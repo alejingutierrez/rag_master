@@ -1,6 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse");
-
 export interface ParsedPage {
   pageNumber: number;
   text: string;
@@ -13,6 +10,32 @@ export interface ParsedPDF {
 }
 
 export async function parsePDF(buffer: Buffer): Promise<ParsedPDF> {
+  // Polyfill para entornos serverless (Lambda) donde no hay DOM
+  if (typeof globalThis.DOMMatrix === "undefined") {
+    // @ts-expect-error Polyfill mínimo para pdf-parse en Lambda
+    globalThis.DOMMatrix = class DOMMatrix {
+      constructor() {
+        return Object.create(null);
+      }
+    };
+  }
+  if (typeof globalThis.Path2D === "undefined") {
+    // @ts-expect-error Polyfill mínimo
+    globalThis.Path2D = class Path2D {};
+  }
+  if (typeof globalThis.ImageData === "undefined") {
+    // @ts-expect-error Polyfill mínimo
+    globalThis.ImageData = class ImageData {
+      constructor(
+        public width: number = 0,
+        public height: number = 0
+      ) {}
+    };
+  }
+
+  // Import dinámico para evitar crashear rutas que no usan PDF
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const pdfParse = require("pdf-parse");
   const data = await pdfParse(buffer);
 
   // pdf-parse no expone texto por página directamente, pero podemos
