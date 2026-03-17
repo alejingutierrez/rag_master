@@ -1,0 +1,90 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  READY
+  ERROR
+}
+
+enum ChunkStrategy {
+  FIXED
+  PARAGRAPH
+  SENTENCE
+}
+
+model Document {
+  id        String         @id @default(cuid())
+  filename  String
+  s3Key     String
+  s3Url     String
+  fileSize  Int
+  pageCount Int            @default(0)
+  status    DocumentStatus @default(PENDING)
+  metadata  Json           @default("{}")
+  error     String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  chunks    Chunk[]
+
+  @@map("documents")
+}
+
+model Chunk {
+  id         String   @id @default(cuid())
+  documentId String
+  content    String
+  pageNumber Int
+  chunkIndex Int
+  chunkSize  Int
+  overlap    Int
+  strategy   ChunkStrategy
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  // El campo embedding se agrega via SQL manual (vector(1024))
+  // Prisma no soporta tipos vector nativamente
+
+  @@index([documentId])
+  @@map("chunks")
+}
+
+model Configuration {
+  id                  String        @id @default(cuid())
+  name                String        @default("default")
+  chunkSize           Int           @default(1024)
+  chunkOverlap        Int           @default(128)
+  chunkStrategy       ChunkStrategy @default(FIXED)
+  embeddingModel      String        @default("amazon.titan-embed-text-v2:0")
+  topK                Int           @default(5)
+  similarityThreshold Float         @default(0.7)
+  maxTokens           Int           @default(4096)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  conversations       Conversation[]
+
+  @@map("configurations")
+}
+
+model Conversation {
+  id              String        @id @default(cuid())
+  question        String
+  answer          String
+  modelUsed       String
+  chunksUsed      Json          @default("[]")
+  configurationId String?
+  configuration   Configuration? @relation(fields: [configurationId], references: [id])
+  createdAt       DateTime      @default(now())
+
+  @@map("conversations")
+}

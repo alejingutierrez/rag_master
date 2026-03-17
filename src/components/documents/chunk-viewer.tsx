@@ -1,0 +1,51 @@
+"use client";
+
+import { Badge } from "@/components/ui/badge";
+
+interface Chunk {
+  id: string;
+  content: string;
+  pageNumber: number;
+  chunkIndex: number;
+  chunkSize: number;
+  overlap: number;
+  strategy: string;
+  metadata: Record<string, unknown>;
+}
+
+interface ChunkViewerProps {
+  chunks: Chunk[];
+}
+
+export function ChunkViewer({ chunks }: ChunkViewerProps) {
+  return (
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold">
+        Chunks ({chunks.length})
+      </h3>
+      {chunks.map((chunk) => (
+        <div
+          key={chunk.id}
+          className="border rounded-lg p-4 bg-white hover:shadow-sm transition-shadow"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="secondary">#{chunk.chunkIndex}</Badge>
+            <Badge variant="outline">Pag. {chunk.pageNumber}</Badge>
+            <Badge variant="outline">{chunk.strategy}</Badge>
+            <span className="text-xs text-neutral-400 ml-auto">
+              {chunk.content.length} caracteres
+            </span>
+          </div>
+          <p className="text-sm text-neutral-700 whitespace-pre-wrap line-clamp-6">
+            {chunk.content}
+          </p>
+        </div>
+      ))}
+      {chunks.length === 0 && (
+        <p className="text-neutral-400 text-center py-8">
+          No hay chunks para este documento
+        </p>
+      )}
+    </div>
+  );
+}
