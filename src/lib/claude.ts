@@ -2,15 +2,10 @@ import {
   BedrockRuntimeClient,
   ConverseStreamCommand,
 } from "@aws-sdk/client-bedrock-runtime";
+import { awsConfig } from "./aws-config";
 import type { SearchResult } from "./vector-search";
 
-const bedrock = new BedrockRuntimeClient({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+const bedrock = new BedrockRuntimeClient(awsConfig);
 
 const CLAUDE_MODEL =
   process.env.BEDROCK_CLAUDE_MODEL_ID ||

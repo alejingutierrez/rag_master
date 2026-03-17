@@ -4,14 +4,9 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
+import { awsConfig } from "./aws-config";
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+const s3 = new S3Client(awsConfig);
 
 const BUCKET = process.env.S3_BUCKET_NAME!;
 
@@ -28,7 +23,7 @@ export async function uploadToS3(
       ContentType: contentType,
     })
   );
-  return `https://${BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+  return `https://${BUCKET}.s3.${awsConfig.region}.amazonaws.com/${key}`;
 }
 
 export async function deleteFromS3(key: string): Promise<void> {
