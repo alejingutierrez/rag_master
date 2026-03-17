@@ -23,26 +23,59 @@ export default function UploadPage() {
     if (!file) return;
 
     setStatus("uploading");
-    setMessage("Subiendo y procesando PDF...");
+    setMessage("Obteniendo URL de subida...");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("chunkSize", config.chunkSize.toString());
-      formData.append("chunkOverlap", config.chunkOverlap.toString());
-      formData.append("strategy", config.strategy);
-
-      const response = await fetch("/api/documents", {
+      // 1. Obtener presigned URL
+      const presignRes = await fetch("/api/documents/presign", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+        }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Error al subir el documento");
+      if (!presignRes.ok) {
+        throw new Error("Error al obtener URL de subida");
       }
 
-      const data = await response.json();
+      const { url, s3Key, s3Url } = await presignRes.json();
+
+      // 2. Subir PDF directamente a S3
+      setMessage("Subiendo PDF a S3...");
+      const uploadRes = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Error al subir el archivo a S3");
+      }
+
+      // 3. Notificar al API para procesar
+      setMessage("Procesando documento...");
+      const processRes = await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          s3Key,
+          s3Url,
+          filename: file.name,
+          fileSize: file.size,
+          chunkSize: config.chunkSize,
+          chunkOverlap: config.chunkOverlap,
+          strategy: config.strategy,
+        }),
+      });
+
+      if (!processRes.ok) {
+        const error = await processRes.json();
+        throw new Error(error.error || "Error al procesar el documento");
+      }
+
+      const data = await processRes.json();
       setStatus("success");
       setMessage(
         `Documento "${data.document.filename}" subido correctamente. Se esta procesando en segundo plano.`

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { uploadToS3 } from "@/lib/s3";
+import { getFromS3 } from "@/lib/s3";
 import { parsePDF } from "@/lib/pdf-parser";
 import { chunkPages } from "@/lib/chunking";
 import { generateEmbedding } from "@/lib/bedrock";
@@ -39,41 +39,35 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// POST /api/documents - Subir y procesar un PDF
+// POST /api/documents - Registrar y procesar un PDF ya subido a S3
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const chunkSize = parseInt(formData.get("chunkSize") as string) || 1024;
-    const chunkOverlap = parseInt(formData.get("chunkOverlap") as string) || 128;
-    const strategy = (formData.get("strategy") as string) || "FIXED";
+    const { s3Key, s3Url, filename, fileSize, chunkSize, chunkOverlap, strategy } =
+      await request.json();
 
-    if (!file || file.type !== "application/pdf") {
+    if (!s3Key || !filename) {
       return NextResponse.json(
-        { error: "Se requiere un archivo PDF" },
+        { error: "Se requiere s3Key y filename" },
         { status: 400 }
       );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const s3Key = `pdfs/${Date.now()}-${file.name}`;
-
-    // 1. Crear documento en estado PENDING
+    // 1. Crear documento en estado PROCESSING
     const document = await prisma.document.create({
       data: {
-        filename: file.name,
+        filename,
         s3Key,
-        s3Url: "",
-        fileSize: file.size,
+        s3Url: s3Url || "",
+        fileSize: fileSize || 0,
         status: "PROCESSING",
       },
     });
 
     // Procesar en background (no bloquear la respuesta)
-    processDocument(document.id, buffer, s3Key, file.name, {
-      chunkSize,
-      chunkOverlap,
-      strategy: strategy as "FIXED" | "PARAGRAPH" | "SENTENCE",
+    processDocument(document.id, s3Key, filename, {
+      chunkSize: chunkSize || 1024,
+      chunkOverlap: chunkOverlap || 128,
+      strategy: (strategy as "FIXED" | "PARAGRAPH" | "SENTENCE") || "FIXED",
     }).catch(console.error);
 
     return NextResponse.json({ document }, { status: 201 });
@@ -88,18 +82,13 @@ export async function POST(request: NextRequest) {
 
 async function processDocument(
   documentId: string,
-  buffer: Buffer,
   s3Key: string,
   filename: string,
   config: { chunkSize: number; chunkOverlap: number; strategy: "FIXED" | "PARAGRAPH" | "SENTENCE" }
 ) {
   try {
-    // 2. Subir a S3
-    const s3Url = await uploadToS3(s3Key, buffer, "application/pdf");
-    await prisma.document.update({
-      where: { id: documentId },
-      data: { s3Url },
-    });
+    // 2. Descargar PDF de S3
+    const buffer = await getFromS3(s3Key);
 
     // 3. Parsear PDF
     const parsed = await parsePDF(buffer);

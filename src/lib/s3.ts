@@ -4,6 +4,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { awsConfig } from "./aws-config";
 
 const s3 = new S3Client(awsConfig);
@@ -33,6 +34,20 @@ export async function deleteFromS3(key: string): Promise<void> {
       Key: key,
     })
   );
+}
+
+export async function generatePresignedUploadUrl(
+  key: string,
+  contentType: string
+): Promise<{ url: string; s3Url: string }> {
+  const command = new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    ContentType: contentType,
+  });
+  const url = await getSignedUrl(s3, command, { expiresIn: 600 });
+  const s3Url = `https://${BUCKET}.s3.${awsConfig.region}.amazonaws.com/${key}`;
+  return { url, s3Url };
 }
 
 export async function getFromS3(key: string): Promise<Buffer> {
