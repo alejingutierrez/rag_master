@@ -10,6 +10,16 @@ export interface ParsedPDF {
 }
 
 export async function parsePDF(buffer: Buffer): Promise<ParsedPDF> {
+  // Polyfills para Lambda (no tiene DOM APIs que pdfjs-dist necesita)
+  if (typeof globalThis.DOMMatrix === "undefined") {
+    // @ts-expect-error polyfill mínimo para pdf-parse en Lambda
+    globalThis.DOMMatrix = class DOMMatrix { constructor() { return Object.create(null); } };
+  }
+  if (typeof globalThis.Path2D === "undefined") {
+    // @ts-expect-error polyfill mínimo
+    globalThis.Path2D = class Path2D {};
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require("pdf-parse");
   // Turbopack puede envolver el export como ESM — manejar ambos casos
