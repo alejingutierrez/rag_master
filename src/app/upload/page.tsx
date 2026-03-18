@@ -77,8 +77,9 @@ export default function UploadPage() {
 
       const data = await processRes.json();
       setStatus("success");
+      const chunkCount = data.document._count?.chunks ?? 0;
       setMessage(
-        `Documento "${data.document.filename}" subido correctamente. Se esta procesando en segundo plano.`
+        `Documento "${data.document.filename}" procesado correctamente. ${chunkCount} chunks creados.`
       );
       setFile(null);
     } catch (error) {

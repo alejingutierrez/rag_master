@@ -6,6 +6,9 @@ import { chunkPages } from "@/lib/chunking";
 import { generateEmbedding } from "@/lib/bedrock";
 import { saveChunkEmbedding } from "@/lib/vector-search";
 
+// PDFs grandes necesitan más tiempo para parsear + generar embeddings
+export const maxDuration = 300;
+
 // GET /api/documents - Listar documentos
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -63,14 +66,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Procesar en background (no bloquear la respuesta)
-    processDocument(document.id, s3Key, filename, {
+    // Procesar síncronamente (en Lambda el background work se congela al enviar respuesta)
+    await processDocument(document.id, s3Key, filename, {
       chunkSize: chunkSize || 1024,
       chunkOverlap: chunkOverlap || 128,
       strategy: (strategy as "FIXED" | "PARAGRAPH" | "SENTENCE") || "FIXED",
-    }).catch(console.error);
+    });
 
-    return NextResponse.json({ document }, { status: 201 });
+    const updated = await prisma.document.findUnique({
+      where: { id: document.id },
+      include: { _count: { select: { chunks: true } } },
+    });
+
+    return NextResponse.json({ document: updated }, { status: 201 });
   } catch (error) {
     console.error("Error uploading document:", error);
     return NextResponse.json(

@@ -6,6 +6,8 @@ import { chunkPages } from "@/lib/chunking";
 import { generateEmbedding } from "@/lib/bedrock";
 import { saveChunkEmbedding } from "@/lib/vector-search";
 
+export const maxDuration = 300;
+
 // POST /api/documents/[id]/reprocess - Re-chunkear y re-embedder
 export async function POST(
   request: NextRequest,
@@ -33,14 +35,19 @@ export async function POST(
     data: { status: "PROCESSING" },
   });
 
-  // Procesar en background
-  reprocessDocument(id, document.s3Key, document.filename, {
+  // Procesar síncronamente (en Lambda el background work se congela)
+  await reprocessDocument(id, document.s3Key, document.filename, {
     chunkSize,
     chunkOverlap,
     strategy,
-  }).catch(console.error);
+  });
 
-  return NextResponse.json({ status: "processing" });
+  const updated = await prisma.document.findUnique({
+    where: { id },
+    include: { _count: { select: { chunks: true } } },
+  });
+
+  return NextResponse.json({ document: updated });
 }
 
 async function reprocessDocument(
