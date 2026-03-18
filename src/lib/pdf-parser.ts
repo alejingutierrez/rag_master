@@ -10,41 +10,16 @@ export interface ParsedPDF {
 }
 
 export async function parsePDF(buffer: Buffer): Promise<ParsedPDF> {
-  // Polyfill para entornos serverless (Lambda) donde no hay DOM
-  if (typeof globalThis.DOMMatrix === "undefined") {
-    // @ts-expect-error Polyfill mínimo para pdf-parse en Lambda
-    globalThis.DOMMatrix = class DOMMatrix {
-      constructor() {
-        return Object.create(null);
-      }
-    };
-  }
-  if (typeof globalThis.Path2D === "undefined") {
-    // @ts-expect-error Polyfill mínimo
-    globalThis.Path2D = class Path2D {};
-  }
-  if (typeof globalThis.ImageData === "undefined") {
-    // @ts-expect-error Polyfill mínimo
-    globalThis.ImageData = class ImageData {
-      constructor(
-        public width: number = 0,
-        public height: number = 0
-      ) {}
-    };
-  }
-
-  // Import dinámico para evitar crashear rutas que no usan PDF
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pdfParse = require("pdf-parse");
+  const mod = require("pdf-parse");
+  // Turbopack puede envolver el export como ESM — manejar ambos casos
+  const pdfParse = typeof mod === "function" ? mod : mod.default;
   const data = await pdfParse(buffer);
 
-  // pdf-parse no expone texto por página directamente, pero podemos
-  // usar el render callback para capturar por página
   const pages: ParsedPage[] = [];
   let currentPage = 1;
-  let currentText = "";
 
-  // Estrategia: dividir por form feeds (\f) que pdf-parse inserta entre páginas
+  // Dividir por form feeds (\f) que pdf-parse inserta entre páginas
   const rawPages = data.text.split("\f");
 
   for (const pageText of rawPages) {
