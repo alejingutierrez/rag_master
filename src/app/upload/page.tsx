@@ -139,8 +139,8 @@ export default function UploadPage() {
     }));
     setUploadStates(initialStates);
 
-    // Procesar de a 4 en paralelo
-    const CONCURRENCY = 4;
+    // Procesar de a 2 en paralelo (evita throttling de Bedrock embeddings)
+    const CONCURRENCY = 2;
     const queue = [...files.map((f, i) => ({ file: f, index: i }))];
 
     const workers = Array.from({ length: CONCURRENCY }, async () => {

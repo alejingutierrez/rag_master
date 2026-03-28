@@ -142,8 +142,8 @@ async function processDocument(
       dbChunks.push(dbChunk);
     }
 
-    // 6. Generar embeddings en lotes paralelos (5 concurrentes)
-    const BATCH_SIZE = 5;
+    // 6. Generar embeddings en lotes (3 concurrentes para evitar throttling Bedrock)
+    const BATCH_SIZE = 3;
     for (let i = 0; i < dbChunks.length; i += BATCH_SIZE) {
       const batch = dbChunks.slice(i, i + BATCH_SIZE);
       await Promise.all(

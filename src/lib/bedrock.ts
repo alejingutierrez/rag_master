@@ -13,18 +13,45 @@ const EMBEDDING_MODEL =
 const EMBEDDING_DIMENSIONS = EMBEDDING_MODEL.includes("cohere") ? 1536 : 1024;
 
 /**
- * Genera un embedding para un texto usando Cohere Embed v4 (o Titan v2 como fallback)
- * Cohere v4: 1536 dimensiones, superior para contenido multilingüe
- * Titan v2: 1024 dimensiones
+ * Sleep helper
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Genera un embedding con retry automático ante throttling
  */
 export async function generateEmbedding(
   text: string,
   inputType: "search_document" | "search_query" = "search_document"
 ): Promise<number[]> {
-  if (EMBEDDING_MODEL.includes("cohere")) {
-    return generateCohereEmbedding(text, inputType);
+  const MAX_RETRIES = 5;
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      if (EMBEDDING_MODEL.includes("cohere")) {
+        return await generateCohereEmbedding(text, inputType);
+      }
+      return await generateTitanEmbedding(text);
+    } catch (error: unknown) {
+      const isThrottled =
+        error instanceof Error &&
+        (error.name === "ThrottlingException" ||
+          error.message.includes("Too many tokens") ||
+          error.message.includes("throttl"));
+
+      if (isThrottled && attempt < MAX_RETRIES - 1) {
+        // Backoff exponencial: 2s, 4s, 8s, 16s
+        const delay = Math.pow(2, attempt + 1) * 1000;
+        console.log(`Bedrock throttled, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        await sleep(delay);
+        continue;
+      }
+      throw error;
+    }
   }
-  return generateTitanEmbedding(text);
+  throw new Error("Max retries exceeded for embedding generation");
 }
 
 /**
@@ -80,14 +107,14 @@ async function generateTitanEmbedding(text: string): Promise<number[]> {
 }
 
 /**
- * Genera embeddings en lote para múltiples textos
+ * Genera embeddings en lote — concurrencia reducida a 3 para evitar throttling
  */
 export async function generateEmbeddings(
   texts: string[],
   inputType: "search_document" | "search_query" = "search_document"
 ): Promise<number[][]> {
   const embeddings: number[][] = [];
-  const batchSize = 10;
+  const batchSize = 3; // Reducido de 10 a 3 para evitar throttling
 
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
