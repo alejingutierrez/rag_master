@@ -72,7 +72,8 @@ export default function ChatPage() {
         const chunksHeader = response.headers.get("X-Chunks-Used");
         if (chunksHeader) {
           try {
-            const chunks = JSON.parse(chunksHeader);
+            const decoded = decodeURIComponent(chunksHeader);
+            const chunks = JSON.parse(decoded);
             setCitations(chunks);
           } catch {
             // Header parsing failed, continue without citations

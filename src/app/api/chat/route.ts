@@ -112,22 +112,25 @@ export async function POST(request: NextRequest) {
     const responseStream = stream.pipeThrough(transformStream);
 
     // Enviar metadatos de los chunks usados en el header
+    // Se usa encodeURIComponent para evitar caracteres Unicode > 255 que
+    // causan "Cannot convert argument to a ByteString" en HTTP headers
+    const chunksMetadata = JSON.stringify(
+      chunks.map((c) => ({
+        id: c.id,
+        documentId: c.documentId,
+        documentFilename: c.documentFilename,
+        pageNumber: c.pageNumber,
+        chunkIndex: c.chunkIndex,
+        similarity: c.similarity,
+        content: c.content.substring(0, 200) + "...",
+      }))
+    );
     return new Response(responseStream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
-        "X-Chunks-Used": JSON.stringify(
-          chunks.map((c) => ({
-            id: c.id,
-            documentId: c.documentId,
-            documentFilename: c.documentFilename,
-            pageNumber: c.pageNumber,
-            chunkIndex: c.chunkIndex,
-            similarity: c.similarity,
-            content: c.content.substring(0, 200) + "...",
-          }))
-        ),
+        "X-Chunks-Used": encodeURIComponent(chunksMetadata),
       },
     });
   } catch (error) {
