@@ -4,6 +4,9 @@ import { generateEmbedding } from "@/lib/bedrock";
 import { searchSimilarChunks } from "@/lib/vector-search";
 import { askClaude } from "@/lib/claude";
 
+// Claude Opus con 90KB de contexto necesita más de 30s
+export const maxDuration = 120;
+
 // POST /api/chat - Pipeline RAG completo con streaming
 export async function POST(request: NextRequest) {
   try {
