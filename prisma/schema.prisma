@@ -62,12 +62,12 @@ model Chunk {
 model Configuration {
   id                  String        @id @default(cuid())
   name                String        @default("default")
-  chunkSize           Int           @default(1024)
-  chunkOverlap        Int           @default(128)
-  chunkStrategy       ChunkStrategy @default(FIXED)
+  chunkSize           Int           @default(512)
+  chunkOverlap        Int           @default(64)
+  chunkStrategy       ChunkStrategy @default(PARAGRAPH)
   embeddingModel      String        @default("amazon.titan-embed-text-v2:0")
-  topK                Int           @default(5)
-  similarityThreshold Float         @default(0.7)
+  topK                Int           @default(8)
+  similarityThreshold Float         @default(0.4)
   maxTokens           Int           @default(4096)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt

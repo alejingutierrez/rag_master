@@ -112,7 +112,8 @@ async function processDocument(
       strategy: config.strategy,
     });
 
-    // 5. Guardar chunks y generar embeddings
+    // 5. Guardar todos los chunks primero (rápido, solo DB)
+    const dbChunks = [];
     for (const chunk of chunks) {
       const dbChunk = await prisma.chunk.create({
         data: {
@@ -126,13 +127,24 @@ async function processDocument(
           metadata: { sourceFile: filename },
         },
       });
-
-      // Generar y guardar embedding
-      const embedding = await generateEmbedding(chunk.content);
-      await saveChunkEmbedding(dbChunk.id, embedding);
+      dbChunks.push(dbChunk);
     }
 
-    // 6. Marcar como listo
+    // 6. Generar embeddings en lotes paralelos (5 concurrentes)
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < dbChunks.length; i += BATCH_SIZE) {
+      const batch = dbChunks.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (dbChunk) => {
+          const chunk = chunks.find((c) => c.chunkIndex === dbChunk.chunkIndex);
+          if (!chunk) return;
+          const embedding = await generateEmbedding(chunk.content);
+          await saveChunkEmbedding(dbChunk.id, embedding);
+        })
+      );
+    }
+
+    // 7. Marcar como listo
     await prisma.document.update({
       where: { id: documentId },
       data: { status: "READY" },

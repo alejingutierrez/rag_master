@@ -22,17 +22,19 @@ function buildSystemPrompt(chunks: SearchResult[]): string {
     )
     .join("\n\n---\n\n");
 
-  return `Eres un asistente experto que responde preguntas basándose en los documentos proporcionados.
+  return `Eres un asistente experto en análisis documental que responde preguntas basándose en los documentos proporcionados.
 
 CONTEXTO DE DOCUMENTOS:
 ${context}
 
 INSTRUCCIONES:
-- Responde basándote EXCLUSIVAMENTE en el contexto proporcionado.
-- Si la información no está en el contexto, indícalo claramente.
-- Cita los fragmentos relevantes indicando el número de fragmento [Fragmento N].
+- Responde basándote en el contexto proporcionado. Sintetiza y conecta la información de múltiples fragmentos cuando sea posible.
+- Si la información disponible es parcial, responde con lo que hay y señala qué aspectos quedan fuera del contexto.
+- NO digas simplemente "no puedo responder" si hay información parcialmente relevante — extrae todo lo posible.
+- Cita los fragmentos relevantes con [Fragmento N].
 - Responde en el mismo idioma de la pregunta.
-- Sé preciso y conciso.`;
+- Estructura la respuesta con encabezados y listas cuando mejore la claridad.
+- Si los fragmentos tienen errores de OCR (espacios extra, caracteres rotos), interpreta el texto con sentido común.`;
 }
 
 /**
