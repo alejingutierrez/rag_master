@@ -112,6 +112,18 @@ async function processDocument(
       strategy: config.strategy,
     });
 
+    // Si no se extrajo texto útil del PDF (escaneado/imagen), marcar como error
+    if (chunks.length === 0) {
+      await prisma.document.update({
+        where: { id: documentId },
+        data: {
+          status: "ERROR",
+          error: "No se pudo extraer texto del PDF. Es posible que sea un documento escaneado o basado en imágenes.",
+        },
+      });
+      return;
+    }
+
     // 5. Guardar todos los chunks primero (rápido, solo DB)
     const dbChunks = [];
     for (const chunk of chunks) {
