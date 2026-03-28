@@ -10,9 +10,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       question,
-      topK = 5,
-      similarityThreshold = 0.7,
-      maxTokens = 4096,
+      topK = 200,
+      similarityThreshold = 0.45,
+      maxTokens = 8000,
       documentIds,
       configurationId,
     } = body;
@@ -63,15 +63,35 @@ export async function POST(request: NextRequest) {
     // 4. Enviar a Claude con streaming
     const stream = await askClaude(question, chunks, config.maxTokens);
 
-    // 5. Crear un TransformStream para capturar la respuesta completa y guardarla
+    // 5. Preparar metadatos de chunks para enviar como primer evento SSE
+    const chunksMetadata = chunks.map((c) => ({
+      id: c.id,
+      documentId: c.documentId,
+      documentFilename: c.documentFilename,
+      pageNumber: c.pageNumber,
+      chunkIndex: c.chunkIndex,
+      similarity: c.similarity,
+      content: c.content.substring(0, 300) + (c.content.length > 300 ? "..." : ""),
+    }));
+
+    // 6. Crear un TransformStream que inyecta los chunks al inicio y captura la respuesta
     let fullAnswer = "";
+    let chunksInjected = false;
+    const encoder = new TextEncoder();
     const modelUsed =
       process.env.BEDROCK_CLAUDE_MODEL_ID ||
       "us.anthropic.claude-opus-4-6-20250610-v1:0";
 
     const transformStream = new TransformStream({
       transform(chunk, controller) {
-        // Pasar el chunk al cliente
+        // Inyectar metadatos de chunks como primer evento
+        if (!chunksInjected) {
+          chunksInjected = true;
+          const chunksEvent = `data: ${JSON.stringify({ chunks: chunksMetadata })}\n\n`;
+          controller.enqueue(encoder.encode(chunksEvent));
+        }
+
+        // Pasar el chunk de Claude al cliente
         controller.enqueue(chunk);
 
         // Acumular texto para guardar después
@@ -111,26 +131,11 @@ export async function POST(request: NextRequest) {
 
     const responseStream = stream.pipeThrough(transformStream);
 
-    // Enviar metadatos de los chunks usados en el header
-    // Se usa encodeURIComponent para evitar caracteres Unicode > 255 que
-    // causan "Cannot convert argument to a ByteString" en HTTP headers
-    const chunksMetadata = JSON.stringify(
-      chunks.map((c) => ({
-        id: c.id,
-        documentId: c.documentId,
-        documentFilename: c.documentFilename,
-        pageNumber: c.pageNumber,
-        chunkIndex: c.chunkIndex,
-        similarity: c.similarity,
-        content: c.content.substring(0, 200) + "...",
-      }))
-    );
     return new Response(responseStream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
-        "X-Chunks-Used": encodeURIComponent(chunksMetadata),
       },
     });
   } catch (error) {

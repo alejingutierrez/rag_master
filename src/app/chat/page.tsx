@@ -2,11 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ChatInterface } from "@/components/chat/chat-interface";
-import { ChunkCitations } from "@/components/chat/chunk-citations";
-import {
-  SearchConfigPanel,
-  type SearchConfig,
-} from "@/components/chat/search-config";
+import { ChunksModal } from "@/components/chat/chunks-modal";
 
 interface Message {
   role: "user" | "assistant";
@@ -23,144 +19,137 @@ interface ChunkCitation {
   content: string;
 }
 
+// Valores fijos de configuración RAG
+const RAG_CONFIG = {
+  topK: 200,
+  similarityThreshold: 0.45,
+  maxTokens: 8000,
+} as const;
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [citations, setCitations] = useState<ChunkCitation[]>([]);
-  const [searchConfig, setSearchConfig] = useState<SearchConfig>({
-    topK: 5,
-    similarityThreshold: 0.7,
-    maxTokens: 4096,
-  });
+  const [showChunksModal, setShowChunksModal] = useState(false);
 
-  const handleAsk = useCallback(
-    async (question: string) => {
-      setIsLoading(true);
-      setStreamingText("");
-      setCitations([]);
+  const handleAsk = useCallback(async (question: string) => {
+    setIsLoading(true);
+    setStreamingText("");
+    setCitations([]);
 
-      // Agregar mensaje del usuario
-      setMessages((prev) => [...prev, { role: "user", content: question }]);
+    setMessages((prev) => [...prev, { role: "user", content: question }]);
 
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            question,
-            topK: searchConfig.topK,
-            similarityThreshold: searchConfig.similarityThreshold,
-            maxTokens: searchConfig.maxTokens,
-          }),
-        });
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question,
+          topK: RAG_CONFIG.topK,
+          similarityThreshold: RAG_CONFIG.similarityThreshold,
+          maxTokens: RAG_CONFIG.maxTokens,
+        }),
+      });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "assistant",
-              content: errorData.error || "Error al procesar la pregunta.",
-            },
-          ]);
-          setIsLoading(false);
-          return;
-        }
-
-        // Extraer chunks usados del header
-        const chunksHeader = response.headers.get("X-Chunks-Used");
-        if (chunksHeader) {
-          try {
-            const decoded = decodeURIComponent(chunksHeader);
-            const chunks = JSON.parse(decoded);
-            setCitations(chunks);
-          } catch {
-            // Header parsing failed, continue without citations
-          }
-        }
-
-        // Leer stream SSE
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let fullText = "";
-
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split("\n").filter((l) => l.startsWith("data: "));
-
-            for (const line of lines) {
-              try {
-                const data = JSON.parse(line.replace("data: ", ""));
-                if (data.text) {
-                  fullText += data.text;
-                  setStreamingText(fullText);
-                }
-                if (data.done) {
-                  // Stream completado
-                }
-              } catch {
-                // Ignorar líneas inválidas
-              }
-            }
-          }
-        }
-
-        // Agregar respuesta completa como mensaje
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: fullText },
-        ]);
-        setStreamingText("");
-      } catch (error) {
-        console.error("Chat error:", error);
+      if (!response.ok) {
+        const errorData = await response.json();
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content: "Error de conexion. Verifica que el servidor este funcionando.",
+            content: errorData.error || "Error al procesar la pregunta.",
           },
         ]);
-      } finally {
         setIsLoading(false);
+        return;
       }
-    },
-    [searchConfig]
-  );
+
+      // Leer stream SSE (chunks vienen como primer evento, luego texto)
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n").filter((l) => l.startsWith("data: "));
+
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line.replace("data: ", ""));
+              // Primer evento: metadatos de chunks
+              if (data.chunks) {
+                setCitations(data.chunks);
+              }
+              // Eventos de texto de Claude
+              if (data.text) {
+                fullText += data.text;
+                setStreamingText(fullText);
+              }
+            } catch {
+              // Ignorar líneas inválidas
+            }
+          }
+        }
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: fullText },
+      ]);
+      setStreamingText("");
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Error de conexion. Verifica que el servidor este funcionando.",
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-neutral-900">Preguntas</h2>
-        <p className="text-neutral-500 mt-1">
-          Haz preguntas sobre tus documentos. Claude responde usando los fragmentos mas relevantes.
-        </p>
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-neutral-900">Preguntas</h2>
+          <p className="text-neutral-500 mt-1">
+            Haz preguntas sobre tus documentos. Claude responde usando los fragmentos mas relevantes.
+          </p>
+        </div>
+        {citations.length > 0 && (
+          <button
+            onClick={() => setShowChunksModal(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 hover:bg-neutral-200 rounded-lg transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            Ver fragmentos ({citations.length})
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Panel lateral: configuración y citas */}
-        <div className="lg:col-span-1 space-y-4 order-2 lg:order-1">
-          <SearchConfigPanel
-            config={searchConfig}
-            onChange={setSearchConfig}
-          />
-          <ChunkCitations chunks={citations} />
-        </div>
+      <ChatInterface
+        onAsk={handleAsk}
+        messages={messages}
+        isLoading={isLoading}
+        streamingText={streamingText}
+      />
 
-        {/* Chat principal */}
-        <div className="lg:col-span-3 order-1 lg:order-2">
-          <ChatInterface
-            onAsk={handleAsk}
-            messages={messages}
-            isLoading={isLoading}
-            streamingText={streamingText}
-          />
-        </div>
-      </div>
+      <ChunksModal
+        open={showChunksModal}
+        onClose={() => setShowChunksModal(false)}
+        chunks={citations}
+      />
     </div>
   );
 }

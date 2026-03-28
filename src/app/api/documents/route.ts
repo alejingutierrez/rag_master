@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
 
     // Procesar síncronamente (en Lambda el background work se congela al enviar respuesta)
     await processDocument(document.id, s3Key, filename, {
-      chunkSize: chunkSize || 1024,
-      chunkOverlap: chunkOverlap || 128,
+      chunkSize: chunkSize || 6000,
+      chunkOverlap: chunkOverlap || 1000,
       strategy: (strategy as "FIXED" | "PARAGRAPH" | "SENTENCE") || "FIXED",
     });
 

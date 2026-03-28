@@ -44,7 +44,7 @@ INSTRUCCIONES:
 export async function askClaude(
   question: string,
   chunks: SearchResult[],
-  maxTokens: number = 4096
+  maxTokens: number = 8000
 ): Promise<ReadableStream<Uint8Array>> {
   const systemPrompt = buildSystemPrompt(chunks);
 
