@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       question,
-      topK = 200,
+      topK = 30,
       similarityThreshold = 0.35,
       maxTokens = 8000,
       documentIds,
