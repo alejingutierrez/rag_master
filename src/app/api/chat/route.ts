@@ -63,15 +63,15 @@ export async function POST(request: NextRequest) {
     // 4. Enviar a Claude con streaming
     const stream = await askClaude(question, chunks, config.maxTokens);
 
-    // 5. Preparar metadatos de chunks para enviar como primer evento SSE
-    const chunksMetadata = chunks.map((c) => ({
+    // 5. Preparar metadatos de chunks para el frontend (top 50 para el modal, Claude recibe todos)
+    const chunksMetadata = chunks.slice(0, 50).map((c) => ({
       id: c.id,
       documentId: c.documentId,
       documentFilename: c.documentFilename,
       pageNumber: c.pageNumber,
       chunkIndex: c.chunkIndex,
       similarity: c.similarity,
-      content: c.content.substring(0, 300) + (c.content.length > 300 ? "..." : ""),
+      content: c.content.substring(0, 150) + (c.content.length > 150 ? "..." : ""),
     }));
 
     // 6. Crear un TransformStream que inyecta los chunks al inicio y captura la respuesta
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
         // Inyectar metadatos de chunks como primer evento
         if (!chunksInjected) {
           chunksInjected = true;
-          const chunksEvent = `data: ${JSON.stringify({ chunks: chunksMetadata })}\n\n`;
+          const chunksEvent = `data: ${JSON.stringify({ chunks: chunksMetadata, totalChunksUsed: chunks.length })}\n\n`;
           controller.enqueue(encoder.encode(chunksEvent));
         }
 

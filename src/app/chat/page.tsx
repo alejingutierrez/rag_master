@@ -31,6 +31,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [citations, setCitations] = useState<ChunkCitation[]>([]);
+  const [totalChunksUsed, setTotalChunksUsed] = useState(0);
   const [showChunksModal, setShowChunksModal] = useState(false);
 
   const handleAsk = useCallback(async (question: string) => {
@@ -84,6 +85,7 @@ export default function ChatPage() {
               // Primer evento: metadatos de chunks
               if (data.chunks) {
                 setCitations(data.chunks);
+                setTotalChunksUsed(data.totalChunksUsed || data.chunks.length);
               }
               // Eventos de texto de Claude
               if (data.text) {
@@ -133,7 +135,7 @@ export default function ChatPage() {
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
             </svg>
-            Ver fragmentos ({citations.length})
+            Ver fragmentos ({totalChunksUsed > citations.length ? `${citations.length} de ${totalChunksUsed}` : citations.length})
           </button>
         )}
       </div>
