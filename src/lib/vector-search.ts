@@ -17,7 +17,7 @@ export interface SearchResult {
  */
 export async function searchSimilarChunks(
   queryEmbedding: number[],
-  topK: number = 15,
+  topK: number = 30,
   similarityThreshold: number = 0.35,
   documentIds?: string[]
 ): Promise<SearchResult[]> {
