@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, User, Bot } from "lucide-react";
+import { MarkdownRenderer } from "./markdown-renderer";
 
 interface Message {
   role: "user" | "assistant";
@@ -69,7 +70,11 @@ export function ChatInterface({
                   : "bg-white border shadow-sm"
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              {msg.role === "assistant" ? (
+                <MarkdownRenderer content={msg.content} />
+              ) : (
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              )}
             </div>
             {msg.role === "user" && (
               <div className="h-8 w-8 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
@@ -86,7 +91,7 @@ export function ChatInterface({
               <Bot className="h-4 w-4 text-white" />
             </div>
             <div className="max-w-[80%] rounded-xl px-4 py-3 bg-white border shadow-sm">
-              <p className="text-sm whitespace-pre-wrap">{streamingText}</p>
+              <MarkdownRenderer content={streamingText} />
               <span className="inline-block w-2 h-4 bg-neutral-400 animate-pulse ml-0.5" />
             </div>
           </div>
