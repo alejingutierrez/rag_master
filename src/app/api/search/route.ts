@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       query,
-      topK = 30,
+      topK = 15,
       similarityThreshold = 0.35,
       documentIds,
     } = body;
