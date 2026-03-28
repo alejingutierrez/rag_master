@@ -28,6 +28,11 @@ export async function searchSimilarChunks(
     ? `AND c."documentId" IN (${documentIds.map((id) => `'${id}'`).join(",")})`
     : "";
 
+  // NOTA: Se interpola el vector directamente en el SQL porque Prisma $queryRawUnsafe
+  // no castea correctamente parámetros posicionales ($1::vector) con el operador <=>
+  // de pgvector. El UPDATE (SET embedding = $1::vector) funciona, pero el SELECT con
+  // comparación <=> retorna 0 resultados cuando se usa parámetro posicional.
+  // El similarityThreshold y topK sí se pasan como parámetros seguros.
   const results = await prisma.$queryRawUnsafe<
     Array<{
       id: string;
@@ -48,15 +53,14 @@ export async function searchSimilarChunks(
       c."chunkIndex",
       c.metadata,
       d.filename,
-      1 - (c.embedding <=> $1::vector) as similarity
+      1 - (c.embedding <=> '${embeddingStr}'::vector) as similarity
     FROM chunks c
     JOIN documents d ON c."documentId" = d.id
     WHERE c.embedding IS NOT NULL
-      AND 1 - (c.embedding <=> $1::vector) >= $2
+      AND 1 - (c.embedding <=> '${embeddingStr}'::vector) >= $1
       ${documentFilter}
-    ORDER BY c.embedding <=> $1::vector
-    LIMIT $3`,
-    embeddingStr,
+    ORDER BY c.embedding <=> '${embeddingStr}'::vector
+    LIMIT $2`,
     similarityThreshold,
     topK
   );
