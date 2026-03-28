@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Generar embedding de la pregunta
-    const queryEmbedding = await generateEmbedding(question);
+    // 2. Generar embedding de la pregunta (search_query para Cohere)
+    const queryEmbedding = await generateEmbedding(question, "search_query");
 
     // 3. Buscar chunks similares
     const chunks = await searchSimilarChunks(

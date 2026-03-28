@@ -52,7 +52,8 @@ model Chunk {
   createdAt  DateTime @default(now())
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
-  // El campo embedding se agrega via SQL manual (vector(1024))
+  // El campo embedding se agrega via SQL manual (vector(1536))
+  // Cohere Embed v4 usa 1536 dimensiones
   // Prisma no soporta tipos vector nativamente
 
   @@index([documentId])

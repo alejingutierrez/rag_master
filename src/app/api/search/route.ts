@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Generar embedding de la consulta
-    const queryEmbedding = await generateEmbedding(query);
+    // 1. Generar embedding de la consulta (search_query para Cohere)
+    const queryEmbedding = await generateEmbedding(query, "search_query");
 
     // 2. Buscar chunks similares
     const results = await searchSimilarChunks(

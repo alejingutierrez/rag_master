@@ -23,8 +23,8 @@ interface FileUploadState {
 
 // Valores fijos de chunking — optimizados para contexto rico
 const CHUNK_CONFIG = {
-  chunkSize: 6000,
-  chunkOverlap: 1000,
+  chunkSize: 3000,
+  chunkOverlap: 750,
   strategy: "FIXED",
 } as const;
 
