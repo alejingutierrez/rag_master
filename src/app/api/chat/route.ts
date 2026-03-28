@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const {
       question,
       topK = 200,
-      similarityThreshold = 0.45,
+      similarityThreshold = 0.35,
       maxTokens = 8000,
       documentIds,
       configurationId,

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const {
       query,
       topK = 200,
-      similarityThreshold = 0.45,
+      similarityThreshold = 0.35,
       documentIds,
     } = body;
 
