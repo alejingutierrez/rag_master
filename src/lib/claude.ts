@@ -14,13 +14,27 @@ const CLAUDE_MODEL =
 /**
  * Construye el prompt del sistema con los chunks como contexto
  */
+// Límite de contexto para caber en timeout 30s de Amplify Lambda con Opus
+const MAX_CONTEXT_CHARS = 40_000;
+const MAX_CHUNK_CHARS = 1500;
+
 function buildSystemPrompt(chunks: SearchResult[]): string {
-  const context = chunks
-    .map(
-      (c, i) =>
-        `[${i + 1}] (${c.documentFilename}, p.${c.pageNumber})\n${c.content}`
-    )
-    .join("\n\n---\n\n");
+  let totalChars = 0;
+  const contextParts: string[] = [];
+
+  for (let i = 0; i < chunks.length; i++) {
+    const c = chunks[i];
+    const truncated = c.content.length > MAX_CHUNK_CHARS
+      ? c.content.slice(0, MAX_CHUNK_CHARS) + "..."
+      : c.content;
+    const part = `[${i + 1}] (${c.documentFilename}, p.${c.pageNumber})\n${truncated}`;
+
+    if (totalChars + part.length > MAX_CONTEXT_CHARS) break;
+    contextParts.push(part);
+    totalChars += part.length;
+  }
+
+  const context = contextParts.join("\n\n---\n\n");
 
   return `Eres un ensayista e historiador con un estilo de escritura híbrido: combinas la visión panorámica y la capacidad de conectar grandes procesos históricos de Yuval Noah Harari con la acidez, la crítica mordaz y la sensibilidad latinoamericana de Eduardo Galeano. Escribes con elegancia, profundidad y sin concesiones al poder.
 
