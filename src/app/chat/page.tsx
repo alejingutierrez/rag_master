@@ -20,11 +20,11 @@ interface ChunkCitation {
 }
 
 // Valores fijos de configuración RAG
-// topK=30 para máximo contexto, maxTokens=800 para caber en timeout 30s de Amplify
+// App Runner soporta hasta 120s — sin restricción de tokens de Amplify
 const RAG_CONFIG = {
   topK: 30,
   similarityThreshold: 0.35,
-  maxTokens: 800,
+  maxTokens: 4000,
 } as const;
 
 export default function ChatPage() {
@@ -75,22 +75,29 @@ export default function ChatPage() {
         return;
       }
 
-      // Leer stream SSE (chunks vienen como primer evento, luego texto)
+      // Leer stream SSE con buffer acumulador para evitar perder eventos partidos
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let fullText = "";
+      let sseBuffer = ""; // acumula bytes hasta tener líneas SSE completas
 
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n").filter((l) => l.startsWith("data: "));
+          // Acumular en buffer — un evento SSE puede llegar partido en varios reads
+          sseBuffer += decoder.decode(value, { stream: true });
+
+          // Procesar solo líneas completas (terminadas en \n)
+          const lines = sseBuffer.split("\n");
+          // La última línea puede estar incompleta — guardarla para el siguiente read
+          sseBuffer = lines.pop() ?? "";
 
           for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
             try {
-              const data = JSON.parse(line.replace("data: ", ""));
+              const data = JSON.parse(line.slice(6));
               // Primer evento: metadatos de chunks
               if (data.chunks) {
                 setCitations(data.chunks);
@@ -102,8 +109,20 @@ export default function ChatPage() {
                 setStreamingText(fullText);
               }
             } catch {
-              // Ignorar líneas inválidas
+              // Ignorar líneas con JSON inválido
             }
+          }
+        }
+
+        // Procesar cualquier dato restante en el buffer al cerrar el stream
+        if (sseBuffer.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(sseBuffer.slice(6));
+            if (data.text) {
+              fullText += data.text;
+            }
+          } catch {
+            // Ignorar
           }
         }
       }

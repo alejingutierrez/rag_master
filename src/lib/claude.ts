@@ -14,10 +14,10 @@ const CLAUDE_MODEL =
 /**
  * Construye el prompt del sistema con los chunks como contexto
  */
-// Límite de contexto para caber en timeout 30s de Amplify Lambda con Opus
-// 20KB total ≈ 15 chunks truncados — Opus necesita ~10s para procesar + ~15s para generar
-const MAX_CONTEXT_CHARS = 20_000;
-const MAX_CHUNK_CHARS = 1000;
+// App Runner soporta 120s — contexto completo sin restricción de Amplify
+// 80KB total ≈ 40 chunks completos de 2000 chars c/u
+const MAX_CONTEXT_CHARS = 80_000;
+const MAX_CHUNK_CHARS = 2000;
 
 function buildSystemPrompt(chunks: SearchResult[]): string {
   let totalChars = 0;
