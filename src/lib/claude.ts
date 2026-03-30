@@ -9,7 +9,7 @@ const bedrock = new BedrockRuntimeClient(awsConfig);
 
 const CLAUDE_MODEL =
   process.env.BEDROCK_CLAUDE_MODEL_ID ||
-  "us.anthropic.claude-opus-4-6-v1";
+  "us.anthropic.claude-opus-4-6-20250610-v1:0";
 
 /**
  * Construye el prompt del sistema con los chunks como contexto

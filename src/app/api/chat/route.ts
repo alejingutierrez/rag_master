@@ -143,9 +143,22 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Chat error:", error);
+
+    const isThrottled =
+      error instanceof Error &&
+      (error.name === "ThrottlingException" ||
+        error.message.includes("throttl"));
+    const isModelError =
+      error instanceof Error &&
+      (error.message.includes("model") || error.message.includes("Model"));
+
+    let errorMsg = "Error al procesar la pregunta";
+    if (isThrottled) errorMsg = "Bedrock está saturado. Espera unos segundos e intenta de nuevo.";
+    else if (isModelError) errorMsg = `Error de modelo: ${(error as Error).message}`;
+
     return new Response(
-      JSON.stringify({ error: "Error al procesar la pregunta" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ error: errorMsg }),
+      { status: isThrottled ? 429 : 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }

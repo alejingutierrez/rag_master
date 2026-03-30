@@ -54,13 +54,21 @@ export default function ChatPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorMsg = "Error al procesar la pregunta.";
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg;
+        } catch {
+          // Lambda timeout o respuesta vacía — el body no es JSON válido
+          if (response.status === 504) {
+            errorMsg = "La consulta tardó demasiado. Intenta con una pregunta más corta.";
+          } else if (response.status === 500) {
+            errorMsg = "Error interno del servidor. Verifica que Bedrock esté disponible.";
+          }
+        }
         setMessages((prev) => [
           ...prev,
-          {
-            role: "assistant",
-            content: errorData.error || "Error al procesar la pregunta.",
-          },
+          { role: "assistant", content: errorMsg },
         ]);
         setIsLoading(false);
         return;
