@@ -11,6 +11,10 @@ env:
   ECR_REPOSITORY: rag-master
   APP_RUNNER_SERVICE_ARN: arn:aws:apprunner:us-east-1:741448945431:service/rag-master/d8fd8b57f0ef41eda8deaf856697bb65
 
+concurrency:
+  group: deploy-apprunner
+  cancel-in-progress: false   # cola — no cancela, espera su turno
+
 jobs:
   deploy:
     name: Build & Deploy
@@ -43,6 +47,22 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Wait for App Runner to be ready
+        run: |
+          echo "Checking App Runner service state..."
+          for i in $(seq 1 40); do
+            STATUS=$(aws apprunner describe-service \
+              --service-arn $APP_RUNNER_SERVICE_ARN \
+              --query 'Service.Status' --output text)
+            echo "  State: $STATUS"
+            if [ "$STATUS" = "RUNNING" ] || [ "$STATUS" = "CREATE_FAILED" ] || [ "$STATUS" = "UPDATE_FAILED" ]; then
+              echo "Ready to deploy (state: $STATUS)"
+              break
+            fi
+            echo "  Service busy, waiting 15s..."
+            sleep 15
+          done
 
       - name: Deploy to App Runner
         env:
