@@ -176,40 +176,79 @@ export function selectRepresentativeChunks(
   return deduped.sort((a, b) => a.chunkIndex - b.chunkIndex);
 }
 
-// ─── Parseo robusto de JSON ───────────────────────────────────────────────────
+// ─── Tool use schema (garantiza JSON válido siempre) ─────────────────────────
 
-function parseQuestionsJSON(raw: string): QuestionData[] {
-  let text = raw.trim();
+const GENERATE_TOOL_NAME = "generate_research_questions";
 
-  // Intento 1: parse directo
-  try {
-    const parsed = JSON.parse(text);
-    return normalizeQuestions(Array.isArray(parsed) ? parsed : parsed.preguntas ?? []);
-  } catch {/* continúa */}
-
-  // Intento 2: extraer bloque markdown ```json ... ```
-  const mdMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (mdMatch) {
-    try {
-      const parsed = JSON.parse(mdMatch[1].trim());
-      return normalizeQuestions(Array.isArray(parsed) ? parsed : parsed.preguntas ?? []);
-    } catch {/* continúa */}
-  }
-
-  // Intento 3: recortar desde primer [ hasta último ]
-  const start = text.indexOf("[");
-  const end = text.lastIndexOf("]");
-  if (start !== -1 && end > start) {
-    try {
-      const parsed = JSON.parse(text.slice(start, end + 1));
-      return normalizeQuestions(parsed);
-    } catch {/* continúa */}
-  }
-
-  throw new Error(
-    `No se pudo parsear el JSON de Claude. Primeros 300 chars: ${raw.slice(0, 300)}`
-  );
-}
+const GENERATE_TOOL_SPEC = {
+  name: GENERATE_TOOL_NAME,
+  description:
+    "Genera exactamente 10 preguntas de investigación histórica sobre Colombia en formato estructurado, clasificadas con la taxonomía de períodos y categorías.",
+  inputSchema: {
+    json: {
+      type: "object",
+      properties: {
+        preguntas: {
+          type: "array",
+          minItems: 10,
+          maxItems: 10,
+          items: {
+            type: "object",
+            required: [
+              "id",
+              "pregunta",
+              "periodo_historico",
+              "categoria",
+              "subcategoria",
+              "periodos_relacionados",
+              "categorias_relacionadas",
+              "justificacion",
+            ],
+            properties: {
+              id: { type: "integer", minimum: 1, maximum: 10 },
+              pregunta: { type: "string", minLength: 20 },
+              periodo_historico: {
+                type: "object",
+                required: ["codigo", "nombre", "rango_temporal"],
+                properties: {
+                  codigo: { type: "string" },
+                  nombre: { type: "string" },
+                  rango_temporal: { type: "string" },
+                },
+              },
+              categoria: {
+                type: "object",
+                required: ["codigo", "nombre"],
+                properties: {
+                  codigo: { type: "string" },
+                  nombre: { type: "string" },
+                },
+              },
+              subcategoria: {
+                type: "object",
+                required: ["codigo", "nombre"],
+                properties: {
+                  codigo: { type: "string" },
+                  nombre: { type: "string" },
+                },
+              },
+              periodos_relacionados: {
+                type: "array",
+                items: { type: "string" },
+              },
+              categorias_relacionadas: {
+                type: "array",
+                items: { type: "string" },
+              },
+              justificacion: { type: "string", minLength: 10 },
+            },
+          },
+        },
+      },
+      required: ["preguntas"],
+    },
+  },
+};
 
 function normalizeQuestions(raw: unknown[]): QuestionData[] {
   return raw.map((q: unknown, i: number) => {
@@ -274,20 +313,33 @@ ${context}`;
         content: [{ text: userMessage }],
       },
     ],
+    toolConfig: {
+      tools: [{ toolSpec: GENERATE_TOOL_SPEC }],
+      toolChoice: { tool: { name: GENERATE_TOOL_NAME } },
+    },
     inferenceConfig: {
-      maxTokens: 4000,
+      maxTokens: 8000,
       temperature: 0.7,
     },
   });
 
   const response = await bedrock.send(command);
 
-  const rawText =
-    response.output?.message?.content?.[0]?.text ?? "";
+  // Con tool use, Bedrock garantiza JSON válido conforme al schema
+  const toolUseBlock = response.output?.message?.content?.find(
+    (block) => block.toolUse?.name === GENERATE_TOOL_NAME
+  );
 
-  if (!rawText) {
-    throw new Error("Claude no retornó contenido");
+  if (!toolUseBlock?.toolUse?.input) {
+    throw new Error("Claude no retornó el tool use con las preguntas");
   }
 
-  return parseQuestionsJSON(rawText);
+  const input = toolUseBlock.toolUse.input as Record<string, unknown>;
+  const preguntas = input.preguntas as unknown[];
+
+  if (!Array.isArray(preguntas) || preguntas.length === 0) {
+    throw new Error("El tool use no contiene preguntas válidas");
+  }
+
+  return normalizeQuestions(preguntas);
 }
