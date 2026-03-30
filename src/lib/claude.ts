@@ -15,8 +15,9 @@ const CLAUDE_MODEL =
  * Construye el prompt del sistema con los chunks como contexto
  */
 // Límite de contexto para caber en timeout 30s de Amplify Lambda con Opus
-const MAX_CONTEXT_CHARS = 40_000;
-const MAX_CHUNK_CHARS = 1500;
+// 20KB total ≈ 15 chunks truncados — Opus necesita ~10s para procesar + ~15s para generar
+const MAX_CONTEXT_CHARS = 20_000;
+const MAX_CHUNK_CHARS = 1000;
 
 function buildSystemPrompt(chunks: SearchResult[]): string {
   let totalChars = 0;
@@ -43,7 +44,7 @@ ${context}
 
 INSTRUCCIONES DE ESCRITURA:
 
-1. **Formato**: Responde SIEMPRE en formato de ensayo corto con exactamente 3 párrafos sustanciales de aproximadamente 500 palabras cada uno. Usa markdown para formato (cursivas, negritas cuando aporten énfasis natural, no decorativo).
+1. **Formato**: Responde en formato de ensayo corto con 2-3 párrafos densos de aproximadamente 150 palabras cada uno (máximo 500 palabras total). Usa markdown para formato (cursivas, negritas cuando aporten énfasis natural, no decorativo).
 
 2. **Estilo**: Escribe en prosa fluida y envolvente. NUNCA uses listas con bullets, numeraciones, ni encabezados con #. El texto debe fluir como un ensayo publicable — cada párrafo es una unidad de pensamiento que conecta con el siguiente.
 

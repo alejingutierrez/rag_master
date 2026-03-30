@@ -20,11 +20,11 @@ interface ChunkCitation {
 }
 
 // Valores fijos de configuración RAG
-// topK=30 para máximo contexto, maxTokens=4000 para caber en timeout 30s Amplify
+// topK=30 para máximo contexto, maxTokens=1500 para caber en timeout 30s de Amplify
 const RAG_CONFIG = {
   topK: 30,
   similarityThreshold: 0.35,
-  maxTokens: 4000,
+  maxTokens: 1500,
 } as const;
 
 export default function ChatPage() {
