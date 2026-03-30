@@ -3,11 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getFromS3 } from "@/lib/s3";
 import { parsePDF } from "@/lib/pdf-parser";
 import { chunkPages } from "@/lib/chunking";
-import { generateEmbedding } from "@/lib/bedrock";
-import { saveChunkEmbedding } from "@/lib/vector-search";
 
-// PDFs grandes necesitan más tiempo para parsear + generar embeddings
-export const maxDuration = 300;
+// Fase 1: parsear PDF + guardar chunks (sin embeddings) — cabe en timeout Lambda
+export const maxDuration = 120;
 
 // GET /api/documents - Listar documentos
 export async function GET(request: NextRequest) {
@@ -42,7 +40,8 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// POST /api/documents - Registrar y procesar un PDF ya subido a S3
+// POST /api/documents - Parsear PDF, chunkear y guardar chunks (sin embeddings)
+// Los embeddings se generan por lotes via POST /api/documents/[id]/process
 export async function POST(request: NextRequest) {
   try {
     const { s3Key, s3Url, filename, fileSize, chunkSize, chunkOverlap, strategy } =
@@ -66,109 +65,81 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Procesar síncronamente (en Lambda el background work se congela al enviar respuesta)
-    await processDocument(document.id, s3Key, filename, {
-      chunkSize: chunkSize || 3000,
-      chunkOverlap: chunkOverlap || 750,
-      strategy: (strategy as "FIXED" | "PARAGRAPH" | "SENTENCE") || "FIXED",
-    });
+    try {
+      // 2. Descargar PDF de S3
+      const buffer = await getFromS3(s3Key);
 
-    const updated = await prisma.document.findUnique({
-      where: { id: document.id },
-      include: { _count: { select: { chunks: true } } },
-    });
+      // 3. Parsear PDF
+      const parsed = await parsePDF(buffer);
+      await prisma.document.update({
+        where: { id: document.id },
+        data: { pageCount: parsed.pageCount },
+      });
 
-    return NextResponse.json({ document: updated }, { status: 201 });
+      // 4. Chunkear
+      const chunks = chunkPages(parsed.pages, {
+        chunkSize: chunkSize || 3000,
+        chunkOverlap: chunkOverlap || 750,
+        strategy: (strategy as "FIXED" | "PARAGRAPH" | "SENTENCE") || "FIXED",
+      });
+
+      // Si no se extrajo texto útil del PDF (escaneado/imagen)
+      if (chunks.length === 0) {
+        await prisma.document.update({
+          where: { id: document.id },
+          data: {
+            status: "ERROR",
+            error: "No se pudo extraer texto del PDF. Es posible que sea un documento escaneado o basado en imágenes.",
+          },
+        });
+        return NextResponse.json(
+          { error: "No se pudo extraer texto del PDF" },
+          { status: 422 }
+        );
+      }
+
+      // 5. Guardar todos los chunks (rápido, solo DB)
+      for (const chunk of chunks) {
+        await prisma.chunk.create({
+          data: {
+            documentId: document.id,
+            content: chunk.content,
+            pageNumber: chunk.pageNumber,
+            chunkIndex: chunk.chunkIndex,
+            chunkSize: chunkSize || 3000,
+            overlap: chunkOverlap || 750,
+            strategy: strategy || "FIXED",
+            metadata: { sourceFile: filename },
+          },
+        });
+      }
+
+      // Retornar inmediatamente — embeddings se generan via /api/documents/[id]/process
+      const updated = await prisma.document.findUnique({
+        where: { id: document.id },
+        include: { _count: { select: { chunks: true } } },
+      });
+
+      return NextResponse.json({ document: updated }, { status: 201 });
+    } catch (processingError) {
+      console.error(`Error processing document ${document.id}:`, processingError);
+      await prisma.document.update({
+        where: { id: document.id },
+        data: {
+          status: "ERROR",
+          error: processingError instanceof Error ? processingError.message : "Error desconocido",
+        },
+      });
+      return NextResponse.json(
+        { error: "Error al procesar el documento" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Error uploading document:", error);
     return NextResponse.json(
       { error: "Error al subir el documento" },
       { status: 500 }
     );
-  }
-}
-
-async function processDocument(
-  documentId: string,
-  s3Key: string,
-  filename: string,
-  config: { chunkSize: number; chunkOverlap: number; strategy: "FIXED" | "PARAGRAPH" | "SENTENCE" }
-) {
-  try {
-    // 2. Descargar PDF de S3
-    const buffer = await getFromS3(s3Key);
-
-    // 3. Parsear PDF
-    const parsed = await parsePDF(buffer);
-    await prisma.document.update({
-      where: { id: documentId },
-      data: { pageCount: parsed.pageCount },
-    });
-
-    // 4. Chunkear
-    const chunks = chunkPages(parsed.pages, {
-      chunkSize: config.chunkSize,
-      chunkOverlap: config.chunkOverlap,
-      strategy: config.strategy,
-    });
-
-    // Si no se extrajo texto útil del PDF (escaneado/imagen), marcar como error
-    if (chunks.length === 0) {
-      await prisma.document.update({
-        where: { id: documentId },
-        data: {
-          status: "ERROR",
-          error: "No se pudo extraer texto del PDF. Es posible que sea un documento escaneado o basado en imágenes.",
-        },
-      });
-      return;
-    }
-
-    // 5. Guardar todos los chunks primero (rápido, solo DB)
-    const dbChunks = [];
-    for (const chunk of chunks) {
-      const dbChunk = await prisma.chunk.create({
-        data: {
-          documentId,
-          content: chunk.content,
-          pageNumber: chunk.pageNumber,
-          chunkIndex: chunk.chunkIndex,
-          chunkSize: config.chunkSize,
-          overlap: config.chunkOverlap,
-          strategy: config.strategy,
-          metadata: { sourceFile: filename },
-        },
-      });
-      dbChunks.push(dbChunk);
-    }
-
-    // 6. Generar embeddings en lotes (3 concurrentes para evitar throttling Bedrock)
-    const BATCH_SIZE = 3;
-    for (let i = 0; i < dbChunks.length; i += BATCH_SIZE) {
-      const batch = dbChunks.slice(i, i + BATCH_SIZE);
-      await Promise.all(
-        batch.map(async (dbChunk) => {
-          const chunk = chunks.find((c) => c.chunkIndex === dbChunk.chunkIndex);
-          if (!chunk) return;
-          const embedding = await generateEmbedding(chunk.content);
-          await saveChunkEmbedding(dbChunk.id, embedding);
-        })
-      );
-    }
-
-    // 7. Marcar como listo
-    await prisma.document.update({
-      where: { id: documentId },
-      data: { status: "READY" },
-    });
-  } catch (error) {
-    console.error(`Error processing document ${documentId}:`, error);
-    await prisma.document.update({
-      where: { id: documentId },
-      data: {
-        status: "ERROR",
-        error: error instanceof Error ? error.message : "Error desconocido",
-      },
-    });
   }
 }

@@ -12,13 +12,14 @@ import {
   FileText,
 } from "lucide-react";
 
-type FileStatus = "pending" | "uploading" | "processing" | "success" | "error";
+type FileStatus = "pending" | "uploading" | "processing" | "embedding" | "success" | "error";
 
 interface FileUploadState {
   file: File;
   status: FileStatus;
   message: string;
   chunkCount?: number;
+  embeddingProgress?: { processed: number; total: number };
 }
 
 // Valores fijos de chunking — optimizados para contexto rico
@@ -86,10 +87,10 @@ export default function UploadPage() {
 
       if (!uploadRes.ok) throw new Error("Error al subir a S3");
 
-      // 3. Procesar documento
+      // 3. Parsear PDF y crear chunks (rápido, sin embeddings)
       updateFileState(index, {
         status: "processing",
-        message: "Procesando y generando embeddings...",
+        message: "Parseando PDF y creando chunks...",
       });
 
       const processRes = await fetch("/api/documents", {
@@ -112,12 +113,61 @@ export default function UploadPage() {
       }
 
       const data = await processRes.json();
+      const documentId = data.document.id;
       const chunkCount = data.document._count?.chunks ?? 0;
+
+      // 4. Generar embeddings por lotes (loop hasta completar)
+      updateFileState(index, {
+        status: "embedding",
+        message: `Generando embeddings: 0/${chunkCount}`,
+        chunkCount,
+        embeddingProgress: { processed: 0, total: chunkCount },
+      });
+
+      let retries = 0;
+      const MAX_RETRIES = 3;
+
+      while (true) {
+        const embRes = await fetch(`/api/documents/${documentId}/process`, {
+          method: "POST",
+        });
+
+        if (embRes.status === 429) {
+          // Throttling — esperar y reintentar
+          retries++;
+          if (retries > MAX_RETRIES) throw new Error("Bedrock throttling persistente");
+          const wait = Math.pow(2, retries) * 2000;
+          updateFileState(index, {
+            message: `Throttling, reintentando en ${wait / 1000}s...`,
+          });
+          await new Promise((r) => setTimeout(r, wait));
+          continue;
+        }
+
+        if (!embRes.ok) {
+          const error = await embRes.json();
+          throw new Error(error.error || "Error al generar embeddings");
+        }
+
+        retries = 0; // Reset en éxito
+        const progress = await embRes.json();
+
+        updateFileState(index, {
+          message: `Generando embeddings: ${progress.processedChunks}/${progress.totalChunks}`,
+          embeddingProgress: {
+            processed: progress.processedChunks,
+            total: progress.totalChunks,
+          },
+        });
+
+        if (progress.status === "READY") break;
+      }
 
       updateFileState(index, {
         status: "success",
-        message: `${chunkCount} chunks creados`,
+        message: `${chunkCount} chunks con embeddings`,
         chunkCount,
+        embeddingProgress: { processed: chunkCount, total: chunkCount },
       });
     } catch (error) {
       updateFileState(index, {
@@ -219,7 +269,8 @@ export default function UploadPage() {
                 <FileText className="h-5 w-5 text-neutral-400 flex-shrink-0" />
               )}
               {(state.status === "uploading" ||
-                state.status === "processing") && (
+                state.status === "processing" ||
+                state.status === "embedding") && (
                 <Loader2 className="h-5 w-5 text-blue-500 animate-spin flex-shrink-0" />
               )}
               {state.status === "success" && (
@@ -243,6 +294,20 @@ export default function UploadPage() {
                 >
                   {state.message}
                 </p>
+                {state.status === "embedding" && state.embeddingProgress && (
+                  <div className="mt-1.5 w-full bg-neutral-200 rounded-full h-1.5">
+                    <div
+                      className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.round(
+                          (state.embeddingProgress.processed /
+                            state.embeddingProgress.total) *
+                            100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ))}
