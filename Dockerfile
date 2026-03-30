@@ -32,6 +32,9 @@ COPY --from=builder /app/public ./public
 COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
 
+# pdf-parse needs its worker file (not traced automatically in standalone mode)
+COPY --from=deps /app/node_modules/pdf-parse ./node_modules/pdf-parse
+
 EXPOSE 3000
 
 CMD ["node", "server.js"]
