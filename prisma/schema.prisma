@@ -35,8 +35,49 @@ model Document {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
   chunks    Chunk[]
+  questions Question[]
 
   @@map("documents")
+}
+
+model Question {
+  id                     String   @id @default(cuid())
+  documentId             String
+  document               Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  questionNumber         Int
+  pregunta               String   @db.Text
+
+  // Período histórico principal
+  periodoCode            String
+  periodoNombre          String
+  periodoRango           String
+
+  // Categoría principal
+  categoriaCode          String
+  categoriaNombre        String
+
+  // Subcategoría
+  subcategoriaCode       String
+  subcategoriaNombre     String
+
+  // Arrays de clasificación relacionada
+  periodosRelacionados   String[]
+  categoriasRelacionadas String[]
+
+  justificacion          String   @db.Text
+
+  // Agrupación por batch de generación
+  batchId                String
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([documentId])
+  @@index([periodoCode])
+  @@index([categoriaCode])
+  @@index([subcategoriaCode])
+  @@index([batchId])
+  @@map("questions")
 }
 
 model Chunk {

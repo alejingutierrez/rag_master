@@ -1,0 +1,77 @@
+"use client";
+
+import { getPeriodColor, getCategoryColor } from "./period-colors";
+import { cn } from "@/lib/utils";
+
+interface StatsData {
+  byCategoria: { code: string; nombre: string; count: number }[];
+  byPeriodo: { code: string; nombre: string; count: number }[];
+  totalDocuments: number;
+  totalQuestions: number;
+}
+
+export function QuestionStats({ stats }: { stats: StatsData }) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Por categoría */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4">
+        <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+          Por Categoría
+        </h3>
+        <div className="space-y-2">
+          {stats.byCategoria.slice(0, 8).map((c) => {
+            const color = getCategoryColor(c.code);
+            const max = stats.byCategoria[0]?.count ?? 1;
+            const pct = Math.round((c.count / max) * 100);
+            return (
+              <div key={c.code} className="flex items-center gap-2">
+                <span className={cn("text-xs font-mono min-w-[3rem]", color.text)}>
+                  {c.code}
+                </span>
+                <div className="flex-1 bg-neutral-800 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={cn("h-full rounded-full transition-all", color.bg.replace("/20", ""))}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-xs text-neutral-500 min-w-[2rem] text-right">
+                  {c.count}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Por período */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4">
+        <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+          Por Período Histórico
+        </h3>
+        <div className="space-y-2">
+          {stats.byPeriodo.slice(0, 8).map((p) => {
+            const color = getPeriodColor(p.code);
+            const max = stats.byPeriodo[0]?.count ?? 1;
+            const pct = Math.round((p.count / max) * 100);
+            return (
+              <div key={p.code} className="flex items-center gap-2">
+                <span className={cn("text-xs font-mono min-w-[4rem]", color.text)}>
+                  {p.code}
+                </span>
+                <div className="flex-1 bg-neutral-800 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={cn("h-full rounded-full", color.bg.replace("/30", "").replace("/40", ""))}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-xs text-neutral-500 min-w-[2rem] text-right">
+                  {p.count}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}

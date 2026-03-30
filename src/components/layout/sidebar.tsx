@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Upload, FileText, Sparkles, MessageSquare } from "lucide-react";
+import { Upload, FileText, Sparkles, MessageSquare, HelpCircle } from "lucide-react";
 
 const navItems = [
   { href: "/upload", label: "Cargar PDFs", icon: Upload },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/enrich", label: "Enriquecer", icon: Sparkles },
-  { href: "/chat", label: "Preguntas", icon: MessageSquare },
+  { href: "/chat", label: "Consultar", icon: MessageSquare },
+  { href: "/questions", label: "Investigación", icon: HelpCircle },
 ];
 
 export function Sidebar() {
