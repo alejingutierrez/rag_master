@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // PATCH /api/documents/[id]/enrich - Actualizar metadata
 export async function PATCH(
   request: NextRequest,

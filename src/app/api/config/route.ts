@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/config - Obtener configuración actual
 export async function GET() {
   let config = await prisma.configuration.findFirst({

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// Forzar renderizado dinámico (no intentar conectar a DB en build time)
+export const dynamic = "force-dynamic";
+
 // GET /api/chat/history - Historial de conversaciones
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

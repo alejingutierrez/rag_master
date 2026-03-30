@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { generateEmbedding } from "@/lib/bedrock";
 import { saveChunkEmbedding } from "@/lib/vector-search";
 
+export const dynamic = "force-dynamic";
+
 // Cada llamada procesa un lote pequeño de embeddings — cabe en timeout Lambda
 export const maxDuration = 120;
 

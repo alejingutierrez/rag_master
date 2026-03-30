@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { deleteFromS3 } from "@/lib/s3";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/documents/[id] - Detalle de documento con chunks
 export async function GET(
   request: NextRequest,

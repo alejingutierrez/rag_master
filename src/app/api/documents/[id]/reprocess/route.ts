@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getFromS3 } from "@/lib/s3";
 import { parsePDF } from "@/lib/pdf-parser";
 import { chunkPages } from "@/lib/chunking";
+
+export const dynamic = "force-dynamic";
 import { generateEmbedding } from "@/lib/bedrock";
 import { saveChunkEmbedding } from "@/lib/vector-search";
 

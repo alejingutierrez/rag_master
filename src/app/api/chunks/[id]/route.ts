@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { generateEmbedding } from "@/lib/bedrock";
 import { saveChunkEmbedding } from "@/lib/vector-search";
 
+export const dynamic = "force-dynamic";
+
 // PATCH /api/chunks/[id] - Editar contenido de un chunk
 export async function PATCH(
   request: NextRequest,
