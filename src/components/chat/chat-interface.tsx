@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, User, Bot } from "lucide-react";
+import { Send, Loader2, User, Bot, MessageSquare } from "lucide-react";
 import { MarkdownRenderer } from "./markdown-renderer";
 
 interface Message {
@@ -40,14 +40,16 @@ export function ChatInterface({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-16rem)]">
+    <div className="flex flex-col h-[calc(100vh-12rem)]">
       {/* Mensajes */}
       <div className="flex-1 overflow-auto space-y-4 pb-4">
         {messages.length === 0 && !isLoading && (
-          <div className="text-center py-16 text-neutral-400">
-            <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg">Haz una pregunta sobre tus documentos</p>
-            <p className="text-sm mt-1">
+          <div className="text-center py-16">
+            <div className="rounded-full bg-muted p-4 w-fit mx-auto mb-4">
+              <MessageSquare className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="text-lg font-medium text-foreground">Haz una pregunta sobre tus documentos</p>
+            <p className="text-sm text-muted-foreground mt-1">
               Las respuestas se basan en los fragmentos mas relevantes de tus PDFs.
             </p>
           </div>
@@ -59,15 +61,15 @@ export function ChatInterface({
             className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}
           >
             {msg.role === "assistant" && (
-              <div className="h-8 w-8 rounded-full bg-neutral-900 flex items-center justify-center flex-shrink-0">
-                <Bot className="h-4 w-4 text-white" />
+              <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                <Bot className="h-4 w-4 text-accent" />
               </div>
             )}
             <div
               className={`max-w-[80%] rounded-xl px-4 py-3 ${
                 msg.role === "user"
-                  ? "bg-neutral-900 text-white"
-                  : "bg-white border shadow-sm"
+                  ? "bg-chat-user text-chat-user-foreground"
+                  : "bg-chat-assistant border border-border text-chat-assistant-foreground"
               }`}
             >
               {msg.role === "assistant" ? (
@@ -77,8 +79,8 @@ export function ChatInterface({
               )}
             </div>
             {msg.role === "user" && (
-              <div className="h-8 w-8 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
-                <User className="h-4 w-4 text-neutral-600" />
+              <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <User className="h-4 w-4 text-primary" />
               </div>
             )}
           </div>
@@ -87,23 +89,23 @@ export function ChatInterface({
         {/* Streaming response */}
         {isLoading && streamingText && (
           <div className="flex gap-3">
-            <div className="h-8 w-8 rounded-full bg-neutral-900 flex items-center justify-center flex-shrink-0">
-              <Bot className="h-4 w-4 text-white" />
+            <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+              <Bot className="h-4 w-4 text-accent" />
             </div>
-            <div className="max-w-[80%] rounded-xl px-4 py-3 bg-white border shadow-sm">
+            <div className="max-w-[80%] rounded-xl px-4 py-3 bg-chat-assistant border border-border">
               <MarkdownRenderer content={streamingText} />
-              <span className="inline-block w-2 h-4 bg-neutral-400 animate-pulse ml-0.5" />
+              <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-0.5" />
             </div>
           </div>
         )}
 
         {isLoading && !streamingText && (
           <div className="flex gap-3">
-            <div className="h-8 w-8 rounded-full bg-neutral-900 flex items-center justify-center flex-shrink-0">
-              <Bot className="h-4 w-4 text-white" />
+            <div className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+              <Bot className="h-4 w-4 text-accent" />
             </div>
-            <div className="rounded-xl px-4 py-3 bg-white border shadow-sm">
-              <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
+            <div className="rounded-xl px-4 py-3 bg-chat-assistant border border-border">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           </div>
         )}
@@ -112,7 +114,7 @@ export function ChatInterface({
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="flex gap-2 pt-4 border-t">
+      <form onSubmit={handleSubmit} className="flex gap-2 pt-4 border-t border-border">
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}

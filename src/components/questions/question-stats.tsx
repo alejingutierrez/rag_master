@@ -13,10 +13,10 @@ interface StatsData {
 export function QuestionStats({ stats }: { stats: StatsData }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Por categoría */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4">
-        <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
-          Por Categoría
+      {/* Por categoria */}
+      <div className="bg-surface border border-border rounded-lg p-4">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Por Categoria
         </h3>
         <div className="space-y-2">
           {stats.byCategoria.slice(0, 8).map((c) => {
@@ -28,13 +28,13 @@ export function QuestionStats({ stats }: { stats: StatsData }) {
                 <span className={cn("text-xs font-mono min-w-[3rem]", color.text)}>
                   {c.code}
                 </span>
-                <div className="flex-1 bg-neutral-800 rounded-full h-1.5 overflow-hidden">
+                <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
                   <div
                     className={cn("h-full rounded-full transition-all", color.bg.replace("/20", ""))}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <span className="text-xs text-neutral-500 min-w-[2rem] text-right">
+                <span className="text-xs text-muted-foreground min-w-[2rem] text-right font-mono">
                   {c.count}
                 </span>
               </div>
@@ -43,10 +43,10 @@ export function QuestionStats({ stats }: { stats: StatsData }) {
         </div>
       </div>
 
-      {/* Por período */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4">
-        <h3 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">
-          Por Período Histórico
+      {/* Por periodo */}
+      <div className="bg-surface border border-border rounded-lg p-4">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Por Periodo Historico
         </h3>
         <div className="space-y-2">
           {stats.byPeriodo.slice(0, 8).map((p) => {
@@ -58,13 +58,13 @@ export function QuestionStats({ stats }: { stats: StatsData }) {
                 <span className={cn("text-xs font-mono min-w-[4rem]", color.text)}>
                   {p.code}
                 </span>
-                <div className="flex-1 bg-neutral-800 rounded-full h-1.5 overflow-hidden">
+                <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
                   <div
                     className={cn("h-full rounded-full", color.bg.replace("/30", "").replace("/40", ""))}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <span className="text-xs text-neutral-500 min-w-[2rem] text-right">
+                <span className="text-xs text-muted-foreground min-w-[2rem] text-right font-mono">
                   {p.count}
                 </span>
               </div>

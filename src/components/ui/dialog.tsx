@@ -41,7 +41,7 @@ export function Dialog({ open, onClose, children }: DialogProps) {
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="relative w-full max-w-3xl max-h-[85vh] mx-4 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-3xl max-h-[85vh] mx-4 bg-surface rounded-xl shadow-lg border border-border flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {children}
       </div>
     </div>
@@ -55,13 +55,13 @@ interface DialogHeaderProps {
 
 export function DialogHeader({ children, onClose }: DialogHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-b">
-      <h3 className="text-lg font-semibold text-neutral-900">{children}</h3>
+    <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      <h3 className="text-lg font-semibold text-foreground">{children}</h3>
       <button
         onClick={onClose}
-        className="p-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
+        className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors"
       >
-        <X className="h-5 w-5 text-neutral-500" />
+        <X className="h-5 w-5 text-muted-foreground" />
       </button>
     </div>
   );

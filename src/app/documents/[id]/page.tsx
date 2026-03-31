@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { PageContainer } from "@/components/layout/page-container";
 import { ChunkViewer } from "@/components/documents/chunk-viewer";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/domain/status-badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatBytes, formatDate } from "@/lib/utils";
 import { ArrowLeft, RefreshCw, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface DocumentDetail {
   id: string;
@@ -32,13 +35,6 @@ interface DocumentDetail {
   }>;
 }
 
-const statusLabels: Record<string, string> = {
-  PENDING: "Pendiente",
-  PROCESSING: "Procesando",
-  READY: "Listo",
-  ERROR: "Error",
-};
-
 export default function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -61,7 +57,6 @@ export default function DocumentDetailPage() {
     fetchDocument();
   }, [id]);
 
-  // Auto-refresh si está procesando
   useEffect(() => {
     if (document?.status !== "PROCESSING") return;
     const interval = setInterval(async () => {
@@ -78,102 +73,97 @@ export default function DocumentDetailPage() {
       await fetch(`/api/documents/${id}/reprocess`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chunkSize: 1024,
-          chunkOverlap: 128,
-          strategy: "FIXED",
-        }),
+        body: JSON.stringify({ chunkSize: 1024, chunkOverlap: 128, strategy: "FIXED" }),
       });
-      // Refresh
       const response = await fetch(`/api/documents/${id}`);
       const data = await response.json();
       setDocument(data.document);
+      toast.success("Reprocesamiento iniciado");
     } catch (error) {
       console.error("Error reprocessing:", error);
+      toast.error("Error al reprocesar");
     } finally {
       setReprocessing(false);
     }
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-neutral-400">Cargando...</div>;
+    return (
+      <PageContainer maxWidth="lg">
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-48 rounded-lg" />
+          <Skeleton className="h-64 rounded-lg" />
+        </div>
+      </PageContainer>
+    );
   }
 
   if (!document) {
-    return <div className="text-center py-12 text-neutral-400">Documento no encontrado</div>;
+    return (
+      <PageContainer maxWidth="lg">
+        <div className="text-center py-12 text-muted-foreground">Documento no encontrado</div>
+      </PageContainer>
+    );
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <Button variant="ghost" onClick={() => router.back()} className="gap-2">
-        <ArrowLeft className="h-4 w-4" />
-        Volver
-      </Button>
+    <PageContainer maxWidth="lg">
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={() => router.back()} className="gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Volver
+        </Button>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">{document.filename}</CardTitle>
-            <Badge
-              variant={
-                document.status === "READY"
-                  ? "success"
-                  : document.status === "ERROR"
-                    ? "destructive"
-                    : document.status === "PROCESSING"
-                      ? "warning"
-                      : "secondary"
-              }
-            >
-              {statusLabels[document.status]}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-xs text-neutral-500">Tamano</p>
-              <p className="font-medium">{formatBytes(document.fileSize)}</p>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl">{document.filename}</CardTitle>
+              <StatusBadge status={document.status} />
             </div>
-            <div>
-              <p className="text-xs text-neutral-500">Paginas</p>
-              <p className="font-medium">{document.pageCount}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Tamano</p>
+                <p className="font-medium text-foreground font-mono">{formatBytes(document.fileSize)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Paginas</p>
+                <p className="font-medium text-foreground font-mono">{document.pageCount}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Chunks</p>
+                <p className="font-medium text-foreground font-mono">{document.chunks.length}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Fecha</p>
+                <p className="font-medium text-foreground">{formatDate(document.createdAt)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-neutral-500">Chunks</p>
-              <p className="font-medium">{document.chunks.length}</p>
-            </div>
-            <div>
-              <p className="text-xs text-neutral-500">Fecha</p>
-              <p className="font-medium">{formatDate(document.createdAt)}</p>
-            </div>
-          </div>
 
-          {document.error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">{document.error}</p>
+            {document.error && (
+              <div className="mt-4 p-3 bg-destructive-muted border border-destructive/20 rounded-lg">
+                <p className="text-sm text-destructive">{document.error}</p>
+              </div>
+            )}
+
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReprocess}
+                disabled={reprocessing || document.status === "PROCESSING"}
+              >
+                {reprocessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Reprocesar
+              </Button>
             </div>
-          )}
+          </CardContent>
+        </Card>
 
-          <div className="mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReprocess}
-              disabled={reprocessing || document.status === "PROCESSING"}
-            >
-              {reprocessing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-              Reprocesar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <ChunkViewer chunks={document.chunks} />
-    </div>
+        <ChunkViewer chunks={document.chunks} />
+      </div>
+    </PageContainer>
   );
 }

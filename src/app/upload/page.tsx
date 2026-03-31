@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { PageContainer } from "@/components/layout/page-container";
 import { Dropzone } from "@/components/upload/dropzone";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import {
   Upload,
   Loader2,
@@ -22,7 +23,6 @@ interface FileUploadState {
   embeddingProgress?: { processed: number; total: number };
 }
 
-// Valores fijos de chunking — optimizados para contexto rico
 const CHUNK_CONFIG = {
   chunkSize: 3000,
   chunkOverlap: 750,
@@ -65,20 +65,15 @@ export default function UploadPage() {
     try {
       updateFileState(index, { status: "uploading", message: "Subiendo a S3..." });
 
-      // 1. Obtener presigned URL
       const presignRes = await fetch("/api/documents/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-        }),
+        body: JSON.stringify({ filename: file.name, contentType: file.type }),
       });
 
       if (!presignRes.ok) throw new Error("Error al obtener URL de subida");
       const { url, s3Key, s3Url } = await presignRes.json();
 
-      // 2. Subir a S3
       const uploadRes = await fetch(url, {
         method: "PUT",
         headers: { "Content-Type": file.type },
@@ -87,23 +82,14 @@ export default function UploadPage() {
 
       if (!uploadRes.ok) throw new Error("Error al subir a S3");
 
-      // 3. Parsear PDF y crear chunks (rápido, sin embeddings)
-      updateFileState(index, {
-        status: "processing",
-        message: "Parseando PDF y creando chunks...",
-      });
+      updateFileState(index, { status: "processing", message: "Parseando PDF y creando chunks..." });
 
       const processRes = await fetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          s3Key,
-          s3Url,
-          filename: file.name,
-          fileSize: file.size,
-          chunkSize: CHUNK_CONFIG.chunkSize,
-          chunkOverlap: CHUNK_CONFIG.chunkOverlap,
-          strategy: CHUNK_CONFIG.strategy,
+          s3Key, s3Url, filename: file.name, fileSize: file.size,
+          chunkSize: CHUNK_CONFIG.chunkSize, chunkOverlap: CHUNK_CONFIG.chunkOverlap, strategy: CHUNK_CONFIG.strategy,
         }),
       });
 
@@ -116,30 +102,22 @@ export default function UploadPage() {
       const documentId = data.document.id;
       const chunkCount = data.document._count?.chunks ?? 0;
 
-      // 4. Generar embeddings por lotes (loop hasta completar)
       updateFileState(index, {
-        status: "embedding",
-        message: `Generando embeddings: 0/${chunkCount}`,
-        chunkCount,
-        embeddingProgress: { processed: 0, total: chunkCount },
+        status: "embedding", message: `Generando embeddings: 0/${chunkCount}`,
+        chunkCount, embeddingProgress: { processed: 0, total: chunkCount },
       });
 
       let retries = 0;
       const MAX_RETRIES = 3;
 
       while (true) {
-        const embRes = await fetch(`/api/documents/${documentId}/process`, {
-          method: "POST",
-        });
+        const embRes = await fetch(`/api/documents/${documentId}/process`, { method: "POST" });
 
         if (embRes.status === 429) {
-          // Throttling — esperar y reintentar
           retries++;
           if (retries > MAX_RETRIES) throw new Error("Bedrock throttling persistente");
           const wait = Math.pow(2, retries) * 2000;
-          updateFileState(index, {
-            message: `Throttling, reintentando en ${wait / 1000}s...`,
-          });
+          updateFileState(index, { message: `Throttling, reintentando en ${wait / 1000}s...` });
           await new Promise((r) => setTimeout(r, wait));
           continue;
         }
@@ -149,30 +127,24 @@ export default function UploadPage() {
           throw new Error(error.error || "Error al generar embeddings");
         }
 
-        retries = 0; // Reset en éxito
+        retries = 0;
         const progress = await embRes.json();
 
         updateFileState(index, {
           message: `Generando embeddings: ${progress.processedChunks}/${progress.totalChunks}`,
-          embeddingProgress: {
-            processed: progress.processedChunks,
-            total: progress.totalChunks,
-          },
+          embeddingProgress: { processed: progress.processedChunks, total: progress.totalChunks },
         });
 
         if (progress.status === "READY") break;
       }
 
       updateFileState(index, {
-        status: "success",
-        message: `${chunkCount} chunks con embeddings`,
-        chunkCount,
-        embeddingProgress: { processed: chunkCount, total: chunkCount },
+        status: "success", message: `${chunkCount} chunks con embeddings`,
+        chunkCount, embeddingProgress: { processed: chunkCount, total: chunkCount },
       });
     } catch (error) {
       updateFileState(index, {
-        status: "error",
-        message: error instanceof Error ? error.message : "Error desconocido",
+        status: "error", message: error instanceof Error ? error.message : "Error desconocido",
       });
     }
   };
@@ -181,15 +153,11 @@ export default function UploadPage() {
     if (files.length === 0) return;
     setIsProcessing(true);
 
-    // Inicializar estados
     const initialStates: FileUploadState[] = files.map((file) => ({
-      file,
-      status: "pending" as FileStatus,
-      message: "En cola...",
+      file, status: "pending" as FileStatus, message: "En cola...",
     }));
     setUploadStates(initialStates);
 
-    // Procesar de a 4 en paralelo
     const CONCURRENCY = 4;
     const queue = [...files.map((f, i) => ({ file: f, index: i }))];
 
@@ -207,148 +175,100 @@ export default function UploadPage() {
 
   const successCount = uploadStates.filter((s) => s.status === "success").length;
   const errorCount = uploadStates.filter((s) => s.status === "error").length;
-  const totalChunks = uploadStates.reduce(
-    (sum, s) => sum + (s.chunkCount || 0),
-    0
-  );
+  const totalChunks = uploadStates.reduce((sum, s) => sum + (s.chunkCount || 0), 0);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-neutral-900">Cargar PDFs</h2>
-        <p className="text-neutral-500 mt-1">
-          Sube documentos PDF para analizarlos y vectorizarlos. Se dividen en fragmentos de 6000 caracteres con solapamiento de 1000 para maximo contexto.
-        </p>
-      </div>
+    <PageContainer maxWidth="md">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Cargar PDFs</h2>
+          <p className="text-muted-foreground mt-1">
+            Sube documentos PDF para analizarlos y vectorizarlos.
+          </p>
+        </div>
 
-      {!isProcessing && uploadStates.length === 0 && (
-        <Dropzone
-          onFilesSelect={handleFilesSelect}
-          selectedFiles={files}
-          onRemoveFile={handleRemoveFile}
-          onClear={handleClear}
-        />
-      )}
+        {!isProcessing && uploadStates.length === 0 && (
+          <Dropzone
+            onFilesSelect={handleFilesSelect}
+            selectedFiles={files}
+            onRemoveFile={handleRemoveFile}
+            onClear={handleClear}
+          />
+        )}
 
-      {/* Progreso de procesamiento */}
-      {uploadStates.length > 0 && (
-        <div className="space-y-2">
-          {/* Resumen */}
-          {!isProcessing && successCount > 0 && (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="py-4">
+        {uploadStates.length > 0 && (
+          <div className="space-y-2">
+            {!isProcessing && successCount > 0 && (
+              <div className="rounded-lg border border-success/30 bg-success-muted p-4">
                 <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <p className="text-sm text-green-800">
+                  <CheckCircle className="h-5 w-5 text-success" />
+                  <p className="text-sm text-success">
                     {successCount} de {uploadStates.length} archivos procesados correctamente.{" "}
                     {totalChunks} chunks totales creados.
                     {errorCount > 0 && (
-                      <span className="text-red-600 ml-2">
-                        {errorCount} con error.
-                      </span>
+                      <span className="text-destructive ml-2">{errorCount} con error.</span>
                     )}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Progreso individual */}
-          {uploadStates.map((state, i) => (
-            <div
-              key={`${state.file.name}-${i}`}
-              className={`border rounded-lg px-4 py-3 flex items-center gap-3 ${
-                state.status === "success"
-                  ? "bg-green-50 border-green-200"
-                  : state.status === "error"
-                    ? "bg-red-50 border-red-200"
-                    : "bg-white"
-              }`}
-            >
-              {state.status === "pending" && (
-                <FileText className="h-5 w-5 text-neutral-400 flex-shrink-0" />
-              )}
-              {(state.status === "uploading" ||
-                state.status === "processing" ||
-                state.status === "embedding") && (
-                <Loader2 className="h-5 w-5 text-blue-500 animate-spin flex-shrink-0" />
-              )}
-              {state.status === "success" && (
-                <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-              )}
-              {state.status === "error" && (
-                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-neutral-900 truncate">
-                  {state.file.name}
-                </p>
-                <p
-                  className={`text-xs ${
-                    state.status === "success"
-                      ? "text-green-600"
-                      : state.status === "error"
-                        ? "text-red-600"
-                        : "text-neutral-500"
-                  }`}
-                >
-                  {state.message}
-                </p>
-                {state.status === "embedding" && state.embeddingProgress && (
-                  <div className="mt-1.5 w-full bg-neutral-200 rounded-full h-1.5">
-                    <div
-                      className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
-                      style={{
-                        width: `${Math.round(
-                          (state.embeddingProgress.processed /
-                            state.embeddingProgress.total) *
-                            100
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                )}
               </div>
-            </div>
-          ))}
+            )}
 
-          {/* Botón para nueva carga */}
-          {!isProcessing && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                setFiles([]);
-                setUploadStates([]);
-              }}
-              className="w-full mt-2"
-            >
-              Cargar mas documentos
-            </Button>
-          )}
-        </div>
-      )}
+            {uploadStates.map((state, i) => (
+              <div
+                key={`${state.file.name}-${i}`}
+                className={`border rounded-lg px-4 py-3 flex items-center gap-3 ${
+                  state.status === "success"
+                    ? "bg-success-muted/50 border-success/20"
+                    : state.status === "error"
+                      ? "bg-destructive-muted/50 border-destructive/20"
+                      : "bg-surface border-border"
+                }`}
+              >
+                {state.status === "pending" && <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />}
+                {(state.status === "uploading" || state.status === "processing" || state.status === "embedding") && (
+                  <Loader2 className="h-5 w-5 text-info animate-spin flex-shrink-0" />
+                )}
+                {state.status === "success" && <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />}
+                {state.status === "error" && <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground truncate">{state.file.name}</p>
+                  <p className={`text-xs ${
+                    state.status === "success" ? "text-success"
+                    : state.status === "error" ? "text-destructive"
+                    : "text-muted-foreground"
+                  }`}>
+                    {state.message}
+                  </p>
+                  {state.status === "embedding" && state.embeddingProgress && (
+                    <Progress
+                      value={state.embeddingProgress.processed}
+                      max={state.embeddingProgress.total}
+                      variant="default"
+                      className="mt-1.5"
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
 
-      {/* Botón principal */}
-      {uploadStates.length === 0 && (
-        <Button
-          onClick={handleUploadAll}
-          disabled={files.length === 0 || isProcessing}
-          className="w-full"
-          size="lg"
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Procesando...
-            </>
-          ) : (
-            <>
-              <Upload className="h-4 w-4" />
-              Subir y Procesar {files.length > 0 ? `${files.length} PDF${files.length > 1 ? "s" : ""}` : "PDFs"}
-            </>
-          )}
-        </Button>
-      )}
-    </div>
+            {!isProcessing && (
+              <Button variant="outline" onClick={handleClear} className="w-full mt-2">
+                Cargar mas documentos
+              </Button>
+            )}
+          </div>
+        )}
+
+        {uploadStates.length === 0 && (
+          <Button onClick={handleUploadAll} disabled={files.length === 0 || isProcessing} className="w-full" size="lg">
+            {isProcessing ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Procesando...</>
+            ) : (
+              <><Upload className="h-4 w-4" /> Subir y Procesar {files.length > 0 ? `${files.length} PDF${files.length > 1 ? "s" : ""}` : "PDFs"}</>
+            )}
+          </Button>
+        )}
+      </div>
+    </PageContainer>
   );
 }

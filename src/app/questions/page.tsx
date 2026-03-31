@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { PageContainer } from "@/components/layout/page-container";
 import { QuestionCard } from "@/components/questions/question-card";
 import { QuestionFilters, FilterState } from "@/components/questions/question-filters";
 import { QuestionStats } from "@/components/questions/question-stats";
-import { Loader2, HelpCircle, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { EmptyState } from "@/components/domain/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BookOpen, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -53,7 +56,6 @@ function QuestionsContent() {
   const [total, setTotal] = useState(0);
   const LIMIT = 20;
 
-  // Cargar documentos para el filtro
   useEffect(() => {
     fetch("/api/documents?limit=200")
       .then((r) => r.json())
@@ -61,7 +63,6 @@ function QuestionsContent() {
       .catch(console.error);
   }, []);
 
-  // Cargar stats (una sola vez al montar)
   useEffect(() => {
     fetch("/api/questions?includeStats=true&limit=1")
       .then((r) => r.json())
@@ -92,13 +93,8 @@ function QuestionsContent() {
     }
   }, [filters, page]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [filters]);
-
-  useEffect(() => {
-    fetchQuestions();
-  }, [fetchQuestions]);
+  useEffect(() => { setPage(1); }, [filters]);
+  useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
 
   const handleFiltersChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -106,23 +102,23 @@ function QuestionsContent() {
   };
 
   return (
-    <div className="p-8">
+    <PageContainer maxWidth="xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <HelpCircle className="h-6 w-6 text-neutral-400" />
-            Preguntas de Investigación
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-muted-foreground" />
+            Preguntas de Investigacion
           </h1>
-          <p className="text-sm text-neutral-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {total > 0
               ? `${total} preguntas generadas con Claude Opus`
-              : "No hay preguntas generadas aún"}
+              : "No hay preguntas generadas aun"}
           </p>
         </div>
         <Link
           href="/questions/generate"
-          className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-neutral-200 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary-hover transition-colors"
         >
           <Sparkles className="h-4 w-4" />
           Generar preguntas
@@ -136,9 +132,8 @@ function QuestionsContent() {
         </div>
       )}
 
-      {/* Layout de dos columnas: filtros + lista */}
+      {/* Layout de dos columnas */}
       <div className="flex gap-6">
-        {/* Filtros (sidebar izquierdo) */}
         <div className="w-64 flex-shrink-0">
           <QuestionFilters
             filters={filters}
@@ -149,61 +144,51 @@ function QuestionsContent() {
           />
         </div>
 
-        {/* Lista de preguntas */}
         <div className="flex-1 min-w-0">
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
+            <div className="grid gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 rounded-lg" />
+              ))}
             </div>
           ) : questions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <HelpCircle className="h-12 w-12 text-neutral-700 mb-4" />
-              <p className="text-neutral-400 font-medium">
-                {total === 0
-                  ? "Aún no se han generado preguntas"
-                  : "No hay preguntas con estos filtros"}
-              </p>
-              <p className="text-neutral-600 text-sm mt-1">
-                {total === 0 ? (
-                  <>
-                    Usa el botón{" "}
-                    <Link href="/questions/generate" className="text-blue-400 hover:underline">
-                      Generar preguntas
-                    </Link>{" "}
-                    para comenzar
-                  </>
-                ) : (
-                  "Intenta con otros filtros"
-                )}
-              </p>
-            </div>
+            <EmptyState
+              icon={BookOpen}
+              title={total === 0 ? "Sin preguntas generadas" : "Sin resultados"}
+              description={total === 0
+                ? "Genera preguntas de investigacion a partir de tus documentos"
+                : "Intenta con otros filtros"}
+              action={total === 0 ? {
+                label: "Generar preguntas",
+                onClick: () => window.location.href = "/questions/generate",
+              } : undefined}
+            />
           ) : (
             <>
-              {/* Grid de preguntas */}
               <div className="grid gap-3">
                 {questions.map((q) => (
                   <QuestionCard key={q.id} question={q} showDocument={!filters.documentId} />
                 ))}
               </div>
 
-              {/* Paginación */}
+              {/* Paginacion */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-neutral-800">
-                  <p className="text-xs text-neutral-500">
-                    Página {page} de {totalPages} · {total} preguntas
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    Pagina {page} de {totalPages} &middot; {total} preguntas
                   </p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="p-1.5 rounded-lg bg-neutral-800 text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="p-1.5 rounded-lg bg-neutral-800 text-neutral-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
@@ -214,16 +199,23 @@ function QuestionsContent() {
           )}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
 
 export default function QuestionsPage() {
   return (
     <Suspense fallback={
-      <div className="p-8 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
-      </div>
+      <PageContainer maxWidth="xl">
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-64" />
+          <div className="grid gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </PageContainer>
     }>
       <QuestionsContent />
     </Suspense>

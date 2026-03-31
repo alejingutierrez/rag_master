@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { Dialog, DialogHeader, DialogBody } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { SimilarityIndicator } from "@/components/domain/similarity-indicator";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ChunkCitation {
   id: string;
@@ -31,52 +34,39 @@ export function ChunksModal({ open, onClose, chunks }: ChunksModalProps) {
         Fragmentos utilizados ({chunks.length})
       </DialogHeader>
       <DialogBody>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {chunks.map((chunk, i) => {
             const isExpanded = expandedChunk === chunk.id;
 
             return (
               <div
                 key={chunk.id}
-                className="border rounded-lg bg-neutral-50 text-sm overflow-hidden transition-all"
+                className="border border-border rounded-lg bg-surface text-sm overflow-hidden transition-all"
               >
-                {/* Header del chunk — clickeable para expandir */}
                 <button
                   onClick={() =>
                     setExpandedChunk(isExpanded ? null : chunk.id)
                   }
-                  className="w-full flex items-center gap-2 px-4 py-3 hover:bg-neutral-100 transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-4 py-3 hover:bg-surface-hover transition-colors text-left"
                 >
                   <Badge variant="secondary" className="text-xs flex-shrink-0">
                     #{i + 1}
                   </Badge>
-                  <Badge variant="outline" className="text-xs flex-shrink-0">
-                    {(chunk.similarity * 100).toFixed(1)}%
-                  </Badge>
-                  <span className="text-xs text-neutral-500 truncate">
+                  <SimilarityIndicator score={chunk.similarity} className="flex-shrink-0" />
+                  <span className="text-xs text-muted-foreground truncate">
                     {chunk.documentFilename} — Pag. {chunk.pageNumber}
                   </span>
-                  <svg
-                    className={`h-4 w-4 ml-auto text-neutral-400 transition-transform flex-shrink-0 ${
-                      isExpanded ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 ml-auto text-muted-foreground transition-transform flex-shrink-0",
+                      isExpanded && "rotate-180"
+                    )}
+                  />
                 </button>
 
-                {/* Contenido expandible */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t bg-white">
-                    <p className="text-xs text-neutral-600 whitespace-pre-wrap pt-3 leading-relaxed">
+                  <div className="px-4 pb-4 border-t border-border bg-muted/30">
+                    <p className="text-xs text-foreground/80 whitespace-pre-wrap pt-3 leading-relaxed">
                       {chunk.content}
                     </p>
                   </div>

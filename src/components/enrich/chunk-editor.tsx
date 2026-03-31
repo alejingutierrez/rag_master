@@ -49,12 +49,12 @@ export function ChunkEditor({ chunks, onSaveChunk }: ChunkEditorProps) {
       <h3 className="text-lg font-semibold">
         Editar Chunks ({chunks.length})
       </h3>
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-muted-foreground">
         Al editar un chunk se regenera automaticamente su embedding.
       </p>
 
       {chunks.map((chunk) => (
-        <div key={chunk.id} className="border rounded-lg p-4 bg-white">
+        <div key={chunk.id} className="border border-border rounded-lg p-4 bg-surface">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="secondary">#{chunk.chunkIndex}</Badge>
             <Badge variant="outline">Pag. {chunk.pageNumber}</Badge>
@@ -104,7 +104,7 @@ export function ChunkEditor({ chunks, onSaveChunk }: ChunkEditorProps) {
               className="font-mono text-sm"
             />
           ) : (
-            <p className="text-sm text-neutral-700 whitespace-pre-wrap line-clamp-4">
+            <p className="text-sm text-foreground/80 whitespace-pre-wrap line-clamp-4">
               {chunk.content}
             </p>
           )}
