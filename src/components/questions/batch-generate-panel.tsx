@@ -23,8 +23,8 @@ interface BatchEvent {
   message?: string;
 }
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 3000;
+const MAX_RETRIES = 5;
+const RETRY_DELAY_MS = 5000;
 
 export function BatchGeneratePanel({
   pendingCount,
@@ -39,15 +39,13 @@ export function BatchGeneratePanel({
   const [retryInfo, setRetryInfo] = useState<{ count: number; active: boolean }>({ count: 0, active: false });
 
   const eventsRef = useRef<BatchEvent[]>([]);
-  const totalProcessedRef = useRef(0);
+  // Track the original total to show accurate progress across retries
+  const originalTotalRef = useRef(0);
 
-  async function runStream(isRetry: boolean): Promise<"complete" | "retry" | "error"> {
-    const controller = new AbortController();
-
+  async function runStream(): Promise<"complete" | "retry" | "error"> {
     try {
       const response = await fetch("/api/questions/generate-batch", {
         method: "POST",
-        signal: controller.signal,
       });
       if (!response.body) throw new Error("No stream");
 
@@ -71,57 +69,44 @@ export function BatchGeneratePanel({
             const event: BatchEvent = JSON.parse(line.slice(6));
 
             if (event.type === "start") {
-              if (!isRetry) {
-                setProgress({ current: 0, total: event.totalDocuments ?? 0 });
-              } else {
-                setProgress((prev) => ({
-                  current: prev.current,
-                  total: prev.current + (event.totalDocuments ?? 0),
-                }));
+              // On first start, set original total
+              if (originalTotalRef.current === 0) {
+                originalTotalRef.current = event.totalDocuments ?? 0;
+                setProgress({ current: 0, total: originalTotalRef.current });
               }
+              // On retry, total stays as original — current reflects real completions
             }
 
             if (event.type === "progress") {
               setCurrentDoc(event.filename ?? null);
-              if (isRetry) {
-                setProgress((prev) => ({
-                  ...prev,
-                  current: totalProcessedRef.current + (event.index ?? 0),
-                }));
-              } else {
-                setProgress((prev) => ({ ...prev, current: event.index ?? prev.current }));
-              }
             }
 
+            // Only update progress on actual completions (not on progress events)
             if (event.type === "document_complete") {
               eventsRef.current = [...eventsRef.current, event];
-              setEvents(eventsRef.current);
-              totalProcessedRef.current++;
-              if (isRetry) {
-                setProgress((prev) => ({ ...prev, current: totalProcessedRef.current }));
-              } else {
-                setProgress((prev) => ({ ...prev, current: event.index ?? prev.current }));
-                totalProcessedRef.current = event.index ?? totalProcessedRef.current;
-              }
+              setEvents([...eventsRef.current]);
+              const completed = eventsRef.current.filter((e) => e.type === "document_complete").length;
+              setProgress({ current: completed, total: originalTotalRef.current });
             }
 
             if (event.type === "document_error") {
               eventsRef.current = [...eventsRef.current, event];
-              setEvents(eventsRef.current);
-              totalProcessedRef.current++;
+              setEvents([...eventsRef.current]);
+              const processed = eventsRef.current.filter(
+                (e) => e.type === "document_complete" || e.type === "document_error"
+              ).length;
+              setProgress({ current: processed, total: originalTotalRef.current });
             }
 
             if (event.type === "complete") {
               receivedComplete = true;
-              const prevCompleted = eventsRef.current.filter((e) => e.type === "document_complete").length;
-              const prevFailed = eventsRef.current.filter((e) => e.type === "document_error").length;
-              const totalGenerated = isRetry ? prevCompleted : (event.generated ?? 0);
-              const totalFailed = isRetry ? prevFailed : (event.failed ?? 0);
+              const totalCompleted = eventsRef.current.filter((e) => e.type === "document_complete").length;
+              const totalFailed = eventsRef.current.filter((e) => e.type === "document_error").length;
 
               setResult({
-                generated: totalGenerated,
+                generated: totalCompleted,
                 failed: totalFailed,
-                total: totalGenerated + totalFailed,
+                total: totalCompleted + totalFailed,
               });
               onComplete();
               return "complete";
@@ -135,29 +120,50 @@ export function BatchGeneratePanel({
         }
       }
 
-      if (!receivedComplete && !controller.signal.aborted) {
+      // Stream ended without complete — likely timeout, should retry
+      if (!receivedComplete) {
         return "retry";
       }
 
       return "complete";
     } catch {
-      if (controller.signal.aborted) return "complete";
       return "retry";
     }
   }
 
-  async function runWithRetry(isRetry: boolean) {
+  async function runWithRetry() {
     let attempt = 0;
 
     while (attempt <= MAX_RETRIES) {
-      const result = await runStream(attempt > 0 || isRetry);
+      const streamResult = await runStream();
 
-      if (result === "complete" || result === "error") return;
+      if (streamResult === "complete" || streamResult === "error") return;
 
       attempt++;
+
+      // Check if any docs are still pending before retrying
+      try {
+        const checkRes = await fetch("/api/questions/generate-batch");
+        const checkData = await checkRes.json();
+        if (checkData.pendingCount === 0) {
+          // All done! The complete event was just lost
+          const totalCompleted = eventsRef.current.filter((e) => e.type === "document_complete").length;
+          const totalFailed = eventsRef.current.filter((e) => e.type === "document_error").length;
+          setResult({
+            generated: totalCompleted,
+            failed: totalFailed,
+            total: totalCompleted + totalFailed,
+          });
+          setProgress({ current: originalTotalRef.current, total: originalTotalRef.current });
+          onComplete();
+          return;
+        }
+      } catch { /* continue with retry */ }
+
       if (attempt > MAX_RETRIES) {
+        const completed = eventsRef.current.filter((e) => e.type === "document_complete").length;
         setError(
-          `Conexion perdida despues de ${MAX_RETRIES} reintentos. Los documentos ya procesados se guardaron. Puedes reiniciar para continuar con los pendientes.`
+          `Conexion perdida despues de ${MAX_RETRIES} reintentos. ${completed} documentos procesados exitosamente. Puedes reiniciar para continuar con los pendientes.`
         );
         return;
       }
@@ -178,9 +184,9 @@ export function BatchGeneratePanel({
     setResult(null);
     setError(null);
     setRetryInfo({ count: 0, active: false });
-    totalProcessedRef.current = 0;
+    originalTotalRef.current = 0;
 
-    await runWithRetry(false);
+    await runWithRetry();
     setGenerating(false);
   };
 
@@ -189,9 +195,12 @@ export function BatchGeneratePanel({
     setError(null);
     setRetryInfo({ count: 0, active: false });
 
-    await runWithRetry(true);
+    await runWithRetry();
     setGenerating(false);
   };
+
+  const completedCount = events.filter((e) => e.type === "document_complete").length;
+  const failedCount = events.filter((e) => e.type === "document_error").length;
 
   return (
     <div className="space-y-4">
@@ -210,7 +219,9 @@ export function BatchGeneratePanel({
         <div className="bg-surface border border-border rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              {retryInfo.active ? "Reconectando..." : `Procesando ${progress.current} de ${progress.total}`}
+              {retryInfo.active
+                ? "Reconectando..."
+                : `${completedCount} completado${completedCount !== 1 ? "s" : ""} de ${progress.total}${failedCount > 0 ? ` (${failedCount} con error)` : ""}`}
             </span>
             <span className="text-foreground font-mono">
               {Math.round((progress.current / progress.total) * 100)}%
@@ -297,11 +308,6 @@ export function BatchGeneratePanel({
             <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p>{error}</p>
-              {events.length > 0 && (
-                <p className="text-xs mt-1 opacity-70">
-                  {events.filter((e) => e.type === "document_complete").length} documento(s) procesados antes del error
-                </p>
-              )}
             </div>
           </div>
           {!generating && (
