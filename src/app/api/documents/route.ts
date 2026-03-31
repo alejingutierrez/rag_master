@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getFromS3 } from "@/lib/s3";
 import { parsePDF } from "@/lib/pdf-parser";
 import { chunkPages } from "@/lib/chunking";
+import { processAllEmbeddings } from "@/lib/embedding-processor";
 
 export const dynamic = "force-dynamic";
 
-// Fase 1: parsear PDF + guardar chunks (sin embeddings) — cabe en timeout Lambda
-export const maxDuration = 120;
+// Fase 1: parsear PDF + guardar chunks — after() inicia embeddings automáticamente
+export const maxDuration = 300;
 
 // GET /api/documents - Listar documentos
 export async function GET(request: NextRequest) {
@@ -120,10 +122,15 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Retornar inmediatamente — embeddings se generan via /api/documents/[id]/process
       const updated = await prisma.document.findUnique({
         where: { id: document.id },
         include: { _count: { select: { chunks: true } } },
+      });
+
+      // 🚀 Iniciar generación de embeddings automáticamente en background.
+      // after() ejecuta DESPUÉS de enviar la respuesta — no depende del cliente.
+      after(async () => {
+        await processAllEmbeddings(document.id);
       });
 
       return NextResponse.json({ document: updated }, { status: 201 });

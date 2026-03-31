@@ -102,40 +102,37 @@ export default function UploadPage() {
       const documentId = data.document.id;
       const chunkCount = data.document._count?.chunks ?? 0;
 
+      // Disparar procesamiento server-side (continúa aunque cierre el navegador)
+      await fetch(`/api/documents/${documentId}/process`, { method: "POST" });
+
       updateFileState(index, {
-        status: "embedding", message: `Generando embeddings: 0/${chunkCount}`,
+        status: "embedding", message: `Generando embeddings en servidor: 0/${chunkCount}`,
         chunkCount, embeddingProgress: { processed: 0, total: chunkCount },
       });
 
-      let retries = 0;
-      const MAX_RETRIES = 3;
-
+      // Polling ligero para mostrar progreso — si se cierra la pestaña,
+      // el servidor sigue procesando igual
       while (true) {
-        const embRes = await fetch(`/api/documents/${documentId}/process`, { method: "POST" });
+        await new Promise((r) => setTimeout(r, 3000));
 
-        if (embRes.status === 429) {
-          retries++;
-          if (retries > MAX_RETRIES) throw new Error("Bedrock throttling persistente");
-          const wait = Math.pow(2, retries) * 2000;
-          updateFileState(index, { message: `Throttling, reintentando en ${wait / 1000}s...` });
-          await new Promise((r) => setTimeout(r, wait));
+        try {
+          const progressRes = await fetch(`/api/documents/${documentId}/process`);
+          if (!progressRes.ok) continue;
+
+          const progress = await progressRes.json();
+
+          updateFileState(index, {
+            message: `Generando embeddings en servidor: ${progress.processedChunks}/${progress.totalChunks}`,
+            embeddingProgress: { processed: progress.processedChunks, total: progress.totalChunks },
+          });
+
+          if (progress.status === "READY") break;
+          if (progress.status === "ERROR") throw new Error("Error al generar embeddings");
+        } catch (e) {
+          // Si el polling falla, el servidor sigue procesando — simplemente reintentar
+          if (e instanceof Error && e.message === "Error al generar embeddings") throw e;
           continue;
         }
-
-        if (!embRes.ok) {
-          const error = await embRes.json();
-          throw new Error(error.error || "Error al generar embeddings");
-        }
-
-        retries = 0;
-        const progress = await embRes.json();
-
-        updateFileState(index, {
-          message: `Generando embeddings: ${progress.processedChunks}/${progress.totalChunks}`,
-          embeddingProgress: { processed: progress.processedChunks, total: progress.totalChunks },
-        });
-
-        if (progress.status === "READY") break;
       }
 
       updateFileState(index, {
