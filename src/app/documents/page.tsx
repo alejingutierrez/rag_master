@@ -18,24 +18,40 @@ interface Document {
   _count: { chunks: number };
 }
 
+interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [pagination, setPagination] = useState<Pagination>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0,
+  });
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/documents");
+      const response = await fetch(`/api/documents?page=${page}&limit=${limit}`);
       const data = await response.json();
       setDocuments(data.documents);
+      setPagination(data.pagination);
     } catch (error) {
       console.error("Error fetching documents:", error);
       toast.error("Error al cargar documentos");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, limit]);
 
   useEffect(() => {
     fetchDocuments();
@@ -45,11 +61,21 @@ export default function DocumentsPage() {
     try {
       await fetch(`/api/documents/${id}`, { method: "DELETE" });
       setDocuments((prev) => prev.filter((d) => d.id !== id));
+      setPagination((prev) => ({ ...prev, total: prev.total - 1, totalPages: Math.ceil((prev.total - 1) / prev.limit) }));
       toast.success("Documento eliminado");
     } catch (error) {
       console.error("Error deleting document:", error);
       toast.error("Error al eliminar documento");
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
   };
 
   useEffect(() => {
@@ -89,8 +115,11 @@ export default function DocumentsPage() {
         ) : (
           <DocumentTable
             documents={documents}
+            pagination={pagination}
             onDelete={(id) => setDeleteTarget(id)}
             onRefresh={fetchDocuments}
+            onPageChange={handlePageChange}
+            onLimitChange={handleLimitChange}
           />
         )}
       </div>
