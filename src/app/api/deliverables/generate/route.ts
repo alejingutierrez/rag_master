@@ -43,7 +43,9 @@ async function consumeClaudeStream(stream: ReadableStream<Uint8Array>): Promise<
         try {
           const data = JSON.parse(line.slice(6));
           if (data.text) fullText += data.text;
-        } catch {
+          if (data.error) throw new Error(`Claude stream error: ${data.error}`);
+        } catch (e) {
+          if (e instanceof Error && e.message.startsWith("Claude stream error:")) throw e;
           /* skip malformed */
         }
       }

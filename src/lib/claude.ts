@@ -50,7 +50,37 @@ export async function askClaude(
     },
   });
 
-  const response = await bedrock.send(command);
+  // Retry con backoff exponencial para errores transitorios de Bedrock
+  let response;
+  const MAX_RETRIES = 3;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      response = await bedrock.send(command);
+      break;
+    } catch (err) {
+      const isRetryable =
+        err instanceof Error &&
+        (err.name === "ThrottlingException" ||
+          err.name === "ModelStreamErrorException" ||
+          err.name === "ModelTimeoutException" ||
+          err.name === "ServiceUnavailableException" ||
+          err.name === "InternalServerException" ||
+          err.message.includes("throttl") ||
+          err.message.includes("Too many requests") ||
+          err.message.includes("timeout") ||
+          err.message.includes("ECONNRESET") ||
+          err.message.includes("socket hang up"));
+      if (!isRetryable || attempt === MAX_RETRIES) throw err;
+      const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
+      console.warn(
+        `askClaude: Bedrock error (${err instanceof Error ? err.name : "unknown"}), ` +
+        `retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`
+      );
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+
+  if (!response) throw new Error("No response from Bedrock after retries");
 
   // Convertir el stream de Bedrock a un ReadableStream web
   const encoder = new TextEncoder();
@@ -77,7 +107,14 @@ export async function askClaude(
         }
         controller.close();
       } catch (error) {
-        controller.error(error);
+        console.error("askClaude stream error:", error);
+        // Enqueue error info before closing so consumers know what happened
+        try {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : "Stream error" })}\n\n`)
+          );
+        } catch { /* already closed */ }
+        controller.close();
       }
     },
   });
