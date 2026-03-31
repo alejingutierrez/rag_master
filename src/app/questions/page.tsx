@@ -7,10 +7,12 @@ import { QuestionFilters, FilterState } from "@/components/questions/question-fi
 import { QuestionStats } from "@/components/questions/question-stats";
 import { EmptyState } from "@/components/domain/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Sparkles, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { Dialog, DialogHeader, DialogBody } from "@/components/ui/dialog";
+import { BatchGeneratePanel } from "@/components/questions/batch-generate-panel";
 
 interface Question {
   id: string;
@@ -45,6 +47,7 @@ function QuestionsContent() {
     documentId: initialDocId,
     periodo: "",
     categoria: "",
+    subcategoria: "",
     search: "",
   });
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -55,6 +58,8 @@ function QuestionsContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [showStats, setShowStats] = useState(false);
+  const [showBatchGenerate, setShowBatchGenerate] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const LIMIT = 20;
 
   useEffect(() => {
@@ -71,6 +76,15 @@ function QuestionsContent() {
       .catch(console.error);
   }, []);
 
+  const fetchPendingCount = useCallback(() => {
+    fetch("/api/questions/generate-batch")
+      .then((r) => r.json())
+      .then((data) => setPendingCount(data.pendingCount ?? 0))
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => { fetchPendingCount(); }, [fetchPendingCount]);
+
   const fetchQuestions = useCallback(async () => {
     setLoading(true);
     try {
@@ -78,6 +92,7 @@ function QuestionsContent() {
       if (filters.documentId) params.set("documentId", filters.documentId);
       if (filters.periodo) params.set("periodo", filters.periodo);
       if (filters.categoria) params.set("categoria", filters.categoria);
+      if (filters.subcategoria) params.set("subcategoria", filters.subcategoria);
       if (filters.search) params.set("search", filters.search);
       params.set("page", String(page));
       params.set("limit", String(LIMIT));
@@ -121,6 +136,15 @@ function QuestionsContent() {
               className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-surface-hover transition-colors"
             >
               {showStats ? "Ocultar stats" : "Ver stats"}
+            </button>
+          )}
+          {pendingCount > 0 && (
+            <button
+              onClick={() => setShowBatchGenerate(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-secondary text-secondary-foreground border border-border rounded-lg text-xs font-medium hover:bg-secondary/80 transition-colors"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Generar Todas ({pendingCount})
             </button>
           )}
           <Link
@@ -204,6 +228,21 @@ function QuestionsContent() {
           )}
         </>
       )}
+      {/* Dialog generacion en lote */}
+      <Dialog open={showBatchGenerate} onClose={() => setShowBatchGenerate(false)}>
+        <DialogHeader onClose={() => setShowBatchGenerate(false)}>
+          Generar Preguntas en Lote
+        </DialogHeader>
+        <DialogBody>
+          <BatchGeneratePanel
+            pendingCount={pendingCount}
+            onComplete={() => {
+              fetchQuestions();
+              fetchPendingCount();
+            }}
+          />
+        </DialogBody>
+      </Dialog>
     </PageContainer>
   );
 }
