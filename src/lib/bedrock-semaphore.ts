@@ -7,9 +7,9 @@
  * y batch questions compitan simultáneamente por el mismo rate limit.
  */
 
-// 2 concurrent: permite 1 embedding + 1 Claude simultáneamente,
-// pero no 3+ requests compitiendo por rate limit
-const MAX_CONCURRENT = 2;
+// Solo 1 llamada a Claude Opus a la vez.
+// Embeddings (Cohere) tienen rate limits separados y no usan este semáforo.
+const MAX_CONCURRENT = 1;
 
 let activeCount = 0;
 const queue: Array<() => void> = [];

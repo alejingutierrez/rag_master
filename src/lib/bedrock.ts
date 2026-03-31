@@ -3,7 +3,6 @@ import {
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 import { awsConfig } from "./aws-config";
-import { withBedrockSemaphore } from "./bedrock-semaphore";
 
 const bedrock = new BedrockRuntimeClient(awsConfig);
 
@@ -27,34 +26,35 @@ export async function generateEmbedding(
   text: string,
   inputType: "search_document" | "search_query" = "search_document"
 ): Promise<number[]> {
-  return withBedrockSemaphore(async () => {
-    const MAX_RETRIES = 5;
+  // NOTE: Embeddings (Cohere) have separate rate limits from Claude Opus
+  // in Bedrock, so they do NOT share the Claude semaphore. They use their
+  // own retry with backoff.
+  const MAX_RETRIES = 5;
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        if (EMBEDDING_MODEL.includes("cohere")) {
-          return await generateCohereEmbedding(text, inputType);
-        }
-        return await generateTitanEmbedding(text);
-      } catch (error: unknown) {
-        const isThrottled =
-          error instanceof Error &&
-          (error.name === "ThrottlingException" ||
-            error.message.includes("Too many tokens") ||
-            error.message.includes("throttl"));
-
-        if (isThrottled && attempt < MAX_RETRIES - 1) {
-          // Backoff exponencial: 5s, 10s, 20s, 40s + jitter
-          const delay = Math.pow(2, attempt) * 5000 + Math.random() * 3000;
-          console.log(`Embedding throttled, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})`);
-          await sleep(delay);
-          continue;
-        }
-        throw error;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      if (EMBEDDING_MODEL.includes("cohere")) {
+        return await generateCohereEmbedding(text, inputType);
       }
+      return await generateTitanEmbedding(text);
+    } catch (error: unknown) {
+      const isThrottled =
+        error instanceof Error &&
+        (error.name === "ThrottlingException" ||
+          error.message.includes("Too many tokens") ||
+          error.message.includes("throttl"));
+
+      if (isThrottled && attempt < MAX_RETRIES - 1) {
+        // Backoff exponencial: 5s, 10s, 20s, 40s + jitter
+        const delay = Math.pow(2, attempt) * 5000 + Math.random() * 3000;
+        console.log(`Embedding throttled, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        await sleep(delay);
+        continue;
+      }
+      throw error;
     }
-    throw new Error("Max retries exceeded for embedding generation");
-  });
+  }
+  throw new Error("Max retries exceeded for embedding generation");
 }
 
 /**
