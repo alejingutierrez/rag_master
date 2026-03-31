@@ -124,6 +124,7 @@ model Conversation {
   question        String
   answer          String
   modelUsed       String
+  templateId      String?
   chunksUsed      Json          @default("[]")
   configurationId String?
   configuration   Configuration? @relation(fields: [configurationId], references: [id])

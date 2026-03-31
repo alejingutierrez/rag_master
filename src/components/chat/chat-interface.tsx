@@ -16,6 +16,7 @@ interface ChatInterfaceProps {
   messages: Message[];
   isLoading: boolean;
   streamingText: string;
+  templateName?: string;
 }
 
 export function ChatInterface({
@@ -23,6 +24,7 @@ export function ChatInterface({
   messages,
   isLoading,
   streamingText,
+  templateName,
 }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -50,7 +52,9 @@ export function ChatInterface({
             </div>
             <p className="text-lg font-medium text-foreground">Haz una pregunta sobre tus documentos</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Las respuestas se basan en los fragmentos mas relevantes de tus PDFs.
+              {templateName
+                ? `Formato: ${templateName} — Las respuestas se basan en los fragmentos mas relevantes de tus PDFs.`
+                : "Las respuestas se basan en los fragmentos mas relevantes de tus PDFs."}
             </p>
           </div>
         )}

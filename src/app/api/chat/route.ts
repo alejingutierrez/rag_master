@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       maxTokens = 8000,
       documentIds,
       configurationId,
+      templateId,
     } = body;
 
     if (!question || typeof question !== "string") {
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Enviar a Claude con streaming
-    const stream = await askClaude(question, chunks, config.maxTokens);
+    const stream = await askClaude(question, chunks, config.maxTokens, { templateId });
 
     // 5. Preparar metadatos de chunks para el frontend (top 50 para el modal, Claude recibe todos)
     const chunksMetadata = chunks.slice(0, 50).map((c) => ({
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
               question,
               answer: fullAnswer,
               modelUsed,
+              templateId: templateId || null,
               chunksUsed: chunks.map((c) => ({
                 id: c.id,
                 similarity: c.similarity,

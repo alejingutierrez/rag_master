@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { ChunksModal } from "@/components/chat/chunks-modal";
+import { TemplateSelector } from "@/components/chat/template-selector";
+import { DEFAULT_TEMPLATE_ID, getTemplateById } from "@/lib/chat-templates";
 import { FileText } from "lucide-react";
 
 interface Message {
@@ -34,6 +36,7 @@ export default function ChatPage() {
   const [citations, setCitations] = useState<ChunkCitation[]>([]);
   const [totalChunksUsed, setTotalChunksUsed] = useState(0);
   const [showChunksModal, setShowChunksModal] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(DEFAULT_TEMPLATE_ID);
 
   const handleAsk = useCallback(async (question: string) => {
     setIsLoading(true);
@@ -51,6 +54,7 @@ export default function ChatPage() {
           topK: RAG_CONFIG.topK,
           similarityThreshold: RAG_CONFIG.similarityThreshold,
           maxTokens: RAG_CONFIG.maxTokens,
+          templateId: selectedTemplateId,
         }),
       });
 
@@ -116,7 +120,7 @@ export default function ChatPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedTemplateId]);
 
   return (
     <PageContainer maxWidth="xl">
@@ -138,11 +142,18 @@ export default function ChatPage() {
         )}
       </div>
 
+      <TemplateSelector
+        selectedTemplateId={selectedTemplateId}
+        onSelectTemplate={setSelectedTemplateId}
+        disabled={isLoading}
+      />
+
       <ChatInterface
         onAsk={handleAsk}
         messages={messages}
         isLoading={isLoading}
         streamingText={streamingText}
+        templateName={getTemplateById(selectedTemplateId)?.name}
       />
 
       <ChunksModal
