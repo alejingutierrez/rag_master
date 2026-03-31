@@ -7,6 +7,7 @@ import { PeriodBadge } from "@/components/domain/period-badge";
 import { CategoryBadge } from "@/components/domain/category-badge";
 import { getPeriodColor, getCategoryColor } from "./period-colors";
 import { getDocumentDisplayName } from "@/lib/enrichment-types";
+import { DeliverableBadges } from "@/components/deliverables/deliverable-badges";
 
 interface QuestionCardProps {
   question: {
@@ -24,6 +25,7 @@ interface QuestionCardProps {
     categoriasRelacionadas: string[];
     justificacion: string;
     document?: { filename: string; metadata?: Record<string, unknown> };
+    deliverables?: { id: string; templateId: string; status: string }[];
     createdAt?: string;
   };
   showDocument?: boolean;
@@ -75,6 +77,13 @@ export function QuestionCard({ question: q, showDocument = true }: QuestionCardP
           </div>
         )}
       </div>
+
+      {/* Deliverable badges */}
+      {q.deliverables && q.deliverables.length > 0 && (
+        <div className="px-4 pb-2">
+          <DeliverableBadges deliverables={q.deliverables} />
+        </div>
+      )}
 
       {/* Footer: documento + justificacion */}
       <div className="border-t border-border px-4 py-2 flex items-center justify-between">

@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20")));
   const includeStats = searchParams.get("includeStats") === "true";
+  const includeDeliverables = searchParams.get("includeDeliverables") === "true";
 
   try {
     const where = {
@@ -37,6 +38,12 @@ export async function GET(request: NextRequest) {
           document: {
             select: { id: true, filename: true, metadata: true, status: true },
           },
+          ...(includeDeliverables && {
+            deliverables: {
+              select: { id: true, templateId: true, status: true, createdAt: true },
+              orderBy: { createdAt: "desc" as const },
+            },
+          }),
         },
         orderBy: [{ createdAt: "desc" }, { questionNumber: "asc" }],
         skip: (page - 1) * limit,

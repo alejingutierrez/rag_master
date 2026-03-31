@@ -9,6 +9,13 @@ datasource db {
   extensions = [pgvector(map: "vector")]
 }
 
+enum DeliverableStatus {
+  PENDING
+  GENERATING
+  COMPLETE
+  ERROR
+}
+
 enum DocumentStatus {
   PENDING
   PROCESSING
@@ -69,6 +76,8 @@ model Question {
 
   // Agrupación por batch de generación
   batchId                String
+
+  deliverables           Deliverable[]
 
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
@@ -131,4 +140,24 @@ model Conversation {
   createdAt       DateTime      @default(now())
 
   @@map("conversations")
+}
+
+model Deliverable {
+  id          String            @id @default(cuid())
+  questionId  String
+  question    Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  templateId  String
+  status      DeliverableStatus @default(PENDING)
+  answer      String            @db.Text @default("")
+  modelUsed   String            @default("")
+  chunksUsed  Json              @default("[]")
+  batchId     String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([questionId])
+  @@index([templateId])
+  @@index([batchId])
+  @@index([questionId, templateId])
+  @@map("deliverables")
 }

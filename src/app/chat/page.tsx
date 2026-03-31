@@ -6,7 +6,8 @@ import { ChatInterface } from "@/components/chat/chat-interface";
 import { ChunksModal } from "@/components/chat/chunks-modal";
 import { TemplateSelector } from "@/components/chat/template-selector";
 import { DEFAULT_TEMPLATE_ID, getTemplateById } from "@/lib/chat-templates";
-import { FileText } from "lucide-react";
+import { GenerateDeliverablesDialog } from "@/components/deliverables/generate-deliverables-dialog";
+import { FileText, Plus } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -37,6 +38,7 @@ export default function ChatPage() {
   const [totalChunksUsed, setTotalChunksUsed] = useState(0);
   const [showChunksModal, setShowChunksModal] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState(DEFAULT_TEMPLATE_ID);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
 
   const handleAsk = useCallback(async (question: string) => {
     setIsLoading(true);
@@ -131,15 +133,25 @@ export default function ChatPage() {
             Haz preguntas sobre tus documentos. Claude responde usando los fragmentos mas relevantes.
           </p>
         </div>
-        {citations.length > 0 && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowChunksModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-secondary-foreground bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
+            onClick={() => setShowGenerateDialog(true)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary-hover rounded-lg transition-colors"
+            title="Generar entregables desde preguntas"
           >
-            <FileText className="h-4 w-4" />
-            Ver fragmentos ({totalChunksUsed > citations.length ? `${citations.length} de ${totalChunksUsed}` : citations.length})
+            <Plus className="h-4 w-4" />
+            Producir
           </button>
-        )}
+          {citations.length > 0 && (
+            <button
+              onClick={() => setShowChunksModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-secondary-foreground bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
+            >
+              <FileText className="h-4 w-4" />
+              Ver fragmentos ({totalChunksUsed > citations.length ? `${citations.length} de ${totalChunksUsed}` : citations.length})
+            </button>
+          )}
+        </div>
       </div>
 
       <TemplateSelector
@@ -160,6 +172,11 @@ export default function ChatPage() {
         open={showChunksModal}
         onClose={() => setShowChunksModal(false)}
         chunks={citations}
+      />
+
+      <GenerateDeliverablesDialog
+        open={showGenerateDialog}
+        onClose={() => setShowGenerateDialog(false)}
       />
     </PageContainer>
   );

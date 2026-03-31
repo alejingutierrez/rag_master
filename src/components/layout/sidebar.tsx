@@ -12,6 +12,7 @@ import {
   Sparkles,
   MessageSquare,
   BookOpen,
+  Package,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/enrich", label: "Enriquecer", icon: Sparkles },
   { href: "/chat", label: "Consultar", icon: MessageSquare },
   { href: "/questions", label: "Investigacion", icon: BookOpen },
+  { href: "/producciones", label: "Producciones", icon: Package },
 ];
 
 const COLLAPSED_KEY = "rag-master-sidebar-collapsed";
