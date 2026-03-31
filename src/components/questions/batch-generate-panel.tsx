@@ -17,14 +17,18 @@ interface BatchEvent {
   index?: number;
   total?: number;
   totalDocuments?: number;
+  batchSize?: number;
+  remaining?: number;
   generated?: number;
   failed?: number;
   error?: string;
   message?: string;
 }
 
-const MAX_RETRIES = 5;
-const RETRY_DELAY_MS = 5000;
+// Max consecutive stalls (no progress) before giving up
+const MAX_STALLS = 3;
+// Pause between auto-reconnections
+const RECONNECT_DELAY_MS = 3000;
 
 export function BatchGeneratePanel({
   pendingCount,
@@ -36,13 +40,17 @@ export function BatchGeneratePanel({
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [result, setResult] = useState<{ generated: number; failed: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [retryInfo, setRetryInfo] = useState<{ count: number; active: boolean }>({ count: 0, active: false });
+  const [reconnecting, setReconnecting] = useState(false);
+  const [batchInfo, setBatchInfo] = useState<string | null>(null);
 
   const eventsRef = useRef<BatchEvent[]>([]);
-  // Track the original total to show accurate progress across retries
   const originalTotalRef = useRef(0);
 
-  async function runStream(): Promise<"complete" | "retry" | "error"> {
+  /** Run one SSE connection. Returns events count produced in THIS connection. */
+  async function runStream(): Promise<{ status: "complete" | "retry" | "error"; eventsThisRound: number; remaining: number }> {
+    let eventsThisRound = 0;
+    let remaining = 0;
+
     try {
       const response = await fetch("/api/questions/generate-batch", {
         method: "POST",
@@ -69,20 +77,23 @@ export function BatchGeneratePanel({
             const event: BatchEvent = JSON.parse(line.slice(6));
 
             if (event.type === "start") {
-              // On first start, set original total
+              // On first start ever, capture the original total
               if (originalTotalRef.current === 0) {
-                originalTotalRef.current = event.totalDocuments ?? 0;
+                originalTotalRef.current = pendingCount || event.totalDocuments || 0;
                 setProgress({ current: 0, total: originalTotalRef.current });
               }
-              // On retry, total stays as original — current reflects real completions
+              // Show batch info
+              if (event.batchSize && event.totalDocuments) {
+                setBatchInfo(`Lote de ${event.batchSize} de ${event.totalDocuments} pendientes`);
+              }
             }
 
             if (event.type === "progress") {
               setCurrentDoc(event.filename ?? null);
             }
 
-            // Only update progress on actual completions (not on progress events)
             if (event.type === "document_complete") {
+              eventsThisRound++;
               eventsRef.current = [...eventsRef.current, event];
               setEvents([...eventsRef.current]);
               const completed = eventsRef.current.filter((e) => e.type === "document_complete").length;
@@ -90,6 +101,7 @@ export function BatchGeneratePanel({
             }
 
             if (event.type === "document_error") {
+              eventsThisRound++;
               eventsRef.current = [...eventsRef.current, event];
               setEvents([...eventsRef.current]);
               const processed = eventsRef.current.filter(
@@ -100,53 +112,66 @@ export function BatchGeneratePanel({
 
             if (event.type === "complete") {
               receivedComplete = true;
-              const totalCompleted = eventsRef.current.filter((e) => e.type === "document_complete").length;
-              const totalFailed = eventsRef.current.filter((e) => e.type === "document_error").length;
+              remaining = event.remaining ?? 0;
 
-              setResult({
-                generated: totalCompleted,
-                failed: totalFailed,
-                total: totalCompleted + totalFailed,
-              });
-              onComplete();
-              return "complete";
+              if (remaining === 0) {
+                // All done!
+                const totalCompleted = eventsRef.current.filter((e) => e.type === "document_complete").length;
+                const totalFailed = eventsRef.current.filter((e) => e.type === "document_error").length;
+                setResult({
+                  generated: totalCompleted,
+                  failed: totalFailed,
+                  total: totalCompleted + totalFailed,
+                });
+                setProgress({ current: originalTotalRef.current, total: originalTotalRef.current });
+                onComplete();
+                return { status: "complete", eventsThisRound, remaining: 0 };
+              }
+
+              // More batches to go — return "retry" to auto-reconnect
+              return { status: "retry", eventsThisRound, remaining };
             }
 
             if (event.type === "error") {
               setError(event.message ?? "Error desconocido");
-              return "error";
+              return { status: "error", eventsThisRound, remaining: 0 };
             }
           } catch {/* skip malformed */}
         }
       }
 
-      // Stream ended without complete — likely timeout, should retry
+      // Stream ended without complete event — connection dropped
       if (!receivedComplete) {
-        return "retry";
+        return { status: "retry", eventsThisRound, remaining: -1 };
       }
 
-      return "complete";
+      return { status: "complete", eventsThisRound, remaining: 0 };
     } catch {
-      return "retry";
+      return { status: "retry", eventsThisRound, remaining: -1 };
     }
   }
 
-  async function runWithRetry() {
-    let attempt = 0;
+  async function runLoop() {
+    let consecutiveStalls = 0;
 
-    while (attempt <= MAX_RETRIES) {
-      const streamResult = await runStream();
+    while (true) {
+      const { status, eventsThisRound, remaining } = await runStream();
 
-      if (streamResult === "complete" || streamResult === "error") return;
+      if (status === "complete" || status === "error") return;
 
-      attempt++;
+      // status === "retry" — check if we made progress
+      if (eventsThisRound > 0) {
+        consecutiveStalls = 0; // Reset — we made progress
+      } else {
+        consecutiveStalls++;
+      }
 
-      // Check if any docs are still pending before retrying
+      // Before retrying, check server for actual pending count
       try {
         const checkRes = await fetch("/api/questions/generate-batch");
         const checkData = await checkRes.json();
         if (checkData.pendingCount === 0) {
-          // All done! The complete event was just lost
+          // All done! Complete event was just lost
           const totalCompleted = eventsRef.current.filter((e) => e.type === "document_complete").length;
           const totalFailed = eventsRef.current.filter((e) => e.type === "document_error").length;
           setResult({
@@ -158,20 +183,23 @@ export function BatchGeneratePanel({
           onComplete();
           return;
         }
-      } catch { /* continue with retry */ }
+      } catch { /* continue */ }
 
-      if (attempt > MAX_RETRIES) {
+      // Give up after MAX_STALLS consecutive connections with zero progress
+      if (consecutiveStalls >= MAX_STALLS) {
         const completed = eventsRef.current.filter((e) => e.type === "document_complete").length;
         setError(
-          `Conexion perdida despues de ${MAX_RETRIES} reintentos. ${completed} documentos procesados exitosamente. Puedes reiniciar para continuar con los pendientes.`
+          `Sin progreso despues de ${MAX_STALLS} intentos consecutivos. ${completed} documentos procesados exitosamente. Puedes reiniciar para continuar con los pendientes.`
         );
         return;
       }
 
-      setRetryInfo({ count: attempt, active: true });
-      setError(null);
-      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
-      setRetryInfo({ count: attempt, active: false });
+      // Auto-reconnect for next batch
+      setReconnecting(true);
+      setCurrentDoc(null);
+      setBatchInfo(remaining > 0 ? `${remaining} documentos restantes...` : "Reconectando...");
+      await new Promise((r) => setTimeout(r, RECONNECT_DELAY_MS));
+      setReconnecting(false);
     }
   }
 
@@ -183,19 +211,21 @@ export function BatchGeneratePanel({
     setProgress({ current: 0, total: 0 });
     setResult(null);
     setError(null);
-    setRetryInfo({ count: 0, active: false });
+    setReconnecting(false);
+    setBatchInfo(null);
     originalTotalRef.current = 0;
 
-    await runWithRetry();
+    await runLoop();
     setGenerating(false);
   };
 
   const handleRetryManual = async () => {
     setGenerating(true);
     setError(null);
-    setRetryInfo({ count: 0, active: false });
+    setReconnecting(false);
+    setBatchInfo(null);
 
-    await runWithRetry();
+    await runLoop();
     setGenerating(false);
   };
 
@@ -219,8 +249,8 @@ export function BatchGeneratePanel({
         <div className="bg-surface border border-border rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              {retryInfo.active
-                ? "Reconectando..."
+              {reconnecting
+                ? "Conectando siguiente lote..."
                 : `${completedCount} completado${completedCount !== 1 ? "s" : ""} de ${progress.total}${failedCount > 0 ? ` (${failedCount} con error)` : ""}`}
             </span>
             <span className="text-foreground font-mono">
@@ -233,22 +263,23 @@ export function BatchGeneratePanel({
               style={{ width: `${(progress.current / progress.total) * 100}%` }}
             />
           </div>
-          {retryInfo.active ? (
-            <p className="text-xs text-warning">
+          {reconnecting ? (
+            <p className="text-xs text-info">
               <RefreshCw className="inline h-3 w-3 animate-spin mr-1" />
-              Reconectando (intento {retryInfo.count}/{MAX_RETRIES})...
+              {batchInfo || "Conectando siguiente lote..."}
             </p>
           ) : currentDoc ? (
             <p className="text-xs text-muted-foreground truncate">
               <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
               {currentDoc}
+              {batchInfo && <span className="ml-2 text-muted-foreground/60">({batchInfo})</span>}
             </p>
           ) : null}
         </div>
       )}
 
       {/* Generating indicator without progress */}
-      {generating && progress.total === 0 && !retryInfo.active && (
+      {generating && progress.total === 0 && !reconnecting && (
         <div className="bg-surface border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" /> Iniciando generacion...

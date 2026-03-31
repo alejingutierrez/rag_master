@@ -5,6 +5,10 @@ import { generateQuestionsForDocument } from "@/lib/questions-generator";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
+// Max docs per SSE connection — keeps well within maxDuration.
+// Frontend auto-reconnects for next batch when remaining > 0.
+const BATCH_SIZE = 8;
+
 // GET /api/questions/generate-batch — Conteo de documentos pendientes
 export async function GET() {
   try {
@@ -74,15 +78,19 @@ export async function POST() {
           return;
         }
 
-        send({ type: "start", totalDocuments: documents.length });
+        // Only process up to BATCH_SIZE per connection
+        const batch = documents.slice(0, BATCH_SIZE);
+        const totalPending = documents.length;
+
+        send({ type: "start", totalDocuments: totalPending, batchSize: batch.length });
 
         let generatedCount = 0;
         let failedCount = 0;
 
-        for (let i = 0; i < documents.length; i++) {
+        for (let i = 0; i < batch.length; i++) {
           if (closed) break;
 
-          const doc = documents[i];
+          const doc = batch[i];
 
           send({
             type: "progress",
@@ -144,7 +152,7 @@ export async function POST() {
               filename: doc.filename,
               questionsGenerated: questions.length,
               index: i + 1,
-              total: documents.length,
+              total: batch.length,
             });
 
             generatedCount++;
@@ -160,16 +168,20 @@ export async function POST() {
           }
 
           // Pausa entre documentos para evitar throttling de Bedrock
-          if (i < documents.length - 1) {
+          if (i < batch.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, 5000));
           }
         }
+
+        // Calculate how many remain after this batch
+        const remaining = totalPending - generatedCount - failedCount;
 
         send({
           type: "complete",
           generated: generatedCount,
           failed: failedCount,
-          total: documents.length,
+          total: batch.length,
+          remaining,
         });
 
         clearInterval(heartbeat);
