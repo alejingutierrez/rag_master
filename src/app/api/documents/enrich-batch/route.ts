@@ -4,20 +4,38 @@ import { enrichDocument } from "@/lib/document-enricher";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-// POST /api/documents/enrich-batch — Enriquecimiento masivo con SSE
+// POST /api/documents/enrich-batch — Enriquecimiento masivo con SSE + heartbeat
 export async function POST() {
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
+      let closed = false;
+
       const send = (data: Record<string, unknown>) => {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-        );
+        if (closed) return;
+        try {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+          );
+        } catch {
+          closed = true;
+        }
       };
 
+      // Heartbeat cada 15s para mantener la conexion viva en App Runner/ALB
+      const heartbeat = setInterval(() => {
+        if (closed) { clearInterval(heartbeat); return; }
+        try {
+          controller.enqueue(encoder.encode(`: heartbeat\n\n`));
+        } catch {
+          closed = true;
+          clearInterval(heartbeat);
+        }
+      }, 15_000);
+
       try {
-        // Obtener documentos no enriquecidos que estén READY
+        // Re-query docs no enriquecidos — permite resume automatico tras reconexion
         const documents = await prisma.document.findMany({
           where: { enriched: false, status: "READY" },
           select: { id: true, filename: true },
@@ -26,6 +44,7 @@ export async function POST() {
 
         if (documents.length === 0) {
           send({ type: "complete", enriched: 0, failed: 0, total: 0, message: "No hay documentos pendientes de enriquecimiento" });
+          clearInterval(heartbeat);
           controller.close();
           return;
         }
@@ -36,6 +55,8 @@ export async function POST() {
         let failedCount = 0;
 
         for (let i = 0; i < documents.length; i++) {
+          if (closed) break;
+
           const doc = documents[i];
 
           send({
@@ -48,7 +69,6 @@ export async function POST() {
           });
 
           try {
-            // Obtener primeros 30 chunks
             const chunks = await prisma.chunk.findMany({
               where: { documentId: doc.id },
               select: { content: true, pageNumber: true, chunkIndex: true },
@@ -120,14 +140,16 @@ export async function POST() {
           total: documents.length,
         });
 
-        controller.close();
+        clearInterval(heartbeat);
+        if (!closed) controller.close();
       } catch (error) {
         console.error("Error in batch enrichment:", error);
         send({
           type: "error",
           message: error instanceof Error ? error.message : "Error desconocido",
         });
-        controller.close();
+        clearInterval(heartbeat);
+        if (!closed) controller.close();
       }
     },
   });
@@ -137,6 +159,7 @@ export async function POST() {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }
