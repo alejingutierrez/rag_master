@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           document: {
-            select: { id: true, filename: true, status: true },
+            select: { id: true, filename: true, metadata: true, status: true },
           },
         },
         orderBy: [{ createdAt: "desc" }, { questionNumber: "asc" }],

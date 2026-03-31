@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatBytes, formatDate } from "@/lib/utils";
 import { ArrowLeft, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { getDocumentDisplayName } from "@/lib/enrichment-types";
 
 interface DocumentDetail {
   id: string;
@@ -118,7 +119,10 @@ export default function DocumentDetailPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">{document.filename}</CardTitle>
+              <CardTitle className="text-xl">{getDocumentDisplayName(document)}</CardTitle>
+              {typeof (document.metadata as Record<string, unknown>)?.bookTitle === "string" && (
+                <p className="text-xs text-muted-foreground font-mono mt-1">{document.filename}</p>
+              )}
               <StatusBadge status={document.status} />
             </div>
           </CardHeader>

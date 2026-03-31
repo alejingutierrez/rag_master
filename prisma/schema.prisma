@@ -31,6 +31,7 @@ model Document {
   pageCount Int            @default(0)
   status    DocumentStatus @default(PENDING)
   metadata  Json           @default("{}")
+  enriched  Boolean        @default(false)
   error     String?
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt

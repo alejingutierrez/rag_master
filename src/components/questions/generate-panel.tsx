@@ -5,10 +5,12 @@ import { BookOpen, RefreshCw, CheckCircle2, Loader2, AlertCircle, ChevronRight }
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { getDocumentDisplayName } from "@/lib/enrichment-types";
 
 interface DocumentWithQuestions {
   id: string;
   filename: string;
+  metadata?: Record<string, unknown>;
   status: string;
   _count: { chunks: number; questions: number };
   latestBatch?: string | null;
@@ -191,7 +193,7 @@ export function GeneratePanel() {
           {readyDocs.map((doc) => (
             <option key={doc.id} value={doc.id}>
               {doc._count.questions > 0 ? "✓ " : "○ "}
-              {doc.filename.length > 60 ? doc.filename.slice(0, 60) + "..." : doc.filename}
+              {(() => { const name = getDocumentDisplayName(doc); return name.length > 60 ? name.slice(0, 60) + "..." : name; })()}
               {doc._count.questions > 0 ? ` (${doc._count.questions} preguntas)` : ""}
             </option>
           ))}

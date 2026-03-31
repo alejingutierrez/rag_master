@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/domain/status-badge";
 import { EmptyState } from "@/components/domain/empty-state";
 import { formatBytes, formatDate } from "@/lib/utils";
 import { Trash2, Eye, RefreshCw, FileText } from "lucide-react";
+import { getDocumentDisplayName } from "@/lib/enrichment-types";
 
 interface Document {
   id: string;
@@ -66,7 +67,7 @@ export function DocumentTable({ documents, onDelete, onRefresh }: DocumentTableP
               <tr key={doc.id} className="border-b border-border last:border-0 hover:bg-surface-hover transition-colors">
                 <td className="px-4 py-3">
                   <p className="font-medium text-sm text-foreground truncate max-w-[200px]">
-                    {doc.filename}
+                    {getDocumentDisplayName(doc)}
                   </p>
                 </td>
                 <td className="px-4 py-3">

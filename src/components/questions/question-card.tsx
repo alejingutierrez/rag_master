@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { PeriodBadge } from "@/components/domain/period-badge";
 import { CategoryBadge } from "@/components/domain/category-badge";
 import { getPeriodColor, getCategoryColor } from "./period-colors";
+import { getDocumentDisplayName } from "@/lib/enrichment-types";
 
 interface QuestionCardProps {
   question: {
@@ -22,7 +23,7 @@ interface QuestionCardProps {
     periodosRelacionados: string[];
     categoriasRelacionadas: string[];
     justificacion: string;
-    document?: { filename: string };
+    document?: { filename: string; metadata?: Record<string, unknown> };
     createdAt?: string;
   };
   showDocument?: boolean;
@@ -80,7 +81,7 @@ export function QuestionCard({ question: q, showDocument = true }: QuestionCardP
         {showDocument && q.document ? (
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
             <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
-            <span className="text-[11px] text-muted-foreground truncate">{q.document.filename}</span>
+            <span className="text-[11px] text-muted-foreground truncate">{getDocumentDisplayName(q.document)}</span>
           </div>
         ) : (
           <div />

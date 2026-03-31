@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, X } from "lucide-react";
+import { getDocumentDisplayName } from "@/lib/enrichment-types";
 
 export interface FilterState {
   documentId: string;
@@ -12,7 +13,7 @@ export interface FilterState {
 interface QuestionFiltersProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
-  documents: { id: string; filename: string }[];
+  documents: { id: string; filename: string; metadata?: Record<string, unknown> }[];
   periodos: { code: string; nombre: string }[];
   categorias: { code: string; nombre: string }[];
 }
@@ -80,7 +81,7 @@ export function QuestionFilters({
         <option value="">Documento</option>
         {documents.map((d) => (
           <option key={d.id} value={d.id}>
-            {d.filename.length > 40 ? d.filename.slice(0, 40) + "..." : d.filename}
+            {(() => { const name = getDocumentDisplayName(d); return name.length > 40 ? name.slice(0, 40) + "..." : name; })()}
           </option>
         ))}
       </select>

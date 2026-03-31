@@ -6,6 +6,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { StatCard } from "@/components/domain/stat-card";
 import { StatusBadge } from "@/components/domain/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getDocumentDisplayName } from "@/lib/enrichment-types";
 import {
   FileText,
   Layers,
@@ -99,7 +100,7 @@ export default function DashboardPage() {
                       <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                          {doc.filename}
+                          {getDocumentDisplayName(doc)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {doc._count.chunks} chunks &middot; {doc.pageCount} paginas
