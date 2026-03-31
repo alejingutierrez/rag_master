@@ -18,19 +18,19 @@ export function QuestionStats({ stats }: { stats: StatsData }) {
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Por Categoria
         </h3>
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {stats.byCategoria.slice(0, 8).map((c) => {
             const color = getCategoryColor(c.code);
             const max = stats.byCategoria[0]?.count ?? 1;
             const pct = Math.round((c.count / max) * 100);
             return (
               <div key={c.code} className="flex items-center gap-2">
-                <span className={cn("text-xs font-mono min-w-[3rem]", color.text)}>
+                <span className={cn("text-xs font-mono min-w-[3rem] font-medium", color.text)}>
                   {c.code}
                 </span>
-                <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
                   <div
-                    className={cn("h-full rounded-full transition-all", color.bg.replace("/20", ""))}
+                    className={cn("h-full rounded-full transition-all", color.bar)}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -48,19 +48,19 @@ export function QuestionStats({ stats }: { stats: StatsData }) {
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Por Periodo Historico
         </h3>
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {stats.byPeriodo.slice(0, 8).map((p) => {
             const color = getPeriodColor(p.code);
             const max = stats.byPeriodo[0]?.count ?? 1;
             const pct = Math.round((p.count / max) * 100);
             return (
               <div key={p.code} className="flex items-center gap-2">
-                <span className={cn("text-xs font-mono min-w-[4rem]", color.text)}>
+                <span className={cn("text-xs font-mono min-w-[4rem] font-medium", color.text)}>
                   {p.code}
                 </span>
-                <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
                   <div
-                    className={cn("h-full rounded-full", color.bg.replace("/30", "").replace("/40", ""))}
+                    className={cn("h-full rounded-full transition-all", color.bar)}
                     style={{ width: `${pct}%` }}
                   />
                 </div>

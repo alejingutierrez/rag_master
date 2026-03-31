@@ -133,8 +133,8 @@ function QuestionsContent() {
       )}
 
       {/* Layout de dos columnas */}
-      <div className="flex gap-6">
-        <div className="w-64 flex-shrink-0">
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:w-64 lg:flex-shrink-0">
           <QuestionFilters
             filters={filters}
             onFiltersChange={handleFiltersChange}
@@ -144,7 +144,7 @@ function QuestionsContent() {
           />
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-hidden">
           {loading ? (
             <div className="grid gap-3">
               {Array.from({ length: 6 }).map((_, i) => (
