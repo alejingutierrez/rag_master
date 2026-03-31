@@ -54,6 +54,7 @@ function QuestionsContent() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [showStats, setShowStats] = useState(false);
   const LIMIT = 20;
 
   useEffect(() => {
@@ -104,101 +105,105 @@ function QuestionsContent() {
   return (
     <PageContainer maxWidth="xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-muted-foreground" />
-            Preguntas de Investigacion
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-xl font-bold text-foreground">Preguntas de Investigacion</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {total > 0
               ? `${total} preguntas generadas con Claude Opus`
               : "No hay preguntas generadas aun"}
           </p>
         </div>
-        <Link
-          href="/questions/generate"
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary-hover transition-colors"
-        >
-          <Sparkles className="h-4 w-4" />
-          Generar preguntas
-        </Link>
+        <div className="flex items-center gap-2">
+          {stats && stats.totalQuestions > 0 && (
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-surface-hover transition-colors"
+            >
+              {showStats ? "Ocultar stats" : "Ver stats"}
+            </button>
+          )}
+          <Link
+            href="/questions/generate"
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary-hover transition-colors"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Generar
+          </Link>
+        </div>
       </div>
 
-      {/* Stats */}
-      {stats && stats.totalQuestions > 0 && (
-        <div className="mb-6">
+      {/* Stats colapsables */}
+      {showStats && stats && stats.totalQuestions > 0 && (
+        <div className="mb-5">
           <QuestionStats stats={stats} />
         </div>
       )}
 
-      {/* Layout de dos columnas */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-64 lg:flex-shrink-0">
-          <QuestionFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            documents={documents}
-            periodos={[]}
-            categorias={[]}
-          />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          {loading ? (
-            <div className="grid gap-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-28 rounded-lg" />
-              ))}
-            </div>
-          ) : questions.length === 0 ? (
-            <EmptyState
-              icon={BookOpen}
-              title={total === 0 ? "Sin preguntas generadas" : "Sin resultados"}
-              description={total === 0
-                ? "Genera preguntas de investigacion a partir de tus documentos"
-                : "Intenta con otros filtros"}
-              action={total === 0 ? {
-                label: "Generar preguntas",
-                onClick: () => window.location.href = "/questions/generate",
-              } : undefined}
-            />
-          ) : (
-            <>
-              <div className="grid gap-3">
-                {questions.map((q) => (
-                  <QuestionCard key={q.id} question={q} showDocument={!filters.documentId} />
-                ))}
-              </div>
-
-              {/* Paginacion */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-                  <p className="text-xs text-muted-foreground">
-                    Pagina {page} de {totalPages} &middot; {total} preguntas
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                      className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                      className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+      {/* Filtros inline */}
+      <div className="mb-4">
+        <QuestionFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          documents={documents}
+          periodos={[]}
+          categorias={[]}
+        />
       </div>
+
+      {/* Lista de preguntas */}
+      {loading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-lg" />
+          ))}
+        </div>
+      ) : questions.length === 0 ? (
+        <EmptyState
+          icon={BookOpen}
+          title={total === 0 ? "Sin preguntas generadas" : "Sin resultados"}
+          description={total === 0
+            ? "Genera preguntas de investigacion a partir de tus documentos"
+            : "Intenta con otros filtros"}
+          action={total === 0 ? {
+            label: "Generar preguntas",
+            onClick: () => window.location.href = "/questions/generate",
+          } : undefined}
+        />
+      ) : (
+        <>
+          <div className="space-y-2">
+            {questions.map((q) => (
+              <QuestionCard key={q.id} question={q} showDocument={!filters.documentId} />
+            ))}
+          </div>
+
+          {/* Paginacion */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
+              <p className="text-xs text-muted-foreground">
+                Pagina {page} de {totalPages} &middot; {total} preguntas
+              </p>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-md bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-md bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </PageContainer>
   );
 }
@@ -207,13 +212,11 @@ export default function QuestionsPage() {
   return (
     <Suspense fallback={
       <PageContainer maxWidth="xl">
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Skeleton className="h-8 w-64" />
-          <div className="grid gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-lg" />
-            ))}
-          </div>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-lg" />
+          ))}
         </div>
       </PageContainer>
     }>
