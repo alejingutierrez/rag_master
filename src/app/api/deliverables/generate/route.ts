@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 /**
- * Consume el ReadableStream SSE de askClaude y acumula el texto completo
+ * Consume el ReadableStream SSE de askClaude y acumula el texto completo.
+ * Includes a per-chunk timeout to detect stalled streams.
  */
 async function consumeClaudeStream(stream: ReadableStream<Uint8Array>): Promise<{
   text: string;
@@ -23,31 +24,46 @@ async function consumeClaudeStream(stream: ReadableStream<Uint8Array>): Promise<
     process.env.BEDROCK_CLAUDE_MODEL_ID ||
     "us.anthropic.claude-opus-4-6-20250610-v1:0";
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      try {
-        const data = JSON.parse(line.slice(6));
-        if (data.text) fullText += data.text;
-      } catch {
-        /* skip malformed */
+  const CHUNK_TIMEOUT_MS = 120_000; // 2 min max wait per chunk
+
+  try {
+    while (true) {
+      const readPromise = reader.read();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Stream read timeout")), CHUNK_TIMEOUT_MS)
+      );
+
+      const { done, value } = await Promise.race([readPromise, timeoutPromise]);
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const data = JSON.parse(line.slice(6));
+          if (data.text) fullText += data.text;
+        } catch {
+          /* skip malformed */
+        }
       }
     }
+
+    // Process remaining buffer
+    if (buffer.startsWith("data: ")) {
+      try {
+        const data = JSON.parse(buffer.slice(6));
+        if (data.text) fullText += data.text;
+      } catch {
+        /* skip */
+      }
+    }
+  } finally {
+    reader.releaseLock();
   }
 
-  // Process remaining buffer
-  if (buffer.startsWith("data: ")) {
-    try {
-      const data = JSON.parse(buffer.slice(6));
-      if (data.text) fullText += data.text;
-    } catch {
-      /* skip */
-    }
+  if (!fullText) {
+    throw new Error("Claude stream returned empty response");
   }
 
   return { text: fullText, modelUsed };
@@ -254,9 +270,9 @@ export async function POST(request: NextRequest) {
             failedCount++;
           }
 
-          // Pausa entre templates para evitar throttling
+          // Pausa entre templates para evitar throttling de Bedrock
           if (i < templateIds.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await new Promise((resolve) => setTimeout(resolve, 5000));
           }
         }
 
