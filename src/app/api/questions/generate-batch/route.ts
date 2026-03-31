@@ -1,25 +1,32 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateQuestionsForDocument } from "@/lib/questions-generator";
+import { processQuestionsBatch } from "@/lib/questions-batch-processor";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-// Max docs per SSE connection — keeps well within maxDuration.
-// Frontend auto-reconnects for next batch when remaining > 0.
-const BATCH_SIZE = 8;
-
-// GET /api/questions/generate-batch — Conteo de documentos pendientes
+// GET /api/questions/generate-batch — Conteo de documentos pendientes + progreso
 export async function GET() {
   try {
-    const pending = await prisma.document.findMany({
-      where: { status: "READY", questions: { none: {} } },
-      select: { id: true, filename: true },
-      orderBy: { createdAt: "asc" },
-    });
+    const [pending, totalWithQuestions, totalReady] = await Promise.all([
+      prisma.document.findMany({
+        where: { status: "READY", questions: { none: {} } },
+        select: { id: true, filename: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.document.count({
+        where: { status: "READY", questions: { some: {} } },
+      }),
+      prisma.document.count({
+        where: { status: "READY" },
+      }),
+    ]);
 
     return NextResponse.json({
       pendingCount: pending.length,
+      completedCount: totalWithQuestions,
+      totalReady,
       pendingDocuments: pending,
     });
   } catch (error) {
@@ -31,179 +38,36 @@ export async function GET() {
   }
 }
 
-// POST /api/questions/generate-batch — Generacion secuencial con SSE + heartbeat
+// POST /api/questions/generate-batch — Dispara generación server-side via after()
+// Responde inmediatamente. El procesamiento continúa en background.
 export async function POST() {
-  const encoder = new TextEncoder();
+  try {
+    const pendingCount = await prisma.document.count({
+      where: { status: "READY", questions: { none: {} } },
+    });
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      let closed = false;
+    if (pendingCount === 0) {
+      return NextResponse.json({
+        message: "No hay documentos pendientes de generación de preguntas",
+        pendingCount: 0,
+      });
+    }
 
-      const send = (data: Record<string, unknown>) => {
-        if (closed) return;
-        try {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-          );
-        } catch {
-          closed = true;
-        }
-      };
+    // 🚀 Disparar procesamiento en background via after()
+    // Continúa ejecutándose aunque el cliente se desconecte
+    after(async () => {
+      await processQuestionsBatch();
+    });
 
-      // Heartbeat cada 5s para mantener la conexion viva en App Runner/ALB
-      // (App Runner corta conexiones idle después de ~120s, Opus puede tardar 60-90s por doc)
-      const heartbeat = setInterval(() => {
-        if (closed) { clearInterval(heartbeat); return; }
-        try {
-          controller.enqueue(encoder.encode(`: heartbeat\n\n`));
-        } catch {
-          closed = true;
-          clearInterval(heartbeat);
-        }
-      }, 5_000);
-
-      try {
-        // Re-query cada vez para obtener solo docs que AUN no tienen preguntas
-        // Esto permite reanudar automaticamente si la conexion se corto a mitad
-        const documents = await prisma.document.findMany({
-          where: { status: "READY", questions: { none: {} } },
-          select: { id: true, filename: true },
-          orderBy: { createdAt: "asc" },
-        });
-
-        if (documents.length === 0) {
-          send({ type: "complete", generated: 0, failed: 0, total: 0, message: "No hay documentos pendientes" });
-          clearInterval(heartbeat);
-          controller.close();
-          return;
-        }
-
-        // Only process up to BATCH_SIZE per connection
-        const batch = documents.slice(0, BATCH_SIZE);
-        const totalPending = documents.length;
-
-        send({ type: "start", totalDocuments: totalPending, batchSize: batch.length });
-
-        let generatedCount = 0;
-        let failedCount = 0;
-
-        for (let i = 0; i < batch.length; i++) {
-          if (closed) break;
-
-          const doc = batch[i];
-
-          send({
-            type: "progress",
-            documentId: doc.id,
-            filename: doc.filename,
-            index: i + 1,
-            total: documents.length,
-            message: `Generando preguntas: ${doc.filename}`,
-          });
-
-          try {
-            const chunks = await prisma.chunk.findMany({
-              where: { documentId: doc.id },
-              select: { content: true, pageNumber: true, chunkIndex: true },
-              orderBy: { chunkIndex: "asc" },
-            });
-
-            if (chunks.length === 0) {
-              send({
-                type: "document_error",
-                documentId: doc.id,
-                filename: doc.filename,
-                error: "Sin chunks procesados",
-              });
-              failedCount++;
-              continue;
-            }
-
-            const questions = await generateQuestionsForDocument(chunks, doc.filename);
-
-            await prisma.question.deleteMany({ where: { documentId: doc.id } });
-
-            const batchId = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-            const now = Date.now();
-            await prisma.question.createMany({
-              data: questions.map((q, idx) => ({
-                id: `q_${now}_${idx}_${Math.random().toString(36).slice(2, 8)}`,
-                documentId: doc.id,
-                questionNumber: q.questionNumber,
-                pregunta: q.pregunta,
-                periodoCode: q.periodoCode,
-                periodoNombre: q.periodoNombre,
-                periodoRango: q.periodoRango,
-                categoriaCode: q.categoriaCode,
-                categoriaNombre: q.categoriaNombre,
-                subcategoriaCode: q.subcategoriaCode,
-                subcategoriaNombre: q.subcategoriaNombre,
-                periodosRelacionados: q.periodosRelacionados,
-                categoriasRelacionadas: q.categoriasRelacionadas,
-                justificacion: q.justificacion,
-                batchId,
-              })),
-            });
-
-            send({
-              type: "document_complete",
-              documentId: doc.id,
-              filename: doc.filename,
-              questionsGenerated: questions.length,
-              index: i + 1,
-              total: batch.length,
-            });
-
-            generatedCount++;
-          } catch (error) {
-            console.error(`Error generating questions for ${doc.id} (${doc.filename}):`, error);
-            send({
-              type: "document_error",
-              documentId: doc.id,
-              filename: doc.filename,
-              error: error instanceof Error ? error.message : "Error desconocido",
-            });
-            failedCount++;
-          }
-
-          // Pausa entre documentos para evitar throttling de Bedrock
-          if (i < batch.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 5000));
-          }
-        }
-
-        // Calculate how many remain after this batch
-        const remaining = totalPending - generatedCount - failedCount;
-
-        send({
-          type: "complete",
-          generated: generatedCount,
-          failed: failedCount,
-          total: batch.length,
-          remaining,
-        });
-
-        clearInterval(heartbeat);
-        if (!closed) controller.close();
-      } catch (error) {
-        console.error("Error in batch question generation:", error);
-        send({
-          type: "error",
-          message: error instanceof Error ? error.message : "Error desconocido",
-        });
-        clearInterval(heartbeat);
-        if (!closed) controller.close();
-      }
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no",
-    },
-  });
+    return NextResponse.json({
+      message: `Generación de preguntas iniciada en background para hasta 20 de ${pendingCount} documentos pendientes`,
+      pendingCount,
+    });
+  } catch (error) {
+    console.error("Error starting batch question generation:", error);
+    return NextResponse.json(
+      { error: "Error al iniciar generación de preguntas" },
+      { status: 500 }
+    );
+  }
 }
