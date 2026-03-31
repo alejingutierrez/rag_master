@@ -144,7 +144,7 @@ function QuestionsContent() {
           />
         </div>
 
-        <div className="flex-1 min-w-0 overflow-hidden">
+        <div className="flex-1 min-w-0">
           {loading ? (
             <div className="grid gap-3">
               {Array.from({ length: 6 }).map((_, i) => (
