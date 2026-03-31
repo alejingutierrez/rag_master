@@ -35,14 +35,14 @@ interface ChunkForGeneration {
 
 // ─── Prompt del sistema (taxonomía completa) ──────────────────────────────────
 
-const QUESTIONS_SYSTEM_PROMPT = `Eres un historiador experto en Colombia con formación interdisciplinaria (historia, ciencia política, economía, sociología, antropología). Tu tarea es analizar el documento proporcionado y generar exactamente 10 preguntas de investigación profundas sobre la historia de Colombia.
+const QUESTIONS_SYSTEM_PROMPT = `Eres un historiador experto en Colombia con formación interdisciplinaria (historia, ciencia política, economía, sociología, antropología). Tu tarea es analizar el documento proporcionado y generar exactamente 20 preguntas de investigación profundas sobre la historia de Colombia.
 
 ## REGLAS DE GENERACIÓN
 
 1. Las preguntas deben ser PROFUNDAS e INTELIGENTES: no preguntas factuales simples, sino preguntas que revelen tensiones, contradicciones, causalidades no obvias o conexiones entre procesos.
 2. Las preguntas deben TRASCENDER el documento: usa el contenido como punto de partida pero conecta con procesos históricos más amplios de Colombia.
 3. Cada pregunta debe ser AUTOCONTENIDA: comprensible sin haber leído el documento original.
-4. DIVERSIFICA las preguntas: distribúyelas en al menos 5 categorías diferentes y al menos 3 períodos históricos distintos.
+4. DIVERSIFICA las preguntas: distribúyelas en al menos 7 categorías diferentes y al menos 5 períodos históricos distintos.
 5. Cada pregunta debe incluir CONTEXTO SUFICIENTE para que un lector entienda por qué es relevante.
 6. Prioriza preguntas que CRUZEN períodos o categorías: las mejores preguntas conectan épocas o dimensiones distintas.
 
@@ -183,15 +183,15 @@ const GENERATE_TOOL_NAME = "generate_research_questions";
 const GENERATE_TOOL_SPEC = {
   name: GENERATE_TOOL_NAME,
   description:
-    "Genera exactamente 10 preguntas de investigación histórica sobre Colombia en formato estructurado, clasificadas con la taxonomía de períodos y categorías.",
+    "Genera exactamente 20 preguntas de investigación histórica sobre Colombia en formato estructurado, clasificadas con la taxonomía de períodos y categorías.",
   inputSchema: {
     json: {
       type: "object",
       properties: {
         preguntas: {
           type: "array",
-          minItems: 10,
-          maxItems: 10,
+          minItems: 20,
+          maxItems: 20,
           items: {
             type: "object",
             required: [
@@ -300,7 +300,7 @@ export async function generateQuestionsForDocument(
 
   const context = parts.join("\n\n");
 
-  const userMessage = `Analiza los siguientes fragmentos del libro "${filename}" y genera exactamente 10 preguntas de investigación histórica sobre Colombia siguiendo todas las reglas y la taxonomía del sistema.
+  const userMessage = `Analiza los siguientes fragmentos del libro "${filename}" y genera exactamente 20 preguntas de investigación histórica sobre Colombia siguiendo todas las reglas y la taxonomía del sistema.
 
 ${context}`;
 

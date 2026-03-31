@@ -16,8 +16,8 @@ export default function GenerateQuestionsPage() {
         </Link>
         <h1 className="text-2xl font-bold text-foreground">Generar Preguntas</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Genera 10 preguntas de investigacion historica por documento usando Claude Opus.
-          El proceso tarda entre 20-45 segundos por libro.
+          Genera 20 preguntas de investigacion historica por documento usando Claude Opus.
+          El proceso tarda entre 30-60 segundos por libro.
         </p>
       </div>
 

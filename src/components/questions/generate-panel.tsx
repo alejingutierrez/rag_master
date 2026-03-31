@@ -243,7 +243,7 @@ export function GeneratePanel() {
               ) : hasQuestions ? (
                 <><RefreshCw className="h-4 w-4" /> Regenerar preguntas</>
               ) : (
-                <><BookOpen className="h-4 w-4" /> Generar 10 preguntas</>
+                <><BookOpen className="h-4 w-4" /> Generar 20 preguntas</>
               )}
             </button>
           </div>
@@ -284,7 +284,7 @@ export function GeneratePanel() {
         <div className="bg-surface border border-border rounded-lg p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-foreground">
-              {done ? `${generatedQuestions.length} preguntas generadas` : `Generando... ${generatedQuestions.length}/10`}
+              {done ? `${generatedQuestions.length} preguntas generadas` : `Generando... ${generatedQuestions.length}/20`}
             </h3>
             {done && (
               <Link href={selectedDoc ? `/questions?documentId=${selectedDoc}` : "/questions"} className="text-xs text-accent hover:text-accent/80 flex items-center gap-1 transition-colors">
