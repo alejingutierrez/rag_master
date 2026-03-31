@@ -41,6 +41,20 @@ function release(): void {
 }
 
 /**
+ * Returns the current queue depth (requests waiting for a slot).
+ */
+export function getQueueDepth(): number {
+  return queue.length;
+}
+
+/**
+ * Returns true if a slot is immediately available.
+ */
+export function isAvailable(): boolean {
+  return activeCount < MAX_CONCURRENT;
+}
+
+/**
  * Ejecuta una función con el semáforo adquirido.
  * Agrega jitter aleatorio (0-3s) antes de ejecutar para evitar
  * que requests encolados golpeen Bedrock todos al mismo instante.

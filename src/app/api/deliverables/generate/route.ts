@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
         }
       };
 
-      // Heartbeat cada 15s
+      // Heartbeat cada 5s para mantener conexión viva en App Runner/ALB
       const heartbeat = setInterval(() => {
         if (closed) {
           clearInterval(heartbeat);
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
           closed = true;
           clearInterval(heartbeat);
         }
-      }, 15_000);
+      }, 5_000);
 
       try {
         // Obtener la pregunta

@@ -46,7 +46,8 @@ export async function POST() {
         }
       };
 
-      // Heartbeat cada 15s para mantener la conexion viva en App Runner/ALB
+      // Heartbeat cada 5s para mantener la conexion viva en App Runner/ALB
+      // (App Runner corta conexiones idle después de ~120s, Opus puede tardar 60-90s por doc)
       const heartbeat = setInterval(() => {
         if (closed) { clearInterval(heartbeat); return; }
         try {
@@ -55,7 +56,7 @@ export async function POST() {
           closed = true;
           clearInterval(heartbeat);
         }
-      }, 15_000);
+      }, 5_000);
 
       try {
         // Re-query cada vez para obtener solo docs que AUN no tienen preguntas
