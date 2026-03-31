@@ -15,11 +15,29 @@ export async function POST(
 
   const stream = new ReadableStream({
     async start(controller) {
+      let closed = false;
+
       const send = (data: Record<string, unknown>) => {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-        );
+        if (closed) return;
+        try {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+          );
+        } catch {
+          closed = true;
+        }
       };
+
+      // Heartbeat cada 5s para mantener conexión viva en App Runner/ALB
+      const heartbeat = setInterval(() => {
+        if (closed) { clearInterval(heartbeat); return; }
+        try {
+          controller.enqueue(encoder.encode(`: heartbeat\n\n`));
+        } catch {
+          closed = true;
+          clearInterval(heartbeat);
+        }
+      }, 5_000);
 
       try {
         // 1. Verificar documento
@@ -30,7 +48,8 @@ export async function POST(
 
         if (!document) {
           send({ type: "error", message: "Documento no encontrado" });
-          controller.close();
+          clearInterval(heartbeat);
+          if (!closed) controller.close();
           return;
         }
 
@@ -51,7 +70,8 @@ export async function POST(
 
         if (chunks.length === 0) {
           send({ type: "error", message: "El documento no tiene chunks procesados" });
-          controller.close();
+          clearInterval(heartbeat);
+          if (!closed) controller.close();
           return;
         }
 
@@ -129,18 +149,16 @@ export async function POST(
           documentId,
         });
 
-        controller.close();
+        clearInterval(heartbeat);
+        if (!closed) controller.close();
       } catch (error) {
         console.error(`Error generating questions for ${documentId}:`, error);
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({
-              type: "error",
-              message: error instanceof Error ? error.message : "Error desconocido",
-            })}\n\n`
-          )
-        );
-        controller.close();
+        send({
+          type: "error",
+          message: error instanceof Error ? error.message : "Error desconocido",
+        });
+        clearInterval(heartbeat);
+        if (!closed) controller.close();
       }
     },
   });
@@ -150,6 +168,7 @@ export async function POST(
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }
