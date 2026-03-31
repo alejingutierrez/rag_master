@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { Sparkles, Loader2, CheckCircle2, AlertCircle, XCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,14 +36,13 @@ export function BatchGeneratePanel({
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [result, setResult] = useState<{ generated: number; failed: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [retrying, setRetrying] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
-  const totalProcessed = useRef(0);
+  const [retryInfo, setRetryInfo] = useState<{ count: number; active: boolean }>({ count: 0, active: false });
 
-  const readStream = useCallback(async (isRetry: boolean) => {
+  const eventsRef = useRef<BatchEvent[]>([]);
+  const totalProcessedRef = useRef(0);
+
+  async function runStream(isRetry: boolean): Promise<"complete" | "retry" | "error"> {
     const controller = new AbortController();
-    abortRef.current = controller;
 
     try {
       const response = await fetch("/api/questions/generate-batch", {
@@ -66,7 +65,6 @@ export function BatchGeneratePanel({
         buffer = lines.pop() ?? "";
 
         for (const line of lines) {
-          // Ignorar heartbeats SSE (lineas que empiezan con :)
           if (line.startsWith(":")) continue;
           if (!line.startsWith("data: ")) continue;
           try {
@@ -76,7 +74,6 @@ export function BatchGeneratePanel({
               if (!isRetry) {
                 setProgress({ current: 0, total: event.totalDocuments ?? 0 });
               } else {
-                // En retry, ajustar el total con los ya procesados
                 setProgress((prev) => ({
                   current: prev.current,
                   total: prev.current + (event.totalDocuments ?? 0),
@@ -89,7 +86,7 @@ export function BatchGeneratePanel({
               if (isRetry) {
                 setProgress((prev) => ({
                   ...prev,
-                  current: totalProcessed.current + (event.index ?? 0),
+                  current: totalProcessedRef.current + (event.index ?? 0),
                 }));
               } else {
                 setProgress((prev) => ({ ...prev, current: event.index ?? prev.current }));
@@ -97,116 +94,112 @@ export function BatchGeneratePanel({
             }
 
             if (event.type === "document_complete") {
-              setEvents((prev) => [...prev, event]);
-              totalProcessed.current++;
+              eventsRef.current = [...eventsRef.current, event];
+              setEvents(eventsRef.current);
+              totalProcessedRef.current++;
               if (isRetry) {
-                setProgress((prev) => ({
-                  ...prev,
-                  current: totalProcessed.current,
-                }));
+                setProgress((prev) => ({ ...prev, current: totalProcessedRef.current }));
               } else {
                 setProgress((prev) => ({ ...prev, current: event.index ?? prev.current }));
-                totalProcessed.current = event.index ?? totalProcessed.current;
+                totalProcessedRef.current = event.index ?? totalProcessedRef.current;
               }
             }
 
             if (event.type === "document_error") {
-              setEvents((prev) => [...prev, event]);
-              totalProcessed.current++;
+              eventsRef.current = [...eventsRef.current, event];
+              setEvents(eventsRef.current);
+              totalProcessedRef.current++;
             }
 
             if (event.type === "complete") {
               receivedComplete = true;
-              const totalGenerated = isRetry
-                ? events.filter((e) => e.type === "document_complete").length + (event.generated ?? 0)
-                : event.generated ?? 0;
-              const totalFailed = isRetry
-                ? events.filter((e) => e.type === "document_error").length + (event.failed ?? 0)
-                : event.failed ?? 0;
+              const prevCompleted = eventsRef.current.filter((e) => e.type === "document_complete").length;
+              const prevFailed = eventsRef.current.filter((e) => e.type === "document_error").length;
+              const totalGenerated = isRetry ? prevCompleted : (event.generated ?? 0);
+              const totalFailed = isRetry ? prevFailed : (event.failed ?? 0);
 
               setResult({
                 generated: totalGenerated,
                 failed: totalFailed,
                 total: totalGenerated + totalFailed,
               });
-              setRetryCount(0);
               onComplete();
+              return "complete";
             }
 
             if (event.type === "error") {
               setError(event.message ?? "Error desconocido");
+              return "error";
             }
           } catch {/* skip malformed */}
         }
       }
 
-      // Si el stream termino sin evento "complete", fue un corte de conexion
       if (!receivedComplete && !controller.signal.aborted) {
-        throw new Error("Conexion interrumpida");
-      }
-    } catch (err) {
-      if (controller.signal.aborted) return; // Cancelado por el usuario
-
-      const errMsg = err instanceof Error ? err.message : "Error de red";
-      const isNetworkError = errMsg.includes("fetch") || errMsg.includes("network") ||
-        errMsg.includes("Conexion interrumpida") || errMsg.includes("Failed") ||
-        errMsg.includes("abort") || errMsg.includes("TypeError");
-
-      if (isNetworkError && retryCount < MAX_RETRIES) {
-        // Auto-retry: el servidor re-query docs sin preguntas, saltando los ya procesados
-        setRetrying(true);
-        setError(null);
-        setRetryCount((prev) => prev + 1);
-
-        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
-        setRetrying(false);
-
-        // Reconectar — el servidor automaticamente salta documentos ya procesados
-        return readStream(true);
+        return "retry";
       }
 
-      setError(
-        retryCount >= MAX_RETRIES
-          ? `Conexion perdida despues de ${MAX_RETRIES} reintentos. Los documentos ya procesados se guardaron correctamente. Puedes reiniciar para continuar con los pendientes.`
-          : errMsg
-      );
+      return "complete";
+    } catch {
+      if (controller.signal.aborted) return "complete";
+      return "retry";
     }
-  }, [events, retryCount, onComplete]);
+  }
+
+  async function runWithRetry(isRetry: boolean) {
+    let attempt = 0;
+
+    while (attempt <= MAX_RETRIES) {
+      const result = await runStream(attempt > 0 || isRetry);
+
+      if (result === "complete" || result === "error") return;
+
+      attempt++;
+      if (attempt > MAX_RETRIES) {
+        setError(
+          `Conexion perdida despues de ${MAX_RETRIES} reintentos. Los documentos ya procesados se guardaron. Puedes reiniciar para continuar con los pendientes.`
+        );
+        return;
+      }
+
+      setRetryInfo({ count: attempt, active: true });
+      setError(null);
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+      setRetryInfo({ count: attempt, active: false });
+    }
+  }
 
   const handleGenerate = async () => {
     setGenerating(true);
     setEvents([]);
+    eventsRef.current = [];
     setCurrentDoc(null);
     setProgress({ current: 0, total: 0 });
     setResult(null);
     setError(null);
-    setRetryCount(0);
-    totalProcessed.current = 0;
+    setRetryInfo({ count: 0, active: false });
+    totalProcessedRef.current = 0;
 
-    await readStream(false);
+    await runWithRetry(false);
     setGenerating(false);
   };
 
   const handleRetryManual = async () => {
     setGenerating(true);
     setError(null);
-    setRetryCount(0);
+    setRetryInfo({ count: 0, active: false });
 
-    await readStream(true);
+    await runWithRetry(true);
     setGenerating(false);
   };
 
   return (
     <div className="space-y-4">
       {/* Action button */}
-      {pendingCount > 0 && !result && !generating && (
+      {pendingCount > 0 && !result && !generating && !error && (
         <button
           onClick={handleGenerate}
-          disabled={generating}
-          className={cn(
-            "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-            "bg-primary text-primary-foreground hover:bg-primary-hover"
-          )}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary-hover"
         >
           <Sparkles className="h-4 w-4" /> Generar preguntas para {pendingCount} documento{pendingCount !== 1 ? "s" : ""}
         </button>
@@ -217,7 +210,7 @@ export function BatchGeneratePanel({
         <div className="bg-surface border border-border rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              {retrying ? "Reconectando..." : `Procesando ${progress.current} de ${progress.total}`}
+              {retryInfo.active ? "Reconectando..." : `Procesando ${progress.current} de ${progress.total}`}
             </span>
             <span className="text-foreground font-mono">
               {Math.round((progress.current / progress.total) * 100)}%
@@ -229,10 +222,10 @@ export function BatchGeneratePanel({
               style={{ width: `${(progress.current / progress.total) * 100}%` }}
             />
           </div>
-          {retrying ? (
+          {retryInfo.active ? (
             <p className="text-xs text-warning">
               <RefreshCw className="inline h-3 w-3 animate-spin mr-1" />
-              Reconectando (intento {retryCount}/{MAX_RETRIES})...
+              Reconectando (intento {retryInfo.count}/{MAX_RETRIES})...
             </p>
           ) : currentDoc ? (
             <p className="text-xs text-muted-foreground truncate">
@@ -244,7 +237,7 @@ export function BatchGeneratePanel({
       )}
 
       {/* Generating indicator without progress */}
-      {generating && progress.total === 0 && !retrying && (
+      {generating && progress.total === 0 && !retryInfo.active && (
         <div className="bg-surface border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" /> Iniciando generacion...

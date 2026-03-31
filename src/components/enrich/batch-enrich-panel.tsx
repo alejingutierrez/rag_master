@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { Sparkles, Loader2, CheckCircle2, AlertCircle, XCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,14 +41,14 @@ export function BatchEnrichPanel({
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [result, setResult] = useState<{ enriched: number; failed: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [retrying, setRetrying] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
-  const totalProcessed = useRef(0);
+  const [retryInfo, setRetryInfo] = useState<{ count: number; active: boolean }>({ count: 0, active: false });
 
-  const readStream = useCallback(async (isRetry: boolean) => {
+  // Refs para valores mutables dentro del stream async (evitar closures obsoletos)
+  const eventsRef = useRef<BatchEvent[]>([]);
+  const totalProcessedRef = useRef(0);
+
+  async function runStream(isRetry: boolean): Promise<"complete" | "retry" | "error"> {
     const controller = new AbortController();
-    abortRef.current = controller;
 
     try {
       const response = await fetch("/api/documents/enrich-batch", {
@@ -71,7 +71,7 @@ export function BatchEnrichPanel({
         buffer = lines.pop() ?? "";
 
         for (const line of lines) {
-          if (line.startsWith(":")) continue; // Ignorar heartbeats
+          if (line.startsWith(":")) continue;
           if (!line.startsWith("data: ")) continue;
           try {
             const event: BatchEvent = JSON.parse(line.slice(6));
@@ -92,7 +92,7 @@ export function BatchEnrichPanel({
               if (isRetry) {
                 setProgress((prev) => ({
                   ...prev,
-                  current: totalProcessed.current + (event.index ?? 0),
+                  current: totalProcessedRef.current + (event.index ?? 0),
                 }));
               } else {
                 setProgress((prev) => ({ ...prev, current: event.index ?? prev.current }));
@@ -100,96 +100,105 @@ export function BatchEnrichPanel({
             }
 
             if (event.type === "document_complete") {
-              setEvents((prev) => [...prev, event]);
-              totalProcessed.current++;
+              eventsRef.current = [...eventsRef.current, event];
+              setEvents(eventsRef.current);
+              totalProcessedRef.current++;
               if (isRetry) {
-                setProgress((prev) => ({ ...prev, current: totalProcessed.current }));
+                setProgress((prev) => ({ ...prev, current: totalProcessedRef.current }));
               } else {
                 setProgress((prev) => ({ ...prev, current: event.index ?? prev.current }));
-                totalProcessed.current = event.index ?? totalProcessed.current;
+                totalProcessedRef.current = event.index ?? totalProcessedRef.current;
               }
             }
 
             if (event.type === "document_error") {
-              setEvents((prev) => [...prev, event]);
-              totalProcessed.current++;
+              eventsRef.current = [...eventsRef.current, event];
+              setEvents(eventsRef.current);
+              totalProcessedRef.current++;
             }
 
             if (event.type === "complete") {
               receivedComplete = true;
-              const totalEnriched = isRetry
-                ? events.filter((e) => e.type === "document_complete").length + (event.enriched ?? 0)
-                : event.enriched ?? 0;
-              const totalFailed = isRetry
-                ? events.filter((e) => e.type === "document_error").length + (event.failed ?? 0)
-                : event.failed ?? 0;
+              const prevCompleted = eventsRef.current.filter((e) => e.type === "document_complete").length;
+              const prevFailed = eventsRef.current.filter((e) => e.type === "document_error").length;
+              // En el ultimo segmento el server reporta sus propios counts
+              // Pero los acumulados son mas precisos
+              const totalEnriched = isRetry ? prevCompleted : (event.enriched ?? 0);
+              const totalFailed = isRetry ? prevFailed : (event.failed ?? 0);
 
               setResult({
                 enriched: totalEnriched,
                 failed: totalFailed,
                 total: totalEnriched + totalFailed,
               });
-              setRetryCount(0);
               onComplete();
+              return "complete";
             }
 
             if (event.type === "error") {
               setError(event.message ?? "Error desconocido");
+              return "error";
             }
           } catch {/* skip malformed */}
         }
       }
 
       if (!receivedComplete && !controller.signal.aborted) {
-        throw new Error("Conexion interrumpida");
-      }
-    } catch (err) {
-      if (controller.signal.aborted) return;
-
-      const errMsg = err instanceof Error ? err.message : "Error de red";
-      const isNetworkError = errMsg.includes("fetch") || errMsg.includes("network") ||
-        errMsg.includes("Conexion interrumpida") || errMsg.includes("Failed") ||
-        errMsg.includes("abort") || errMsg.includes("TypeError");
-
-      if (isNetworkError && retryCount < MAX_RETRIES) {
-        setRetrying(true);
-        setError(null);
-        setRetryCount((prev) => prev + 1);
-
-        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
-        setRetrying(false);
-
-        return readStream(true);
+        return "retry";
       }
 
-      setError(
-        retryCount >= MAX_RETRIES
-          ? `Conexion perdida despues de ${MAX_RETRIES} reintentos. Los documentos ya enriquecidos se guardaron correctamente. Puedes reiniciar para continuar con los pendientes.`
-          : errMsg
-      );
+      return "complete";
+    } catch {
+      if (controller.signal.aborted) return "complete";
+      return "retry";
     }
-  }, [events, retryCount, onComplete]);
+  }
+
+  async function runWithRetry(isRetry: boolean) {
+    let attempt = 0;
+
+    while (attempt <= MAX_RETRIES) {
+      const result = await runStream(attempt > 0 || isRetry);
+
+      if (result === "complete" || result === "error") return;
+
+      // Conexion cortada — reintentar
+      attempt++;
+      if (attempt > MAX_RETRIES) {
+        setError(
+          `Conexion perdida despues de ${MAX_RETRIES} reintentos. Los documentos ya enriquecidos se guardaron. Puedes reiniciar para continuar con los pendientes.`
+        );
+        return;
+      }
+
+      setRetryInfo({ count: attempt, active: true });
+      setError(null);
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+      setRetryInfo({ count: attempt, active: false });
+    }
+  }
 
   const handleEnrich = async () => {
     setEnriching(true);
     setEvents([]);
+    eventsRef.current = [];
     setCurrentDoc(null);
     setProgress({ current: 0, total: 0 });
     setResult(null);
     setError(null);
-    setRetryCount(0);
-    totalProcessed.current = 0;
+    setRetryInfo({ count: 0, active: false });
+    totalProcessedRef.current = 0;
 
-    await readStream(false);
+    await runWithRetry(false);
     setEnriching(false);
   };
 
   const handleRetryManual = async () => {
     setEnriching(true);
     setError(null);
-    setRetryCount(0);
+    setRetryInfo({ count: 0, active: false });
 
-    await readStream(true);
+    await runWithRetry(true);
     setEnriching(false);
   };
 
@@ -212,7 +221,7 @@ export function BatchEnrichPanel({
       </div>
 
       {/* Action button */}
-      {pendingCount > 0 && !result && !enriching && (
+      {pendingCount > 0 && !result && !enriching && !error && (
         <button
           onClick={handleEnrich}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary-hover"
@@ -226,7 +235,7 @@ export function BatchEnrichPanel({
         <div className="bg-surface border border-border rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              {retrying ? "Reconectando..." : `Procesando ${progress.current} de ${progress.total}`}
+              {retryInfo.active ? "Reconectando..." : `Procesando ${progress.current} de ${progress.total}`}
             </span>
             <span className="text-foreground font-mono">
               {Math.round((progress.current / progress.total) * 100)}%
@@ -238,10 +247,10 @@ export function BatchEnrichPanel({
               style={{ width: `${(progress.current / progress.total) * 100}%` }}
             />
           </div>
-          {retrying ? (
+          {retryInfo.active ? (
             <p className="text-xs text-warning">
               <RefreshCw className="inline h-3 w-3 animate-spin mr-1" />
-              Reconectando (intento {retryCount}/{MAX_RETRIES})...
+              Reconectando (intento {retryInfo.count}/{MAX_RETRIES})...
             </p>
           ) : currentDoc ? (
             <p className="text-xs text-muted-foreground truncate">
@@ -253,7 +262,7 @@ export function BatchEnrichPanel({
       )}
 
       {/* Enriching indicator without progress */}
-      {enriching && progress.total === 0 && !retrying && (
+      {enriching && progress.total === 0 && !retryInfo.active && (
         <div className="bg-surface border border-border rounded-lg p-4">
           <p className="text-sm text-muted-foreground flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" /> Iniciando enriquecimiento...
