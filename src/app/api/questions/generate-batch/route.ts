@@ -116,27 +116,25 @@ export async function POST() {
 
             const batchId = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-            for (const q of questions) {
-              await prisma.question.create({
-                data: {
-                  id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-                  documentId: doc.id,
-                  questionNumber: q.questionNumber,
-                  pregunta: q.pregunta,
-                  periodoCode: q.periodoCode,
-                  periodoNombre: q.periodoNombre,
-                  periodoRango: q.periodoRango,
-                  categoriaCode: q.categoriaCode,
-                  categoriaNombre: q.categoriaNombre,
-                  subcategoriaCode: q.subcategoriaCode,
-                  subcategoriaNombre: q.subcategoriaNombre,
-                  periodosRelacionados: q.periodosRelacionados,
-                  categoriasRelacionadas: q.categoriasRelacionadas,
-                  justificacion: q.justificacion,
-                  batchId,
-                },
-              });
-            }
+            await prisma.question.createMany({
+              data: questions.map((q) => ({
+                id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${q.questionNumber}`,
+                documentId: doc.id,
+                questionNumber: q.questionNumber,
+                pregunta: q.pregunta,
+                periodoCode: q.periodoCode,
+                periodoNombre: q.periodoNombre,
+                periodoRango: q.periodoRango,
+                categoriaCode: q.categoriaCode,
+                categoriaNombre: q.categoriaNombre,
+                subcategoriaCode: q.subcategoriaCode,
+                subcategoriaNombre: q.subcategoriaNombre,
+                periodosRelacionados: q.periodosRelacionados,
+                categoriasRelacionadas: q.categoriasRelacionadas,
+                justificacion: q.justificacion,
+                batchId,
+              })),
+            });
 
             send({
               type: "document_complete",
@@ -161,7 +159,7 @@ export async function POST() {
 
           // Pausa entre documentos para evitar throttling de Bedrock
           if (i < documents.length - 1) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await new Promise((resolve) => setTimeout(resolve, 5000));
           }
         }
 

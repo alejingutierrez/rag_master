@@ -205,7 +205,7 @@ const GENERATE_TOOL_SPEC = {
               "justificacion",
             ],
             properties: {
-              id: { type: "integer", minimum: 1, maximum: 10 },
+              id: { type: "integer", minimum: 1, maximum: 20 },
               pregunta: { type: "string", minLength: 20 },
               periodo_historico: {
                 type: "object",
@@ -323,7 +323,27 @@ ${context}`;
     },
   });
 
-  const response = await bedrock.send(command);
+  // Retry con backoff exponencial para throttling de Bedrock
+  let response;
+  const MAX_BEDROCK_RETRIES = 3;
+  for (let attempt = 0; attempt <= MAX_BEDROCK_RETRIES; attempt++) {
+    try {
+      response = await bedrock.send(command);
+      break;
+    } catch (err) {
+      const isThrottled =
+        err instanceof Error &&
+        (err.name === "ThrottlingException" ||
+          err.message.includes("throttl") ||
+          err.message.includes("Too many requests"));
+      if (!isThrottled || attempt === MAX_BEDROCK_RETRIES) throw err;
+      const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
+      console.warn(`Bedrock throttled (attempt ${attempt + 1}/${MAX_BEDROCK_RETRIES}), retrying in ${delay}ms...`);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+
+  if (!response) throw new Error("No response from Bedrock after retries");
 
   // Con tool use, Bedrock garantiza JSON válido conforme al schema
   const toolUseBlock = response.output?.message?.content?.find(
