@@ -190,6 +190,28 @@ export async function POST(request: NextRequest) {
           const templateId = templateIds[i];
           const template = getTemplateById(templateId)!;
 
+          // Verificar si ya existe un deliverable COMPLETE para esta pregunta+template
+          const existing = await prisma.deliverable.findUnique({
+            where: { questionId_templateId: { questionId, templateId } },
+          });
+
+          if (existing && existing.status === "COMPLETE") {
+            send({
+              type: "template_complete",
+              templateId,
+              templateName: template.name,
+              deliverableId: existing.id,
+              answerPreview:
+                existing.answer.slice(0, 150) +
+                (existing.answer.length > 150 ? "..." : ""),
+              index: i + 1,
+              total,
+              skipped: true,
+            });
+            generatedCount++;
+            continue;
+          }
+
           send({
             type: "template_start",
             templateId,
@@ -198,11 +220,19 @@ export async function POST(request: NextRequest) {
             total,
           });
 
-          // Crear deliverable en estado PENDING
-          const deliverable = await prisma.deliverable.create({
-            data: {
+          // Upsert: crear o actualizar (si existe con status ERROR, regenerar)
+          const deliverable = await prisma.deliverable.upsert({
+            where: { questionId_templateId: { questionId, templateId } },
+            create: {
               questionId,
               templateId,
+              status: "GENERATING",
+              batchId,
+              answer: "",
+              modelUsed: "",
+              chunksUsed: [],
+            },
+            update: {
               status: "GENERATING",
               batchId,
               answer: "",
