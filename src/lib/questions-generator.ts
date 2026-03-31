@@ -190,7 +190,7 @@ const GENERATE_TOOL_SPEC = {
       properties: {
         preguntas: {
           type: "array",
-          minItems: 20,
+          minItems: 1,
           maxItems: 20,
           items: {
             type: "object",
@@ -318,7 +318,7 @@ ${context}`;
       toolChoice: { tool: { name: GENERATE_TOOL_NAME } },
     },
     inferenceConfig: {
-      maxTokens: 8000,
+      maxTokens: 16000,
       temperature: 0.7,
     },
   });
@@ -331,12 +331,19 @@ ${context}`;
       response = await bedrock.send(command);
       break;
     } catch (err) {
-      const isThrottled =
+      const isRetryable =
         err instanceof Error &&
         (err.name === "ThrottlingException" ||
+          err.name === "ModelStreamErrorException" ||
+          err.name === "ModelTimeoutException" ||
+          err.name === "ServiceUnavailableException" ||
+          err.name === "InternalServerException" ||
           err.message.includes("throttl") ||
-          err.message.includes("Too many requests"));
-      if (!isThrottled || attempt === MAX_BEDROCK_RETRIES) throw err;
+          err.message.includes("Too many requests") ||
+          err.message.includes("timeout") ||
+          err.message.includes("ECONNRESET") ||
+          err.message.includes("socket hang up"));
+      if (!isRetryable || attempt === MAX_BEDROCK_RETRIES) throw err;
       const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
       console.warn(`Bedrock throttled (attempt ${attempt + 1}/${MAX_BEDROCK_RETRIES}), retrying in ${delay}ms...`);
       await new Promise((r) => setTimeout(r, delay));

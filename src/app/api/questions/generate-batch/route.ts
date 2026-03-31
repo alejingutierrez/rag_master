@@ -116,9 +116,10 @@ export async function POST() {
 
             const batchId = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
+            const now = Date.now();
             await prisma.question.createMany({
-              data: questions.map((q) => ({
-                id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${q.questionNumber}`,
+              data: questions.map((q, idx) => ({
+                id: `q_${now}_${idx}_${Math.random().toString(36).slice(2, 8)}`,
                 documentId: doc.id,
                 questionNumber: q.questionNumber,
                 pregunta: q.pregunta,

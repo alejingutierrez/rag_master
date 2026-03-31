@@ -83,10 +83,12 @@ export async function POST(
         // 5. Guardar preguntas con un batchId común
         const batchId = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-        for (const q of questions) {
+        const baseTs = Date.now();
+        for (let qi = 0; qi < questions.length; qi++) {
+          const q = questions[qi];
           const saved = await prisma.question.create({
             data: {
-              id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+              id: `q_${baseTs}_${qi}_${Math.random().toString(36).slice(2, 8)}`,
               documentId,
               questionNumber: q.questionNumber,
               pregunta: q.pregunta,
