@@ -11,4 +11,9 @@ export const awsConfig = {
       process.env.APP_SECRET_ACCESS_KEY ||
       "",
   },
+  // Timeout largo para Opus con contexto grande (80KB → puede tomar 60-90s)
+  requestHandler: {
+    requestTimeout: 180_000,    // 3 min timeout para la conexión HTTP
+    connectionTimeout: 10_000,  // 10s para establecer conexión
+  },
 };

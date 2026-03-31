@@ -3,6 +3,7 @@ import {
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 import { awsConfig } from "./aws-config";
+import { withBedrockSemaphore } from "./bedrock-semaphore";
 
 const bedrock = new BedrockRuntimeClient(awsConfig);
 
@@ -323,34 +324,33 @@ ${context}`;
     },
   });
 
-  // Retry con backoff exponencial para throttling de Bedrock
-  let response;
-  const MAX_BEDROCK_RETRIES = 3;
-  for (let attempt = 0; attempt <= MAX_BEDROCK_RETRIES; attempt++) {
-    try {
-      response = await bedrock.send(command);
-      break;
-    } catch (err) {
-      const isRetryable =
-        err instanceof Error &&
-        (err.name === "ThrottlingException" ||
-          err.name === "ModelStreamErrorException" ||
-          err.name === "ModelTimeoutException" ||
-          err.name === "ServiceUnavailableException" ||
-          err.name === "InternalServerException" ||
-          err.message.includes("throttl") ||
-          err.message.includes("Too many requests") ||
-          err.message.includes("timeout") ||
-          err.message.includes("ECONNRESET") ||
-          err.message.includes("socket hang up"));
-      if (!isRetryable || attempt === MAX_BEDROCK_RETRIES) throw err;
-      const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
-      console.warn(`Bedrock throttled (attempt ${attempt + 1}/${MAX_BEDROCK_RETRIES}), retrying in ${delay}ms...`);
-      await new Promise((r) => setTimeout(r, delay));
+  // Serializar acceso a Bedrock + retry con backoff exponencial
+  const response = await withBedrockSemaphore(async () => {
+    const MAX_BEDROCK_RETRIES = 3;
+    for (let attempt = 0; attempt <= MAX_BEDROCK_RETRIES; attempt++) {
+      try {
+        return await bedrock.send(command);
+      } catch (err) {
+        const isRetryable =
+          err instanceof Error &&
+          (err.name === "ThrottlingException" ||
+            err.name === "ModelStreamErrorException" ||
+            err.name === "ModelTimeoutException" ||
+            err.name === "ServiceUnavailableException" ||
+            err.name === "InternalServerException" ||
+            err.message.includes("throttl") ||
+            err.message.includes("Too many requests") ||
+            err.message.includes("timeout") ||
+            err.message.includes("ECONNRESET") ||
+            err.message.includes("socket hang up"));
+        if (!isRetryable || attempt === MAX_BEDROCK_RETRIES) throw err;
+        const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
+        console.warn(`Bedrock throttled (attempt ${attempt + 1}/${MAX_BEDROCK_RETRIES}), retrying in ${delay}ms...`);
+        await new Promise((r) => setTimeout(r, delay));
+      }
     }
-  }
-
-  if (!response) throw new Error("No response from Bedrock after retries");
+    throw new Error("No response from Bedrock after retries");
+  });
 
   // Con tool use, Bedrock garantiza JSON válido conforme al schema
   const toolUseBlock = response.output?.message?.content?.find(

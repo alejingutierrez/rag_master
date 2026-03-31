@@ -9,6 +9,7 @@ import {
   getTemplateById,
   DEFAULT_TEMPLATE_ID,
 } from "./chat-templates";
+import { withBedrockSemaphore } from "./bedrock-semaphore";
 
 const bedrock = new BedrockRuntimeClient(awsConfig);
 
@@ -50,37 +51,36 @@ export async function askClaude(
     },
   });
 
-  // Retry con backoff exponencial para errores transitorios de Bedrock
-  let response;
-  const MAX_RETRIES = 3;
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      response = await bedrock.send(command);
-      break;
-    } catch (err) {
-      const isRetryable =
-        err instanceof Error &&
-        (err.name === "ThrottlingException" ||
-          err.name === "ModelStreamErrorException" ||
-          err.name === "ModelTimeoutException" ||
-          err.name === "ServiceUnavailableException" ||
-          err.name === "InternalServerException" ||
-          err.message.includes("throttl") ||
-          err.message.includes("Too many requests") ||
-          err.message.includes("timeout") ||
-          err.message.includes("ECONNRESET") ||
-          err.message.includes("socket hang up"));
-      if (!isRetryable || attempt === MAX_RETRIES) throw err;
-      const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
-      console.warn(
-        `askClaude: Bedrock error (${err instanceof Error ? err.name : "unknown"}), ` +
-        `retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`
-      );
-      await new Promise((r) => setTimeout(r, delay));
+  // Serializar acceso a Bedrock + retry con backoff exponencial
+  const response = await withBedrockSemaphore(async () => {
+    const MAX_RETRIES = 3;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        return await bedrock.send(command);
+      } catch (err) {
+        const isRetryable =
+          err instanceof Error &&
+          (err.name === "ThrottlingException" ||
+            err.name === "ModelStreamErrorException" ||
+            err.name === "ModelTimeoutException" ||
+            err.name === "ServiceUnavailableException" ||
+            err.name === "InternalServerException" ||
+            err.message.includes("throttl") ||
+            err.message.includes("Too many requests") ||
+            err.message.includes("timeout") ||
+            err.message.includes("ECONNRESET") ||
+            err.message.includes("socket hang up"));
+        if (!isRetryable || attempt === MAX_RETRIES) throw err;
+        const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
+        console.warn(
+          `askClaude: Bedrock error (${err instanceof Error ? err.name : "unknown"}), ` +
+          `retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`
+        );
+        await new Promise((r) => setTimeout(r, delay));
+      }
     }
-  }
-
-  if (!response) throw new Error("No response from Bedrock after retries");
+    throw new Error("No response from Bedrock after retries");
+  });
 
   // Convertir el stream de Bedrock a un ReadableStream web
   const encoder = new TextEncoder();
