@@ -27,19 +27,39 @@ export async function GET() {
   }
 }
 
-// POST /api/questions/generate-batch — Generacion secuencial con SSE
+// POST /api/questions/generate-batch — Generacion secuencial con SSE + heartbeat
 export async function POST() {
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
+      let closed = false;
+
       const send = (data: Record<string, unknown>) => {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-        );
+        if (closed) return;
+        try {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+          );
+        } catch {
+          closed = true;
+        }
       };
 
+      // Heartbeat cada 15s para mantener la conexion viva en App Runner/ALB
+      const heartbeat = setInterval(() => {
+        if (closed) { clearInterval(heartbeat); return; }
+        try {
+          controller.enqueue(encoder.encode(`: heartbeat\n\n`));
+        } catch {
+          closed = true;
+          clearInterval(heartbeat);
+        }
+      }, 15_000);
+
       try {
+        // Re-query cada vez para obtener solo docs que AUN no tienen preguntas
+        // Esto permite reanudar automaticamente si la conexion se corto a mitad
         const documents = await prisma.document.findMany({
           where: { status: "READY", questions: { none: {} } },
           select: { id: true, filename: true },
@@ -48,6 +68,7 @@ export async function POST() {
 
         if (documents.length === 0) {
           send({ type: "complete", generated: 0, failed: 0, total: 0, message: "No hay documentos pendientes" });
+          clearInterval(heartbeat);
           controller.close();
           return;
         }
@@ -58,6 +79,8 @@ export async function POST() {
         let failedCount = 0;
 
         for (let i = 0; i < documents.length; i++) {
+          if (closed) break;
+
           const doc = documents[i];
 
           send({
@@ -70,7 +93,6 @@ export async function POST() {
           });
 
           try {
-            // Obtener chunks del documento
             const chunks = await prisma.chunk.findMany({
               where: { documentId: doc.id },
               select: { content: true, pageNumber: true, chunkIndex: true },
@@ -88,10 +110,8 @@ export async function POST() {
               continue;
             }
 
-            // Generar preguntas con Claude
             const questions = await generateQuestionsForDocument(chunks, doc.filename);
 
-            // Eliminar preguntas anteriores (safety) y guardar nuevas
             await prisma.question.deleteMany({ where: { documentId: doc.id } });
 
             const batchId = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -152,14 +172,16 @@ export async function POST() {
           total: documents.length,
         });
 
-        controller.close();
+        clearInterval(heartbeat);
+        if (!closed) controller.close();
       } catch (error) {
         console.error("Error in batch question generation:", error);
         send({
           type: "error",
           message: error instanceof Error ? error.message : "Error desconocido",
         });
-        controller.close();
+        clearInterval(heartbeat);
+        if (!closed) controller.close();
       }
     },
   });
@@ -169,6 +191,7 @@ export async function POST() {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }
