@@ -11,7 +11,7 @@ const bedrock = new BedrockRuntimeClient(awsConfig);
 // Opus se reserva para el chat RAG donde se necesita razonamiento profundo.
 const QUESTIONS_MODEL =
   process.env.BEDROCK_QUESTIONS_MODEL_ID ||
-  "us.anthropic.claude-sonnet-4-6-20250514-v1:0";
+  "us.anthropic.claude-sonnet-4-6";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
