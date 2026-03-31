@@ -42,8 +42,8 @@ export async function generateEmbedding(
           error.message.includes("throttl"));
 
       if (isThrottled && attempt < MAX_RETRIES - 1) {
-        // Backoff exponencial: 2s, 4s, 8s, 16s
-        const delay = Math.pow(2, attempt + 1) * 1000;
+        // Backoff exponencial: 5s, 10s, 20s, 40s + jitter
+        const delay = Math.pow(2, attempt) * 5000 + Math.random() * 3000;
         console.log(`Bedrock throttled, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})`);
         await sleep(delay);
         continue;
