@@ -132,14 +132,12 @@ model Conversation {
   id              String        @id @default(cuid())
   question        String
   answer          String
-  status          String        @default("COMPLETE")
   modelUsed       String
   templateId      String?
   chunksUsed      Json          @default("[]")
   configurationId String?
   configuration   Configuration? @relation(fields: [configurationId], references: [id])
   createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
 
   @@map("conversations")
 }
