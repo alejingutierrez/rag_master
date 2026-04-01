@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { ChatInterface } from "@/components/chat/chat-interface";
 import { ChunksModal } from "@/components/chat/chunks-modal";
@@ -40,11 +40,24 @@ export default function ChatPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(DEFAULT_TEMPLATE_ID);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
 
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const typeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+    };
+  }, []);
+
   const handleAsk = useCallback(async (question: string) => {
+    // Clear any existing timers
+    if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+    if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+
     setIsLoading(true);
     setStreamingText("");
     setCitations([]);
-
     setMessages((prev) => [...prev, { role: "user", content: question }]);
 
     try {
@@ -61,65 +74,65 @@ export default function ChatPage() {
       });
 
       if (!response.ok) {
-        let errorMsg = "Error al procesar la pregunta.";
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } catch {
-          if (response.status === 504) errorMsg = "La consulta tardo demasiado. Intenta con una pregunta mas corta.";
-          else if (response.status === 500) errorMsg = "Error interno del servidor. Verifica que Bedrock este disponible.";
-        }
-        setMessages((prev) => [...prev, { role: "assistant", content: errorMsg }]);
+        const errorData = await response.json().catch(() => ({}));
+        setMessages((prev) => [...prev, { role: "assistant", content: (errorData as { error?: string }).error || "Error al procesar la pregunta." }]);
         setIsLoading(false);
         return;
       }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-      let sseBuffer = "";
+      const { id, chunks, totalChunksUsed: total } = await response.json() as {
+        id: string;
+        chunks: ChunkCitation[];
+        totalChunksUsed: number;
+      };
+      setCitations(chunks || []);
+      setTotalChunksUsed(total || 0);
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          sseBuffer += decoder.decode(value, { stream: true });
-          const lines = sseBuffer.split("\n");
-          sseBuffer = lines.pop() ?? "";
+      // Poll until complete
+      pollTimerRef.current = setInterval(async () => {
+        try {
+          const poll = await fetch(`/api/chat/${id}`);
+          if (!poll.ok) return;
+          const data = await poll.json() as {
+            id: string;
+            status: string;
+            answer: string;
+            isDone: boolean;
+          };
 
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.chunks) {
-                setCitations(data.chunks);
-                setTotalChunksUsed(data.totalChunksUsed || data.chunks.length);
+          if (data.status === "COMPLETE" && data.answer) {
+            clearInterval(pollTimerRef.current!);
+            pollTimerRef.current = null;
+
+            // Fake streaming: reveal answer progressively
+            const fullAnswer: string = data.answer;
+            let charIndex = 0;
+            typeTimerRef.current = setInterval(() => {
+              charIndex = Math.min(charIndex + 30, fullAnswer.length);
+              setStreamingText(fullAnswer.slice(0, charIndex));
+              if (charIndex >= fullAnswer.length) {
+                clearInterval(typeTimerRef.current!);
+                typeTimerRef.current = null;
+                setMessages((prev) => [...prev, { role: "assistant", content: fullAnswer }]);
+                setStreamingText("");
+                setIsLoading(false);
               }
-              if (data.text) {
-                fullText += data.text;
-                setStreamingText(fullText);
-              }
-            } catch { /* ignore */ }
+            }, 30);
+          } else if (data.status === "ERROR") {
+            clearInterval(pollTimerRef.current!);
+            pollTimerRef.current = null;
+            setMessages((prev) => [...prev, { role: "assistant", content: data.answer || "Error al generar la respuesta." }]);
+            setStreamingText("");
+            setIsLoading(false);
           }
+        } catch {
+          // Network error during poll — will retry on next tick
         }
+      }, 2000);
 
-        if (sseBuffer.startsWith("data: ")) {
-          try {
-            const data = JSON.parse(sseBuffer.slice(6));
-            if (data.text) fullText += data.text;
-          } catch { /* ignore */ }
-        }
-      }
-
-      setMessages((prev) => [...prev, { role: "assistant", content: fullText }]);
-      setStreamingText("");
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Error de conexion. Verifica que el servidor este funcionando." },
-      ]);
-    } finally {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Error de conexión." }]);
       setIsLoading(false);
     }
   }, [selectedTemplateId]);
