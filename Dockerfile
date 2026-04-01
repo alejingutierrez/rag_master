@@ -35,6 +35,13 @@ COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
 # pdf-parse needs its worker file (not traced automatically in standalone mode)
 COPY --from=deps /app/node_modules/pdf-parse ./node_modules/pdf-parse
 
+# Migration script — runs on every container startup before the server starts.
+# Uses @prisma/client (already present) so no Prisma CLI needed.
+# All statements use IF NOT EXISTS → idempotent and safe to re-run.
+COPY scripts/apply-migrations.js ./scripts/apply-migrations.js
+
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+# Apply schema migrations first, then start the Next.js server.
+# apply-migrations.js always exits 0 so the server starts even if migrations fail.
+CMD ["sh", "-c", "node scripts/apply-migrations.js && node server.js"]

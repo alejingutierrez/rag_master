@@ -15,6 +15,21 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Body JSON inválido" }, { status: 400 });
   }
 
+  // Outer try/catch: catches any unexpected error (Prisma, Bedrock, etc.) and
+  // returns a JSON 500 with the actual message instead of a silent empty 500.
+  try {
+    return await handleChat(body);
+  } catch (error) {
+    console.error("POST /api/chat unhandled error:", error);
+    return Response.json(
+      { error: error instanceof Error ? error.message : "Error interno del servidor" },
+      { status: 500 }
+    );
+  }
+}
+
+async function handleChat(body: Record<string, unknown>) {
+
   const {
     question,
     topK = 50,
