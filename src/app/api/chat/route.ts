@@ -6,7 +6,12 @@ import { askClaude } from "@/lib/claude";
 
 export const maxDuration = 60;
 
-// POST /api/chat — Pipeline RAG: embedding + search + DB record, then Claude runs in background via after()
+// Prefijo que distingue un mensaje de error de una respuesta real.
+// No usar caracteres especiales que puedan aparecer en respuestas de Claude.
+const ERROR_PREFIX = "\u0000ERROR:";
+
+// POST /api/chat — RAG pipeline: embedding + search, crea registro, Claude corre en after().
+// No depende de columnas nuevas: usa answer="" (generando) / respuesta real (listo) / ERROR (fallo).
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown>;
   try {
@@ -15,12 +20,10 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Body JSON inválido" }, { status: 400 });
   }
 
-  // Outer try/catch: catches any unexpected error (Prisma, Bedrock, etc.) and
-  // returns a JSON 500 with the actual message instead of a silent empty 500.
   try {
     return await handleChat(body);
   } catch (error) {
-    console.error("POST /api/chat unhandled error:", error);
+    console.error("POST /api/chat error:", error);
     return Response.json(
       { error: error instanceof Error ? error.message : "Error interno del servidor" },
       { status: 500 }
@@ -29,7 +32,6 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleChat(body: Record<string, unknown>) {
-
   const {
     question,
     topK = 50,
@@ -52,13 +54,12 @@ async function handleChat(body: Record<string, unknown>) {
     return Response.json({ error: "Se requiere una pregunta" }, { status: 400 });
   }
 
-  // 1. Load config from DB if configurationId provided
+  // 1. Configuración
   let config = {
     topK: topK as number,
     similarityThreshold: similarityThreshold as number,
     maxTokens: maxTokens as number,
   };
-
   if (configurationId) {
     const dbConfig = await prisma.configuration.findUnique({
       where: { id: configurationId as string },
@@ -72,10 +73,10 @@ async function handleChat(body: Record<string, unknown>) {
     }
   }
 
-  // 2. Generate embedding
+  // 2. Embedding de la pregunta
   const queryEmbedding = await generateEmbedding(question, "search_query");
 
-  // 3. Search similar chunks
+  // 3. Búsqueda vectorial
   const chunks = await searchSimilarChunks(
     queryEmbedding,
     config.topK,
@@ -83,7 +84,6 @@ async function handleChat(body: Record<string, unknown>) {
     documentIds as string[] | undefined
   );
 
-  // 4. Return 404 if no chunks found
   if (chunks.length === 0) {
     return Response.json(
       {
@@ -94,7 +94,7 @@ async function handleChat(body: Record<string, unknown>) {
     );
   }
 
-  // 5. Build chunks metadata
+  // 4. Metadatos para el frontend
   const chunksMetadata = chunks.slice(0, 50).map((c) => ({
     id: c.id,
     documentId: c.documentId,
@@ -109,12 +109,13 @@ async function handleChat(body: Record<string, unknown>) {
     process.env.BEDROCK_CLAUDE_MODEL_ID ||
     "us.anthropic.claude-opus-4-6-20250610-v1:0";
 
-  // 6. Create conversation record with GENERATING status
+  // 5. Crear registro de conversación.
+  //    answer="" → generando  |  answer=texto → completo  |  answer=ERROR_PREFIX+msg → error
+  //    NO usa campos nuevos (status/updatedAt) para no depender de migraciones.
   const conversation = await prisma.conversation.create({
     data: {
       question,
-      answer: "",
-      status: "GENERATING",
+      answer: "",          // Vacío = todavía generando
       modelUsed,
       templateId: (templateId as string) || null,
       chunksUsed: chunksMetadata,
@@ -122,7 +123,8 @@ async function handleChat(body: Record<string, unknown>) {
     },
   });
 
-  // 7. Run Claude in background after response is sent
+  // 6. Claude corre en background — después de que el HTTP response es enviado.
+  //    Puede tardar varios minutos sin ningún timeout de conexión activo.
   after(async () => {
     try {
       const claudeStream = await askClaude(
@@ -139,39 +141,33 @@ async function handleChat(body: Record<string, unknown>) {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
         const text = decoder.decode(value, { stream: true });
         for (const line of text.split("\n")) {
           if (!line.startsWith("data: ")) continue;
           try {
             const data = JSON.parse(line.slice(6)) as Record<string, unknown>;
-            if (typeof data.text === "string") {
-              fullAnswer += data.text;
-            }
-          } catch {
-            // Ignore non-JSON lines
-          }
+            if (typeof data.text === "string") fullAnswer += data.text;
+          } catch { /* líneas no-JSON */ }
         }
       }
 
       await prisma.conversation.update({
         where: { id: conversation.id },
-        data: { answer: fullAnswer, status: "COMPLETE" },
+        data: { answer: fullAnswer },
       });
     } catch (error) {
       console.error("Background Claude error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Error al generar respuesta";
+      const msg = error instanceof Error ? error.message : "Error al generar respuesta";
       await prisma.conversation
         .update({
           where: { id: conversation.id },
-          data: { status: "ERROR", answer: errorMessage },
+          data: { answer: ERROR_PREFIX + msg },
         })
-        .catch((e) => console.error("Error updating conversation status:", e));
+        .catch((e) => console.error("Error saving error state:", e));
     }
   });
 
-  // 8. Return immediately with id and chunks
+  // 7. Devolver en < 5s — el cliente empieza a hacer polling con el id.
   return Response.json({
     id: conversation.id,
     chunks: chunksMetadata,
