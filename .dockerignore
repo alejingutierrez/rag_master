@@ -7,3 +7,4 @@ node_modules
 *.md
 .DS_Store
 scripts/
+!scripts/apply-migrations.js

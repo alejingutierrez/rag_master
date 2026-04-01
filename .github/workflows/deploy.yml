@@ -24,25 +24,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Migraciones: se intentan desde CI (rápido si la DB es accesible).
-      # Si la DB no es accesible desde GitHub Actions (VPC/whitelist),
-      # el paso falla silenciosamente y la migración corre en el startup del contenedor
-      # vía scripts/apply-migrations.js (antes de node server.js en el Dockerfile CMD).
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Apply database migrations (best-effort from CI)
-        continue-on-error: true
-        run: npx prisma db execute --file ./prisma/migrations/20260331000001_add_conversation_status/migration.sql --schema ./prisma/schema.prisma
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:

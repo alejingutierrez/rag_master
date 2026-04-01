@@ -43,5 +43,4 @@ COPY scripts/apply-migrations.js ./scripts/apply-migrations.js
 EXPOSE 3000
 
 # Apply schema migrations first, then start the Next.js server.
-# apply-migrations.js always exits 0 so the server starts even if migrations fail.
 CMD ["sh", "-c", "node scripts/apply-migrations.js && node server.js"]

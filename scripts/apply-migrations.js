@@ -7,9 +7,11 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const MIGRATIONS = [
-  // 2026-03-31: add status + updatedAt to conversations for polling architecture
+  // 2026-03-31: add status + updatedAt to conversations (legacy — kept for idempotency)
   `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'COMPLETE'`,
   `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+  // 2026-04-01: add templateId to conversations (was in schema but missing from DB)
+  `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS "templateId" TEXT`,
 ];
 
 async function main() {
