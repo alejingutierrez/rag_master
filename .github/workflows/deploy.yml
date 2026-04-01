@@ -24,6 +24,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Correr migraciones ANTES del deploy para que el nuevo código encuentre las columnas listas.
+      # Usamos prisma db execute (no migrate deploy) porque los nombres de migración previos
+      # son no-estándar y el SQL tiene IF NOT EXISTS — seguro correrlo múltiples veces.
+      - name: Set up Node.js for migrations
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply database migrations
+        run: npx prisma db execute --file ./prisma/migrations/20260331000001_add_conversation_status/migration.sql --schema ./prisma/schema.prisma
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
