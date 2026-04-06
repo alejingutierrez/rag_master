@@ -13,39 +13,47 @@ export const maxDuration = 300;
 
 // GET /api/documents - Listar documentos
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
-  const status = searchParams.get("status");
-  const enriched = searchParams.get("enriched");
+  try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const status = searchParams.get("status");
+    const enriched = searchParams.get("enriched");
 
-  const where = {
-    ...(status && { status: status as "PENDING" | "PROCESSING" | "READY" | "ERROR" }),
-    ...(enriched !== null && enriched !== undefined && enriched !== "" && { enriched: enriched === "true" }),
-  };
+    const where = {
+      ...(status && { status: status as "PENDING" | "PROCESSING" | "READY" | "ERROR" }),
+      ...(enriched !== null && enriched !== undefined && enriched !== "" && { enriched: enriched === "true" }),
+    };
 
-  const [documents, total] = await Promise.all([
-    prisma.document.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-      include: {
-        _count: { select: { chunks: true } },
+    const [documents, total] = await Promise.all([
+      prisma.document.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          _count: { select: { chunks: true } },
+        },
+      }),
+      prisma.document.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      documents,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-    }),
-    prisma.document.count({ where }),
-  ]);
-
-  return NextResponse.json({
-    documents,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Error listing documents:", error);
+    return NextResponse.json(
+      { error: "Error al listar documentos" },
+      { status: 500 }
+    );
+  }
 }
 
 // POST /api/documents - Parsear PDF, chunkear y guardar chunks (sin embeddings)
