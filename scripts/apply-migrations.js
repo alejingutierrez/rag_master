@@ -12,6 +12,9 @@ const MIGRATIONS = [
   `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
   // 2026-04-01: add templateId to conversations (was in schema but missing from DB)
   `ALTER TABLE conversations ADD COLUMN IF NOT EXISTS "templateId" TEXT`,
+  // 2026-04-06: add fileHash to documents for duplicate detection
+  `ALTER TABLE documents ADD COLUMN IF NOT EXISTS "fileHash" TEXT`,
+  `CREATE INDEX IF NOT EXISTS "documents_fileHash_idx" ON documents ("fileHash")`,
 ];
 
 async function main() {

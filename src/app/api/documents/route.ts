@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 // Los embeddings se generan por lotes via POST /api/documents/[id]/process
 export async function POST(request: NextRequest) {
   try {
-    const { s3Key, s3Url, filename, fileSize, chunkSize, chunkOverlap, strategy } =
+    const { s3Key, s3Url, filename, fileSize, fileHash, chunkSize, chunkOverlap, strategy } =
       await request.json();
 
     if (!s3Key || !filename) {
@@ -62,6 +62,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verificar duplicado por hash (segunda barrera — la primera es el frontend)
+    if (fileHash) {
+      const existing = await prisma.document.findFirst({
+        where: { fileHash, status: { not: "ERROR" } },
+        select: { id: true, filename: true },
+      });
+      if (existing) {
+        return NextResponse.json(
+          { error: `Documento duplicado: "${existing.filename}" ya tiene el mismo contenido` },
+          { status: 422 }
+        );
+      }
+    }
+
     // 1. Crear documento en estado PROCESSING
     const document = await prisma.document.create({
       data: {
@@ -69,6 +83,7 @@ export async function POST(request: NextRequest) {
         s3Key,
         s3Url: s3Url || "",
         fileSize: fileSize || 0,
+        fileHash: fileHash || null,
         status: "PROCESSING",
       },
     });

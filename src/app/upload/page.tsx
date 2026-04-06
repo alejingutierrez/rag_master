@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { Dropzone } from "@/components/upload/dropzone";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,18 @@ import {
   CheckCircle,
   AlertCircle,
   FileText,
+  Copy,
 } from "lucide-react";
 
-type FileStatus = "pending" | "uploading" | "processing" | "embedding" | "success" | "error";
+type FileStatus =
+  | "pending"
+  | "hashing"
+  | "uploading"
+  | "processing"
+  | "embedding"
+  | "success"
+  | "error"
+  | "duplicate";
 
 interface FileUploadState {
   file: File;
@@ -21,6 +30,7 @@ interface FileUploadState {
   message: string;
   chunkCount?: number;
   embeddingProgress?: { processed: number; total: number };
+  retryCount?: number;
 }
 
 const CHUNK_CONFIG = {
@@ -29,13 +39,76 @@ const CHUNK_CONFIG = {
   strategy: "FIXED",
 } as const;
 
+// --- Configuración de robustez ---
+const CONCURRENCY = 2; // Reducido de 4 a 2 para evitar saturar el backend en AWS
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY = 2000; // 2s base para backoff exponencial
+const POLLING_INTERVAL = 4000; // 4s entre polls
+const POLLING_TIMEOUT = 20 * 60 * 1000; // 20 minutos max de polling
+
+// --- Utilidades ---
+
+async function computeFileHash(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = MAX_RETRIES
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+
+      // Solo reintentar en errores de servidor (502, 503, 504) o rate limit (429)
+      if (res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504) {
+        if (attempt < maxRetries) {
+          const delay = RETRY_BASE_DELAY * Math.pow(2, attempt) + Math.random() * 1000;
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+      }
+
+      return res;
+    } catch (err) {
+      // Error de red (fetch failed, timeout, etc.)
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < maxRetries) {
+        const delay = RETRY_BASE_DELAY * Math.pow(2, attempt) + Math.random() * 1000;
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+    }
+  }
+
+  throw lastError || new Error("Fetch failed after retries");
+}
+
 export default function UploadPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [uploadStates, setUploadStates] = useState<FileUploadState[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const abortRef = useRef(false);
+
+  // Set de hashes ya subidos en esta sesión (para detectar duplicados locales)
+  const sessionHashesRef = useRef<Set<string>>(new Set());
 
   const handleFilesSelect = useCallback((newFiles: File[]) => {
-    setFiles((prev) => [...prev, ...newFiles]);
+    setFiles((prev) => {
+      // Filtrar duplicados por nombre+tamaño dentro de la lista actual
+      const existing = new Set(prev.map((f) => `${f.name}|${f.size}`));
+      const unique = newFiles.filter((f) => !existing.has(`${f.name}|${f.size}`));
+      if (unique.length < newFiles.length) {
+        // Algunos archivos ya estaban seleccionados
+      }
+      return [...prev, ...unique];
+    });
   }, []);
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -45,12 +118,11 @@ export default function UploadPage() {
   const handleClear = useCallback(() => {
     setFiles([]);
     setUploadStates([]);
+    abortRef.current = false;
+    sessionHashesRef.current.clear();
   }, []);
 
-  const updateFileState = (
-    index: number,
-    update: Partial<FileUploadState>
-  ) => {
+  const updateFileState = (index: number, update: Partial<FileUploadState>) => {
     setUploadStates((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], ...update };
@@ -58,14 +130,48 @@ export default function UploadPage() {
     });
   };
 
-  const uploadSingleFile = async (
-    file: File,
-    index: number
-  ): Promise<void> => {
-    try {
-      updateFileState(index, { status: "uploading", message: "Subiendo a S3..." });
+  const uploadSingleFile = async (file: File, index: number): Promise<void> => {
+    if (abortRef.current) return;
 
-      const presignRes = await fetch("/api/documents/presign", {
+    try {
+      // --- Paso 0: Calcular hash para detección de duplicados ---
+      updateFileState(index, { status: "hashing", message: "Verificando duplicados..." });
+
+      const fileHash = await computeFileHash(file);
+
+      // Verificar duplicado local (misma sesión de carga)
+      if (sessionHashesRef.current.has(fileHash)) {
+        updateFileState(index, {
+          status: "duplicate",
+          message: "Archivo duplicado (mismo contenido que otro archivo en esta carga)",
+        });
+        return;
+      }
+
+      // Verificar duplicado en el servidor
+      const checkRes = await fetchWithRetry("/api/documents/check-duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileHash, filename: file.name }),
+      });
+
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData.isDuplicate) {
+          updateFileState(index, {
+            status: "duplicate",
+            message: `Documento ya existe: "${checkData.existingFilename}" (subido el ${new Date(checkData.createdAt).toLocaleDateString()})`,
+          });
+          return;
+        }
+      }
+
+      sessionHashesRef.current.add(fileHash);
+
+      // --- Paso 1: Obtener presigned URL (con retry) ---
+      updateFileState(index, { status: "uploading", message: "Obteniendo URL de subida..." });
+
+      const presignRes = await fetchWithRetry("/api/documents/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filename: file.name, contentType: file.type }),
@@ -74,27 +180,41 @@ export default function UploadPage() {
       if (!presignRes.ok) throw new Error("Error al obtener URL de subida");
       const { url, s3Key, s3Url } = await presignRes.json();
 
-      const uploadRes = await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
+      // --- Paso 2: Subir a S3 (con retry) ---
+      updateFileState(index, { status: "uploading", message: "Subiendo a S3..." });
 
-      if (!uploadRes.ok) throw new Error("Error al subir a S3");
+      const uploadRes = await fetchWithRetry(
+        url,
+        {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        },
+        MAX_RETRIES
+      );
 
+      if (!uploadRes.ok) throw new Error(`Error al subir a S3 (${uploadRes.status})`);
+
+      // --- Paso 3: Procesar PDF en servidor (con retry) ---
       updateFileState(index, { status: "processing", message: "Parseando PDF y creando chunks..." });
 
-      const processRes = await fetch("/api/documents", {
+      const processRes = await fetchWithRetry("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          s3Key, s3Url, filename: file.name, fileSize: file.size,
-          chunkSize: CHUNK_CONFIG.chunkSize, chunkOverlap: CHUNK_CONFIG.chunkOverlap, strategy: CHUNK_CONFIG.strategy,
+          s3Key,
+          s3Url,
+          filename: file.name,
+          fileSize: file.size,
+          fileHash,
+          chunkSize: CHUNK_CONFIG.chunkSize,
+          chunkOverlap: CHUNK_CONFIG.chunkOverlap,
+          strategy: CHUNK_CONFIG.strategy,
         }),
       });
 
       if (!processRes.ok) {
-        const error = await processRes.json();
+        const error = await processRes.json().catch(() => ({ error: `Error ${processRes.status}` }));
         throw new Error(error.error || "Error al procesar");
       }
 
@@ -102,23 +222,51 @@ export default function UploadPage() {
       const documentId = data.document.id;
       const chunkCount = data.document._count?.chunks ?? 0;
 
-      // Disparar procesamiento server-side (continúa aunque cierre el navegador)
-      await fetch(`/api/documents/${documentId}/process`, { method: "POST" });
+      // --- Paso 4: Disparar procesamiento de embeddings ---
+      await fetchWithRetry(`/api/documents/${documentId}/process`, { method: "POST" });
 
       updateFileState(index, {
-        status: "embedding", message: `Generando embeddings en servidor: 0/${chunkCount}`,
-        chunkCount, embeddingProgress: { processed: 0, total: chunkCount },
+        status: "embedding",
+        message: `Generando embeddings en servidor: 0/${chunkCount}`,
+        chunkCount,
+        embeddingProgress: { processed: 0, total: chunkCount },
       });
 
-      // Polling ligero para mostrar progreso — si se cierra la pestaña,
-      // el servidor sigue procesando igual
-      while (true) {
-        await new Promise((r) => setTimeout(r, 3000));
+      // --- Paso 5: Polling de progreso con timeout ---
+      const pollingStart = Date.now();
+      let consecutiveErrors = 0;
+
+      while (!abortRef.current) {
+        await new Promise((r) => setTimeout(r, POLLING_INTERVAL));
+
+        // Timeout de seguridad
+        if (Date.now() - pollingStart > POLLING_TIMEOUT) {
+          updateFileState(index, {
+            status: "success",
+            message: `${chunkCount} chunks — embeddings continuando en servidor`,
+            chunkCount,
+          });
+          return;
+        }
 
         try {
           const progressRes = await fetch(`/api/documents/${documentId}/process`);
-          if (!progressRes.ok) continue;
 
+          if (!progressRes.ok) {
+            consecutiveErrors++;
+            if (consecutiveErrors >= 10) {
+              // Demasiados errores seguidos, pero el servidor sigue procesando
+              updateFileState(index, {
+                status: "success",
+                message: `Embeddings continuando en background (sin conexión de polling)`,
+                chunkCount,
+              });
+              return;
+            }
+            continue;
+          }
+
+          consecutiveErrors = 0;
           const progress = await progressRes.json();
 
           updateFileState(index, {
@@ -129,19 +277,30 @@ export default function UploadPage() {
           if (progress.status === "READY") break;
           if (progress.status === "ERROR") throw new Error("Error al generar embeddings");
         } catch (e) {
-          // Si el polling falla, el servidor sigue procesando — simplemente reintentar
           if (e instanceof Error && e.message === "Error al generar embeddings") throw e;
+          consecutiveErrors++;
+          if (consecutiveErrors >= 10) {
+            updateFileState(index, {
+              status: "success",
+              message: `Embeddings continuando en background`,
+              chunkCount,
+            });
+            return;
+          }
           continue;
         }
       }
 
       updateFileState(index, {
-        status: "success", message: `${chunkCount} chunks con embeddings`,
-        chunkCount, embeddingProgress: { processed: chunkCount, total: chunkCount },
+        status: "success",
+        message: `${chunkCount} chunks con embeddings`,
+        chunkCount,
+        embeddingProgress: { processed: chunkCount, total: chunkCount },
       });
     } catch (error) {
       updateFileState(index, {
-        status: "error", message: error instanceof Error ? error.message : "Error desconocido",
+        status: "error",
+        message: error instanceof Error ? error.message : "Error desconocido",
       });
     }
   };
@@ -149,17 +308,19 @@ export default function UploadPage() {
   const handleUploadAll = async () => {
     if (files.length === 0) return;
     setIsProcessing(true);
+    abortRef.current = false;
 
     const initialStates: FileUploadState[] = files.map((file) => ({
-      file, status: "pending" as FileStatus, message: "En cola...",
+      file,
+      status: "pending" as FileStatus,
+      message: "En cola...",
     }));
     setUploadStates(initialStates);
 
-    const CONCURRENCY = 4;
     const queue = [...files.map((f, i) => ({ file: f, index: i }))];
 
     const workers = Array.from({ length: CONCURRENCY }, async () => {
-      while (queue.length > 0) {
+      while (queue.length > 0 && !abortRef.current) {
         const item = queue.shift();
         if (!item) break;
         await uploadSingleFile(item.file, item.index);
@@ -172,6 +333,7 @@ export default function UploadPage() {
 
   const successCount = uploadStates.filter((s) => s.status === "success").length;
   const errorCount = uploadStates.filter((s) => s.status === "error").length;
+  const duplicateCount = uploadStates.filter((s) => s.status === "duplicate").length;
   const totalChunks = uploadStates.reduce((sum, s) => sum + (s.chunkCount || 0), 0);
 
   return (
@@ -205,6 +367,9 @@ export default function UploadPage() {
                     {errorCount > 0 && (
                       <span className="text-destructive ml-2">{errorCount} con error.</span>
                     )}
+                    {duplicateCount > 0 && (
+                      <span className="text-muted-foreground ml-2">{duplicateCount} duplicados omitidos.</span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -218,22 +383,31 @@ export default function UploadPage() {
                     ? "bg-success-muted/50 border-success/20"
                     : state.status === "error"
                       ? "bg-destructive-muted/50 border-destructive/20"
-                      : "bg-surface border-border"
+                      : state.status === "duplicate"
+                        ? "bg-warning-muted/50 border-warning/20"
+                        : "bg-surface border-border"
                 }`}
               >
                 {state.status === "pending" && <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />}
-                {(state.status === "uploading" || state.status === "processing" || state.status === "embedding") && (
+                {(state.status === "hashing" || state.status === "uploading" || state.status === "processing" || state.status === "embedding") && (
                   <Loader2 className="h-5 w-5 text-info animate-spin flex-shrink-0" />
                 )}
                 {state.status === "success" && <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />}
                 {state.status === "error" && <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />}
+                {state.status === "duplicate" && <Copy className="h-5 w-5 text-warning flex-shrink-0" />}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground truncate">{state.file.name}</p>
-                  <p className={`text-xs ${
-                    state.status === "success" ? "text-success"
-                    : state.status === "error" ? "text-destructive"
-                    : "text-muted-foreground"
-                  }`}>
+                  <p
+                    className={`text-xs ${
+                      state.status === "success"
+                        ? "text-success"
+                        : state.status === "error"
+                          ? "text-destructive"
+                          : state.status === "duplicate"
+                            ? "text-warning"
+                            : "text-muted-foreground"
+                    }`}
+                  >
                     {state.message}
                   </p>
                   {state.status === "embedding" && state.embeddingProgress && (
@@ -259,9 +433,14 @@ export default function UploadPage() {
         {uploadStates.length === 0 && (
           <Button onClick={handleUploadAll} disabled={files.length === 0 || isProcessing} className="w-full" size="lg">
             {isProcessing ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Procesando...</>
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Procesando...
+              </>
             ) : (
-              <><Upload className="h-4 w-4" /> Subir y Procesar {files.length > 0 ? `${files.length} PDF${files.length > 1 ? "s" : ""}` : "PDFs"}</>
+              <>
+                <Upload className="h-4 w-4" /> Subir y Procesar{" "}
+                {files.length > 0 ? `${files.length} PDF${files.length > 1 ? "s" : ""}` : "PDFs"}
+              </>
             )}
           </Button>
         )}
