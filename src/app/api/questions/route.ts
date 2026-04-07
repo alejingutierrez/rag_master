@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20")));
   const includeStats = searchParams.get("includeStats") === "true";
   const includeDeliverables = searchParams.get("includeDeliverables") === "true";
+  const sortBy = searchParams.get("sortBy") || "default";
 
   try {
     const where = {
@@ -45,7 +46,14 @@ export async function GET(request: NextRequest) {
             },
           }),
         },
-        orderBy: [{ createdAt: "desc" }, { questionNumber: "asc" }],
+        orderBy:
+          sortBy === "periodo"
+            ? [{ periodoCode: "asc" }, { ordenPeriodo: { sort: "asc" as const, nulls: "last" as const } }]
+            : sortBy === "categoria"
+              ? [{ categoriaCode: "asc" }, { ordenCategoria: { sort: "asc" as const, nulls: "last" as const } }]
+              : sortBy === "subcategoria"
+                ? [{ subcategoriaCode: "asc" }, { ordenSubcategoria: { sort: "asc" as const, nulls: "last" as const } }]
+                : [{ createdAt: "desc" }, { questionNumber: "asc" }],
         skip: (page - 1) * limit,
         take: limit,
       }),

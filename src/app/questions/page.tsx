@@ -30,6 +30,12 @@ interface Question {
   justificacion: string;
   document: { id: string; filename: string };
   createdAt: string;
+  ordenPeriodo?: number | null;
+  ordenCategoria?: number | null;
+  ordenSubcategoria?: number | null;
+  temaPeriodo?: string | null;
+  temaCategoria?: string | null;
+  temaSubcategoria?: string | null;
 }
 
 interface StatsData {
@@ -49,6 +55,7 @@ function QuestionsContent() {
     categoria: "",
     subcategoria: "",
     search: "",
+    sortBy: "",
   });
   const [questions, setQuestions] = useState<Question[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -94,6 +101,7 @@ function QuestionsContent() {
       if (filters.categoria) params.set("categoria", filters.categoria);
       if (filters.subcategoria) params.set("subcategoria", filters.subcategoria);
       if (filters.search) params.set("search", filters.search);
+      if (filters.sortBy) params.set("sortBy", filters.sortBy);
       params.set("page", String(page));
       params.set("limit", String(LIMIT));
 

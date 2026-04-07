@@ -74,6 +74,14 @@ model Question {
   periodosRelacionados   String[]
   categoriasRelacionadas String[]
 
+  // Ordenamiento inteligente (asignado por scripts/order-questions.mts)
+  ordenPeriodo           Int?
+  ordenCategoria         Int?
+  ordenSubcategoria      Int?
+  temaPeriodo            String?
+  temaCategoria          String?
+  temaSubcategoria       String?
+
   justificacion          String   @db.Text
 
   // Agrupación por batch de generación
@@ -89,6 +97,9 @@ model Question {
   @@index([categoriaCode])
   @@index([subcategoriaCode])
   @@index([batchId])
+  @@index([periodoCode, ordenPeriodo])
+  @@index([categoriaCode, ordenCategoria])
+  @@index([subcategoriaCode, ordenSubcategoria])
   @@map("questions")
 }
 

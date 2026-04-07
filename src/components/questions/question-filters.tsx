@@ -9,6 +9,7 @@ export interface FilterState {
   categoria: string;
   subcategoria: string;
   search: string;
+  sortBy: string;
 }
 
 interface QuestionFiltersProps {
@@ -177,7 +178,7 @@ export function QuestionFilters({
   documents,
 }: QuestionFiltersProps) {
   const hasFilters =
-    filters.documentId || filters.periodo || filters.categoria || filters.subcategoria || filters.search;
+    filters.documentId || filters.periodo || filters.categoria || filters.subcategoria || filters.search || filters.sortBy;
 
   const update = (partial: Partial<FilterState>) =>
     onFiltersChange({ ...filters, ...partial });
@@ -237,9 +238,19 @@ export function QuestionFilters({
         </select>
       )}
 
+      {/* Separador visual */}
+      <div className="w-px h-5 bg-border mx-0.5" />
+
+      <select value={filters.sortBy} onChange={(e) => update({ sortBy: e.target.value })} className={selectClass}>
+        <option value="">Recientes</option>
+        <option value="periodo">Por periodo</option>
+        <option value="categoria">Por categoria</option>
+        <option value="subcategoria">Por subcategoria</option>
+      </select>
+
       {hasFilters && (
         <button
-          onClick={() => onFiltersChange({ documentId: "", periodo: "", categoria: "", subcategoria: "", search: "" })}
+          onClick={() => onFiltersChange({ documentId: "", periodo: "", categoria: "", subcategoria: "", search: "", sortBy: "" })}
           className="h-8 px-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md hover:bg-surface-hover transition-colors"
           title="Limpiar filtros"
         >

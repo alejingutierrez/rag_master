@@ -15,6 +15,16 @@ const MIGRATIONS = [
   // 2026-04-06: add fileHash to documents for duplicate detection
   `ALTER TABLE documents ADD COLUMN IF NOT EXISTS "fileHash" TEXT`,
   `CREATE INDEX IF NOT EXISTS "documents_fileHash_idx" ON documents ("fileHash")`,
+  // 2026-04-06: ordering fields for intelligent question ordering
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "ordenPeriodo" INTEGER`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "ordenCategoria" INTEGER`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "ordenSubcategoria" INTEGER`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "temaPeriodo" TEXT`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "temaCategoria" TEXT`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "temaSubcategoria" TEXT`,
+  `CREATE INDEX IF NOT EXISTS "questions_periodoCode_ordenPeriodo_idx" ON questions ("periodoCode", "ordenPeriodo")`,
+  `CREATE INDEX IF NOT EXISTS "questions_categoriaCode_ordenCategoria_idx" ON questions ("categoriaCode", "ordenCategoria")`,
+  `CREATE INDEX IF NOT EXISTS "questions_subcategoriaCode_ordenSubcategoria_idx" ON questions ("subcategoriaCode", "ordenSubcategoria")`,
 ];
 
 async function main() {

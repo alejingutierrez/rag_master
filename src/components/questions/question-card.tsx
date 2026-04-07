@@ -27,6 +27,12 @@ interface QuestionCardProps {
     document?: { filename: string; metadata?: Record<string, unknown> };
     deliverables?: { id: string; templateId: string; status: string }[];
     createdAt?: string;
+    ordenPeriodo?: number | null;
+    ordenCategoria?: number | null;
+    ordenSubcategoria?: number | null;
+    temaPeriodo?: string | null;
+    temaCategoria?: string | null;
+    temaSubcategoria?: string | null;
   };
   showDocument?: boolean;
 }
@@ -49,11 +55,41 @@ export function QuestionCard({ question: q, showDocument = true }: QuestionCardP
         {/* Clasificacion: periodo + categoria en una linea limpia */}
         <div className="flex flex-wrap items-center gap-1.5 mt-3 ml-9">
           <PeriodBadge code={q.periodoCode} name={q.periodoNombre} range={q.periodoRango} showIcon />
+          {q.ordenPeriodo != null && (
+            <span className="text-[9px] font-mono text-primary/60 -ml-0.5">#{q.ordenPeriodo}</span>
+          )}
           <CategoryBadge code={q.categoriaCode} name={q.categoriaNombre} showIcon />
+          {q.ordenCategoria != null && (
+            <span className="text-[9px] font-mono text-primary/60 -ml-0.5">#{q.ordenCategoria}</span>
+          )}
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">
             {q.subcategoriaCode}
           </span>
+          {q.ordenSubcategoria != null && (
+            <span className="text-[9px] font-mono text-primary/60 -ml-0.5">#{q.ordenSubcategoria}</span>
+          )}
         </div>
+
+        {/* Temas asignados por el ordenamiento inteligente */}
+        {(q.temaPeriodo || q.temaCategoria || q.temaSubcategoria) && (
+          <div className="flex flex-wrap gap-1.5 mt-1.5 ml-9">
+            {q.temaPeriodo && (
+              <span className="text-[10px] italic text-muted-foreground/70">{q.temaPeriodo}</span>
+            )}
+            {q.temaCategoria && q.temaCategoria !== q.temaPeriodo && (
+              <>
+                <span className="text-[10px] text-muted-foreground/40">|</span>
+                <span className="text-[10px] italic text-muted-foreground/70">{q.temaCategoria}</span>
+              </>
+            )}
+            {q.temaSubcategoria && q.temaSubcategoria !== q.temaCategoria && (
+              <>
+                <span className="text-[10px] text-muted-foreground/40">|</span>
+                <span className="text-[10px] italic text-muted-foreground/70">{q.temaSubcategoria}</span>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Tags relacionados — compactos, solo si existen */}
         {(q.periodosRelacionados.length > 0 || q.categoriasRelacionadas.length > 0) && (
