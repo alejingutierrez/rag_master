@@ -105,65 +105,152 @@ function guessInstitution(filename: string): string {
 
 /**
  * Convierte un filename a una cita APA.
+ *
+ * Soporta múltiples patrones reales del corpus:
+ *   1. "Autor - Título-Editorial (año).pdf"                      ej. Steven Dudley - Walking Ghosts-Routledge (2003)
+ *   2. "(Colección) Autor - Título-Editorial (año).pdf"          ej. (Biblioteca IEPRI) Francisco Gutiérrez - ...
+ *   3. "Título (Autor) (Z-Library).pdf"                          ej. El terrorismo de Estado en Colombia (Hernando Calvo Ospina) (Z-Library)
+ *   4. "Título (Autor1 y Autor2) (Z-Library).pdf"
+ *   5. "ApellidoNombreI_AÑO_Capítulo_título.pdf"                 ej. DePablosAndrésF_2017_I.Elgobiernodelapazyl_Testigosolvidados.Per
+ *   6. "Filename-con-guiones-año.pdf"                            ej. Todo-paso-frente-a-nuestros-2021
+ *   7. Otros: institucional / anónimo / con código numérico
  */
 export function filenameToApa(filename: string): ApaCitation {
   const clean = stripFilename(filename);
-  const year = extractYear(filename); // buscar en el original (puede tener números removidos por strip)
+  const year = extractYear(filename);
 
-  // Patrón principal: "Autor - Título-Editorial (año).pdf"
-  // o "(Colección) Autor - Título-Editorial (año).pdf"
-  const patternFull = /^(?:\([^)]+\)\s+)?([^-]+?)\s+-\s+(.+?)(?:-([^()]+?))?\s*(?:\(\d{4}\))?$/;
+  // Limpiar "(Z-Library)" y similares — no son parte del título
+  const noZLib = clean.replace(/\s*\(Z-Library\)\s*/gi, "").trim();
 
-  // Quitar colección al inicio entre paréntesis
-  const noCollection = clean.replace(/^\([^)]+\)\s+/, "");
+  // Quitar colección al inicio entre paréntesis (ej. "(Biblioteca IEPRI 25 años) ...")
+  const noCollection = noZLib.replace(/^\([^)]+\)\s+/, "");
 
-  const match = noCollection.match(/^([^-]+?)\s+-\s+(.+?)(?:-([^-]+?))?\s*\(\d{4}\)$/);
+  // ── Patrón 1+2: "Autor - Título-Editorial (año)" ────────────
+  const m1 = noCollection.match(/^([^-]+?)\s+-\s+(.+?)(?:-([^-]+?))?\s*\(\d{4}\)$/);
+  if (m1) {
+    const [, author, title, publisher] = m1;
+    if (looksLikeAuthor(author)) {
+      return {
+        author: formatAuthor(author),
+        year,
+        title: cleanTitle(title),
+        publisher: publisher?.trim(),
+        raw: filename,
+      };
+    }
+  }
 
-  if (match) {
-    const [, author, title, publisher] = match;
+  // ── Patrón 3+4: "Título (Autor) (Z-Library)" — autor en paréntesis al final ──
+  // Buscar el ÚLTIMO paréntesis no vacío en el noZLib clean
+  // Ya removimos (Z-Library), así que el último ( ) suele ser el autor
+  const parenMatches = [...noZLib.matchAll(/\(([^)]+)\)/g)];
+  const lastParen = parenMatches[parenMatches.length - 1];
+  if (lastParen && looksLikeAuthor(lastParen[1]) && lastParen.index !== undefined) {
+    const authorRaw = lastParen[1];
+    const titleRaw = noZLib.slice(0, lastParen.index).trim();
+    if (titleRaw.length > 5) {
+      return {
+        author: formatAuthor(authorRaw),
+        year,
+        title: cleanTitle(titleRaw),
+        raw: filename,
+      };
+    }
+  }
+
+  // ── Patrón 5: "ApellidoNombreI_AÑO_..._..." con underscores ──
+  // Heurística: empieza con palabra que tiene mayúsculas internas + año + _ + título
+  const m5 = clean.match(/^([A-Z][a-zA-ZáéíóúÁÉÍÓÚñÑ]+?(?:[A-Z][a-zA-ZáéíóúÁÉÍÓÚñÑ]+)*?)[\s_]+(\d{4})[\s_]+(.+)$/);
+  if (m5) {
+    const [, authorCompact, yearFromName, rest] = m5;
     return {
-      author: formatAuthor(author),
-      year,
-      title: title.trim().replace(/_/g, ": "),
-      publisher: publisher?.trim(),
+      author: expandCompactAuthor(authorCompact),
+      year: yearFromName,
+      title: cleanTitle(rest),
       raw: filename,
     };
   }
 
-  // Patrón sin año al final
-  const match2 = noCollection.match(/^([^-]+?)\s+-\s+(.+?)(?:-(.+))?$/);
-  if (match2) {
-    const [, author, title, publisher] = match2;
-    return {
-      author: formatAuthor(author),
-      year,
-      title: title.trim().replace(/_/g, ": "),
-      publisher: publisher?.trim(),
-      raw: filename,
-    };
-  }
-
-  // Institucional: sin autor obvio
+  // ── Institucional ──
   if (isInstitutional(filename)) {
     return {
       author: guessInstitution(filename),
       year,
-      title: clean
-        .replace(/^\([^)]+\)\s+/, "")
-        .replace(/-/g, " ")
-        .replace(/\s+/g, " ")
-        .trim(),
+      title: cleanTitle(clean),
       raw: filename,
     };
   }
 
-  // Fallback: usar el nombre limpio como título
+  // ── Fallback: título como nombre limpio, año si lo encontramos ──
   return {
-    author: "Anónimo",
+    author: "Autor desconocido",
     year,
-    title: clean,
+    title: cleanTitle(clean),
     raw: filename,
   };
+}
+
+/**
+ * Limpia título: quita _, normaliza espacios, no incluye paréntesis vacíos.
+ */
+function cleanTitle(s: string): string {
+  return s
+    .replace(/_/g, " ")
+    .replace(/\s*\([^)]*Library[^)]*\)\s*/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+\(\d{4}\)\s*$/, "") // quitar (año) trailing
+    .replace(/\s+-\s+/g, " — ")     // guiones tipográficos
+    .trim();
+}
+
+/**
+ * Heurística: ¿parece un nombre de autor?
+ * Acepta: "Nombre Apellido" / "Inicial Apellido" / "Nombre Apellido y Nombre Apellido"
+ * Rechaza: títulos largos, frases con artículos como "El", "La", "Una"
+ */
+function looksLikeAuthor(s: string): boolean {
+  const t = s.trim();
+  if (t.length < 3 || t.length > 100) return false;
+  // Si tiene demasiadas palabras (>6), es probable que sea un título
+  const words = t.split(/\s+/);
+  if (words.length > 8) return false;
+  // Si empieza con artículo o palabras comunes de título → no es autor
+  if (/^(El|La|Los|Las|Un|Una|De|En|Por|Para|Con|Sin|Sobre|Hacia|Hasta|Cómo|Qué|Quién|Cuándo|Por qué|This|The|A|An|How|What)\b/i.test(t)) {
+    return false;
+  }
+  // Debe tener al menos una palabra que empiece con mayúscula
+  if (!/[A-ZÁÉÍÓÚÑ]/.test(t)) return false;
+  // No debe tener números (años, citas, etc) excepto cuando son iniciales
+  if (/\d{2,}/.test(t)) return false;
+  return true;
+}
+
+/**
+ * Expande autor "DePablosAndrésF" → "De Pablos, A. F."
+ * Heurística: divide en mayúsculas, primera parte es Apellido, resto son iniciales.
+ */
+function expandCompactAuthor(compact: string): string {
+  // Insertar espacios antes de cada mayúscula
+  const split = compact.replace(/([A-Z])/g, " $1").trim().split(/\s+/);
+  if (split.length === 0) return compact;
+  if (split.length === 1) return split[0];
+  // Primera palabra = apellido (puede tener prefijo como "De")
+  // Si la primera tiene <3 chars, asumir que es preposición y unirla
+  let lastName = split[0];
+  let i = 1;
+  if (lastName.length <= 2 && split.length > 2) {
+    lastName += " " + split[i];
+    i++;
+  }
+  const firstName = split[i] || "";
+  const middleInitials = split.slice(i + 1).map((p) => `${p[0]}.`).join(" ");
+  if (firstName && middleInitials) {
+    return `${lastName}, ${firstName[0]}. ${middleInitials}`;
+  }
+  if (firstName) {
+    return `${lastName}, ${firstName[0]}.`;
+  }
+  return lastName;
 }
 
 /**

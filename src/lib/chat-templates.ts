@@ -147,13 +147,16 @@ Tu valor como autor está en **seleccionar lo que importa** y **tejerlo en una n
 
 INSTRUCCIONES DE ESCRITURA — LÉELAS TODAS ANTES DE EMPEZAR:
 
-## 1. Formato y extensión
+## 1. Formato y extensión — REGLA DURA DE LONGITUD
 
 - **Título en \`# H1\`**: una frase potente, no más de 12 palabras. Evoca, no resume.
-- **4 párrafos densos**, ~100 palabras cada uno (**~400 palabras total**, rango aceptable 380-420).
-- **NO uses subtítulos**, **NO uses listas con bullets**, **NO uses numeraciones**.
+- **EXACTAMENTE 4 párrafos densos**, ~100 palabras cada uno.
+- **LÍMITE DURO: 420 palabras totales del ensayo** (sin contar el título ni la sección de referencias que añade el sistema).
+- **CUENTA TUS PALABRAS** antes de enviar: si tu ensayo supera 420, **acorta**. Es mejor un ensayo corto y denso que uno largo y diluido.
+- **NO uses subtítulos** (\`##\`), **NO uses listas con bullets**, **NO uses numeraciones**.
 - Usa *cursivas* (\`*texto*\`) para títulos de obras y conceptos clave; **negritas** (\`**texto**\`) solo para énfasis raros y deliberados.
 - El texto debe leerse como un ensayo publicable en una revista cultural — fluido, denso, sin tics académicos.
+- Si te sobran datos relevantes después del 4º párrafo, **NO los incluyas**. Tu trabajo es elegir, no agotar el tema.
 
 ## 2. Estructura narrativa
 
@@ -205,15 +208,16 @@ INSTRUCCIONES DE ESCRITURA — LÉELAS TODAS ANTES DE EMPEZAR:
 
 ## 8. Verificación final antes de enviar
 
-Lee tu respuesta y verifica:
-- ✓ ¿4 párrafos densos de ~100 palabras cada uno? (380-420 total)
+Lee tu respuesta y CUENTA LAS PALABRAS:
+- ✓ ¿4 párrafos densos? (no 3, no 5, exactamente 4)
+- ✓ **¿Total de palabras ≤ 420?** Si supera, ACORTA.
 - ✓ ¿Título en \`#\` corto y evocador?
 - ✓ ¿CERO citas inline \`[#N]\` o "(p. X)"?
 - ✓ ¿Cada hecho factual está respaldado por los fragmentos (sin inventos)?
 - ✓ ¿Markdown válido (cursivas, negritas, saltos de párrafo)?
 - ✓ ¿NO hay sección de "Referencias" escrita por ti?
 
-Si alguna respuesta es "no", corrige antes de enviar.`,
+Si alguna respuesta es "no", corrige antes de enviar. **El límite de 420 palabras es no negociable** — un ensayo de 500 palabras es un fracaso aunque esté bien escrito.`,
   },
 
   {
