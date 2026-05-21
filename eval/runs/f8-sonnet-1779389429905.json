@@ -1,0 +1,1372 @@
+{
+  "tag": "f8-sonnet",
+  "timestamp": "2026-05-21T18:50:29.905Z",
+  "summary": {
+    "avgFactsRecall": 0.86,
+    "avgHallucination": 0.471969696969697,
+    "avgFactuality": 0.6240151515151515,
+    "avgCitations": 24.4,
+    "avgLatency": 77356.4
+  },
+  "results": [
+    {
+      "questionId": "np_01",
+      "category": "nombres_propios",
+      "question": "Cuéntame la historia de Manuel Cepeda Vargas, el padre del senador Iván Cepeda. Era periodista y dirigente de la Unión Patriótica.",
+      "answer": "# El último senador\n\nHay hombres que mueren dos veces: una cuando los matan, y otra cuando el Estado que los mató decide que su muerte no existió en términos jurídicos. Manuel Cepeda Vargas fue uno de esos hombres. Dirigente del Partido Comunista Colombiano y figura central de la Unión Patriótica [#1], Cepeda construyó su vida pública desde las páginas del semanario *Voz*, del cual fue director [#7], una publicación que en los años de las negociaciones de paz entre el gobierno de Belisario Betancur y las FARC se convirtió en referencia obligada para la prensa colombiana. Los periodistas de los grandes medios llegaban a las diez de la noche a buscar ejemplares, y la llamada \"prensa burguesa\" reproducía sus fotos en primera plana [#11]. Era un hombre exigente, de carácter áspero con sus colaboradores, capaz de regañar a un reportero por no traer una nota y luego llamar a disculparse cuando descubría que el reportero había estado a punto de morir en un accidente de helicóptero [#11]. Esa mezcla de rigor y humanidad lo definía.\n\nCepeda era lo que en la jerga comunista se llamaba un \"ortodoxo\": creía en *la combinación de todas las formas de lucha*, la doctrina que sostenía el uso simultáneo de métodos legales e ilegales para transformar el orden político [#6]. Como parte del Comité Ejecutivo del Partido Comunista, mantenía contacto con las FARC [#6], lo que sus enemigos usarían después para justificar su asesinato. Pero Cepeda no era solo un ideólogo de escritorio: fue elegido primero al Congreso y luego al Senado bajo las banderas de la Unión Patriótica [#1], ese movimiento político que había nacido en 1985 de los acuerdos de paz como mecanismo de transición de las armas a la política [#20]. En las elecciones de 1994, ya con la UP diezmada por años de exterminio sistemático, Cepeda obtuvo 51.032 votos —el 0,9 por ciento de la votación nacional—, un 37 por ciento menos que en la elección anterior, cifra que era en sí misma un mapa del terror [#19]. Fue el último legislador elegido de la Unión Patriótica [#2].\n\nDesde su curul, Cepeda no guardó silencio. Denunció públicamente las amenazas que pesaban sobre él y sobre otros dirigentes de su partido [#2]. Nombró en el Senado a oficiales del Ejército, incluyendo al coronel Rodolfo Herrera Luna, señalándolos como opositores a las negociaciones de paz y como figuras con vínculos en grupos paramilitares [#6]. Era una valentía que sus colegas muertos —Jaime Pardo Leal, Bernardo Jaramillo Ossa, José Antequera— habrían reconocido como el mismo gesto que los había precedido en la muerte. Jaramillo Ossa había sido asesinado el 22 de marzo de 1990 en el aeropuerto de Bogotá [#2], el mismo lugar donde el 3 de marzo de 1989 había caído José Antequera [#2]. Colombia tenía aeropuertos que funcionaban como patíbulos. Cepeda lo sabía. Siguió hablando.\n\nEl 9 de agosto de 1994, tres días antes de posesionarse como senador, Manuel Cepeda Vargas se desplazaba en su vehículo de placas BBZ-824 por la avenida Américas, frente al inmueble número 74-05 del barrio Mandalay en Bogotá, acompañado de su conductor Eduardo Fierro Paloma y su escolta Alfonso Morales Aguirre [#4]. Un Renault 9 Brio blanco interceptó el vehículo. Los ocupantes abrieron fuego. El escolta reaccionó e impactó el vehículo agresor, cuyos ocupantes huyeron abandonando una pistola, un proveedor, cartuchos y vainillas [#4]. Esas evidencias condujeron a identificar a los autores materiales: los sargentos del Ejército Nacional Hernando Medina Camacho y Justo Gil Zúñiga Labrador [#4]. El jefe paramilitar Carlos Castaño Gil reconocería después, con una frialdad que hiela, que él mismo viajó a Bogotá ese día y dirigió el comando que ejecutó al senador [#2]. La Corte Suprema de Justicia rechazó esa confesión porque el contenido del libro donde aparecía no existía, según el tribunal, *en términos jurídicos* [#2]. Colombia tiene una larga tradición de hacer desaparecer la realidad mediante el lenguaje procesal.\n\nLo que siguió fue una de esas ironías que solo la impunidad latinoamericana puede producir con tanta elegancia. Castaño fue absuelto por el Tribunal Superior de Bogotá sin siquiera haber designado un abogado defensor, hecho que él mismo celebró burlonamente ante su biógrafo: *\"¡Qué ironía y qué deplorable justicia!\"* [#2]. Solo los dos sargentos fueron condenados. El general Herrera Luna, señalado como posible autor intelectual, murió sin ser investigado [#9]. Su hijo Iván Cepeda, junto a su hermana Claudia, empujó el caso durante años hasta llevarlo ante la Corte Interamericana de Derechos Humanos, que en sentencia del 26 de mayo de 2010 concluyó que el asesinato ocurrió en el contexto de una violencia sistemática contra los miembros de la UP [#18]. Iván y Claudia terminaron exiliados en París con una beca académica [#9]. Aprendiendo francés, escribió Iván en un correo. Sobreviviendo, quiso decir.\n\n---\n\n*Fuentes: Walking Ghosts: Murder and Guerrilla Politics in Colombia (2003). El terrorismo de Estado en Colombia. Elementos para una genealogía del paramilitarismo en Colombia. Testigos olvidados. Todo pasó frente a nuestros ojos: El genocidio de la Unión Patriótica 1984-2002. Hallazgos y Recomendaciones — Comisión de la Verdad (2022). Detrás de la guerra en Colombia (2020).*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#1]",
+        "[#7]",
+        "[#11]",
+        "[#11]",
+        "[#6]",
+        "[#6]",
+        "[#1]",
+        "[#20]",
+        "[#19]",
+        "[#2]",
+        "[#2]",
+        "[#6]",
+        "[#2]",
+        "[#2]",
+        "[#4]",
+        "[#4]",
+        "[#4]",
+        "[#2]",
+        "[#2]",
+        "[#2]",
+        "[#9]",
+        "[#18]",
+        "[#9]"
+      ],
+      "facts": [
+        {
+          "fact": "Manuel Cepeda Vargas fue dirigente del Partido Comunista Colombiano",
+          "present_in_answer": true,
+          "exact_quote": "Dirigente del Partido Comunista Colombiano y figura central de la Unión Patriótica",
+          "confidence": 1
+        },
+        {
+          "fact": "Fue senador por la Unión Patriótica",
+          "present_in_answer": true,
+          "exact_quote": "fue elegido primero al Congreso y luego al Senado bajo las banderas de la Unión Patriótica",
+          "confidence": 1
+        },
+        {
+          "fact": "Dirigió el semanario Voz (Voz Proletaria) del Partido Comunista",
+          "present_in_answer": true,
+          "exact_quote": "Cepeda construyó su vida pública desde las páginas del semanario Voz, del cual fue director",
+          "confidence": 1
+        },
+        {
+          "fact": "Fue asesinado en 1994",
+          "present_in_answer": true,
+          "exact_quote": "El 9 de agosto de 1994, tres días antes de posesionarse como senador, Manuel Cepeda Vargas se desplazaba en su vehículo... Un Renault 9 Brio blanco interceptó el vehículo. Los ocupantes abrieron fuego.",
+          "confidence": 1
+        },
+        {
+          "fact": "Su caso llegó a la Corte Interamericana de Derechos Humanos",
+          "present_in_answer": true,
+          "exact_quote": "hasta llevarlo ante la Corte Interamericana de Derechos Humanos, que en sentencia del 26 de mayo de 2010 concluyó que el asesinato ocurrió en el contexto de una violencia sistemática contra los miembros de la UP",
+          "confidence": 1
+        }
+      ],
+      "factsRecall": 1,
+      "hallucinations": [
+        {
+          "claim": "Manuel Cepeda Vargas fue dirigente del Partido Comunista Colombiano",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #1 indica que fue uno de los líderes más importantes del Partido Comunista, y el fragmento #2 lo describe como dirigente del Partido Comunista y de la UP."
+        },
+        {
+          "claim": "Manuel Cepeda Vargas fue figura central de la Unión Patriótica",
+          "supported_by_chunks": true,
+          "reason": "Múltiples fragmentos (#1, #2, #4) lo describen como senador de la UP y último legislador elegido de ese partido."
+        },
+        {
+          "claim": "Manuel Cepeda Vargas fue director del semanario Voz",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #7/#8 indica que Roberto Romero Ospina fue muy cercano a Manuel Cepeda Vargas, director de esa rotativa (Voz). El fragmento #1 también menciona que dirigió el semanario Voz."
+        },
+        {
+          "claim": "La Unión Patriótica nació en 1985 de los acuerdos de paz",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona el origen o fundación de la Unión Patriótica en 1985 ni su relación con acuerdos de paz."
+        },
+        {
+          "claim": "En las elecciones de 1994 Cepeda obtuvo 51.032 votos",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona cifras de votos obtenidos por Cepeda en las elecciones de 1994."
+        },
+        {
+          "claim": "Los 51.032 votos representaron el 0,9 por ciento de la votación nacional",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona porcentajes de votación nacional relacionados con Cepeda."
+        },
+        {
+          "claim": "Bernardo Jaramillo Ossa fue asesinado el 22 de marzo de 1990 en el aeropuerto de Bogotá",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #2/#3 indica que el 22 de marzo fue asesinado en el aeropuerto de Bogotá Bernardo Jaramillo Ossa, un año después del asesinato de Antequera (ocurrido el 3 de marzo de 1989)."
+        },
+        {
+          "claim": "José Antequera fue asesinado el 3 de marzo de 1989 en el aeropuerto de Bogotá",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #2/#3 indica explícitamente que el 3 de marzo de 1989 fue asesinado José Antequera al interior del aeropuerto de Bogotá."
+        },
+        {
+          "claim": "El 9 de agosto de 1994 Manuel Cepeda Vargas se desplazaba en un vehículo de placas BBZ-824 por la avenida Américas frente al inmueble número 74-05 del barrio Mandalay en Bogotá",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #4/#5 describe exactamente esos detalles: el vehículo de placas BBZ-824, la avenida Américas, el inmueble No. 74-05 del Barrio Mandalay, el 9 de agosto de 1994."
+        },
+        {
+          "claim": "Los autores materiales identificados fueron los sargentos Hernando Medina Camacho y Justo Gil Zúñiga Labrador",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #1 menciona que fue asesinado por dos miembros de la unidad de inteligencia militar, y el fragmento #9 menciona 'los dos soldados', pero ningún fragmento menciona los nombres específicos de Hernando Medina Camacho y Justo Gil Zúñiga Labrador."
+        },
+        {
+          "claim": "Carlos Castaño Gil reconoció haber viajado a Bogotá y dirigido el comando que ejecutó al senador",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #9 indica que Castaño admitió haber 'dirigido' el asesinato de Manuel, pero no menciona específicamente que viajó a Bogotá para hacerlo."
+        },
+        {
+          "claim": "La Corte Interamericana de Derechos Humanos emitió sentencia el 26 de mayo de 2010 sobre el caso Cepeda Vargas",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #13 menciona explícitamente 'Corte IDH, 2010, Caso Manuel Cepeda Vargas vs Colombia, sentencia del 26 de mayo de 2010'."
+        }
+      ],
+      "hallucinationRate": 0.4166666666666667,
+      "factualityScore": 0.7916666666666666,
+      "latencyMs": {
+        "retrieval": 15243,
+        "generation": 41560,
+        "judge": 20162,
+        "total": 76965
+      }
+    },
+    {
+      "questionId": "np_02",
+      "category": "nombres_propios",
+      "question": "¿Quién fue Jorge Eliécer Gaitán y qué pasó el 9 de abril de 1948?",
+      "answer": "# El hombre que Colombia no pudo tener\n\nJorge Eliécer Gaitán nació en el seno de una familia mestiza y se construyó a sí mismo con una tenacidad que la oligarquía colombiana nunca supo si admirar o temer [#4]. Abogado, parlamentario, alcalde de Bogotá en 1936, magistrado de la Corte Suprema de Justicia, ministro de Educación y luego ministro de Trabajo [#23], Gaitán acumuló credenciales institucionales con la misma energía con que acumulaba enemigos entre los poderosos. Su aspecto indígena y su tono de piel oscuro no eran rasgos que ocultara: los usaba conscientemente para generar simpatía entre el electorado, en una sociedad profundamente compartimentada donde ningún político, conservador o liberal, se aproximaba realmente a los votantes [#4]. Fundó la Unión Nacional de Izquierdista Revolucionaria —la UNIR— y desde allí promovió la intervención del Estado en la economía, la reforma agraria, la organización de cooperativas campesinas y un nacionalismo antiimperialista que atentaba directamente contra los intereses de latifundistas y burguesía urbana [#23]. Era, en palabras que no exageran, *el líder popular más importante que haya tenido Colombia* [#16].\n\nSu discurso tenía una arquitectura política precisa que Daniel Pécaut comparó con el peronismo argentino: el mismo cuestionamiento a la oligarquía, la misma oposición entre el pueblo y el país político, la misma aspiración a superar las contradicciones entre capital y trabajo en nombre de una reconstrucción orgánica de la sociedad [#13]. Pero Gaitán era más que un populista de manual. Era, según el análisis de Gonzalo Sánchez, simultáneamente un líder político liberal de raigambre decimonónica, un líder social moderno y un caudillo populista que podía proyectarse como la gran amenaza al orden establecido y, al mismo tiempo, como su más seguro garante [#20]. Esa ambigüedad no era debilidad: era su genio. El 7 de febrero de 1948, apenas dos meses antes de su muerte, convocó en Bogotá la célebre *Marcha del Silencio*, una movilización de miles de banderas negras en señal de luto por los liberales asesinados, donde la multitud marchó en un silencio abrumador exigiendo paz al gobierno conservador [#21]. Se ha dicho que ese día Gaitán hubiera podido ordenar cualquier cosa a la multitud, pero le ordenó regresar a casa, y eso produjo más terror en la oligarquía que si hubiera ordenado la revuelta [#20].\n\nEl 9 de abril de 1948 a la 1:05 de la tarde, al salir de su oficina ubicada en el Edificio Nieto sobre la carrera séptima de Bogotá, junto al antiguo café El Gato Negro, Jorge Eliécer Gaitán cayó asesinado bajo las balas de Juan Roa Sierra [#12]. Tres disparos. El contexto no podía ser más cargado de ironía histórica: en esos mismos días sesionaba en Bogotá la IX Conferencia Panamericana, presidida inicialmente por Laureano Gómez, donde el general George Marshall, Secretario de Estado de los Estados Unidos, había llegado a firmar una declaración anticomunista que buscaría la unidad continental [#22]. La ciudad había sido limpiada de mendigos, lustrabotas y vendedores ambulantes para presentarse como vitrina continental. Gaitán había sido excluido de la representación colombiana en esa conferencia: pertenecía a la Colombia que no se podía mostrar [#22]. Con su asesinato irrumpió precisamente ese rostro oculto.\n\nLo que siguió fue una tormenta que ningún poder pudo contener. En minutos, miles inundaron el corazón de la ciudad: hombres con banderas rojas y machetes, mujeres con niños y gasolina [#10]. Los tranvías en llamas recorrieron vacíos las avenidas, ardieron iglesias y monasterios, los machetes cortaron las mangueras de incendios y el cielo se tornó rojo [#10]. Las estimaciones sobre los muertos en Bogotá ese día oscilan entre 500 y 2.500 personas [#6], aunque otras fuentes hablan de hasta seis mil muertos y tres días de fuego [#10]. La violencia se extendió a todo el territorio nacional: en Santander, Tolima, Valle del Cauca y Cundinamarca se desencadenaron levantamientos populares [#8]. La clase trabajadora marginada, la gente que sentía que el gobierno, las leyes y la sociedad estaban en su contra, vio evaporarse en un instante la esperanza mística que había depositado en la presidencia de Gaitán [#2]. El *Bogotazo*, como se llamaría ese episodio, no fue el inicio de La Violencia, pero sí su detonante más brutal y definitivo.\n\nLas consecuencias se midieron en décadas y en cuerpos. Entre 1948 y 1958, en el período conocido como *La Violencia*, murieron entre 200.000 y 300.000 colombianos en campos y pueblos del país [#3], con más de dos millones de desplazados [#8]. La violencia fue particularmente intensa en las zonas de producción cafetera [#8], y adquirió rituales macabros —descuartizamientos de hombres vivos, exhibiciones de cabezas cortadas, dispersión de partes de cuerpos por caminos rurales— que perviven aún en la memoria colectiva colombiana [#17]. De los grandes líderes populistas latinoamericanos de su época —Lázaro Cárdenas en México, los Perón en Argentina, Getúlio Vargas en Brasil, Víctor Raúl Haya de la Torre en Perú— Gaitán fue el único que murió asesinado [#2]. La reforma agraria, el Estado de bienestar, las promesas de cambio: todo pasó al olvido [#18]. Quedó en cambio la frase que se le atribuye, pronunciada como una profecía: *\"La oligarquía no me mata porque sabe que si lo hace el país se vuelca y las aguas demorarán cincuenta años en regresar a su nivel normal\"* [#4]. Hay quienes creen que no regresaron nunca.\n\n---\n\n*Fuentes: Pensar el Siglo XIX (s.f.). Historia concisa de Colombia 1810-2017 (2017). La batalla por la paz (2019). Diez propuestas para el estudio de la historia reciente de Colombia con énfasis en el conflicto armado (s.f.). Enciclopedia de Colombia 3 (s.f.). Culture Smart! Colombia (2011). Autodefensas de Cundinamarca (s.f.). Beyond Bogotá: Diary of a Drug War Journalist in Colombia (s.f.). El río (s.f.). La violencia en Colombia: estudio de un proceso social (2014). Enciclopedia de Colombia 2 (s.f.). Breve historia del conflicto armado en Colombia (s.f.). De la derecha a la izquierda: La Iglesia Católica en la Colombia contemporánea (2000). Nueva Historia de Colombia, Vol. I (s.f.). Caminos de guerra, utopías de paz: Colombia 1948-2020 (2021). Basta ya: Colombia, memorias de guerra y dignidad (2016). Breve historia de Bogotá (2016). Las guerrillas de Colombia (2017). Enciclopedia de Colombia 4 (s.f.). Nueva Historia de Colombia, Vol. VI (s.f.). CEV Territorial Centro Digital (2022).*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#4]",
+        "[#23]",
+        "[#4]",
+        "[#23]",
+        "[#16]",
+        "[#13]",
+        "[#20]",
+        "[#21]",
+        "[#20]",
+        "[#12]",
+        "[#22]",
+        "[#22]",
+        "[#10]",
+        "[#10]",
+        "[#6]",
+        "[#10]",
+        "[#8]",
+        "[#2]",
+        "[#3]",
+        "[#8]",
+        "[#8]",
+        "[#17]",
+        "[#2]",
+        "[#18]",
+        "[#4]"
+      ],
+      "facts": [
+        {
+          "fact": "Jorge Eliécer Gaitán fue líder liberal colombiano",
+          "present_in_answer": true,
+          "exact_quote": "un líder político liberal de raigambre decimonónica",
+          "confidence": 0.85
+        },
+        {
+          "fact": "Fue asesinado el 9 de abril de 1948 en Bogotá",
+          "present_in_answer": true,
+          "exact_quote": "El 9 de abril de 1948 a la 1:05 de la tarde, al salir de su oficina ubicada en el Edificio Nieto sobre la carrera séptima de Bogotá... Jorge Eliécer Gaitán cayó asesinado",
+          "confidence": 1
+        },
+        {
+          "fact": "Su muerte desencadenó el Bogotazo",
+          "present_in_answer": true,
+          "exact_quote": "El *Bogotazo*, como se llamaría ese episodio, no fue el inicio de La Violencia, pero sí su detonante más brutal y definitivo.",
+          "confidence": 1
+        },
+        {
+          "fact": "El presunto asesino fue Juan Roa Sierra",
+          "present_in_answer": true,
+          "exact_quote": "Jorge Eliécer Gaitán cayó asesinado bajo las balas de Juan Roa Sierra",
+          "confidence": 1
+        },
+        {
+          "fact": "Su asesinato marcó el inicio de La Violencia",
+          "present_in_answer": false,
+          "exact_quote": "",
+          "confidence": 0.9
+        }
+      ],
+      "factsRecall": 0.8,
+      "hallucinations": [
+        {
+          "claim": "Jorge Eliécer Gaitán fue alcalde de Bogotá en 1936",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona que Gaitán haya sido alcalde de Bogotá en 1936."
+        },
+        {
+          "claim": "Jorge Eliécer Gaitán fue magistrado de la Corte Suprema de Justicia",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona que Gaitán haya sido magistrado de la Corte Suprema de Justicia."
+        },
+        {
+          "claim": "Jorge Eliécer Gaitán fue ministro de Educación",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona que Gaitán haya sido ministro de Educación."
+        },
+        {
+          "claim": "Jorge Eliécer Gaitán fue ministro de Trabajo",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona que Gaitán haya sido ministro de Trabajo."
+        },
+        {
+          "claim": "Gaitán fundó la Unión Nacional de Izquierdista Revolucionaria (UNIR)",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona la fundación de la UNIR por parte de Gaitán."
+        },
+        {
+          "claim": "El 7 de febrero de 1948 Gaitán convocó en Bogotá la Marcha del Silencio",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona la Marcha del Silencio ni la fecha del 7 de febrero de 1948."
+        },
+        {
+          "claim": "El 9 de abril de 1948 a la 1:05 de la tarde Gaitán fue asesinado",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos mencionan que fue asesinado el 9 de abril de 1948 a la 1 p.m. (fragmento #1) o a la una de la tarde (fragmento #10), pero no especifican las 1:05 de la tarde."
+        },
+        {
+          "claim": "Gaitán fue asesinado por Juan Roa Sierra",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #1 y #12 identifican explícitamente a Juan Roa Sierra como el asesino de Gaitán."
+        },
+        {
+          "claim": "Gaitán fue asesinado al salir de su oficina en el Edificio Nieto sobre la carrera séptima de Bogotá",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos mencionan que fue asesinado al salir de su oficina (#1, #10, #12), pero ninguno especifica el Edificio Nieto ni la carrera séptima."
+        },
+        {
+          "claim": "En 1948 sesionaba en Bogotá la IX Conferencia Panamericana",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #7, #10, #11 y #12 mencionan que en Bogotá se celebraba la IX Conferencia Panamericana (o Interamericana) en el momento del asesinato de Gaitán en 1948."
+        },
+        {
+          "claim": "El general George Marshall era Secretario de Estado de los Estados Unidos en 1948",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #10 menciona que 'el secretario de Estado de los Estados Unidos, George Marshall, estaba en Bogotá' el 9 de abril de 1948."
+        },
+        {
+          "claim": "Entre 1948 y 1958 murieron entre 200.000 y 300.000 colombianos durante el período conocido como La Violencia",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #8 menciona más de 200.000 víctimas mortales, pero no establece un rango de hasta 300.000. El claim no está completamente soportado tal como está formulado."
+        }
+      ],
+      "hallucinationRate": 0.75,
+      "factualityScore": 0.42500000000000004,
+      "latencyMs": {
+        "retrieval": 11126,
+        "generation": 50088,
+        "judge": 15654,
+        "total": 76868
+      }
+    },
+    {
+      "questionId": "np_03",
+      "category": "nombres_propios",
+      "question": "Háblame de María Cano, la 'flor del trabajo' del movimiento socialista colombiano.",
+      "answer": "# La Flor Roja que Hizo Temblar a Medellín\n\nHay mujeres que nacen en el lugar equivocado para la época correcta. María Cano nació en Medellín en 1887 [#10], en el seno de una familia de raigambre liberal e intelectual —su tío Fidel Cano había fundado *El Espectador* [#10], el segundo periódico del país [#14]— en una ciudad famosa por su catolicismo estricto y su moral de sacristía. Su padre dirigió en algún momento la Escuela Normal de Medellín, una institución laica [#10], y en ese ambiente de librepensamiento María y sus hermanas recibieron una educación que las alejaba del destino doméstico que la sociedad antioqueña reservaba para las mujeres. Leyó a Víctor Hugo, a Zola, a Rousseau, a Voltaire [#7], a los mismos autores que la Iglesia miraba con horror. Frecuentó tertulias de intelectuales liberales [#7] y, para sus veinte años, ya publicaba cuentos de carga emocional en revistas literarias [#10]. Desde 1921 escribía en revistas y periódicos antioqueños [#11], influida por las poetas del Cono Sur —Delmira Agustini, Alfonsina Storni, Juana de Ibarbourou y Gabriela Mistral [#11]— que habían irrumpido en las letras latinoamericanas la década anterior. Era, en suma, una anomalía perfectamente construida.\n\nEl salto de la literatura a la política obrera no fue un accidente sino una acumulación. Trabajando en la Biblioteca Departamental de Medellín, María Cano comenzó a relacionarse con obreros y artesanos que allí concurrían y a frecuentar los barrios pobres de la ciudad [#6]. En noviembre de 1923 empezó a introducir en sus publicaciones elementos de la temática social [#11], y en enero de 1924 protestó contra la educación militar que se impartía a los jóvenes reclutados, llamando a las mujeres a protestar [#11]. En marzo de ese mismo año impulsó la idea de fomentar en las clases pobres el acceso a la literatura y al saber, con un programa de lectores-escuchas en la Biblioteca Municipal de Medellín que le permitió acercarse de manera definitiva a la vida de artesanos, obreros, contratistas y maestros de obra [#11]. Así, cuando el 1 de mayo de 1925 los trabajadores de Medellín la proclamaron *Flor del Trabajo* [#9] —un título que en otras manos no era más que un cargo decorativo de caridad burguesa [#3]— María Cano ya había ganado ese reconocimiento a pulso, trabajando intensamente en los barrios obreros, haciendo colectas públicas y dictando conferencias [#9]. La ironía es perfecta: le dieron una corona de flores y ella la convirtió en una antorcha.\n\nLo que siguió fue una de las carreras políticas más vertiginosas y breves de la historia colombiana. Entre 1925 y 1927, María Cano realizó siete giras por el país [#4], recorriendo con fidelidad la nueva geografía laboral colombiana: los campamentos mineros y ferroviarios, las trilladoras de café del occidente, los braceros del río en Girardot, las condiciones miserables del campesinado en Boyacá, los campos petrolíferos de Barrancabermeja donde denudó los nexos entre la discriminación laboral y la pérdida de soberanía nacional [#18]. En seis de esas giras fue acompañada por Ignacio Torres Giraldo [#1], secretario general de la Confederación Obrera Nacional (CON) [#1], su compañero político y de vida. Participó en la preparación del Tercer Congreso Nacional Obrero y fue elegida en su junta directiva junto con Torres Giraldo, Raúl Eduardo Mahecha, Tomás Uribe Márquez y Alfonso Romero [#1]. Fue cofundadora del Partido Socialista Revolucionario (PSR) en 1926 [#4], la primera organización política en Colombia con pretensiones marxistas [#23]. Su voz de contralto [#10] electrizaba multitudes. En su quinta gira pronunció una frase que generaciones de obreros recordarían: *\"Soy mujer y en mi entraña tiembla el dolor al pensar que pudiera concebir un hijo que fuera un esclavo\"* [#14]. En los hogares de Medellín, mientras tanto, se cuidaba a las hijas para que no se convirtieran en *\"Mariacanos\"* [#1].\n\nEl poder siempre encuentra la manera de doblegar lo que no puede comprar. María Cano fue encarcelada en varias ocasiones por su trabajo político [#2], y la represión del gobierno conservador contra el movimiento obrero fue sistemática y brutal. Apoyó la huelga petrolera contra la Tropical Oil Company en Barrancabermeja en 1927 [#4] y trabajó en la zona bananera del Caribe, donde al año siguiente estallaría la huelga contra la United Fruit Company que terminaría en la infame masacre de diciembre de 1928 [#8]. Pero la represión externa no fue lo único que la derrotó: las contradicciones internas del movimiento socialista, las luchas intestinas y el marginamiento que se le hizo dentro de su propio partido [#2] la empujaron hacia el silencio. A los 41 años, en 1930, se retiró de la vida política [#2] y se vinculó como obrera de la papelería de la Imprenta Departamental de Antioquia, y luego como empleada de la Biblioteca Departamental, hasta 1947 [#2]. La mujer que había hecho temblar a la clase dirigente terminó fichando tarjeta en una biblioteca pública.\n\nTorres Giraldo escribió que *\"María Cano vivió los últimos veinte años de su vida como una flor marchita en un vaso de agua, hasta que el viento se la llevó el 26 de abril de 1967\"* [#2]. Hay en esa frase una ternura que no alcanza a ocultar la tragedia. La historia oficial colombiana tardó décadas en reconocerla, y cuando lo hizo fue con la comodidad de quien canoniza a los muertos para no tener que escuchar a los vivos. Lo que los documentos revelan, sin embargo, es una mujer que tuvo siempre conciencia y voluntad para formar su propio criterio, que no se doblegó ante nada ni ante nadie [#19], y que en 1930 escribió con una lucidez que todavía incomoda: *\"Entre nosotros existe una norma de que las mujeres carecen de criterio propio, y que solo actúan como reflejo de un sacerdote, un padre o un amigo. Creo que he formado suficientemente mi propio criterio para orientarme\"* [#4]. No reivindicó los derechos específicos de las mujeres sino los de las masas en general [#2], y sin embargo su sola existencia fue el argumento más poderoso contra el orden que pretendía combatir.\n\n---\n\n*Fuentes: Enciclopedia de Colombia 2. Nueva Historia de Colombia Vol. III y Vol. IV. Of Beasts and Beauty (project_muse_23640). Modernization in Colombia: The Laureano Gomez Years, 1889–1965. Beatriz Helena Robledo — María Cano. La virgen roja (2017). Cultura e identidad obrera: Colombia 1910–1945. The Colombia Reader: History, Culture, Politics. Entre la legitimidad y la violencia: Colombia 1875–1994. Las Guerrillas de Colombia. Los trabajadores en la historia latinoamericana. Diez propuestas para el estudio de la historia reciente de Colombia. Homofobia y agresiones verbales (2008).*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#10]",
+        "[#10]",
+        "[#14]",
+        "[#10]",
+        "[#7]",
+        "[#7]",
+        "[#10]",
+        "[#11]",
+        "[#11]",
+        "[#6]",
+        "[#11]",
+        "[#11]",
+        "[#11]",
+        "[#9]",
+        "[#3]",
+        "[#9]",
+        "[#4]",
+        "[#18]",
+        "[#1]",
+        "[#1]",
+        "[#1]",
+        "[#4]",
+        "[#23]",
+        "[#10]",
+        "[#14]",
+        "[#1]",
+        "[#2]",
+        "[#4]",
+        "[#8]",
+        "[#2]",
+        "[#2]",
+        "[#2]",
+        "[#2]",
+        "[#19]",
+        "[#4]",
+        "[#2]"
+      ],
+      "facts": [
+        {
+          "fact": "María Cano fue una líder socialista colombiana",
+          "present_in_answer": true,
+          "exact_quote": "Fue cofundadora del Partido Socialista Revolucionario (PSR) en 1926 [#4], la primera organización política en Colombia con pretensiones marxistas",
+          "confidence": 0.95
+        },
+        {
+          "fact": "Fue conocida como la Flor del Trabajo",
+          "present_in_answer": true,
+          "exact_quote": "cuando el 1 de mayo de 1925 los trabajadores de Medellín la proclamaron *Flor del Trabajo*",
+          "confidence": 1
+        },
+        {
+          "fact": "Militó en el Partido Socialista Revolucionario (PSR)",
+          "present_in_answer": true,
+          "exact_quote": "Fue cofundadora del Partido Socialista Revolucionario (PSR) en 1926",
+          "confidence": 1
+        },
+        {
+          "fact": "Recorrió Colombia organizando obreros en los años 1920",
+          "present_in_answer": true,
+          "exact_quote": "Entre 1925 y 1927, María Cano realizó siete giras por el país [#4], recorriendo con fidelidad la nueva geografía laboral colombiana: los campamentos mineros y ferroviarios, las trilladoras de café del occidente, los braceros del río en Girardot",
+          "confidence": 1
+        },
+        {
+          "fact": "Es originaria de Medellín",
+          "present_in_answer": true,
+          "exact_quote": "María Cano nació en Medellín en 1887",
+          "confidence": 1
+        }
+      ],
+      "factsRecall": 1,
+      "hallucinations": [
+        {
+          "claim": "María Cano nació en Medellín en 1887",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #10 indica que María Cano (1887–1967) era de Medellín, y el fragmento #11 también menciona sus fechas (1887-1967)."
+        },
+        {
+          "claim": "El tío de María Cano, Fidel Cano, había fundado El Espectador",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #10 menciona explícitamente que su tío Fidel Cano había fundado El Espectador."
+        },
+        {
+          "claim": "El padre de María Cano dirigió la Escuela Normal de Medellín",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #10 indica que su padre había dirigido en algún momento la Escuela Normal de Medellín."
+        },
+        {
+          "claim": "El 1 de mayo de 1925 los trabajadores de Medellín proclamaron a María Cano Flor del Trabajo",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #3, #5, #6 y #9 confirman que el 1 de mayo de 1925 fue elegida Flor del Trabajo en Medellín."
+        },
+        {
+          "claim": "Entre 1925 y 1927, María Cano realizó siete giras por el país",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #4 menciona que María realizó siete giras por el país desde 1925 hasta 1927."
+        },
+        {
+          "claim": "Ignacio Torres Giraldo era secretario general de la Confederación Obrera Nacional (CON)",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #1 menciona a Torres Giraldo como delegado que presidió el segundo congreso obrero donde se creó la CON, pero no lo identifica como secretario general de dicha organización."
+        },
+        {
+          "claim": "María Cano fue cofundadora del Partido Socialista Revolucionario (PSR) en 1926",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #4 indica que fue fundadora del Partido Socialista Revolucionaria (PSR) en 1926, y el fragmento #5 también menciona la formación del Socialist Revolutionary Party en 1926."
+        },
+        {
+          "claim": "María Cano apoyó la huelga petrolera contra la Tropical Oil Company en Barrancabermeja en 1927",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #4 menciona que el activismo sindical llevó a huelgas contra la Tropical Oil Company en Barrancabermeja en 1927, en las que María Cano estuvo involucrada."
+        },
+        {
+          "claim": "La huelga contra la United Fruit Company terminó en una masacre en diciembre de 1928",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #8 menciona la huelga de los trabajadores de la United Fruit Company en diciembre de 1928, conocida como la masacre de las bananeras."
+        },
+        {
+          "claim": "A los 41 años, en 1930, María Cano se retiró de la vida política",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #4 menciona que se retiró del activismo, pero no especifica que fue en 1930 ni a los 41 años. El fragmento #12 sugiere que cayó en desgracia a fines de los años veinte, sin precisar 1930."
+        },
+        {
+          "claim": "María Cano se vinculó como empleada de la Biblioteca Departamental hasta 1947",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #6 menciona que se relacionó con obreros en la Biblioteca Departamental, pero no indica que fuera empleada de dicha institución ni menciona el año 1947."
+        },
+        {
+          "claim": "María Cano murió el 26 de abril de 1967",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos #10 y #11 indican que murió en 1967, pero ninguno especifica la fecha exacta del 26 de abril. El fragmento #12 incluso menciona erróneamente 1963 como año de su muerte."
+        }
+      ],
+      "hallucinationRate": 0.3333333333333333,
+      "factualityScore": 0.8333333333333334,
+      "latencyMs": {
+        "retrieval": 11588,
+        "generation": 51564,
+        "judge": 17779,
+        "total": 80931
+      }
+    },
+    {
+      "questionId": "np_04",
+      "category": "nombres_propios",
+      "question": "¿Qué papel jugó Carlos Pizarro Leongómez en la desmovilización del M-19?",
+      "answer": "# El hombre que dobló el fusil: Carlos Pizarro y la paz imposible\n\nHay momentos en la historia latinoamericana en que un solo hombre encarna la contradicción entera de su época. Carlos Pizarro Leongómez fue uno de esos hombres: guerrillero que se convirtió en arquitecto de la paz, comandante que ordenó dejar las armas con la misma autoridad con que antes había ordenado empuñarlas. Su trayectoria al frente del M-19 no comenzó en la mesa de negociación sino en las cenizas del Palacio de Justicia, cuya toma en 1985 representó el mayor error histórico del movimiento y, paradójicamente, el punto de inflexión que lo empujó hacia la paz [#13]. Cuando el máximo dirigente del M-19, Álvaro Fayad, fue acribillado el 13 de marzo de 1986 por un comando del Grupo de Operaciones Especiales de la Policía Nacional, Pizarro lo sustituyó y tomó una decisión que sorprendería a toda la izquierda armada del continente: transformar la derrota política en renacimiento, convirtiendo al M-19 en el abanderado de la negociación [#13].\n\nLa audacia de Pizarro no era solo retórica. En diciembre de 1987, durante la primera reunión exterior de la Coordinadora Guerrillera Simón Bolívar celebrada en La Habana, anunció ante los comandantes de todos los grupos guerrilleros colombianos que el M-19 lanzaría pronto una propuesta de paz. \"Si ustedes no van, nosotros sí vamos\", les dijo, con la misma teatralidad que había caracterizado siempre al *eme* [#13]. Antes de llegar a la mesa, sin embargo, Pizarro ejecutó un movimiento político calculado: el secuestro del líder conservador Álvaro Gómez Hurtado en 1988, a quien caracterizó como representante del \"régimen oligárquico\", buscando forzar la negociación y denunciar la guerra sucia paramilitar que arreciaba en Urabá y Córdoba [#19]. El resultado fue inesperado: en lugar de cerrar puertas, el secuestro desató una movilización nacional que terminó abriendo el camino hacia la firma de un acuerdo de tregua con el comisionado de paz Rafael Pardo Rueda el 10 de enero de 1989 en las montañas del Cauca [#22].\n\nLo que siguió fueron catorce meses de negociación intensa, en los que Pizarro demostró ser, según el propio Rafael Pardo, \"el guerrillero que mejor usaba los medios de comunicación\" [#6]. Instalado en el campamento temporal de Santo Domingo, Cauca, se convirtió en un fenómeno político sin precedentes, llevando al M-19 a niveles de popularidad inéditos gracias a un manejo sobresaliente de la televisión [#6]. Pardo lo describió como un negociador que \"actuaba lealmente y de frente, sin buscar ganancias temporales en pequeñas maniobras\", que sabía escuchar y se concentraba siempre en los puntos políticos esenciales [#6]. Pizarro tejió además una red de contactos, alianzas y pactos de no agresión para blindar al nuevo movimiento, obsesionado con no repetir el exterminio sistemático que había sufrido la Unión Patriótica [#6]. Tenía el mando total de la organización y llegó al proceso acompañado por todo su comando central, lo que garantizó la coherencia interna de la decisión [#7].\n\nEl 8 de marzo de 1990, en Santo Domingo, Cauca, ante más de 200 periodistas nacionales e internacionales y una delegación del Gobierno, Carlos Pizarro presidió la dejación de armas [#4]. Los guerrilleros formaron un círculo y depositaron sus fusiles uno a uno. Cuando llegó su turno, Pizarro envolvió su propia arma en la bandera de Colombia y la colocó sobre la mesa con estas palabras: *\"El M-19, en las manos de su Comandante General, hace dejación de la última arma en manos del Movimiento 19 de Abril, por la paz y la dignidad de Colombia\"* [#4]. Antes había advertido a sus hombres que \"dejar las armas es más difícil que cualquier combate\" [#4]. Al día siguiente, el 9 de marzo, viajó en helicóptero a la Casa de Nariño, donde el presidente Virgilio Barco le dijo \"Bienvenido a la democracia\" [#7]. Ese mismo mes se presentó como candidato a la Alcaldía de Bogotá, obteniendo 70.901 votos, el 7,8% del total escrutado [#9].\n\nLa historia, sin embargo, tiene una crueldad particular con quienes se atreven a cambiarla. El 26 de abril de 1990, apenas cuarenta y ocho días después de la desmovilización, Carlos Pizarro fue asesinado en un avión por un sicario del paramilitarismo [#5]. Tenía el futuro en las manos y se lo arrancaron en el aire. Su entierro en Bogotá fue una peregrinación pacífica de todo un día, desde la Plaza de Bolívar hasta el Cementerio Central, cuando lo que muchos esperaban era el regreso a las armas [#5]. Que eso no ocurriera fue, en parte, su última victoria política: Antonio Navarro Wolff asumió el liderazgo y salió en televisión nacional a decir que seguían adelante con la paz [#7]. A finales de 1990, la Alianza Democrática M-19 obtuvo un tercio de la votación en los comicios para la Asamblea Constituyente [#2]. Pizarro no vivió para verlo, pero la Constitución de 1991 lleva, entre sus páginas, la huella indeleble de un hombre que entendió antes que nadie que las guerras civiles colombianas tenían que terminar.\n\n---\n\n*Fuentes: Cambiar el Futuro. Historia de los procesos de paz en Colombia 1981-2016 (s.f.). La batalla por la paz (2019). 9 de marzo de 1990 (2020). Las Guerrillas de Colombia (2017). Víctima de la globalización: la historia de cómo el narcotráfico destruyó la paz en Colombia (2012). Testigos olvidados (2017). CEV Narrativa Histórica (2022).*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#13]",
+        "[#13]",
+        "[#13]",
+        "[#19]",
+        "[#22]",
+        "[#6]",
+        "[#6]",
+        "[#6]",
+        "[#6]",
+        "[#7]",
+        "[#4]",
+        "[#4]",
+        "[#4]",
+        "[#7]",
+        "[#9]",
+        "[#5]",
+        "[#5]",
+        "[#7]",
+        "[#2]"
+      ],
+      "facts": [
+        {
+          "fact": "Carlos Pizarro fue comandante del M-19",
+          "present_in_answer": true,
+          "exact_quote": "comandante que ordenó dejar las armas con la misma autoridad con que antes había ordenado empuñarlas",
+          "confidence": 0.99
+        },
+        {
+          "fact": "Lideró la desmovilización del M-19 en 1990",
+          "present_in_answer": true,
+          "exact_quote": "El 8 de marzo de 1990, en Santo Domingo, Cauca, ante más de 200 periodistas nacionales e internacionales y una delegación del Gobierno, Carlos Pizarro presidió la dejación de armas",
+          "confidence": 0.99
+        },
+        {
+          "fact": "Se convirtió en candidato presidencial por la Alianza Democrática M-19",
+          "present_in_answer": false,
+          "exact_quote": "",
+          "confidence": 0.95
+        },
+        {
+          "fact": "Fue asesinado en avión durante la campaña en 1990",
+          "present_in_answer": true,
+          "exact_quote": "El 26 de abril de 1990, apenas cuarenta y ocho días después de la desmovilización, Carlos Pizarro fue asesinado en un avión por un sicario del paramilitarismo",
+          "confidence": 0.99
+        },
+        {
+          "fact": "Su asesinato se enmarca en el exterminio de candidatos presidenciales de izquierda",
+          "present_in_answer": false,
+          "exact_quote": "",
+          "confidence": 0.85
+        }
+      ],
+      "factsRecall": 0.6,
+      "hallucinations": [
+        {
+          "claim": "Álvaro Fayad fue acribillado el 13 de marzo de 1986 por un comando del Grupo de Operaciones Especiales de la Policía Nacional",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #13 menciona que el 13 de marzo de 1986 alguien murió acribillado por un comando del GOES, pero el texto está cortado y no menciona explícitamente el nombre de Álvaro Fayad ni que fuera de la Policía Nacional."
+        },
+        {
+          "claim": "En diciembre de 1987 se celebró la primera reunión exterior de la Coordinadora Guerrillera Simón Bolívar en La Habana",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona la Coordinadora Guerrillera Simón Bolívar ni ninguna reunión en La Habana en 1987."
+        },
+        {
+          "claim": "El M-19 secuestró al líder conservador Álvaro Gómez Hurtado en 1988",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona el secuestro de Álvaro Gómez Hurtado."
+        },
+        {
+          "claim": "Se firmó un acuerdo de tregua con el comisionado de paz Rafael Pardo Rueda el 10 de enero de 1989 en las montañas del Cauca",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos #8 y #10 mencionan que el 10 de enero de 1989 se anunció el inicio de negociaciones y se firmó el acta de Santo Domingo, pero la reunión exploratoria fue en el sur del Tolima, no en el Cauca. Además, no se describe como un acuerdo de tregua sino como inicio de negociaciones."
+        },
+        {
+          "claim": "El 8 de marzo de 1990, en Santo Domingo, Cauca, ante más de 200 periodistas nacionales e internacionales, Carlos Pizarro presidió la dejación de armas del M-19",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #4 confirma que más de 200 periodistas asistieron y que Carlos Pizarro presidió la dejación de armas, pero el fragmento #1 indica que la desmovilización formal fue el 9 de marzo de 1990 en Caloto (Cauca), no el 8 de marzo en Santo Domingo."
+        },
+        {
+          "claim": "El 9 de marzo de 1990, Pizarro viajó en helicóptero a la Casa de Nariño, donde el presidente Virgilio Barco le dijo 'Bienvenido a la democracia'",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #1 confirma que el 9 de marzo de 1990 Pizarro y Navarro viajaron en helicóptero a la Casa de Nariño para encontrarse con el presidente Barco. El fragmento #7 menciona la frase 'Bienvenido a la democracia' en ese contexto."
+        },
+        {
+          "claim": "Carlos Pizarro se presentó como candidato a la Alcaldía de Bogotá obteniendo 70.901 votos, el 7,8% del total escrutado",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #9 confirma explícitamente que Carlos Pizarro obtuvo 70.901 votos para la Alcaldía de Bogotá, equivalente al 7,8% del total de votos escrutados."
+        },
+        {
+          "claim": "El 26 de abril de 1990, Carlos Pizarro fue asesinado en un avión",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos #2 y #5 confirman que Pizarro fue asesinado en un avión en abril de 1990, pero ninguno especifica la fecha exacta del 26 de abril."
+        },
+        {
+          "claim": "Antonio Navarro Wolff asumió el liderazgo del M-19 tras el asesinato de Pizarro",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #7 indica que Navarro 'salió en directo, en televisión nacional, diciendo que seguían adelante con la paz' tras el asesinato de Pizarro y que 'fue determinante para la paz y la incorporación definitiva del M-19 a la vida civil', lo que implica que asumió el liderazgo."
+        },
+        {
+          "claim": "A finales de 1990, la Alianza Democrática M-19 obtuvo un tercio de la votación en los comicios para la Asamblea Constituyente",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #2 menciona que a fines de 1990 hubo comicios relacionados con la Asamblea Constituyente, pero el texto está cortado y no especifica el porcentaje obtenido por la Alianza Democrática M-19."
+        },
+        {
+          "claim": "La toma del Palacio de Justicia ocurrió en 1985",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #13 menciona explícitamente 'la toma del Palacio de Justicia en 1985' como el mayor error histórico del M-19."
+        }
+      ],
+      "hallucinationRate": 0.6363636363636364,
+      "factualityScore": 0.2818181818181818,
+      "latencyMs": {
+        "retrieval": 12181,
+        "generation": 39601,
+        "judge": 22185,
+        "total": 73967
+      }
+    },
+    {
+      "questionId": "np_05",
+      "category": "nombres_propios",
+      "question": "Cuéntame sobre Pablo Escobar y la guerra del narcotráfico en los años 80.",
+      "answer": "# El polvo blanco y la sangre: Pablo Escobar y la guerra que Colombia no eligió\n\nHay hombres que no inventan su época, sino que la destilan. Pablo Escobar Gaviria nació en 1949 en Rionegro, Antioquia [#1], y comenzó su carrera criminal en los márgenes más humildes del delito: robando lápidas de cementerio, borrando las inscripciones y revendiéndolas con descuento a los familiares recientes de los muertos [#1]. Era, en cierto modo, un negocio perfecto para quien aprendería a lucrar de la muerte ajena. Pero la historia de Escobar no es solo la historia de un criminal excepcional; es la historia de un país con las condiciones perfectas para producirlo. Colombia, el único país de Suramérica con costas en dos océanos, con selvas y montañas que ocultaban laboratorios, con un gobierno central históricamente débil y una estructura de poder regional descentralizada [#1], era el escenario ideal. La geografía y la política conspiraron juntas para convertir a Colombia en el epicentro mundial de la exportación de cocaína.\n\nLa ascensión de Escobar fue tan vertiginosa como obscena. En 1982 fue elegido representante suplente al Congreso de la Nación por Antioquia [#1], mientras la revista *Semana* lo retrataba en portada como un \"Robin Hood paisa\" [#13], permitiéndole explicar sin contradicción que su fortuna provenía de negocios de automóviles y bienes raíces [#13]. Era la comodidad de una élite que prefería no saber. Los partidos políticos lo acogieron con beneplácito: el movimiento de Alberto Santofimio Botero lo recibió cuando Luis Carlos Galán lo rechazó por sus riquezas de \"dudosa procedencia\" [#14]. La tolerancia era estructural, no accidental. En un país donde la abstención electoral superaba el 50% y comprar votos era práctica recurrente, los recursos del narcotráfico resultaban convenientes [#14]. El Cartel de Medellín controlaba ya la cadena completa de producción, desde los cultivos hasta el mercado al detal en las calles de Estados Unidos [#14], mientras el Estado miraba hacia otro lado con una mezcla de ignorancia y complicidad.\n\nEl 10 de marzo de 1984 marcó el fin de esa cómoda ceguera. Ese día, la policía llegó en helicóptero al complejo de procesamiento de Tranquilandia, en el suroriente de Colombia, y confiscó cerca de 15.000 kilos de cocaína, destruyendo laboratorios que habrían producido más de 3.000 kilos del alcaloide al mes [#2]. Era asombroso que ninguno de los dos países —Colombia ni Estados Unidos— hubiera sido plenamente consciente de la magnitud de la industria hasta casi una década después de que hubiera comenzado [#2]. Pero la verdadera ruptura llegó cuando el joven ministro de Justicia Rodrigo Lara Bonilla decidió condenar el lavado de dinero y destruir laboratorios ilícitos: Escobar ordenó su asesinato en 1984 [#1]. En una reunión previa en la hacienda Doradal, los traficantes más veteranos, como Santiago Ocampo, habían aconsejado mantener un bajo perfil y evitar antagonismos con el Estado [#22]. El esbirro de Escobar, apodado el Chopo, respondió con una broma que nadie encontró del todo graciosa: *\"Tranquilos, muchachos, que si el Estado se nos viene encima, a él también lo matamos\"* [#22]. La profecía se cumplió.\n\nLo que siguió fue una década de terror sistemático. El año 1989 se convirtió en el año de la guerra de Escobar contra el establecimiento: el Cartel de Medellín asesinó al gobernador de Antioquia Antonio Roldán Betancourt el 4 de julio, al magistrado Carlos Valencia el 16 de agosto, al coronel Valdemar Franklin Quintero el 18 de agosto, y al candidato presidencial Luis Carlos Galán ese mismo día [#6]. Detonaron bombas en la sede del periódico *El Espectador* el 2 de septiembre, en el diario *Vanguardia Liberal* el 17 de octubre, hicieron estallar un avión comercial de Avianca el 27 de noviembre y destruyeron el edificio del DAS el 6 de diciembre [#6]. Para 1990, los llamados Extraditables —el grupo terrorista creado para combatir la extradición— acumulaban 623 atentados, 402 civiles muertos, 1.710 heridos y 550 policías asesinados [#8]. En Medellín, el cartel controlaba el 80% del mercado global de la cocaína y enviaba 80 toneladas mensuales a Estados Unidos, generando ganancias de alrededor de 70 millones de dólares al día [#20]; una cantidad tan absurda que la organización gastaba mil dólares semanales solo en cauchos para sujetar los fajos de billetes [#20].\n\nLa paradoja más cruel de esta historia es que la guerra tenía dos frentes simultáneos y contradictorios. Mientras Escobar combatía al Estado, el Cartel de Cali —liderado por los hermanos Rodríguez Orejuela— colaboraba activamente con la policía y la DEA, entregando información bajo el seudónimo de *los Canarios* [#8]. Ayudaron a dar con Gonzalo Rodríguez Gacha, quien fue muerto en diciembre de 1989 [#8]. El 19 de junio de 1991, el mismo día en que la Asamblea Constituyente votaba el artículo 35 de la nueva Constitución —que prohibía la extradición de colombianos por nacimiento [#4]—, Escobar se entregó a las autoridades [#4]. Había ganado su guerra jurídica a costa de centenares de muertos. Y en ese gesto está la síntesis más amarga de toda la historia: un Estado que negoció con el terror, una Constitución que nació manchada, y una sociedad que aprendió, a sangre y dinamita, que en Colombia los poderes subterráneos siempre encuentran la manera de escribir las reglas del juego.\n\n---\n\n*Fuentes: Historia concisa de Colombia 1810-2017 (2017). Víctima de la globalización: la historia de cómo el narcotráfico destruyó la paz en Colombia (2012). Análisis histórico del narcotráfico en Colombia (s.f.). Colombia, donde el verde es de todos los colores (2016). Comisión de la Verdad — Narrativa Histórica (2022). Sistemas de Guerra, la economía política del conflicto en Colombia (s.f.). Nuestra guerra sin nombre: transformaciones del conflicto en Colombia (2006). 1989 (2019). Magdalena. Historias de Colombia (2021). Otra historia de Colombia (s.f.). Comisión de la Verdad — Hallazgos (2022).*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#1]",
+        "[#1]",
+        "[#1]",
+        "[#1]",
+        "[#13]",
+        "[#13]",
+        "[#14]",
+        "[#14]",
+        "[#14]",
+        "[#2]",
+        "[#2]",
+        "[#1]",
+        "[#22]",
+        "[#22]",
+        "[#6]",
+        "[#6]",
+        "[#8]",
+        "[#20]",
+        "[#20]",
+        "[#8]",
+        "[#8]",
+        "[#4]",
+        "[#4]"
+      ],
+      "facts": [
+        {
+          "fact": "Pablo Escobar fue el líder del Cartel de Medellín",
+          "present_in_answer": true,
+          "exact_quote": "El Cartel de Medellín controlaba ya la cadena completa de producción",
+          "confidence": 0.85
+        },
+        {
+          "fact": "Ordenó el asesinato del ministro Rodrigo Lara Bonilla en 1984",
+          "present_in_answer": true,
+          "exact_quote": "Escobar ordenó su asesinato en 1984",
+          "confidence": 0.99
+        },
+        {
+          "fact": "Estuvo involucrado en el asesinato del candidato Luis Carlos Galán en 1989",
+          "present_in_answer": true,
+          "exact_quote": "al candidato presidencial Luis Carlos Galán ese mismo día",
+          "confidence": 0.95
+        },
+        {
+          "fact": "Bombardeó el avión de Avianca en 1989",
+          "present_in_answer": true,
+          "exact_quote": "hicieron estallar un avión comercial de Avianca el 27 de noviembre",
+          "confidence": 0.99
+        },
+        {
+          "fact": "Murió en 1993 en Medellín",
+          "present_in_answer": false,
+          "exact_quote": "",
+          "confidence": 0.99
+        }
+      ],
+      "factsRecall": 0.8,
+      "hallucinations": [
+        {
+          "claim": "Pablo Escobar Gaviria nació en 1949 en Rionegro, Antioquia",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #1 menciona explícitamente que Pablo Escobar nació en 1949 en Rionegro (Antioquia)."
+        },
+        {
+          "claim": "En 1982 fue elegido representante suplente al Congreso de la Nación por Antioquia",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #1 indica que 'Escobar fue elegido en 1982 representante suplente al Congreso de la Nación por Antioquia'."
+        },
+        {
+          "claim": "La revista Semana retrató a Escobar en portada como un 'Robin Hood paisa'",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #13 menciona que en abril de 1983 la revista Semana presentó a Pablo Escobar en un artículo de portada titulado 'Un Robin Hood paisa'."
+        },
+        {
+          "claim": "Luis Carlos Galán rechazó a Escobar por sus riquezas de 'dudosa procedencia'",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #14 indica que Galán dijo que no podía aceptar el apoyo político ni financiero de alguien cuya riqueza era de dudosa procedencia."
+        },
+        {
+          "claim": "El 10 de marzo de 1984 la policía llegó al complejo de procesamiento de Tranquilandia",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #2 y #3 mencionan explícitamente que el 10 de marzo de 1984 la policía nacional llegó en helicóptero al complejo de procesamiento de Tranquilandia."
+        },
+        {
+          "claim": "En Tranquilandia se confiscaron cerca de 15.000 kilos de cocaína",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #2 y #3 indican que se confiscó 'cerca de 15 000 kilos de cocaína' en Tranquilandia."
+        },
+        {
+          "claim": "El ministro de Justicia Rodrigo Lara Bonilla fue asesinado en 1984",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #15 menciona que 'desde 1984 –cuando asesinan al ministro Rodrigo Lara–', lo que confirma el asesinato en 1984, aunque no se menciona su nombre completo 'Bonilla'."
+        },
+        {
+          "claim": "El gobernador de Antioquia Antonio Roldán Betancourt fue asesinado el 4 de julio de 1989",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #6 menciona que 'el Cartel de Medellín asesinó al gobernador de Antioquia, Antonio Roldán Betancourt, el 4 de julio'."
+        },
+        {
+          "claim": "El candidato presidencial Luis Carlos Galán fue asesinado el 18 de agosto de 1989",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona el asesinato de Luis Carlos Galán ni la fecha del 18 de agosto de 1989."
+        },
+        {
+          "claim": "Un avión comercial de Avianca fue destruido el 27 de noviembre de 1989",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona la destrucción de un avión de Avianca ni la fecha del 27 de noviembre de 1989."
+        },
+        {
+          "claim": "El edificio del DAS fue destruido el 6 de diciembre de 1989",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona la destrucción del edificio del DAS ni la fecha del 6 de diciembre de 1989."
+        },
+        {
+          "claim": "El 19 de junio de 1991 la Asamblea Constituyente votó el artículo 35 de la nueva Constitución que prohibía la extradición de colombianos por nacimiento, y ese mismo día Escobar se entregó a las autoridades",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #4 indica explícitamente que el 19 de junio de 1991 Pablo Escobar se entregó a las autoridades y que ese mismo día la Asamblea Constituyente votó el artículo 35 que prohibía la extradición de colombianos por nacimiento."
+        }
+      ],
+      "hallucinationRate": 0.25,
+      "factualityScore": 0.675,
+      "latencyMs": {
+        "retrieval": 14379,
+        "generation": 46304,
+        "judge": 16657,
+        "total": 77340
+      }
+    },
+    {
+      "questionId": "np_06",
+      "category": "nombres_propios",
+      "question": "¿Quién fue Bernardo Jaramillo Ossa y cómo murió?",
+      "answer": "# El hombre que no debía ganar\n\nHay muertes que son accidentes de la historia, y hay muertes que *son* la historia misma. La de Bernardo Jaramillo Ossa pertenece a la segunda categoría: fue un asesinato tan calculado, tan estructural, tan revelador de las entrañas del poder colombiano, que entenderlo equivale a entender décadas de violencia política en ese país. Jaramillo Ossa era abogado, oriundo de Manizales, y llegó a la presidencia de la Unión Patriótica —la UP— después de que su antecesor, el ex magistrado Jaime Pardo Leal, fuera asesinado el 11 de octubre de 1987 en La Mesa, Cundinamarca [#10]. Antes de asumir la candidatura presidencial, Jaramillo había sido representante a la Cámara [#14] y asesor jurídico del Sindicato de Trabajadores del Banano en Urabá, Sintrabanano [#1], lo que lo vinculaba directamente con las comunidades más golpeadas por el paramilitarismo. Era, en suma, un hombre que conocía el precio de la política desde abajo, y que aun así eligió seguir.\n\nLa Unión Patriótica había nacido en 1985 como resultado de los acuerdos de paz entre el gobierno de Belisario Betancur y las FARC [#22], y su irrupción electoral fue tan contundente como perturbadora para el establecimiento: por primera vez en la historia del país, una fuerza política distinta a los dos partidos tradicionales lograba desbancarlos en alcaldías, concejos municipales, diputaciones y curules en el Congreso [#4]. Pero el éxito electoral de la UP fue leído por sectores de las Fuerzas Militares no como una señal de madurez democrática, sino como una amenaza: un excoronel del Ejército Nacional confesaría años después que el avance electoral del partido fue percibido como \"el brazo político de las FARC\" y que eso \"prendió las alertas\" que abrieron la puerta a los paramilitares [#24]. Lo que siguió fue sistemático y feroz: entre 1985 y los años siguientes fueron asesinados ocho congresistas, trece diputados, setenta concejales y once alcaldes de la UP [#18], en una campaña de exterminio que Pablo Escobar atribuía en buena parte a Fidel Castaño, a quien llamaba *Dos Mil* por el número de militantes de la UP que estimaba había eliminado [#12].\n\nBernardo Jaramillo Ossa sabía que iba a morir. Había pedido a Pablo Escobar, en diciembre de 1989, que interviniera para detener los asesinatos de miembros de la UP [#12]. Había enviado a otro dirigente del partido, Álvaro Salazar, a reunirse con Escobar para ese propósito [#13]. Nada funcionó. El 22 de marzo de 1990, en el Puente Aéreo de Bogotá —uno de los espacios más vigilados del país—, un adolescente de dieciséis años le disparó [#9]. Los médicos lo recibieron casi una hora después de los disparos, sin signos vitales, y aunque intentaron reanimarlo durante otra hora, fue declarado muerto [#6]. Su compañera Mariela, que había hablado con él de la muerte desde el principio de su relación, se encerró en un baño del hospital: no quería que nadie la viera derrumbarse [#6]. El sicario era un menor reclutado por paramilitares del Magdalena Medio bajo las órdenes de los hermanos Castaño Gil [#9]. Colombia acababa de asesinar a su segundo candidato presidencial de la UP.\n\nLa reacción popular fue inmediata y desbordante. En la región cafetera, cuna de Jaramillo, militantes del partido tomaron oficinas gubernamentales [#6]. En Cali, profesores abandonaron las aulas y salieron a las calles con pancartas [#6]. En Urabá, los trabajadores bananeros declararon una huelga que paralizó la región durante varios días [#6]. En Medellín, manifestantes tomaron el edificio del gobierno provincial [#6]. En Bogotá, la rabia fue más sangrienta: un soldado murió y dos policías resultaron heridos en enfrentamientos con protestantes en barrios de la UP; en el centro, militantes quemaron buses y bloquearon las principales avenidas durante horas [#6]. La muerte de Jaramillo no era solo la muerte de un hombre: era la confirmación de que en Colombia, la izquierda no tenía derecho a ganar elecciones.\n\nLo que vino después completó el cuadro con una precisión macabra. Apenas treinta y cinco días después del asesinato de Jaramillo, el 26 de abril de 1990, Carlos Pizarro Leongómez —candidato presidencial del M-19, recién desmovilizado— fue asesinado en pleno vuelo comercial en la ruta Bogotá-Barranquilla [#7]. Tres candidatos presidenciales asesinados en menos de ocho meses [#7]. Los tres representaban opciones progresistas; los tres habían anunciado transformaciones profundas; los tres contaron con la participación de fuerzas paramilitares y miembros de organismos de seguridad del Estado [#3]. María José Pizarro, hija de Carlos, lo diría con una claridad que ningún informe oficial ha igualado: \"A mi papá no lo asesinaron por haber sido guerrillero 20 años, lo asesinaron porque iba a ganar la presidencia\" [#3]. Lo mismo podría decirse de Bernardo Jaramillo Ossa: no murió por lo que había sido, sino por lo que Colombia no estaba dispuesta a dejar que fuera.\n\n---\n\n*Fuentes: El terrorismo de Estado en Colombia (s.f.). Informe final Sufrir la guerra impactos (2022). EL NARCOTRAFICANTE Nº 82 ALVARO URIBE VELEZ PRESIDENTE DE COLOMBIA (s.f.). Walking Ghosts: Murder and Guerrilla Politics in Colombia (2003). Testigos olvidados (2017). Niñez y conflicto armado — CEV (2022). La Colombia fuera de Colombia — CEV (2022). Víctima de la globalización (2012). Las Guerrillas de Colombia (2017). Todo pasó frente a nuestros ojos (2021). El derecho de justicia como garantía de no repetición (s.f.). Basta Ya: Colombia, memorias de guerra y dignidad (2016). Trujillo: Una tragedia que no cesa (s.f.).*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#10]",
+        "[#14]",
+        "[#1]",
+        "[#22]",
+        "[#4]",
+        "[#24]",
+        "[#18]",
+        "[#12]",
+        "[#12]",
+        "[#13]",
+        "[#9]",
+        "[#6]",
+        "[#6]",
+        "[#9]",
+        "[#6]",
+        "[#6]",
+        "[#6]",
+        "[#6]",
+        "[#6]",
+        "[#7]",
+        "[#7]",
+        "[#3]",
+        "[#3]"
+      ],
+      "facts": [
+        {
+          "fact": "Bernardo Jaramillo Ossa fue candidato presidencial por la Unión Patriótica",
+          "present_in_answer": true,
+          "exact_quote": "Colombia acababa de asesinar a su segundo candidato presidencial de la UP.",
+          "confidence": 0.95
+        },
+        {
+          "fact": "Fue asesinado el 22 de marzo de 1990",
+          "present_in_answer": true,
+          "exact_quote": "El 22 de marzo de 1990, en el Puente Aéreo de Bogotá",
+          "confidence": 1
+        },
+        {
+          "fact": "Murió en el aeropuerto Eldorado de Bogotá",
+          "present_in_answer": false,
+          "exact_quote": "",
+          "confidence": 0.85
+        },
+        {
+          "fact": "Su asesinato se enmarca en el exterminio de la UP",
+          "present_in_answer": true,
+          "exact_quote": "en una campaña de exterminio que Pablo Escobar atribuía en buena parte a Fidel Castaño",
+          "confidence": 0.95
+        },
+        {
+          "fact": "Rodríguez Gacha (cartel de Medellín) fue señalado como responsable",
+          "present_in_answer": false,
+          "exact_quote": "",
+          "confidence": 0.95
+        }
+      ],
+      "factsRecall": 0.6,
+      "hallucinations": [
+        {
+          "claim": "Jaime Pardo Leal fue asesinado el 11 de octubre de 1987 en La Mesa, Cundinamarca",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #10 menciona explícitamente que Jaime Pardo Leal fue asesinado el 11 de octubre de 1987 en La Mesa, Cundinamarca."
+        },
+        {
+          "claim": "Bernardo Jaramillo Ossa era oriundo de Manizales",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #14 lo describe como 'el joven abogado manizaleño Bernardo Jaramillo Ossa', indicando que era de Manizales."
+        },
+        {
+          "claim": "Bernardo Jaramillo Ossa fue asesor jurídico del Sindicato de Trabajadores del Banano en Urabá, Sintrabanano",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #1 y #2 describen a Bernardo Jaramillo Ossa como 'abogado asesor del Sindicato de Trabajadores del Banano en Urabá (Sintrabanano)'."
+        },
+        {
+          "claim": "La Unión Patriótica nació en 1985 como resultado de los acuerdos de paz entre el gobierno de Belisario Betancur y las FARC",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona el origen de la UP, el año 1985, ni los acuerdos de paz con Belisario Betancur."
+        },
+        {
+          "claim": "Entre 1985 y los años siguientes fueron asesinados ocho congresistas, trece diputados, setenta concejales y once alcaldes de la UP",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona estas cifras específicas de congresistas, diputados, concejales y alcaldes asesinados."
+        },
+        {
+          "claim": "Bernardo Jaramillo Ossa fue asesinado el 22 de marzo de 1990 en el Puente Aéreo de Bogotá",
+          "supported_by_chunks": true,
+          "reason": "Múltiples fragmentos (#1, #2, #3, #7, #8, #10) confirman que Bernardo Jaramillo Ossa fue asesinado el 22 de marzo de 1990 en el Puente Aéreo (aeropuerto) de Bogotá."
+        },
+        {
+          "claim": "El sicario que disparó a Jaramillo era un adolescente de dieciséis años",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #9 indica que 'un adolescente de dieciséis años asesinó al candidato presidencial de la UP Bernardo Jaramillo Ossa'."
+        },
+        {
+          "claim": "Carlos Pizarro Leongómez fue asesinado el 26 de abril de 1990 en pleno vuelo comercial en la ruta Bogotá-Barranquilla",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #7 y #8 confirman que Carlos Pizarro fue asesinado el 26 de abril en pleno vuelo de un avión comercial en la ruta Bogotá-Barranquilla."
+        },
+        {
+          "claim": "Bernardo Jaramillo Ossa había pedido a Pablo Escobar en diciembre de 1989 que interviniera para detener los asesinatos de miembros de la UP",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #12 y #13 indican que en diciembre de 1989, mientras Jaramillo se preparaba para ser candidato presidencial, le pidió a Pablo Escobar que interviniera para detener el asesinato de los miembros de la UP."
+        },
+        {
+          "claim": "Bernardo Jaramillo Ossa había sido representante a la Cámara",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #14 menciona que Bernardo Jaramillo Ossa 'en ese momento era representante a la Cámara' cuando fue designado sucesor de Pardo Leal."
+        },
+        {
+          "claim": "El asesinato de Pizarro ocurrió treinta y cinco días después del asesinato de Jaramillo",
+          "supported_by_chunks": false,
+          "reason": "Aunque los fragmentos mencionan ambas fechas (22 de marzo y 26 de abril de 1990), ninguno calcula ni menciona explícitamente que transcurrieron treinta y cinco días entre ambos asesinatos. La diferencia real entre esas fechas es de 35 días, pero los fragmentos no hacen esa afirmación."
+        },
+        {
+          "claim": "Pablo Escobar llamaba a Fidel Castaño 'Dos Mil' por el número de militantes de la UP que estimaba había eliminado",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #12 y #13 indican que Escobar llamaba a Fidel Castaño 'Dos Mil', por el número de miembros de la UP que estimaba había matado Castaño."
+        }
+      ],
+      "hallucinationRate": 0.25,
+      "factualityScore": 0.475,
+      "latencyMs": {
+        "retrieval": 14378,
+        "generation": 41411,
+        "judge": 19185,
+        "total": 74975
+      }
+    },
+    {
+      "questionId": "np_07",
+      "category": "nombres_propios",
+      "question": "Háblame de Simón Bolívar y la campaña de independencia en la Nueva Granada.",
+      "answer": "# El Trueno que Bajó de los Llanos: Bolívar y la Liberación de la Nueva Granada\n\nLa historia oficial suele construir sus héroes como estatuas: inmóviles, perfectas, sin contradicción. Pero Simón Bolívar —nacido en Caracas el 24 de julio de 1783, hijo de Juan Vicente Bolívar y María de la Concepción Palacios, huérfano desde niño y educado por preceptores como Simón Rodríguez y Andrés Bello [#9]— fue todo lo contrario: un hombre de carne y fracaso, que aprendió a ganar precisamente porque conoció la derrota con intimidad. Antes de la gloria de 1819, hubo años de humillación. En 1815, con Pablo Morillo avanzando implacablemente sobre el continente, Bolívar se vio obligado a refugiarse en Jamaica, donde escribió su célebre *Carta de Jamaica* el 6 de septiembre de ese año [#16], un grito de lucidez política desde el exilio. Ese texto no era la proclama de un vencedor: era el manifiesto de alguien que todavía no sabía si sobreviviría para ver realizado su sueño. La independencia, antes de ser una victoria, fue una obstinada apuesta contra la probabilidad.\n\nEl terror que precedió a la liberación merece ser nombrado sin eufemismos. Cuando Morillo reconquistó la Nueva Granada en 1816, estableció en Santafé tres instrumentos de dominación sistemática: la *Junta de Secuestro*, que confiscaba las propiedades de los patriotas; el *Tribunal de Pacificación*, que encarcelaba o exiliaba a los simpatizantes de la causa independentista; y el *Consejo de Guerra Permanente*, encargado de juzgar y ejecutar a los acusados de traición [#16]. Bajo ese régimen fueron fusilados en 1816 los líderes más prominentes del movimiento: Camilo Torres, Francisco José de Caldas, Jorge Tadeo Lozano, José María Carbonell, Antonio Villavicencio y José María Cabal, entre muchos otros [#10]. Los fusilamientos se extendieron a civiles, y los casos de Policarpa Salavarrieta y Antonia Santos se convirtieron en los ejemplos más célebres de esas represalias [#10]. Morillo no pacificó: exterminó a una generación entera. Y al hacerlo, sin saberlo, fabricó el combustible de la rebelión que vendría.\n\nFue precisamente en los márgenes del imperio —en los llanos inhóspitos de Casanare— donde se gestó la respuesta. Francisco de Paula Santander, nacido en 1792 en la Villa del Rosario de Cúcuta [#22], había escapado de la represión de Morillo refugiándose en esas llanuras, donde no solo alcanzó el grado de General de Brigada sino que recibió el encargo de Bolívar de convertir en ejército organizado las fuerzas patriotas dispersas [#8]. Fue Santander quien sugirió que el objetivo inicial de la campaña debía ser la Nueva Granada [#8], y fue él quien transformó Casanare en lo que Clément Thibaud llamaría el gran arquitecto de la campaña: un bastión y un colchón entre los llanos venezolanos y las montañas realistas de la meseta cundiboyacense [#23]. El 23 de mayo de 1819 comenzó formalmente la campaña [#8], y el 5 de julio el ejército inició el paso de los Andes por el páramo de Pisba, un lugar considerado militarmente inaccesible [#5]. Los soldados, acostumbrados al calor de la llanura, debieron soportar temperaturas extremas en la cordillera [#5]. La geografía era el primer enemigo.\n\nLo que siguió fue una secuencia de combates que la historia ha romantizado pero que en su momento fueron decisiones tomadas al filo de la derrota. El 25 de julio de 1819, en el Pantano de Vargas, cerca de Paipa, una audaz carga de caballería al mando de Juan José Rondón salvó al ejército patriota de lo que habría sido una derrota catastrófica [#5]; en esa batalla, una división de cien británicos dentro de un ejército de 2.500 hombres jugó un papel notable [#6]. Finalmente, el 7 de agosto, en el Puente de Boyacá, el ejército libertador —compuesto por aproximadamente 2.800 infantes y 600 jinetes [#1]— derrotó a las fuerzas realistas de José María Barreiro en apenas dos horas [#2], tomando cerca de 1.600 prisioneros [#2]. Las bajas españolas sumaron entre 100 y 150 muertos y 160 heridos; los patriotas perdieron apenas 13 hombres y tuvieron 53 heridos [#1]. La desproporción de las cifras dice todo sobre la naturaleza del colapso realista: no fue solo una derrota militar, fue el derrumbe de un sistema que ya no tenía legitimidad popular.\n\nEl virrey Juan Sámano, que creía haber ganado, huyó de Santafé disfrazado de campesino con tanta precipitación que dejó sobre su escritorio una bolsa de oro, medio millón de pesos en la bóveda, y armas suficientes para reaprovisionar a todo el ejército republicano [#2]. También dejó, con involuntaria elocuencia, su maquillaje, su colorete y una fina colección de pelucas empolvadas [#2]. Pocas imágenes resumen mejor el fin de un orden: el representante del rey de España huyendo disfrazado, abandonando sus pelucas y su oro, mientras el 10 de agosto de 1819, bajo una lluvia de flores, el ejército patriota entraba triunfante a Santafé [#1]. El propio Pablo Morillo reconoció en una carta al Ministerio de Guerra de España que *\"en un solo día, Bolívar acaba con el fruto de cinco años de campaña\"* [#2]. La victoria de Boyacá no cerró la guerra —el camino hacia la independencia total sería largo todavía [#8]— pero hizo algo más importante: hizo irreversible la dirección de la historia.\n\n---\n\n*Fuentes: Grandes momentos de Colombia (2017). Magdalena. Historias de Colombia (2021). Historia concisa de Colombia 1810-2017 (2017). Enciclopedia de Colombia 2. Gran Bretaña y la Independencia de Venezuela y Colombia. Repúblicas en armas. Los ejércitos de Bolívar en las guerras de independencia en Venezuela y Colombia (2003). Otra historia de Colombia. Breve historia de Bogotá (2016). Historia de la primera República de Colombia, 1819-1831 (2019).*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#9]",
+        "[#16]",
+        "[#16]",
+        "[#10]",
+        "[#10]",
+        "[#22]",
+        "[#8]",
+        "[#8]",
+        "[#23]",
+        "[#8]",
+        "[#5]",
+        "[#5]",
+        "[#5]",
+        "[#6]",
+        "[#1]",
+        "[#2]",
+        "[#2]",
+        "[#1]",
+        "[#2]",
+        "[#2]",
+        "[#1]",
+        "[#2]",
+        "[#8]"
+      ],
+      "facts": [
+        {
+          "fact": "Simón Bolívar lideró la campaña libertadora",
+          "present_in_answer": true,
+          "exact_quote": "el ejército libertador —compuesto por aproximadamente 2.800 infantes y 600 jinetes— derrotó a las fuerzas realistas de José María Barreiro",
+          "confidence": 0.98
+        },
+        {
+          "fact": "La batalla de Boyacá fue el 7 de agosto de 1819",
+          "present_in_answer": true,
+          "exact_quote": "Finalmente, el 7 de agosto, en el Puente de Boyacá, el ejército libertador —compuesto por aproximadamente 2.800 infantes y 600 jinetes— derrotó a las fuerzas realistas de José María Barreiro en apenas dos horas",
+          "confidence": 1
+        },
+        {
+          "fact": "Selló la independencia de la Nueva Granada",
+          "present_in_answer": true,
+          "exact_quote": "La victoria de Boyacá no cerró la guerra —el camino hacia la independencia total sería largo todavía— pero hizo algo más importante: hizo irreversible la dirección de la historia.",
+          "confidence": 0.85
+        },
+        {
+          "fact": "Francisco de Paula Santander fue su lugarteniente",
+          "present_in_answer": true,
+          "exact_quote": "Francisco de Paula Santander, nacido en 1792 en la Villa del Rosario de Cúcuta, había escapado de la represión de Morillo refugiándose en esas llanuras, donde no solo alcanzó el grado de General de Brigada sino que recibió el encargo de Bolívar de convertir en ejército organizado las fuerzas patriotas dispersas",
+          "confidence": 0.92
+        },
+        {
+          "fact": "Cruzó los Andes desde Venezuela hacia la Nueva Granada",
+          "present_in_answer": true,
+          "exact_quote": "el 5 de julio el ejército inició el paso de los Andes por el páramo de Pisba, un lugar considerado militarmente inaccesible",
+          "confidence": 0.9
+        }
+      ],
+      "factsRecall": 1,
+      "hallucinations": [
+        {
+          "claim": "Simón Bolívar nació en Caracas el 24 de julio de 1783",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos mencionan que Bolívar nació en 1783 (fragmentos 14 y 15) pero no especifican la fecha exacta ni la ciudad de nacimiento."
+        },
+        {
+          "claim": "Bolívar fue hijo de Juan Vicente Bolívar y María de la Concepción Palacios",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona los nombres de los padres de Bolívar."
+        },
+        {
+          "claim": "Bolívar fue educado por preceptores como Simón Rodríguez y Andrés Bello",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona a Simón Rodríguez ni a Andrés Bello como preceptores de Bolívar."
+        },
+        {
+          "claim": "Bolívar escribió su Carta de Jamaica el 6 de septiembre de 1815",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #9 menciona que Bolívar redactó su célebre Carta de Jamaica el 6 de septiembre (de 1815), lo cual coincide con el claim."
+        },
+        {
+          "claim": "Francisco de Paula Santander nació en 1792 en la Villa del Rosario de Cúcuta",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona el lugar ni la fecha de nacimiento de Santander."
+        },
+        {
+          "claim": "El 23 de mayo de 1819 comenzó formalmente la campaña",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #8 indica explícitamente que 'El 23 de mayo de 1819 se dio inicio a la campaña'."
+        },
+        {
+          "claim": "El 5 de julio el ejército inició el paso de los Andes por el páramo de Pisba",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #8 menciona que 'el 5 de julio comenzó el paso' y el fragmento #5 indica que el ejército debía escalar la cordillera a través del páramo de Pisba."
+        },
+        {
+          "claim": "El 25 de julio de 1819, en el Pantano de Vargas, cerca de Paipa, una carga de caballería al mando de Juan José Rondón salvó al ejército patriota",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos #6 y #2 mencionan la batalla del Pantano de Vargas el 24 de julio (no el 25) y destacan el papel de los jinetes y los británicos, pero no mencionan específicamente a Juan José Rondón ni la localización cerca de Paipa."
+        },
+        {
+          "claim": "El 7 de agosto, en el Puente de Boyacá, el ejército libertador derrotó a las fuerzas realistas de José María Barreiro en aproximadamente dos horas",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #2 indica que 'En apenas dos horas, Bolívar dispersó la única fuerza realista capaz de defender el acceso a Bogotá', y el fragmento #6 menciona a Barreiro como comandante realista. El fragmento #1 también menciona el Puente de Boyacá y la fecha del 7 de agosto de 1819."
+        },
+        {
+          "claim": "El ejército libertador estaba compuesto por aproximadamente 2.800 infantes y 600 jinetes",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento especifica la composición del ejército libertador en esos términos. El fragmento #6 menciona un ejército de 2.500 hombres pero en referencia a la batalla del Pantano de Vargas."
+        },
+        {
+          "claim": "Los patriotas tomaron cerca de 1.600 prisioneros en Boyacá",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #2 menciona explícitamente que Bolívar tomó 'mil seiscientos prisioneros' en la Batalla de Boyacá."
+        },
+        {
+          "claim": "El 10 de agosto de 1819 el ejército patriota entró a Santafé",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona la fecha específica del 10 de agosto de 1819 como la entrada del ejército patriota a Santafé."
+        }
+      ],
+      "hallucinationRate": 0.5833333333333334,
+      "factualityScore": 0.7083333333333333,
+      "latencyMs": {
+        "retrieval": 13094,
+        "generation": 44091,
+        "judge": 18615,
+        "total": 75800
+      }
+    },
+    {
+      "questionId": "np_08",
+      "category": "nombres_propios",
+      "question": "¿Qué hizo Rafael Núñez como presidente y cómo influyó en la Regeneración?",
+      "answer": "# Rafael Núñez: el arquitecto del orden y sus contradicciones\n\nLa historia latinoamericana está llena de hombres que llegaron al poder prometiendo salvar a sus países de sí mismos. Rafael Núñez fue uno de los más sofisticados de esa estirpe: liberal de origen, positivista de formación, autoritario de vocación. Su frase más célebre no fue un discurso de victoria sino una advertencia lanzada en 1878, cuando como presidente del Congreso le dio posesión al presidente Julián Trujillo y sentenció: *\"hemos llegado a un punto en que estamos confrontando este preciso dilema: regeneración administrativa fundamental o catástrofe\"* [#6]. Con esa frase, Núñez no solo diagnosticó una época; se autoproclamó su único médico posible. El contexto no era retórico: desde 1875, las exportaciones colombianas habían caído de 29 millones de dólares a apenas 7.3 millones en 1885 [#2], y el proyecto liberal radical, que había apostado por el libre mercado y la federación, se desmoronaba bajo el peso de su propio fracaso económico.\n\nSu primer gobierno, entre 1880 y 1882, fue descrito como *\"la más creativa de las administraciones al finalizar el siglo pasado\"* [#3]. En ese período creó la Comisión Científica Permanente mediante la ley 59 del 11 de junio de 1881, encargada de estudiar botánica, geología, mineralogía, zoología, geografía y arqueología del país, y trajo de Francia al biólogo y químico Joseph Charles Mano para dirigirla [#3]. También estableció una política aduanera proteccionista y fundó el Banco Nacional, autorizando la libre emisión de moneda [#17]. Estas medidas no eran ideológicamente inocentes: el proteccionismo le ganó el apoyo de los artesanos bogotanos, que veían en los aranceles altos una protección a sus oficios [#14], y la fundación del banco le dio al Estado un instrumento de control económico que los radicales nunca habían querido tener. Núñez comprendía algo que sus adversarios ignoraban: que el poder real no se ejerce solo desde la tribuna, sino desde el presupuesto.\n\nLa gran obra de la Regeneración fue la Constitución de 1886, cuya redacción fue liderada por el conservador **Miguel Antonio Caro** [#4], lo que explica por qué el texto terminó reflejando más los postulados del conservatismo que los del liberalismo independiente que Núñez decía encarnar. El país se centralizó bajo el nombre de República de Colombia, los estados se convirtieron en departamentos y sus gobernadores pasaron a ser nombrados por el Gobierno nacional [#4]. El período presidencial se extendió a seis años [#5], y la Iglesia Católica recuperó el control sobre el matrimonio, los cementerios, el registro civil y, crucialmente, la educación pública [#19]. En 1887 se aprobó el Concordato con la Santa Sede [#19]. La paradoja era mayúscula: Núñez, descrito como *\"fino político liberal, escéptico, positivista, hombre de mundo\"* [#13], había construido un Estado que entregaba sus instituciones más sensibles a **Miguel Antonio Caro**, *\"católico ultramontano, hispanófilo tradicionalista, arrogante y huraño\"* que, según se decía, como cuestión de principio no solía viajar más allá de los confines de la Sabana de Bogotá [#13].\n\nLo más revelador del poder de Núñez no fue lo que hizo cuando gobernó, sino lo que hizo cuando decidió no gobernar. Elegido presidente para el período 1886-1892 y reelegido en 1892 sin oposición [#1], prefirió no residir en Bogotá ni ejercer directamente el mando, salvo en situaciones de crisis [#1]. Desde su retiro en Cartagena, dirigía la política nacional a través de los editoriales de su periódico *El Porvenir*, que ningún político podía ignorar [#9]. Sus artículos eran *\"una guía que era leída por todos los políticos para encontrar orientaciones que casi siempre era obligatorio seguir\"* [#1]. Además, desde 1888 tenía el derecho constitucional de posesionarse como presidente en cualquier parte del país y ante dos testigos [#1], lo que convertía su voluntad en un artículo constitucional implícito. Cuando en noviembre de 1894 el periódico conservador *El Correo Nacional* fue suspendido por orden oficial, el ministro de Gobierno Luis Holguín argumentó que su redacción había convertido al diario en *\"instrumento de sistemática agresión contra la autoridad del jefe de Estado\"* [#9]. La prensa libre era bienvenida siempre que fuera la prensa de Núñez.\n\nLa Regeneración dejó al país una Constitución que duraría hasta 1991, pero no le dio la paz que prometía [#7]. La exclusión de los liberales del poder nacional alimentó revueltas en 1895 y desembocó en la Guerra de los Mil Días, entre 1899 y 1902, en la que murieron cien mil personas, el erario gastó veinticinco millones de pesos y el cambio del peso colombiano llegó al 25.000% como consecuencia de las emisiones de papel moneda [#25]. Núñez había muerto en 1894 [#1] sin ver el desenlace de su obra, pero la lógica de su sistema —centralismo, exclusión del adversario, alianza con la Iglesia, control de la prensa mediante la célebre *ley 61 de 1888* o *\"ley de los caballos\"* [#11]— ya había sembrado las semillas de ese desastre. El Regenerador le dio a Colombia una Constitución y un himno nacional [#7], pero no supo, o no quiso, construir un orden que no dependiera de su propia sombra.\n\n---\n\n*Fuentes: Nueva Historia de Colombia, Vol. I (s.f.). Nueva Historia de Colombia, Vol. VI (s.f.). Enciclopedia de Colombia 2 (s.f.). Enciclopedia de Colombia 4 (s.f.). Otra historia de Colombia (s.f.). Víctima de la globalización (2012). Coffee and Conflict in Colombia, 1886-1910 (1986). El café en Colombia, 1850-1970 (s.f.). Historia abierta del arte colombiano (s.f.). Economía y cultura en la historia de Colombia (s.f.). Manual de Historia de Colombia, Tomo III (s.f.). Grandes momentos de Colombia (2017). Modernization in Colombia (2001). Breve historia de Bogotá (2016).*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#6]",
+        "[#2]",
+        "[#3]",
+        "[#3]",
+        "[#17]",
+        "[#14]",
+        "[#4]",
+        "[#4]",
+        "[#5]",
+        "[#19]",
+        "[#19]",
+        "[#13]",
+        "[#13]",
+        "[#1]",
+        "[#1]",
+        "[#9]",
+        "[#1]",
+        "[#1]",
+        "[#9]",
+        "[#7]",
+        "[#25]",
+        "[#1]",
+        "[#11]",
+        "[#7]"
+      ],
+      "facts": [
+        {
+          "fact": "Rafael Núñez fue presidente de Colombia varias veces",
+          "present_in_answer": true,
+          "exact_quote": "Elegido presidente para el período 1886-1892 y reelegido en 1892 sin oposición",
+          "confidence": 0.95
+        },
+        {
+          "fact": "Lideró la Regeneración a partir de 1880",
+          "present_in_answer": true,
+          "exact_quote": "Su primer gobierno, entre 1880 y 1882, fue descrito como 'la más creativa de las administraciones al finalizar el siglo pasado'",
+          "confidence": 0.85
+        },
+        {
+          "fact": "Impulsó la Constitución de 1886",
+          "present_in_answer": true,
+          "exact_quote": "La gran obra de la Regeneración fue la Constitución de 1886",
+          "confidence": 1
+        },
+        {
+          "fact": "Centralizó el poder político",
+          "present_in_answer": true,
+          "exact_quote": "El país se centralizó bajo el nombre de República de Colombia, los estados se convirtieron en departamentos y sus gobernadores pasaron a ser nombrados por el Gobierno nacional",
+          "confidence": 1
+        },
+        {
+          "fact": "Es autor del himno nacional de Colombia",
+          "present_in_answer": true,
+          "exact_quote": "El Regenerador le dio a Colombia una Constitución y un himno nacional",
+          "confidence": 0.95
+        }
+      ],
+      "factsRecall": 1,
+      "hallucinations": [
+        {
+          "claim": "Rafael Núñez pronunció la frase sobre 'regeneración administrativa fundamental o catástrofe' en 1878 al dar posesión al presidente Julián Trujillo",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #6 describe explícitamente que Núñez pronunció la frase 'regeneración administrativa fundamental o catástrofe' en el acto de posesión de Trujillo. El fragmento #12 confirma que Trujillo fue elegido presidente en 1878."
+        },
+        {
+          "claim": "Desde 1875, las exportaciones colombianas habían caído de 29 millones de dólares a apenas 7.3 millones en 1885",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona cifras de exportaciones colombianas para esos años."
+        },
+        {
+          "claim": "El primer gobierno de Núñez fue entre 1880 y 1882",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #3 indica explícitamente que 'Rafael Núñez ejerció la presidencia por primera vez entre 1880 y 1882'."
+        },
+        {
+          "claim": "Núñez creó la Comisión Científica Permanente mediante la ley 59 del 11 de junio de 1881",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #3 menciona explícitamente la creación de la Comisión Científica Permanente mediante 'ley 59 del 11 de junio de 1881'."
+        },
+        {
+          "claim": "Núñez trajo de Francia al biólogo y químico Joseph Charles Mano para dirigir la Comisión Científica Permanente",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #3 indica que 'el gobierno trajo de Francia al biólogo y químico Joseph Charles Mano' para dirigir dicha comisión."
+        },
+        {
+          "claim": "La Constitución de 1886 fue redactada bajo el liderazgo de Miguel Antonio Caro",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos mencionan a Miguel Antonio Caro como figura del régimen de Núñez (#13), pero ninguno atribuye específicamente a Caro el liderazgo en la redacción de la Constitución de 1886."
+        },
+        {
+          "claim": "El período presidencial establecido en la Constitución de 1886 se extendió a seis años",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #15 indica que 'El presidente, investido de fuerte autoridad, sería elegido por un período de seis años', en el contexto de la constitución de la Regeneración."
+        },
+        {
+          "claim": "En 1887 se aprobó el Concordato con la Santa Sede",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona el Concordato con la Santa Sede ni su fecha de aprobación."
+        },
+        {
+          "claim": "Núñez fue elegido presidente para el período 1886-1892 y reelegido en 1892 sin oposición",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #1 indica que 'El Regenerador fue elegido presidente para el período 1886-92, y su reelección en 1892 para un nuevo sexenio no tuvo oposición'."
+        },
+        {
+          "claim": "Núñez dirigía la política nacional desde Cartagena a través de los editoriales de su periódico El Porvenir",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #9 menciona que Núñez publicaba artículos en El Porvenir de Cartagena, y el fragmento #1 señala que no quiso residir en Bogotá pero mantuvo influencia decisiva usando la prensa como herramienta."
+        },
+        {
+          "claim": "En noviembre de 1894 el periódico conservador El Correo Nacional fue suspendido por orden oficial",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona la suspensión de El Correo Nacional en noviembre de 1894."
+        },
+        {
+          "claim": "La Guerra de los Mil Días ocurrió entre 1899 y 1902 y en ella murieron cien mil personas",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #5 menciona la guerra civil de 1899 a 1902, pero no indica la cifra de cien mil muertos. La fecha sí está soportada pero la cifra de víctimas no aparece en los fragmentos."
+        }
+      ],
+      "hallucinationRate": 0.4166666666666667,
+      "factualityScore": 0.7916666666666666,
+      "latencyMs": {
+        "retrieval": 14127,
+        "generation": 43788,
+        "judge": 20433,
+        "total": 78348
+      }
+    },
+    {
+      "questionId": "np_09",
+      "category": "nombres_propios",
+      "question": "Cuéntame sobre Álvaro Uribe Vélez y el debate sobre Hacienda El Ubérrimo.",
+      "answer": "# La Tierra que Habla: El Ubérrimo y los Silencios del Poder\n\nHay propiedades que son más que tierra. Son biografías. Son mapas del poder real de un país, trazados no en los libros de historia sino en los registros notariales, en las escrituras que cambian de manos cuando cambia la violencia. La hacienda El Ubérrimo, ubicada en el corregimiento El Sabanal, a veinte kilómetros de Montería, en el departamento de Córdoba, es una de esas propiedades que condensa en sus potreros la historia entera de Colombia: la concentración de la tierra, el paramilitarismo, el narcotráfico y la política. Álvaro Uribe Vélez la adquirió alrededor de 1982 [#4], comprándosela, según se relata, a un empresario del transporte que había sido secuestrado por la guerrilla [#1]. El nombre mismo de la hacienda es una declaración de principios: *ubérrimo*, del latín, significa lo más fértil, lo más abundante. Y en efecto, sus tierras planas —\"una mesa de billar\", dicen los campesinos [#3]— siguen el curso del canal de riego que el Estado construyó para una reforma agraria que nunca llegó a los desposeídos [#3].\n\nLa geografía de la desigualdad colombiana se puede leer en una sola estadística. El profesor Marco Palacios la formuló con precisión quirúrgica: Uribe Vélez pertenece al grupo de los 2.300 colombianos propietarios de más de 2.000 hectáreas, que entre todos acaparan unos cuarenta millones de hectáreas. En el otro platillo de la balanza, cerca de dos millones y medio de pequeños propietarios, con menos de cinco hectáreas cada uno, apenas suman cuatro millones y medio de hectáreas en total [#1]. El Ubérrimo engorda unas mil reses y mantiene unos sesenta caballos finos [#1]. Mientras tanto, el corregimiento El Sabanal, donde está enclavada la hacienda presidencial, es pobre: la atención médica es deficiente y la escuela tiene problemas locativos [#17]. Esta es la paradoja que la hacienda encarna sin pudor: la fertilidad de la tierra y la miseria de quienes la rodean coexisten a doscientos metros del templo parroquial [#3], como si la abundancia y el abandono fueran vecinos naturales, condenados a no mirarse.\n\nLo que hace de El Ubérrimo algo más que una hacienda ganadera es su función política. Uribe Vélez la utilizó con frecuencia como lugar de encuentro con delegaciones extranjeras y como sitio de trabajo presidencial [#2], recibiendo allí, por ejemplo, al presidente de la General Electric, Jeffrey Immelt [#2]. Pero también fue desde esa finca que tomó decisiones de gobierno de alcance departamental: fue desde El Ubérrimo que autorizó la designación del ganadero Benito Osorio Villadiego como gobernador encargado de Córdoba [#18], en un departamento que tuvo nueve gobernadores en cuatro años [#18]. La hacienda operaba así como una suerte de palacio paralelo, un centro de poder informal donde la política cordobesa —con toda su carga de vínculos paramilitares y escándalos de corrupción— encontraba su punto de gravedad. Que el abogado José *El Tigre* Corena, amigo cercano del presidente, se ocupara del manejo de la finca El Ubérrimo mientras su hija Tania Corena era designada en un cargo diplomático [#7], ilustra con elocuencia cómo el poder personal y el poder del Estado se confundían en esos potreros del Sinú.\n\nEl contexto en que El Ubérrimo creció como propiedad y como símbolo no puede separarse de la historia del paramilitarismo en Córdoba. Los años finales de la década de 1980 estuvieron marcados por el inicio de las masacres y los crímenes políticos selectivos en la región [#5], precisamente cuando Uribe Vélez ya se había instalado en el departamento como hacendado y congresista [#5]. A corta distancia de Montería se hallaban los cuarteles y centros de entrenamiento de las AUC [#9]. Era imposible, señalan Iván Cepeda y Jorge Rojas, no saber lo que acontecía en la relación entre los políticos y los jefes paramilitares, en especial cuando el diario local difundía cotidianamente su crónica [#9]. Salvatore Mancuso afirmó en versión libre ante fiscales de la Unidad de Justicia y Paz en mayo de 2007 que 25 de los 28 alcaldes de Córdoba habían estado bajo sus órdenes [#2]. Todos los personajes principales que orbitan alrededor de El Ubérrimo han sido denunciados e investigados por presuntos vínculos con grupos paramilitares [#9].\n\nLa hacienda El Ubérrimo es, en última instancia, una metáfora perfecta del poder latinoamericano: se presenta con austeridad y sencillez [#3], con mecedoras rústicas de cuero y madera [#3], con el dueño que ordeña vacas y doma caballos [#1], que sirve el café a ministros y campesinos por igual [#14]. Es el poder que se disfraza de trabajo honesto, de hombre de campo que no ha perdido el contacto con la tierra. Pero esa tierra fue construida sobre los canales de una reforma agraria fracasada [#3], en un departamento donde el padre del presidente murió en su hacienda en junio de 1983 [#12], donde el helicóptero que llegó al rescate era, según reportó la prensa, del hacendado Pablo Escobar [#12], y donde la fortuna familiar nunca recibió una aclaración objetiva sobre su procedencia [#12]. La historia de El Ubérrimo no es la historia de un hombre que trabajó la tierra. Es la historia de una tierra que trabajó para un sistema.\n\n---\n\n*Fuentes: A las puertas del Ubérrimo (Iván Cepeda y Jorge Rojas). El terrorismo de Estado en Colombia (Hernando Calvo Ospina). Una nación desplazada. Mujeres que hacen historia: tierra, cuerpo y política en el Caribe colombiano.*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#4]",
+        "[#1]",
+        "[#3]",
+        "[#3]",
+        "[#1]",
+        "[#1]",
+        "[#17]",
+        "[#3]",
+        "[#2]",
+        "[#2]",
+        "[#18]",
+        "[#18]",
+        "[#7]",
+        "[#5]",
+        "[#5]",
+        "[#9]",
+        "[#9]",
+        "[#2]",
+        "[#9]",
+        "[#3]",
+        "[#3]",
+        "[#1]",
+        "[#14]",
+        "[#3]",
+        "[#12]",
+        "[#12]",
+        "[#12]"
+      ],
+      "facts": [
+        {
+          "fact": "Álvaro Uribe Vélez fue presidente de Colombia (2002-2010)",
+          "present_in_answer": false,
+          "exact_quote": "",
+          "confidence": 0.9
+        },
+        {
+          "fact": "La hacienda El Ubérrimo está ubicada en Córdoba",
+          "present_in_answer": true,
+          "exact_quote": "ubicada en el corregimiento El Sabanal, a veinte kilómetros de Montería, en el departamento de Córdoba",
+          "confidence": 1
+        },
+        {
+          "fact": "Iván Cepeda investigó los vínculos paramilitares en la región",
+          "present_in_answer": true,
+          "exact_quote": "señalan Iván Cepeda y Jorge Rojas, no saber lo que acontecía en la relación entre los políticos y los jefes paramilitares",
+          "confidence": 0.85
+        },
+        {
+          "fact": "El debate involucró acusaciones de paramilitarismo",
+          "present_in_answer": true,
+          "exact_quote": "Todos los personajes principales que orbitan alrededor de El Ubérrimo han sido denunciados e investigados por presuntos vínculos con grupos paramilitares",
+          "confidence": 1
+        },
+        {
+          "fact": "Iván Cepeda y Jorge Rojas publicaron un libro titulado 'A las puertas del Ubérrimo'",
+          "present_in_answer": true,
+          "exact_quote": "A las puertas del Ubérrimo (Iván Cepeda y Jorge Rojas)",
+          "confidence": 1
+        }
+      ],
+      "factsRecall": 0.8,
+      "hallucinations": [
+        {
+          "claim": "La hacienda El Ubérrimo está ubicada en el corregimiento El Sabanal, a veinte kilómetros de Montería, en el departamento de Córdoba",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos mencionan que El Ubérrimo se extiende desde El Sabanal hasta el municipio de San Carlos y está cerca de Montería, pero no especifican la distancia de veinte kilómetros."
+        },
+        {
+          "claim": "Álvaro Uribe Vélez adquirió El Ubérrimo alrededor de 1982",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #4 indica que El Ubérrimo es 'desde 1982 propiedad del presidente Álvaro Uribe Vélez', y el fragmento #1 menciona que la compró 'a comienzos de la década de 1980'."
+        },
+        {
+          "claim": "El Ubérrimo engorda unas mil reses y mantiene unos sesenta caballos finos",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #1 cita al profesor Marco Palacios indicando que en esos terrenos 'engordan unas mil reses y se mantienen unos sesenta caballos finos'."
+        },
+        {
+          "claim": "Uribe Vélez recibió en El Ubérrimo al presidente de la General Electric, Jeffrey Immelt",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #2 menciona explícitamente que Uribe recibió en su finca al presidente de la General Electric, Jeffrey Immelt, interesado en invertir en Colombia."
+        },
+        {
+          "claim": "Desde El Ubérrimo Uribe Vélez autorizó la designación del ganadero Benito Osorio Villadiego como gobernador encargado de Córdoba",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona a Benito Osorio Villadiego ni esa designación específica desde El Ubérrimo."
+        },
+        {
+          "claim": "El departamento de Córdoba tuvo nueve gobernadores en cuatro años",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona este dato sobre el número de gobernadores de Córdoba en cuatro años."
+        },
+        {
+          "claim": "El abogado José El Tigre Corena se ocupaba del manejo de la finca El Ubérrimo mientras su hija Tania Corena era designada en un cargo diplomático",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona a José El Tigre Corena ni a Tania Corena en relación con El Ubérrimo."
+        },
+        {
+          "claim": "Salvatore Mancuso afirmó en versión libre ante fiscales de la Unidad de Justicia y Paz en mayo de 2007 que 25 de los 28 alcaldes de Córdoba habían estado bajo sus órdenes",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles contiene esta declaración específica de Mancuso sobre los alcaldes de Córdoba."
+        },
+        {
+          "claim": "El padre de Uribe Vélez murió en su hacienda en junio de 1983",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #12 y #13 mencionan que 'El padre del presidente murió en un asalto que realizaron las FARC a su hacienda en junio de 1983'."
+        },
+        {
+          "claim": "Según reportó la prensa, el helicóptero que llegó al rescate tras la muerte del padre de Uribe era del hacendado Pablo Escobar",
+          "supported_by_chunks": false,
+          "reason": "Ninguno de los fragmentos disponibles menciona este dato sobre el helicóptero de Pablo Escobar."
+        },
+        {
+          "claim": "Cerca de dos millones y medio de pequeños propietarios con menos de cinco hectáreas cada uno apenas suman cuatro millones y medio de hectáreas en total",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #1 cita al profesor Marco Palacios indicando exactamente que 'cerca de dos millones y medio de pequeños propietarios (de menos de cinco hectáreas) tienen apenas cuatro millones y medio de hectáreas'."
+        },
+        {
+          "claim": "Los 2.300 colombianos propietarios de más de 2.000 hectáreas acaparan unos cuarenta millones de hectáreas",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #1 menciona explícitamente que '2.300 colombianos propietarios de más de 2.000 hectáreas... acaparan entre todos unos cuarenta millones de hectáreas'."
+        }
+      ],
+      "hallucinationRate": 0.5,
+      "factualityScore": 0.55,
+      "latencyMs": {
+        "retrieval": 16599,
+        "generation": 42729,
+        "judge": 19403,
+        "total": 78731
+      }
+    },
+    {
+      "questionId": "np_10",
+      "category": "nombres_propios",
+      "question": "¿Quién fue Jaime Pardo Leal y qué relación tenía con la Unión Patriótica?",
+      "answer": "# El hombre que Colombia no podía permitirse que viviera\n\nHay figuras históricas cuya biografía parece diseñada para incomodar al poder: demasiado legales para ser ignorados, demasiado radicales para ser tolerados. Jaime Pardo Leal era una de esas figuras. Abogado, exmagistrado del Tribunal Superior de Bogotá, candidato a la Corte Suprema de Justicia [#11], fundador de la Asociación Nacional de Funcionarios y Empleados de la Rama Jurisdiccional —Asonal Judicial— [#13], cofundador de la Central Unitaria de Trabajadores de Colombia y miembro del Comité Central del Partido Comunista Colombiano [#13], Pardo Leal encarnaba esa rareza latinoamericana: el hombre de izquierda que no empuñó un fusil sino un expediente. Integrante de la Juventud Comunista en sus años de estudiante [#13], construyó su trayectoria dentro de las instituciones del Estado que, paradójicamente, terminaría ordenando su muerte. Era, en el sentido más preciso del término, un enemigo interno que el establecimiento no podía acusar de guerrillero sin mentir descaradamente.\n\nLa Unión Patriótica nació en 1984 de los llamados Acuerdos de La Uribe, negociados entre el gobierno del presidente Belisario Betancur Cuartas y las FARC [#24]. La idea era crear un movimiento político que potenciara la participación de la insurgencia en la vida democrática, un tránsito de las armas a las urnas que Colombia prometió garantizar y luego traicionó con sangre. En su Primer Congreso, celebrado en noviembre de 1985, la UP eligió inicialmente a Jacobo Arenas, comandante segundo de las FARC, como candidato presidencial [#13]; sin embargo, la negación de salvoconductos y el estado de emergencia derivado de la toma del Palacio de Justicia hicieron inviable esa candidatura. Fue entonces, el 4 de febrero de 1986, cuando Pardo Leal fue nombrado presidente de la UP y candidato presidencial [#13], asumiendo el rol de rostro civil de un proyecto político que sus enemigos se empeñarían en presentar como fachada guerrillera, sin importar cuántas veces él mismo desmintiera esa acusación.\n\nLos resultados electorales de 1986 demostraron que el miedo de las élites no era infundado, aunque sí era criminal. En las elecciones parlamentarias de marzo, la UP obtuvo 6 senadores, 9 representantes a la Cámara, 14 diputados, 23 alcaldías y 351 concejales [#23]. En las presidenciales de mayo, Pardo Leal alcanzó 328.752 votos, el 4,5% del censo electoral [#4], la votación más alta lograda hasta entonces por cualquier candidato de izquierda en la historia de Colombia [#3]. En departamentos como Arauca obtuvo el 49% de los votos, y en Guaviare el 71% [#23]. Estos números no eran solo estadísticas: eran la demostración de que una Colombia distinta era posible, de que los márgenes geográficos y sociales del país —esos territorios que el bipartidismo había abandonado a su suerte— podían organizarse políticamente. Para los paramilitares, los narcotraficantes y los sectores militares que operaban bajo la Doctrina de Seguridad Nacional, esos números eran una sentencia de muerte.\n\nPardo Leal fue perfectamente consciente del peligro que corría. Meses antes de su asesinato pronunció palabras que suenan hoy como una despedida lúcida: *\"Algunos estamos amenazados de muerte, por nuestra fidelidad desde cuando éramos jóvenes, a la patria, al pueblo, a los trabajadores, y a la causa del socialismo. (…) en el evento de que el enemigo lograra arrebatarnos nuestra vida, bienvenida la muerte\"* [#25]. También fue él quien, en septiembre de 1987, tomó distancia pública de la lucha armada, declarando que *\"en este momento la lucha armada no es la vía correcta\"* [#9], e invitando a las organizaciones insurgentes a regresar a la vida civil [#9]. Ese distanciamiento no detuvo el exterminio. El 11 de octubre de 1987, sicarios al servicio de Gonzalo Rodríguez Gacha —alias *el Mexicano*— lo asesinaron en La Mesa, Cundinamarca [#10] [#20]. Al día siguiente, las FARC anunciaron el fin de la tregua [#10]. La muerte de Pardo Leal no solo eliminó a un hombre: desencadenó una espiral de violencia que el Estado colombiano había hecho posible con su omisión cómplice.\n\nEl asesinato de Jaime Pardo Leal fue el primer acto de un genocidio sistemático. Entre 1984 y 1993, al menos 540 homicidios correspondieron a miembros de la UP [#14]; en total, a 5.733 personas les fue arrebatada la vida por su vinculación con el movimiento [#18]. Su sucesor en la candidatura presidencial, Bernardo Jaramillo Ossa, fue asesinado el 22 de marzo de 1990 en el aeropuerto de Bogotá [#18]. Las autoridades estatales, como registra el libro *Colombia Nunca Más*, *\"nada vieron, nada escucharon, nada hicieron\"* [#1]. La historia de Pardo Leal es, en última instancia, la historia de un país que ofreció democracia con una mano y firmó órdenes de ejecución con la otra: un Estado que legalizó un partido para luego permitir —y en muchos casos facilitar— su exterminio físico, convirtiendo las urnas en una trampa mortal para quienes creyeron, con una fe que hoy resulta desgarradora, que Colombia podía cambiar sin que nadie tuviera que morir por ello.\n\n---\n\n*Fuentes: El Narcotraficante Nº 82 Álvaro Uribe Vélez Presidente de Colombia (s.f.). Walking Ghosts: Murder and Guerrilla Politics in Colombia (2003). 1989 (2019). Informe Final CEV — Hallazgos y Recomendaciones (2022). Colombia: Las razones de la guerra (2021). Todo pasó frente a nuestros ojos: El genocidio de la Unión Patriótica 1984-2002 (2021). Informe Final CEV — Narrativa Histórica (2022). Informe Final CEV — Violaciones (2022). Informe Final CEV — Territorial Centro (2022). Memoria de la Infamia (s.f.). Guerras Recicladas (s.f.). Los López en la historia de Colombia (2022). Hacer la guerra y matar la política (s.f.). Cuando los pájaros no cantaban (2022).*",
+      "chunksUsed": 25,
+      "citationsFound": [
+        "[#11]",
+        "[#13]",
+        "[#13]",
+        "[#13]",
+        "[#24]",
+        "[#13]",
+        "[#13]",
+        "[#23]",
+        "[#4]",
+        "[#3]",
+        "[#23]",
+        "[#25]",
+        "[#9]",
+        "[#9]",
+        "[#10]",
+        "[#20]",
+        "[#10]",
+        "[#14]",
+        "[#18]",
+        "[#18]",
+        "[#1]"
+      ],
+      "facts": [
+        {
+          "fact": "Jaime Pardo Leal fue candidato presidencial por la Unión Patriótica en 1986",
+          "present_in_answer": true,
+          "exact_quote": "el 4 de febrero de 1986, cuando Pardo Leal fue nombrado presidente de la UP y candidato presidencial",
+          "confidence": 1
+        },
+        {
+          "fact": "Fue asesinado en 1987",
+          "present_in_answer": true,
+          "exact_quote": "El 11 de octubre de 1987, sicarios al servicio de Gonzalo Rodríguez Gacha —alias el Mexicano— lo asesinaron en La Mesa, Cundinamarca",
+          "confidence": 1
+        },
+        {
+          "fact": "Rodríguez Gacha (cartel de Medellín) fue señalado como autor",
+          "present_in_answer": true,
+          "exact_quote": "sicarios al servicio de Gonzalo Rodríguez Gacha —alias el Mexicano— lo asesinaron en La Mesa, Cundinamarca",
+          "confidence": 0.85
+        },
+        {
+          "fact": "Su asesinato es parte del exterminio de la UP",
+          "present_in_answer": true,
+          "exact_quote": "El asesinato de Jaime Pardo Leal fue el primer acto de un genocidio sistemático. Entre 1984 y 1993, al menos 540 homicidios correspondieron a miembros de la UP",
+          "confidence": 1
+        },
+        {
+          "fact": "Era abogado y juez antes de su carrera política",
+          "present_in_answer": true,
+          "exact_quote": "Abogado, exmagistrado del Tribunal Superior de Bogotá, candidato a la Corte Suprema de Justicia",
+          "confidence": 0.9
+        }
+      ],
+      "factsRecall": 1,
+      "hallucinations": [
+        {
+          "claim": "Jaime Pardo Leal fue abogado y exmagistrado del Tribunal Superior de Bogotá",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos mencionan que fue juez de circuito (fragmento #3), presidente de Asonal Judicial y abogado (fragmento #6, #11), pero el cargo de magistrado del Tribunal Superior de Bogotá se atribuye a Carlos Ernesto Valencia García (fragmento #5), no a Pardo Leal. Los fragmentos #1 y #2 lo llaman 'ex magistrado' sin especificar el tribunal."
+        },
+        {
+          "claim": "Jaime Pardo Leal fue fundador de la Asociación Nacional de Funcionarios y Empleados de la Rama Jurisdiccional (Asonal Judicial)",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #5 indica que 'Pardo Leal había sido, además, uno de los fundadores de la Asociación Nacional de Funcionarios y Empleados de la Rama Jurisdiccional (Asonal)'."
+        },
+        {
+          "claim": "Jaime Pardo Leal fue cofundador de la Central Unitaria de Trabajadores de Colombia",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona su vinculación con la Central Unitaria de Trabajadores de Colombia."
+        },
+        {
+          "claim": "Jaime Pardo Leal fue miembro del Comité Central del Partido Comunista Colombiano",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona su membresía en el Comité Central del Partido Comunista Colombiano."
+        },
+        {
+          "claim": "La Unión Patriótica nació en 1984 de los Acuerdos de La Uribe, negociados entre el gobierno de Belisario Betancur Cuartas y las FARC",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #15 menciona 'el nacimiento de la UP, en el año 84' y el fragmento #10 hace referencia a 'los acuerdos de La Uribe', vinculando el origen de la UP con ese proceso de negociación, aunque no nombra explícitamente a Belisario Betancur."
+        },
+        {
+          "claim": "El Primer Congreso de la UP se celebró en noviembre de 1985 y eligió inicialmente a Jacobo Arenas como candidato presidencial",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #13 indica que 'En su Primer Congreso, en noviembre de 1985... Jacobo Arenas, comandante segundo al mando de las FARC, fue elegido candidato presidencial'."
+        },
+        {
+          "claim": "El 4 de febrero de 1986, Pardo Leal fue nombrado presidente de la UP y candidato presidencial",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #3 menciona que Pardo Leal se convirtió en presidente de la UP en 1985, no en febrero de 1986. Ningún fragmento especifica la fecha del 4 de febrero de 1986."
+        },
+        {
+          "claim": "En las elecciones parlamentarias de marzo de 1986, la UP obtuvo 6 senadores, 9 representantes a la Cámara, 14 diputados, 23 alcaldías y 351 concejales",
+          "supported_by_chunks": false,
+          "reason": "El fragmento #4 indica que la UP eligió 5 senadores, 9 representantes, 18 diputados y 335 concejales, cifras distintas a las del claim. El fragmento #11 menciona solo 2 senadores elegidos directamente."
+        },
+        {
+          "claim": "En las elecciones presidenciales de 1986, Pardo Leal alcanzó 328.752 votos, el 4,5% del censo electoral",
+          "supported_by_chunks": true,
+          "reason": "Los fragmentos #3 y #4 confirman los 328.752 votos. El fragmento #4 especifica que fue el 4,5% de la votación total, aunque el claim dice 'censo electoral' en lugar de 'votación total'."
+        },
+        {
+          "claim": "El 11 de octubre de 1987, Pardo Leal fue asesinado en La Mesa, Cundinamarca por sicarios al servicio de Gonzalo Rodríguez Gacha",
+          "supported_by_chunks": true,
+          "reason": "El fragmento #5 menciona que el gobierno acusó a Gonzalo Rodríguez Gacha por el asesinato de Pardo Leal, y los fragmentos #1, #2 y #7 confirman que fue asesinado en 1987, aunque ninguno especifica la fecha exacta ni el lugar."
+        },
+        {
+          "claim": "Bernardo Jaramillo Ossa fue asesinado el 22 de marzo de 1990 en el aeropuerto de Bogotá",
+          "supported_by_chunks": false,
+          "reason": "Los fragmentos #1, #2 y #7 confirman que Bernardo Jaramillo Ossa fue asesinado en 1990, pero ninguno especifica la fecha exacta del 22 de marzo ni el lugar del aeropuerto de Bogotá."
+        },
+        {
+          "claim": "Entre 1984 y 1993, al menos 540 homicidios correspondieron a miembros de la UP, y en total 5.733 personas fueron asesinadas por su vinculación con el movimiento",
+          "supported_by_chunks": false,
+          "reason": "Ningún fragmento menciona estas cifras específicas de homicidios."
+        }
+      ],
+      "hallucinationRate": 0.5833333333333334,
+      "factualityScore": 0.7083333333333333,
+      "latencyMs": {
+        "retrieval": 13382,
+        "generation": 42887,
+        "judge": 23369,
+        "total": 79639
+      }
+    }
+  ]
+}

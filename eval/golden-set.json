@@ -1,0 +1,395 @@
+{
+  "version": "1.0",
+  "description": "Golden set de 30 preguntas para evaluar el sistema RAG sobre la biblioteca de historia colombiana. Cada pregunta tiene expected-facts (hechos verificables) y expected-keywords (términos clave que probablemente aparecen en chunks pertinentes).",
+  "categories": {
+    "nombres_propios": "Pregunta directa sobre una persona concreta",
+    "conceptos": "Pregunta sobre un concepto, movimiento o proceso histórico",
+    "fechas_eventos": "Pregunta sobre un evento concreto con fecha",
+    "multi_hop": "Requiere conectar dos o más entidades/eventos",
+    "vagas": "Preguntas insuficientes — deben fallar elegantemente, no alucinar"
+  },
+  "questions": [
+    {
+      "id": "np_01",
+      "category": "nombres_propios",
+      "question": "Cuéntame la historia de Manuel Cepeda Vargas, el padre del senador Iván Cepeda. Era periodista y dirigente de la Unión Patriótica.",
+      "expected_keywords": ["Manuel Cepeda", "Cepeda Vargas", "Unión Patriótica", "Voz Proletaria", "Voz", "Partido Comunista", "senador"],
+      "expected_facts": [
+        "Manuel Cepeda Vargas fue dirigente del Partido Comunista Colombiano",
+        "Fue senador por la Unión Patriótica",
+        "Dirigió el semanario Voz (Voz Proletaria) del Partido Comunista",
+        "Fue asesinado en 1994",
+        "Su caso llegó a la Corte Interamericana de Derechos Humanos"
+      ]
+    },
+    {
+      "id": "np_02",
+      "category": "nombres_propios",
+      "question": "¿Quién fue Jorge Eliécer Gaitán y qué pasó el 9 de abril de 1948?",
+      "expected_keywords": ["Gaitán", "Bogotazo", "9 de abril", "1948", "asesinato", "Roa Sierra"],
+      "expected_facts": [
+        "Jorge Eliécer Gaitán fue líder liberal colombiano",
+        "Fue asesinado el 9 de abril de 1948 en Bogotá",
+        "Su muerte desencadenó el Bogotazo",
+        "El presunto asesino fue Juan Roa Sierra",
+        "Su asesinato marcó el inicio de La Violencia"
+      ]
+    },
+    {
+      "id": "np_03",
+      "category": "nombres_propios",
+      "question": "Háblame de María Cano, la 'flor del trabajo' del movimiento socialista colombiano.",
+      "expected_keywords": ["María Cano", "flor del trabajo", "socialista", "obrero", "Medellín", "PSR", "Partido Socialista Revolucionario"],
+      "expected_facts": [
+        "María Cano fue una líder socialista colombiana",
+        "Fue conocida como la Flor del Trabajo",
+        "Militó en el Partido Socialista Revolucionario (PSR)",
+        "Recorrió Colombia organizando obreros en los años 1920",
+        "Es originaria de Medellín"
+      ]
+    },
+    {
+      "id": "np_04",
+      "category": "nombres_propios",
+      "question": "¿Qué papel jugó Carlos Pizarro Leongómez en la desmovilización del M-19?",
+      "expected_keywords": ["Pizarro", "M-19", "desmovilización", "1990", "asesinato", "Alianza Democrática"],
+      "expected_facts": [
+        "Carlos Pizarro fue comandante del M-19",
+        "Lideró la desmovilización del M-19 en 1990",
+        "Se convirtió en candidato presidencial por la Alianza Democrática M-19",
+        "Fue asesinado en avión durante la campaña en 1990",
+        "Su asesinato se enmarca en el exterminio de candidatos presidenciales de izquierda"
+      ]
+    },
+    {
+      "id": "np_05",
+      "category": "nombres_propios",
+      "question": "Cuéntame sobre Pablo Escobar y la guerra del narcotráfico en los años 80.",
+      "expected_keywords": ["Pablo Escobar", "Medellín", "cartel", "narcotráfico", "Galán", "Lara Bonilla", "extradición"],
+      "expected_facts": [
+        "Pablo Escobar fue el líder del Cartel de Medellín",
+        "Ordenó el asesinato del ministro Rodrigo Lara Bonilla en 1984",
+        "Estuvo involucrado en el asesinato del candidato Luis Carlos Galán en 1989",
+        "Bombardeó el avión de Avianca en 1989",
+        "Murió en 1993 en Medellín"
+      ]
+    },
+    {
+      "id": "np_06",
+      "category": "nombres_propios",
+      "question": "¿Quién fue Bernardo Jaramillo Ossa y cómo murió?",
+      "expected_keywords": ["Bernardo Jaramillo", "Unión Patriótica", "candidato", "asesinato", "1990", "aeropuerto"],
+      "expected_facts": [
+        "Bernardo Jaramillo Ossa fue candidato presidencial por la Unión Patriótica",
+        "Fue asesinado el 22 de marzo de 1990",
+        "Murió en el aeropuerto Eldorado de Bogotá",
+        "Su asesinato se enmarca en el exterminio de la UP",
+        "Rodríguez Gacha (cartel de Medellín) fue señalado como responsable"
+      ]
+    },
+    {
+      "id": "np_07",
+      "category": "nombres_propios",
+      "question": "Háblame de Simón Bolívar y la campaña de independencia en la Nueva Granada.",
+      "expected_keywords": ["Bolívar", "independencia", "Boyacá", "Nueva Granada", "Santander", "1819"],
+      "expected_facts": [
+        "Simón Bolívar lideró la campaña libertadora",
+        "La batalla de Boyacá fue el 7 de agosto de 1819",
+        "Selló la independencia de la Nueva Granada",
+        "Francisco de Paula Santander fue su lugarteniente",
+        "Cruzó los Andes desde Venezuela hacia la Nueva Granada"
+      ]
+    },
+    {
+      "id": "np_08",
+      "category": "nombres_propios",
+      "question": "¿Qué hizo Rafael Núñez como presidente y cómo influyó en la Regeneración?",
+      "expected_keywords": ["Núñez", "Regeneración", "1886", "Constitución", "presidente", "conservador"],
+      "expected_facts": [
+        "Rafael Núñez fue presidente de Colombia varias veces",
+        "Lideró la Regeneración a partir de 1880",
+        "Impulsó la Constitución de 1886",
+        "Centralizó el poder político",
+        "Es autor del himno nacional de Colombia"
+      ]
+    },
+    {
+      "id": "np_09",
+      "category": "nombres_propios",
+      "question": "Cuéntame sobre Álvaro Uribe Vélez y el debate sobre Hacienda El Ubérrimo.",
+      "expected_keywords": ["Uribe", "Ubérrimo", "Iván Cepeda", "paramilitarismo", "Córdoba"],
+      "expected_facts": [
+        "Álvaro Uribe Vélez fue presidente de Colombia (2002-2010)",
+        "La hacienda El Ubérrimo está ubicada en Córdoba",
+        "Iván Cepeda investigó los vínculos paramilitares en la región",
+        "El debate involucró acusaciones de paramilitarismo",
+        "Iván Cepeda y Jorge Rojas publicaron un libro titulado 'A las puertas del Ubérrimo'"
+      ]
+    },
+    {
+      "id": "np_10",
+      "category": "nombres_propios",
+      "question": "¿Quién fue Jaime Pardo Leal y qué relación tenía con la Unión Patriótica?",
+      "expected_keywords": ["Jaime Pardo Leal", "Unión Patriótica", "asesinato", "candidato"],
+      "expected_facts": [
+        "Jaime Pardo Leal fue candidato presidencial por la Unión Patriótica en 1986",
+        "Fue asesinado en 1987",
+        "Rodríguez Gacha (cartel de Medellín) fue señalado como autor",
+        "Su asesinato es parte del exterminio de la UP",
+        "Era abogado y juez antes de su carrera política"
+      ]
+    },
+    {
+      "id": "co_01",
+      "category": "conceptos",
+      "question": "¿Qué fue la Unión Patriótica y por qué se considera un genocidio político?",
+      "expected_keywords": ["Unión Patriótica", "UP", "FARC", "Betancur", "exterminio", "genocidio político", "1985"],
+      "expected_facts": [
+        "La UP surgió en 1985 como resultado de negociaciones entre el gobierno Betancur y las FARC",
+        "Fue un partido que agrupaba sectores de izquierda y excombatientes",
+        "Se calcula que más de 3000-5000 militantes fueron asesinados",
+        "El exterminio involucró paramilitares, narcotraficantes y agentes del Estado",
+        "La Corte Interamericana de Derechos Humanos ha emitido sentencias sobre el caso"
+      ]
+    },
+    {
+      "id": "co_02",
+      "category": "conceptos",
+      "question": "Explícame el Frente Nacional y por qué se considera un acuerdo bipartidista cerrado.",
+      "expected_keywords": ["Frente Nacional", "1958", "liberales", "conservadores", "alternancia", "Rojas Pinilla"],
+      "expected_facts": [
+        "El Frente Nacional duró de 1958 a 1974",
+        "Fue un acuerdo entre liberales y conservadores tras la caída de Rojas Pinilla",
+        "Establecía alternancia en la presidencia entre los dos partidos",
+        "Distribuía paritariamente los cargos públicos",
+        "Excluía a otras fuerzas políticas del poder formal"
+      ]
+    },
+    {
+      "id": "co_03",
+      "category": "conceptos",
+      "question": "Háblame del paramilitarismo en Urabá durante los años 90.",
+      "expected_keywords": ["paramilitares", "Urabá", "Castaño", "ACCU", "FARC", "EPL", "Sintrabanano", "masacre"],
+      "expected_facts": [
+        "Los hermanos Castaño lideraron las ACCU en Urabá",
+        "El paramilitarismo se expandió en los años 1990",
+        "La región disputaba el control con las FARC y el EPL",
+        "Hubo masacres masivas contra sindicalistas (Sintrabanano)",
+        "La economía bananera fue clave en el conflicto"
+      ]
+    },
+    {
+      "id": "co_04",
+      "category": "conceptos",
+      "question": "¿Qué fue La Violencia (1948-1958) en Colombia?",
+      "expected_keywords": ["La Violencia", "1948", "1958", "Gaitán", "liberales", "conservadores", "muertos"],
+      "expected_facts": [
+        "La Violencia fue un conflicto bipartidista entre 1948 y 1958",
+        "Se desencadenó tras el asesinato de Gaitán en 1948",
+        "Enfrentó a liberales y conservadores",
+        "Se estima entre 200.000 y 300.000 muertos",
+        "Terminó con el pacto del Frente Nacional"
+      ]
+    },
+    {
+      "id": "co_05",
+      "category": "conceptos",
+      "question": "¿Cómo se originaron las FARC y qué papel jugó Marquetalia?",
+      "expected_keywords": ["FARC", "Marquetalia", "Manuel Marulanda", "Tirofijo", "1964", "autodefensas campesinas"],
+      "expected_facts": [
+        "Las FARC se fundaron oficialmente en 1964",
+        "Tuvieron origen en autodefensas campesinas comunistas",
+        "El ataque a Marquetalia en 1964 fue el detonante",
+        "Manuel Marulanda 'Tirofijo' fue uno de los fundadores",
+        "Surgieron como respuesta a la persecución política durante La Violencia"
+      ]
+    },
+    {
+      "id": "co_06",
+      "category": "conceptos",
+      "question": "Cuéntame sobre el narcotráfico y los carteles colombianos de los años 80 y 90.",
+      "expected_keywords": ["cartel de Medellín", "cartel de Cali", "Escobar", "Rodríguez Orejuela", "Rodríguez Gacha", "narcotráfico"],
+      "expected_facts": [
+        "El Cartel de Medellín fue liderado por Pablo Escobar",
+        "El Cartel de Cali fue liderado por los hermanos Rodríguez Orejuela",
+        "José Gonzalo Rodríguez Gacha 'El Mexicano' era socio de Escobar",
+        "Los carteles dominaron la cocaína mundial en los 80-90",
+        "Fueron responsables de cientos de asesinatos y bombas"
+      ]
+    },
+    {
+      "id": "co_07",
+      "category": "conceptos",
+      "question": "¿Qué fue el M-19 y qué eventos clave protagonizó?",
+      "expected_keywords": ["M-19", "Movimiento 19 de Abril", "embajada", "Palacio de Justicia", "Pizarro", "1985"],
+      "expected_facts": [
+        "El M-19 fue un grupo guerrillero fundado en 1974",
+        "Tomó la embajada de República Dominicana en 1980",
+        "Asaltó el Palacio de Justicia en noviembre de 1985",
+        "Se desmovilizó en 1990 bajo Carlos Pizarro",
+        "Se convirtió en partido político (Alianza Democrática M-19)"
+      ]
+    },
+    {
+      "id": "co_08",
+      "category": "conceptos",
+      "question": "Explícame las ideas socialistas y la izquierda en Colombia a principios del siglo XX.",
+      "expected_keywords": ["socialismo", "PSR", "Partido Socialista Revolucionario", "María Cano", "Mahecha", "Partido Comunista"],
+      "expected_facts": [
+        "El Partido Socialista Revolucionario (PSR) se fundó en 1926",
+        "María Cano y Raúl Eduardo Mahecha fueron figuras destacadas",
+        "El Partido Comunista Colombiano surgió en 1930",
+        "La izquierda emergió en respuesta al desarrollo industrial y obrero",
+        "La masacre de las bananeras (1928) influyó en su consolidación"
+      ]
+    },
+    {
+      "id": "fe_01",
+      "category": "fechas_eventos",
+      "question": "¿Qué pasó en el Palacio de Justicia el 6 y 7 de noviembre de 1985?",
+      "expected_keywords": ["Palacio de Justicia", "M-19", "1985", "Betancur", "Andrés Almarales", "Gaona", "Urán"],
+      "expected_facts": [
+        "El M-19 tomó el Palacio de Justicia el 6 de noviembre de 1985",
+        "Murieron magistrados, guerrilleros y civiles",
+        "El ejército retomó el edificio el 7 de noviembre",
+        "Varias personas fueron desaparecidas forzosamente",
+        "Belisario Betancur era el presidente en ese momento"
+      ]
+    },
+    {
+      "id": "fe_02",
+      "category": "fechas_eventos",
+      "question": "Cuéntame sobre la masacre de Bojayá del 2 de mayo de 2002.",
+      "expected_keywords": ["Bojayá", "2002", "FARC", "iglesia", "paramilitares", "Chocó"],
+      "expected_facts": [
+        "La masacre ocurrió el 2 de mayo de 2002",
+        "Las FARC lanzaron un cilindro bomba contra una iglesia",
+        "Murieron al menos 79 civiles refugiados en la iglesia",
+        "Ocurrió en Bellavista, Bojayá, Chocó",
+        "Se enmarcó en enfrentamientos entre FARC y paramilitares"
+      ]
+    },
+    {
+      "id": "fe_03",
+      "category": "fechas_eventos",
+      "question": "¿Qué ocurrió durante la masacre de las bananeras en 1928?",
+      "expected_keywords": ["bananeras", "1928", "United Fruit", "huelga", "Ciénaga", "Magdalena", "ejército"],
+      "expected_facts": [
+        "La masacre ocurrió en diciembre de 1928",
+        "Trabajadores de la United Fruit Company estaban en huelga",
+        "El ejército disparó contra los huelguistas en Ciénaga, Magdalena",
+        "Se desconoce el número exacto de muertos (decenas a centenares)",
+        "Fue narrada por García Márquez en Cien Años de Soledad"
+      ]
+    },
+    {
+      "id": "fe_04",
+      "category": "fechas_eventos",
+      "question": "Háblame del proceso de paz de La Habana entre el gobierno Santos y las FARC.",
+      "expected_keywords": ["La Habana", "Santos", "FARC", "proceso de paz", "Humberto de la Calle", "Sergio Jaramillo", "acuerdo"],
+      "expected_facts": [
+        "Las negociaciones se realizaron en La Habana, Cuba",
+        "Iniciaron en 2012 bajo el gobierno de Juan Manuel Santos",
+        "Humberto de la Calle fue jefe del equipo negociador del gobierno",
+        "Se firmó el acuerdo final en 2016",
+        "Fue rechazado por el plebiscito y luego ajustado y refrendado por el Congreso"
+      ]
+    },
+    {
+      "id": "fe_05",
+      "category": "fechas_eventos",
+      "question": "¿Qué fue el Bogotazo del 9 de abril de 1948?",
+      "expected_keywords": ["Bogotazo", "9 de abril", "1948", "Gaitán", "Roa Sierra", "tranvía"],
+      "expected_facts": [
+        "El Bogotazo ocurrió el 9 de abril de 1948",
+        "Estalló tras el asesinato de Jorge Eliécer Gaitán",
+        "Hubo destrucción masiva del centro de Bogotá",
+        "Murieron miles de personas",
+        "Coincidió con la Novena Conferencia Panamericana"
+      ]
+    },
+    {
+      "id": "mh_01",
+      "category": "multi_hop",
+      "question": "¿Cómo se conectan el asesinato de Manuel Cepeda Vargas con el exterminio de la Unión Patriótica?",
+      "expected_keywords": ["Manuel Cepeda", "Unión Patriótica", "exterminio", "genocidio político", "1994", "Voz"],
+      "expected_facts": [
+        "Manuel Cepeda Vargas fue el último senador sobreviviente de la UP",
+        "Fue asesinado el 9 de agosto de 1994",
+        "Su asesinato cerró el ciclo de exterminio de líderes UP",
+        "Otros líderes UP asesinados antes: Jaime Pardo Leal (1987), Bernardo Jaramillo (1990)",
+        "La Corte Interamericana condenó al Estado colombiano por su muerte"
+      ]
+    },
+    {
+      "id": "mh_02",
+      "category": "multi_hop",
+      "question": "¿Qué relación hay entre el cartel de Medellín y la guerra contra la Unión Patriótica?",
+      "expected_keywords": ["cartel de Medellín", "Rodríguez Gacha", "Unión Patriótica", "paramilitares", "Castaño"],
+      "expected_facts": [
+        "Rodríguez Gacha del cartel de Medellín financió ataques contra la UP",
+        "Los narcotraficantes se aliaron con paramilitares y militares",
+        "Rodríguez Gacha fue señalado del asesinato de Jaime Pardo Leal y Bernardo Jaramillo",
+        "Los Castaño organizaron incursiones paramilitares en zonas UP",
+        "El cartel veía a la UP como amenaza por su crítica al narcotráfico"
+      ]
+    },
+    {
+      "id": "mh_03",
+      "category": "multi_hop",
+      "question": "¿Cómo se relacionan la masacre de las bananeras y el surgimiento del movimiento socialista en Colombia?",
+      "expected_keywords": ["bananeras", "1928", "PSR", "María Cano", "Mahecha", "huelga", "socialismo"],
+      "expected_facts": [
+        "Raúl Eduardo Mahecha lideró la huelga bananera",
+        "La huelga fue organizada por el PSR (Partido Socialista Revolucionario)",
+        "María Cano apoyó las movilizaciones obreras de la época",
+        "La masacre fortaleció el sentimiento antiimperialista",
+        "Contribuyó a la consolidación del Partido Comunista Colombiano"
+      ]
+    },
+    {
+      "id": "mh_04",
+      "category": "multi_hop",
+      "question": "¿Qué vínculos hay entre el conflicto en Buenaventura y el paramilitarismo del Valle del Cauca?",
+      "expected_keywords": ["Buenaventura", "Valle", "paramilitares", "Frente Manuel Cepeda Vargas", "FARC", "narcotráfico"],
+      "expected_facts": [
+        "Buenaventura es el principal puerto colombiano en el Pacífico",
+        "Las FARC tenían el Frente 30 y el Frente Manuel Cepeda Vargas en la región",
+        "Los paramilitares incursionaron en Buenaventura desde el 2000",
+        "Las élites económicas vallecaucanas estuvieron en disputa territorial",
+        "El narcotráfico (rutas marítimas) intensificó la violencia"
+      ]
+    },
+    {
+      "id": "mh_05",
+      "category": "multi_hop",
+      "question": "¿Cómo se entrelazan la historia del periodismo colombiano y la persecución a periodistas críticos del siglo XX?",
+      "expected_keywords": ["periodismo", "Voz", "Jaime Garzón", "asesinato", "El Espectador", "Guillermo Cano"],
+      "expected_facts": [
+        "El periodismo crítico ha sido perseguido en Colombia",
+        "Guillermo Cano (director de El Espectador) fue asesinado en 1986",
+        "Manuel Cepeda Vargas dirigió el semanario Voz Proletaria",
+        "Jaime Garzón fue asesinado en 1999",
+        "El narcotráfico y el paramilitarismo atacaron sistemáticamente prensa crítica"
+      ]
+    },
+    {
+      "id": "vg_01",
+      "category": "vagas",
+      "question": "cuentame la historia",
+      "expected_keywords": [],
+      "expected_facts": [],
+      "should_fail_elegantly": true,
+      "expected_behavior": "El sistema debe identificar que la pregunta es insuficiente y pedir aclaración. NO debe inventar contenido. NO debe devolver chunks aleatorios."
+    },
+    {
+      "id": "vg_02",
+      "category": "vagas",
+      "question": "qué pasó",
+      "expected_keywords": [],
+      "expected_facts": [],
+      "should_fail_elegantly": true,
+      "expected_behavior": "Pregunta sin sujeto ni contexto. El sistema debe pedir aclaración en lugar de generar respuesta."
+    }
+  ]
+}

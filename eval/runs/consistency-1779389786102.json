@@ -1,0 +1,547 @@
+{
+  "timestamp": "2026-05-21T18:56:26.102Z",
+  "tests": [
+    {
+      "type": "determinism",
+      "n": 3,
+      "results": [
+        {
+          "questionId": "np_01",
+          "runs": [
+            {
+              "chunkIds": [
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmo7f8ea20lt0ad018im56iuq",
+                "cmnnj6ihg08oaad01t581ixtb",
+                "cmnnrhw1n09fwad01zlwabxf5",
+                "cmo7f8et00m2cad01hdqwoksj",
+                "cmo7glzsa04ywad01ek7sno31",
+                "cmnniks2z001nad01zpis2rkz",
+                "cmnnomgyo00scad01s75f1gyo",
+                "cmo7glzse04yyad01uld5ya0b"
+              ],
+              "topSimilarity": 0.9
+            },
+            {
+              "chunkIds": [
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmo7f8ea20lt0ad018im56iuq",
+                "cmo7f8et00m2cad01hdqwoksj",
+                "cmo7glzsa04ywad01ek7sno31",
+                "cmo7glztj04zoad01k33dtion",
+                "cmo7glyxs04cwad01aoonkzqt",
+                "cmnniks2z001nad01zpis2rkz",
+                "cmnnomgyo00scad01s75f1gyo",
+                "cmo7glzse04yyad01uld5ya0b"
+              ],
+              "topSimilarity": 0.9
+            },
+            {
+              "chunkIds": [
+                "cmo7f8ea20lt0ad018im56iuq",
+                "cmnnrhw1n09fwad01zlwabxf5",
+                "cmnnj6ihg08oaad01t581ixtb",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmo7f8et00m2cad01hdqwoksj",
+                "cmnniks2z001nad01zpis2rkz",
+                "cmnnomgyo00scad01s75f1gyo",
+                "cmo7glzsa04ywad01ek7sno31",
+                "cmo7glztj04zoad01k33dtion"
+              ],
+              "topSimilarity": 0.9
+            }
+          ],
+          "uniqueChunksUnion": 12,
+          "intersectionSize": 7,
+          "stability": 0.7
+        },
+        {
+          "questionId": "np_02",
+          "runs": [
+            {
+              "chunkIds": [
+                "cmo6qvmid088nad0123f243lf",
+                "cmnny3brp07zzad01k35t81xv",
+                "cmndsnug205odad015b1ftchy",
+                "cmndw9uns02r6ad015o69dff7",
+                "cmnnuhafc0i1wad015trhranx",
+                "cmndw9u8a02iead01bacea8w4",
+                "cmndskq6r04g5ad01caleu0ya",
+                "cmne3wqje06w2ad01o12xhbtz",
+                "cmnere1fl04sfad017jvaf5hs",
+                "cmneo2o6e04muad016jnj4gky"
+              ],
+              "topSimilarity": 1
+            },
+            {
+              "chunkIds": [
+                "cmnny3brp07zzad01k35t81xv",
+                "cmndw9uns02r6ad015o69dff7",
+                "cmndw9u8a02iead01bacea8w4",
+                "cmndskq6r04g5ad01caleu0ya",
+                "cmne3wqje06w2ad01o12xhbtz",
+                "cmnere1fl04sfad017jvaf5hs",
+                "cmndsnug205odad015b1ftchy",
+                "cmo6k19l90cixad011p0jtc9c",
+                "cmnnuhafc0i1wad015trhranx",
+                "cmnnualie0grcad01akxgz6l4"
+              ],
+              "topSimilarity": 1
+            },
+            {
+              "chunkIds": [
+                "cmnny3brp07zzad01k35t81xv",
+                "cmo205c3u01wxad01au1k5obu",
+                "cmndw9uns02r6ad015o69dff7",
+                "cmndw9u8a02iead01bacea8w4",
+                "cmndskq6r04g5ad01caleu0ya",
+                "cmne3wqje06w2ad01o12xhbtz",
+                "cmnere1fl04sfad017jvaf5hs",
+                "cmndsnug205odad015b1ftchy",
+                "cmnnuhafc0i1wad015trhranx",
+                "cmnnualie0grcad01akxgz6l4"
+              ],
+              "topSimilarity": 1
+            }
+          ],
+          "uniqueChunksUnion": 13,
+          "intersectionSize": 8,
+          "stability": 0.8
+        },
+        {
+          "questionId": "np_03",
+          "runs": [
+            {
+              "chunkIds": [
+                "cmnnualcd0gkkad01wlb9x4cy",
+                "cmo6ka97g0ei9ad01l9f5529i",
+                "cmo6rc4yk0bciad015fmfqe4a",
+                "cmo6rc4yp0bckad0130725mi2",
+                "cmo1zcmlb0fkgad01i7flm6kn",
+                "cmo6ka97b0ei7ad015h9iidwh",
+                "cmo6ka9770ei5ad01mje5ef6u",
+                "cmndw9ttz02akad01fh7brewp",
+                "cmnerd5o103gbad01c2ig6gja",
+                "cmndvqhl408s5ad018wid88no"
+              ],
+              "topSimilarity": 0.9
+            },
+            {
+              "chunkIds": [
+                "cmnnualcd0gkkad01wlb9x4cy",
+                "cmo6ka97g0ei9ad01l9f5529i",
+                "cmo6rc4yk0bciad015fmfqe4a",
+                "cmo6rc4yp0bckad0130725mi2",
+                "cmo1zcmlb0fkgad01i7flm6kn",
+                "cmo6ka97b0ei7ad015h9iidwh",
+                "cmo6ka9770ei5ad01mje5ef6u",
+                "cmndw9ttz02akad01fh7brewp",
+                "cmnerd5o103gbad01c2ig6gja",
+                "cmndvqhl408s5ad018wid88no"
+              ],
+              "topSimilarity": 0.9
+            },
+            {
+              "chunkIds": [
+                "cmnnualcd0gkkad01wlb9x4cy",
+                "cmo6ka97g0ei9ad01l9f5529i",
+                "cmo6rc4yk0bciad015fmfqe4a",
+                "cmo6rc4yp0bckad0130725mi2",
+                "cmo1zcmlb0fkgad01i7flm6kn",
+                "cmo6ka9770ei5ad01mje5ef6u",
+                "cmndw9ttz02akad01fh7brewp",
+                "cmnerd5o103gbad01c2ig6gja",
+                "cmndvqhl408s5ad018wid88no",
+                "cmnnualc70gkcad01sl1ddeyt"
+              ],
+              "topSimilarity": 0.9
+            }
+          ],
+          "uniqueChunksUnion": 11,
+          "intersectionSize": 9,
+          "stability": 0.9
+        },
+        {
+          "questionId": "np_04",
+          "runs": [
+            {
+              "chunkIds": [
+                "cmndsnui505p9ad013eui6y9k",
+                "cmnduj1yz02gjad013nyqtppj",
+                "cmnetqj2001itad011oz6qo3g",
+                "cmnetqj2701ixad01zshupc0b",
+                "cmnetqj2t01j9ad01kbndo2vn",
+                "cmnduj1x302ejad01qas4zyxz",
+                "cmnduj1yh02fzad01pgy6yyio",
+                "cmnduj1wx02edad01pyu7t7cq",
+                "cmo7idtv0025uad01iq7w2e8u",
+                "cmnniks3m002pad01m7h1oy2h"
+              ],
+              "topSimilarity": 0.9
+            },
+            {
+              "chunkIds": [
+                "cmndsnui505p9ad013eui6y9k",
+                "cmnduj1yz02gjad013nyqtppj",
+                "cmnetqj2001itad011oz6qo3g",
+                "cmnetqj2701ixad01zshupc0b",
+                "cmo7idtv0025uad01iq7w2e8u",
+                "cmnduj1x302ejad01qas4zyxz",
+                "cmnduj1yh02fzad01pgy6yyio",
+                "cmnduj1wx02edad01pyu7t7cq",
+                "cmnetqj2t01j9ad01kbndo2vn",
+                "cmnniks3m002pad01m7h1oy2h"
+              ],
+              "topSimilarity": 0.9
+            },
+            {
+              "chunkIds": [
+                "cmndsnui505p9ad013eui6y9k",
+                "cmnduj1yz02gjad013nyqtppj",
+                "cmnetqj2001itad011oz6qo3g",
+                "cmnetqj2701ixad01zshupc0b",
+                "cmnetqj2t01j9ad01kbndo2vn",
+                "cmnduj1x302ejad01qas4zyxz",
+                "cmnduj1yh02fzad01pgy6yyio",
+                "cmo7idtv0025uad01iq7w2e8u",
+                "cmnniks3m002pad01m7h1oy2h",
+                "cmnnommvk00wlad01yb1khcx5"
+              ],
+              "topSimilarity": 0.9
+            }
+          ],
+          "uniqueChunksUnion": 11,
+          "intersectionSize": 9,
+          "stability": 0.9
+        },
+        {
+          "questionId": "np_05",
+          "runs": [
+            {
+              "chunkIds": [
+                "cmnny3bsu080had01ofjt5jlv",
+                "cmnexbanp08juad01imxg1ykl",
+                "cmnnj5fi807h9ad01ybrjndgi",
+                "cmnnrh88a088uad013vz0js55",
+                "cmndbvda700yajj1h0drblnya",
+                "cmo7idfe200drad01lshh23of",
+                "cmne3e9c7053rad01d76axh1b",
+                "cmo7kzkox0benad01jfsk3v3t",
+                "cmo7f266d0jpzad01o6vrgxfm",
+                "cmo6gw8no0cb5ad01w1ulhk6v"
+              ],
+              "topSimilarity": 0.9
+            },
+            {
+              "chunkIds": [
+                "cmnny3bsu080had01ofjt5jlv",
+                "cmne3e9c7053rad01d76axh1b",
+                "cmo7kzkox0benad01jfsk3v3t",
+                "cmnexbanp08juad01imxg1ykl",
+                "cmo7f266d0jpzad01o6vrgxfm",
+                "cmnnj5fi807h9ad01ybrjndgi",
+                "cmnnrh88a088uad013vz0js55",
+                "cmndbvda700yajj1h0drblnya",
+                "cmo7idfe200drad01lshh23of",
+                "cmo7idfew00e9ad01c4xwtsep"
+              ],
+              "topSimilarity": 0.9
+            },
+            {
+              "chunkIds": [
+                "cmo7kzkox0benad01jfsk3v3t",
+                "cmnny3bsu080had01ofjt5jlv",
+                "cmnexbanp08juad01imxg1ykl",
+                "cmnnj5fi807h9ad01ybrjndgi",
+                "cmnnrh88a088uad013vz0js55",
+                "cmndbvda700yajj1h0drblnya",
+                "cmo7idfe200drad01lshh23of",
+                "cmne3e9c7053rad01d76axh1b",
+                "cmo7f266d0jpzad01o6vrgxfm",
+                "cmo1ynud40binad01d8paoj2u"
+              ],
+              "topSimilarity": 0.9
+            }
+          ],
+          "uniqueChunksUnion": 12,
+          "intersectionSize": 9,
+          "stability": 0.9
+        }
+      ],
+      "avgStability": 0.8400000000000001
+    },
+    {
+      "type": "robustness",
+      "results": [
+        {
+          "questionId": "np_01",
+          "originalChunks": [
+            "cmnnu6bj70ekdad016o7i1k7j",
+            "cmnnkdue50egdad01ra5zxppi",
+            "cmo7f8ea20lt0ad018im56iuq",
+            "cmo7f8et00m2cad01hdqwoksj",
+            "cmneo2sx805uhad012ddoz863",
+            "cmnniks2z001nad01zpis2rkz",
+            "cmnnomgyo00scad01s75f1gyo",
+            "cmo7glzse04yyad01uld5ya0b",
+            "cmnniks41003bad01d1a923mb",
+            "cmnnomh0500t6ad01wx2xf5ym"
+          ],
+          "paraphrasedRuns": [
+            {
+              "paraphrase": "¿Puedes narrarme quién fue Manuel Cepeda Vargas, el progenitor del senador Iván Cepeda, que ejercía como periodista y líder de la Unión Patriótica?",
+              "chunks": [
+                "cmo7f8ea20lt0ad018im56iuq",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmnnj6ihg08oaad01t581ixtb",
+                "cmnnrhw1n09fwad01zlwabxf5",
+                "cmo7glztj04zoad01k33dtion",
+                "cmneo2sx805uhad012ddoz863",
+                "cmnniks2z001nad01zpis2rkz",
+                "cmnnomgyo00scad01s75f1gyo",
+                "cmo7i2i8s0j3uad015esdbt91"
+              ],
+              "overlap": 6
+            },
+            {
+              "paraphrase": "Háblame sobre la vida de Manuel Cepeda Vargas, padre del congresista Iván Cepeda, quien se desempeñó como comunicador y dirigente político de la Unión Patriótica.",
+              "chunks": [
+                "cmo7f8ea20lt0ad018im56iuq",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmnnrhw1n09fwad01zlwabxf5",
+                "cmnnj6ihg08oaad01t581ixtb",
+                "cmo7f8et00m2cad01hdqwoksj",
+                "cmnniks2z001nad01zpis2rkz",
+                "cmnnomgyo00scad01s75f1gyo",
+                "cmnniks41003bad01d1a923mb",
+                "cmnnomh0500t6ad01wx2xf5ym"
+              ],
+              "overlap": 8
+            },
+            {
+              "paraphrase": "Me gustaría conocer la historia de Manuel Cepeda Vargas, progenitor del parlamentario Iván Cepeda, reconocido por su labor periodística y su papel como dirigente dentro de la Unión Patriótica.",
+              "chunks": [
+                "cmo7f8ea20lt0ad018im56iuq",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmnnrhw1n09fwad01zlwabxf5",
+                "cmneo2sx805uhad012ddoz863",
+                "cmnniks2z001nad01zpis2rkz",
+                "cmnnomgyo00scad01s75f1gyo",
+                "cmnern59m07g0ad01j69g3sn7",
+                "cmo7glzse04yyad01uld5ya0b",
+                "cmnniks41003bad01d1a923mb"
+              ],
+              "overlap": 8
+            }
+          ],
+          "avgOverlap": 7.333333333333333
+        },
+        {
+          "questionId": "co_07",
+          "originalChunks": [
+            "cmndssvn80839ad01ipkxfzpi",
+            "cmndw9tw802byad01em59gkmm",
+            "cmnduj1tb02ajad01ll8oygxh",
+            "cmnerdin4045iad01e4dflc11",
+            "cmo6prpay0495ad01o3gq268g",
+            "cmo211th202d5ad01tjzcvtig",
+            "cmndw9tw402bwad018p1da3nd",
+            "cmo7idurw02iwad01uxe0627e",
+            "cmo6prpb40499ad01oacbg2un",
+            "cmneto54z003iad01ctvp6qq4"
+          ],
+          "paraphrasedRuns": [
+            {
+              "paraphrase": "¿Cuál era el M-19 y cuáles fueron los acontecimientos más importantes en los que participó?",
+              "chunks": [
+                "cmndssvn80839ad01ipkxfzpi",
+                "cmndw9tw802byad01em59gkmm",
+                "cmndw9twc02c0ad01d3883pt4",
+                "cmo7idurw02iwad01uxe0627e",
+                "cmnduj1tb02ajad01ll8oygxh",
+                "cmnduj7ww02r2ad014kpx4smq",
+                "cmnnualme0guaad01nnq9mglk",
+                "cmo6prpay0495ad01o3gq268g",
+                "cmnniks3m002pad01m7h1oy2h",
+                "cmnnommvk00wlad01yb1khcx5"
+              ],
+              "overlap": 5
+            },
+            {
+              "paraphrase": "¿En qué consistió el movimiento M-19 y qué hechos relevantes marcaron su historia?",
+              "chunks": [
+                "cmo7hh7os0cz5ad0115jpx8lk",
+                "cmndw9tw802byad01em59gkmm",
+                "cmnduj1tb02ajad01ll8oygxh",
+                "cmnerdin4045iad01e4dflc11",
+                "cmnnualme0guaad01nnq9mglk",
+                "cmndw9tw402bwad018p1da3nd",
+                "cmo7idurw02iwad01uxe0627e",
+                "cmo211th202d5ad01tjzcvtig",
+                "cmo7f8e0j0lomad01h6nhfin4",
+                "cmo6prpay0495ad01o3gq268g"
+              ],
+              "overlap": 7
+            },
+            {
+              "paraphrase": "¿Qué representó el M-19 y qué episodios fundamentales llevó a cabo a lo largo de su existencia?",
+              "chunks": [
+                "cmndssvn80839ad01ipkxfzpi",
+                "cmo7idurw02iwad01uxe0627e",
+                "cmndw9tw802byad01em59gkmm",
+                "cmnduj1tb02ajad01ll8oygxh",
+                "cmndw9tw402bwad018p1da3nd",
+                "cmo6prpay0495ad01o3gq268g",
+                "cmneto54z003iad01ctvp6qq4",
+                "cmo7hh80g0d6had017uxbt861",
+                "cmo6prpb40499ad01oacbg2un",
+                "cmnez7qih0eb7ad01fjo4leod"
+              ],
+              "overlap": 8
+            }
+          ],
+          "avgOverlap": 6.666666666666667
+        },
+        {
+          "questionId": "fe_01",
+          "originalChunks": [
+            "cmo6j5ffu05w5ad01zaln2kfd",
+            "cmo3mlbr3089uad01rs6nenqw",
+            "cmnexbain08hiad01w3979rnn",
+            "cmnduj7s702nkad017s6w2noy",
+            "cmndbvdcu010gjj1h5e34h8d2",
+            "cmo7idfie00fxad01p3k4iz2s",
+            "cmndvqi8t09gdad01zbjxxlfw",
+            "cmnduj7r802n2ad0189f4vv39",
+            "cmo3mlc6608jkad01cksfcq83",
+            "cmnduj7us02q4ad010ihnq0tq"
+          ],
+          "paraphrasedRuns": [
+            {
+              "paraphrase": "¿Cuáles fueron los eventos que tuvieron lugar en el Palacio de Justicia durante los días 6 y 7 de noviembre de 1985?",
+              "chunks": [
+                "cmo6j5ffu05w5ad01zaln2kfd",
+                "cmo3mlbr3089uad01rs6nenqw",
+                "cmnduj7s702nkad017s6w2noy",
+                "cmnexbain08hiad01w3979rnn",
+                "cmndbvdcu010gjj1h5e34h8d2",
+                "cmo7idfie00fxad01p3k4iz2s",
+                "cmndvqi8t09gdad01zbjxxlfw",
+                "cmnezwdrh0j56ad01tou5xcw4",
+                "cmo3mlc6608jkad01cksfcq83",
+                "cmnnualnr0gv0ad01roil1lfq"
+              ],
+              "overlap": 8
+            },
+            {
+              "paraphrase": "¿Qué sucesos ocurrieron en el Palacio de Justicia a lo largo del 6 y el 7 de noviembre de 1985?",
+              "chunks": [
+                "cmo6j5ffu05w5ad01zaln2kfd",
+                "cmo3mlbr3089uad01rs6nenqw",
+                "cmnnualnr0gv0ad01roil1lfq",
+                "cmnduj7s702nkad017s6w2noy",
+                "cmnexbain08hiad01w3979rnn",
+                "cmndbvdcu010gjj1h5e34h8d2",
+                "cmo7idfie00fxad01p3k4iz2s",
+                "cmndvqi8t09gdad01zbjxxlfw",
+                "cmnezwdrh0j56ad01tou5xcw4",
+                "cmo3mlc6608jkad01cksfcq83"
+              ],
+              "overlap": 8
+            },
+            {
+              "paraphrase": "¿Qué hechos se desarrollaron en el Palacio de Justicia los días 6 y 7 de noviembre de 1985?",
+              "chunks": [
+                "cmo6j5ffu05w5ad01zaln2kfd",
+                "cmo3mlbr3089uad01rs6nenqw",
+                "cmo3mlc6608jkad01cksfcq83",
+                "cmnduj7s702nkad017s6w2noy",
+                "cmnexbain08hiad01w3979rnn",
+                "cmndbvdcu010gjj1h5e34h8d2",
+                "cmo7idfie00fxad01p3k4iz2s",
+                "cmnduj7r802n2ad0189f4vv39",
+                "cmnezwdrh0j56ad01tou5xcw4",
+                "cmo3mlbsm08auad01bjvqc1je"
+              ],
+              "overlap": 8
+            }
+          ],
+          "avgOverlap": 8
+        },
+        {
+          "questionId": "mh_01",
+          "originalChunks": [
+            "cmo7glzs204yqad01zne5j8qb",
+            "cmo7glzqr04xsad01gjpez9ja",
+            "cmo7glyxs04cwad01aoonkzqt",
+            "cmo7glyzv04ecad01225e7dzx",
+            "cmnnu6bj70ekdad016o7i1k7j",
+            "cmnnkdue50egdad01ra5zxppi",
+            "cmo7glzrx04ymad01zm6te1uy",
+            "cmo7glzv3050qad01z523lmbs",
+            "cmnesinn40f6vad016pdndj66",
+            "cmnez75dl0ddiad01ljgtx2up"
+          ],
+          "paraphrasedRuns": [
+            {
+              "paraphrase": "¿De qué manera el homicidio de Manuel Cepeda Vargas está vinculado con la eliminación sistemática de la Unión Patriótica?",
+              "chunks": [
+                "cmo7glzs204yqad01zne5j8qb",
+                "cmo7glzqr04xsad01gjpez9ja",
+                "cmo7glzse04yyad01uld5ya0b",
+                "cmo7glzrx04ymad01zm6te1uy",
+                "cmo7glztj04zoad01k33dtion",
+                "cmo7glzsa04ywad01ek7sno31",
+                "cmo7glz0z04f2ad011aofqzuw",
+                "cmo7glyxs04cwad01aoonkzqt",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi"
+              ],
+              "overlap": 6
+            },
+            {
+              "paraphrase": "¿Qué relación existe entre la muerte de Manuel Cepeda Vargas y el genocidio perpetrado contra los miembros de la Unión Patriótica?",
+              "chunks": [
+                "cmo7glzs204yqad01zne5j8qb",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmo7glz0z04f2ad011aofqzuw",
+                "cmo7glyxs04cwad01aoonkzqt",
+                "cmo7glzrx04ymad01zm6te1uy",
+                "cmo7glztj04zoad01k33dtion",
+                "cmo7glzqr04xsad01gjpez9ja",
+                "cmnern59h07fwad01x4kaik4l",
+                "cmo7glzsa04ywad01ek7sno31"
+              ],
+              "overlap": 6
+            },
+            {
+              "paraphrase": "¿Cómo se relaciona el caso del asesinato de Manuel Cepeda Vargas con el proceso de exterminio que sufrió la Unión Patriótica?",
+              "chunks": [
+                "cmo7glzs204yqad01zne5j8qb",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmnezwdcv0iokad014z9r9u92",
+                "cmo7glztj04zoad01k33dtion",
+                "cmo7glzqr04xsad01gjpez9ja",
+                "cmo7glzse04yyad01uld5ya0b",
+                "cmo7glzv8050uad01mcwcad4g",
+                "cmo7glyxs04cwad01aoonkzqt",
+                "cmo7glz0z04f2ad011aofqzuw"
+              ],
+              "overlap": 5
+            }
+          ],
+          "avgOverlap": 5.666666666666667
+        }
+      ],
+      "avgOverlap": 6.916666666666667
+    }
+  ]
+}

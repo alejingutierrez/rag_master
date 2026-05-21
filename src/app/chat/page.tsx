@@ -25,8 +25,8 @@ interface ChunkCitation {
 }
 
 const RAG_CONFIG = {
-  topK: 50,
-  similarityThreshold: 0.35,
+  topK: 100,
+  similarityThreshold: 0.25,
   maxTokens: 4000,
 } as const;
 

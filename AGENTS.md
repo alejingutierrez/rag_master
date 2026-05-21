@@ -98,8 +98,41 @@ rag_master/
 
 ## Flujo Principal
 
-1. **Upload**: PDF -> S3 -> pdf-parse -> chunking -> Bedrock embeddings -> pgvector
-2. **Query**: Pregunta -> Bedrock embedding -> pgvector cosine search -> top-k chunks -> Claude streaming -> respuesta
+### Upload (idempotente para nuevos PDFs)
+1. PDF → S3
+2. pdf-parse → chunking FIXED (3000 chars, overlap 750)
+3. INSERT en `chunks` → trigger `chunks_fts_trigger` genera `content_fts` automáticamente
+4. processAllEmbeddings → Cohere Embed v4 (1536d) → guardar embedding
+5. HNSW indexa automáticamente el nuevo embedding (no se rebuilds, solo añade)
+
+### Query (pipeline RAG completo — `/api/chat`)
+```
+Pregunta del usuario
+  → Validación (≥4 palabras)
+  → expandQuery (Haiku 4.5)              → 3 paráfrasis + 1 HyDE
+  → Embedding paralelo de cada query     (Cohere v4, concurrencia 3)
+  → Retrieval híbrido paralelo:
+       HNSW (vector cosine)              → top-100
+       BM25 (websearch_to_tsquery)       → top-100
+       Reciprocal Rank Fusion            → top-100 fusionado
+  → Fusión RRF entre las 5 queries       → top-100 global
+  → Cohere Rerank v3.5                   → top-30
+  → Claude Haiku 4.5 judge               → top-15 finales
+  → (opcional) expansión a parent chunks → top-15 con más contexto
+  → Claude Opus 4.6 + template mini-ensayo (citas [#N] obligatorias, temp=0)
+  → Validación post-hoc con Haiku        → remueve oraciones con citas inválidas
+  → Respuesta guardada en BD
+```
+
+**Tunable via env vars**:
+- `PGVECTOR_PROBES` (20) — solo si vuelves a IVFFLAT
+- `PGVECTOR_EF_SEARCH` (200) — para HNSW
+- `BEDROCK_SEMAPHORE_LIMIT` (1) — 0 desactiva semaphore
+- `BEDROCK_EXPANSION_MODEL_ID` (Haiku 4.5)
+- `BEDROCK_JUDGE_MODEL_ID` (Haiku 4.5)
+- `BEDROCK_RERANK_MODEL_ID` (cohere.rerank-v3-5:0)
+- `BEDROCK_VALIDATOR_MODEL_ID` (Haiku 4.5)
+- `ENABLE_CITATION_VALIDATION` (true) — desactivar si quieres latencia menor
 
 ## Convenciones
 

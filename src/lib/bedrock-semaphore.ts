@@ -7,9 +7,12 @@
  * y batch questions compitan simultáneamente por el mismo rate limit.
  */
 
-// Solo 1 llamada a Claude Opus a la vez.
+// Concurrencia controlada de llamadas a Bedrock Claude.
 // Embeddings (Cohere) tienen rate limits separados y no usan este semáforo.
-const MAX_CONCURRENT = 1;
+// Para bypass total (recomendado al usar pipeline con reranker+expansion):
+//   BEDROCK_SEMAPHORE_LIMIT=0
+const MAX_CONCURRENT = Number(process.env.BEDROCK_SEMAPHORE_LIMIT ?? "1");
+const BYPASS = MAX_CONCURRENT <= 0;
 
 let activeCount = 0;
 const queue: Array<() => void> = [];
@@ -60,6 +63,10 @@ export function isAvailable(): boolean {
  * que requests encolados golpeen Bedrock todos al mismo instante.
  */
 export async function withBedrockSemaphore<T>(fn: () => Promise<T>): Promise<T> {
+  if (BYPASS) {
+    return await fn();
+  }
+
   await acquire();
 
   // Jitter aleatorio para desacoplar requests concurrentes

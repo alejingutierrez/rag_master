@@ -25,6 +25,57 @@ const MIGRATIONS = [
   `CREATE INDEX IF NOT EXISTS "questions_periodoCode_ordenPeriodo_idx" ON questions ("periodoCode", "ordenPeriodo")`,
   `CREATE INDEX IF NOT EXISTS "questions_categoriaCode_ordenCategoria_idx" ON questions ("categoriaCode", "ordenCategoria")`,
   `CREATE INDEX IF NOT EXISTS "questions_subcategoriaCode_ordenSubcategoria_idx" ON questions ("subcategoriaCode", "ordenSubcategoria")`,
+
+  // 2026-05-21: BM25 (FTS español) — chunks.content_fts + GIN index + trigger
+  // Esto habilita la búsqueda híbrida vector + BM25 con websearch_to_tsquery.
+  `ALTER TABLE chunks ADD COLUMN IF NOT EXISTS content_fts tsvector`,
+  // Trigger para mantener content_fts actualizado en INSERT y UPDATE de content
+  `CREATE OR REPLACE FUNCTION chunks_content_fts_trigger() RETURNS trigger AS $$
+   BEGIN
+     NEW.content_fts := to_tsvector('spanish', NEW.content);
+     RETURN NEW;
+   END;
+   $$ LANGUAGE plpgsql`,
+  `DROP TRIGGER IF EXISTS chunks_fts_trigger ON chunks`,
+  `CREATE TRIGGER chunks_fts_trigger
+   BEFORE INSERT OR UPDATE OF content ON chunks
+   FOR EACH ROW EXECUTE FUNCTION chunks_content_fts_trigger()`,
+  // GIN index para queries BM25 rápidas
+  `CREATE INDEX IF NOT EXISTS chunks_fts_idx ON chunks USING gin(content_fts)`,
+
+  // 2026-05-21: chunks_v2 (parent-child) — por ahora solo crear la tabla;
+  // el re-procesamiento se hace bajo demanda con scripts/reprocess-v2.mts
+  `CREATE TABLE IF NOT EXISTS chunks_v2 (
+     id           TEXT PRIMARY KEY,
+     "documentId" TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+     content      TEXT NOT NULL,
+     "contextualContent" TEXT,
+     "pageNumber" INTEGER NOT NULL,
+     "chunkIndex" INTEGER NOT NULL,
+     "parentIndex" INTEGER NOT NULL,
+     "chapterTitle" TEXT,
+     "isParent"   BOOLEAN NOT NULL DEFAULT false,
+     embedding    vector(1536),
+     metadata     JSONB NOT NULL DEFAULT '{}',
+     "createdAt"  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+   )`,
+  `CREATE INDEX IF NOT EXISTS chunks_v2_documentId_idx ON chunks_v2("documentId")`,
+  `CREATE INDEX IF NOT EXISTS chunks_v2_parent_idx ON chunks_v2("documentId", "parentIndex") WHERE "isParent" = true`,
+  `ALTER TABLE chunks_v2 ADD COLUMN IF NOT EXISTS content_fts tsvector
+   GENERATED ALWAYS AS (to_tsvector('spanish', coalesce("contextualContent", content))) STORED`,
+  `CREATE INDEX IF NOT EXISTS chunks_v2_fts_idx ON chunks_v2 USING gin(content_fts)`,
+
+  // 2026-05-21: HNSW index para chunks (reemplaza IVFFLAT). Idempotente — si ya existe HNSW
+  // por construcción manual previa, este IF NOT EXISTS es no-op. Si solo existe IVFFLAT,
+  // este CREATE crea HNSW; el IVFFLAT viejo NO se elimina aquí (hacerlo requiere DROP manual).
+  // NOTA: build de HNSW sobre 250k+ vectores tarda ~10 min y necesita ≥1GB maintenance_work_mem.
+  // No corre en cada deploy: solo la PRIMERA vez que no existe.
+  `DO $$ BEGIN
+     IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'chunks_embedding_hnsw_idx') THEN
+       PERFORM set_config('maintenance_work_mem', '1500MB', false);
+       EXECUTE 'CREATE INDEX chunks_embedding_hnsw_idx ON chunks USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64)';
+     END IF;
+   END $$`,
 ];
 
 async function main() {

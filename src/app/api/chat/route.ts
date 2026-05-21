@@ -1,10 +1,17 @@
 import { NextRequest, after } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateEmbedding } from "@/lib/bedrock";
-import { searchSimilarChunks } from "@/lib/vector-search";
 import { askClaude } from "@/lib/claude";
+import { runRagPipeline } from "@/lib/rag-pipeline";
+import { validateAndClean } from "@/lib/citation-validator";
 
-export const maxDuration = 60;
+// Flag para habilitar validación post-hoc de citas (default: on en producción).
+// Sube factualidad pero añade ~3-5s de latencia y 1 llamada extra a Haiku.
+const ENABLE_CITATION_VALIDATION =
+  (process.env.ENABLE_CITATION_VALIDATION ?? "true").toLowerCase() === "true";
+
+// Subido de 60 a 300s porque el pipeline con reranker + query expansion puede tomar 30-60s
+// en el peor caso (top-100 candidates + Cohere Rerank + Haiku judge + parent expansion).
+export const maxDuration = 300;
 
 // Prefijo que distingue un mensaje de error de una respuesta real.
 // No usar caracteres especiales que puedan aparecer en respuestas de Claude.
@@ -34,8 +41,8 @@ export async function POST(request: NextRequest) {
 async function handleChat(body: Record<string, unknown>) {
   const {
     question,
-    topK = 50,
-    similarityThreshold = 0.35,
+    topK = 100,
+    similarityThreshold = 0.25,
     maxTokens = 4000,
     documentIds,
     configurationId,
@@ -52,6 +59,19 @@ async function handleChat(body: Record<string, unknown>) {
 
   if (!question || typeof question !== "string" || !question.trim()) {
     return Response.json({ error: "Se requiere una pregunta" }, { status: 400 });
+  }
+
+  // Validar que la pregunta sea suficientemente específica.
+  // Una pregunta como "cuentame la historia" no puede ser respondida sin ambigüedad.
+  const wordCount = question.trim().split(/\s+/).filter((w) => w.length >= 2).length;
+  if (wordCount < 4) {
+    return Response.json(
+      {
+        error:
+          "Tu pregunta es muy general. Por favor incluye el sujeto (persona, evento, concepto) y al menos un detalle adicional. Ejemplo: 'cuentame la historia de Manuel Cepeda Vargas' o '¿qué pasó en el Palacio de Justicia en 1985?'",
+      },
+      { status: 422 }
+    );
   }
 
   // 1. Configuración
@@ -73,22 +93,38 @@ async function handleChat(body: Record<string, unknown>) {
     }
   }
 
-  // 2. Embedding de la pregunta
-  const queryEmbedding = await generateEmbedding(question, "search_query");
+  // 2. Detectar si BM25 / chunks_v2 están disponibles para activar pipeline mejorado
+  const v2Available = await prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
+    `SELECT COUNT(*) as c FROM chunks_v2 WHERE embedding IS NOT NULL LIMIT 1`
+  ).then((r) => Number(r[0]?.c || 0) > 0).catch(() => false);
 
-  // 3. Búsqueda vectorial
-  const chunks = await searchSimilarChunks(
-    queryEmbedding,
-    config.topK,
-    config.similarityThreshold,
-    documentIds as string[] | undefined
-  );
+  const bm25Available = await prisma.$queryRawUnsafe<Array<{ exists: boolean }>>(
+    `SELECT EXISTS(
+       SELECT 1 FROM information_schema.columns
+       WHERE table_name = '${v2Available ? "chunks_v2" : "chunks"}' AND column_name = 'content_fts'
+     ) as exists`
+  ).then((r) => r[0]?.exists || false).catch(() => false);
+
+  const effectiveTable = v2Available ? "chunks_v2" : "chunks";
+
+  // 3. Ejecutar pipeline RAG (con todas las mejoras disponibles)
+  const ragResult = await runRagPipeline(question, {
+    tableName: effectiveTable,
+    useBM25: bm25Available,
+    useReranker: true,
+    useQueryExpansion: true,
+    useParentExpansion: v2Available, // solo si hay parents en chunks_v2
+    documentIds: documentIds as string[] | undefined,
+    finalTopK: 15,
+  });
+
+  const chunks = ragResult.chunks;
 
   if (chunks.length === 0) {
     return Response.json(
       {
         error:
-          "No se encontraron fragmentos relevantes. Intenta ajustar el umbral de similitud o verifica que los documentos estén procesados.",
+          "No se encontraron fragmentos relevantes. Intenta reformular la pregunta con más detalles específicos (nombres, fechas, lugares).",
       },
       { status: 404 }
     );
@@ -151,9 +187,27 @@ async function handleChat(body: Record<string, unknown>) {
         }
       }
 
+      // Validación post-hoc de citas — sube factualidad removiendo oraciones
+      // con citas que no respaldan el claim. Solo si la respuesta tiene >100 chars
+      // (saltar para respuestas cortas/errores).
+      let finalAnswer = fullAnswer;
+      if (ENABLE_CITATION_VALIDATION && fullAnswer.length > 100) {
+        try {
+          const validated = await validateAndClean(fullAnswer, chunks);
+          if (validated.removedCount > 0) {
+            console.log(
+              `[chat] Validación: ${validated.removedCount}/${validated.totalSentencesWithCitations} oraciones removidas por citas inválidas (factuality=${(validated.factualityRate * 100).toFixed(0)}%)`
+            );
+            finalAnswer = validated.cleanedAnswer;
+          }
+        } catch (e) {
+          console.warn("[chat] Validación falló (continuando con respuesta sin validar):", (e as Error).message);
+        }
+      }
+
       await prisma.conversation.update({
         where: { id: conversation.id },
-        data: { answer: fullAnswer },
+        data: { answer: finalAnswer },
       });
     } catch (error) {
       console.error("Background Claude error:", error);

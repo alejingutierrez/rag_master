@@ -1,0 +1,275 @@
+{
+  "timestamp": "2026-05-21T15:44:57.464Z",
+  "tests": [
+    {
+      "type": "robustness",
+      "results": [
+        {
+          "questionId": "np_01",
+          "originalChunks": [
+            "cmnnu6bj70ekdad016o7i1k7j",
+            "cmnnkdue50egdad01ra5zxppi",
+            "cmo7f8ea20lt0ad018im56iuq",
+            "cmo7f8et00m2cad01hdqwoksj",
+            "cmneo2sx805uhad012ddoz863",
+            "cmnniks2z001nad01zpis2rkz",
+            "cmnnomgyo00scad01s75f1gyo",
+            "cmo7glzse04yyad01uld5ya0b",
+            "cmnniks41003bad01d1a923mb",
+            "cmnnomh0500t6ad01wx2xf5ym"
+          ],
+          "paraphrasedRuns": [
+            {
+              "paraphrase": "¿Puedes narrarme quién fue Manuel Cepeda Vargas, el progenitor del senador Iván Cepeda, que se desempeñó como periodista y líder de la Unión Patriótica?",
+              "chunks": [
+                "cmo7f8ea20lt0ad018im56iuq",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmnnrhw1n09fwad01zlwabxf5",
+                "cmnnj6ihg08oaad01t581ixtb",
+                "cmo7glztj04zoad01k33dtion",
+                "cmneo2sx805uhad012ddoz863",
+                "cmnniks2z001nad01zpis2rkz",
+                "cmnnomgyo00scad01s75f1gyo",
+                "cmo7glyxs04cwad01aoonkzqt"
+              ],
+              "overlap": 6
+            },
+            {
+              "paraphrase": "Háblame acerca de la vida de Manuel Cepeda Vargas, padre del congresista Iván Cepeda, quien ejerció como periodista y dirigente del partido Unión Patriótica.",
+              "chunks": [
+                "cmo7f8ea20lt0ad018im56iuq",
+                "cmo7f8et00m2cad01hdqwoksj",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmnnrhw1n09fwad01zlwabxf5",
+                "cmnnj6ihg08oaad01t581ixtb",
+                "cmneo2sx805uhad012ddoz863",
+                "cmnniks2z001nad01zpis2rkz",
+                "cmnnomgyo00scad01s75f1gyo",
+                "cmnniks41003bad01d1a923mb"
+              ],
+              "overlap": 8
+            },
+            {
+              "paraphrase": "¿Cuál es la historia de Manuel Cepeda Vargas, progenitor del parlamentario Iván Cepeda, reconocido por su labor como comunicador y su papel como dirigente dentro de la Unión Patriótica?",
+              "chunks": [
+                "cmnnuakvx0g0kad011opm9nce",
+                "cmnnugj3y0hjzad01nh7lta1f",
+                "cmnf0c3oi0ozkad01etexialj",
+                "cmo7ddf0o059pad01amhfo4wx",
+                "cmno1afa40gvpad017tz5tjj7",
+                "cmo7ddf4t05dvad01ixl59qq5",
+                "cmnf0c3uh0p1oad01xut7a4i1",
+                "cmo412ir102dead01bnr8n4zo",
+                "cmne382pz01g9ad01hsvmpczb",
+                "cmnduwksu04rnad01u3q2dcgp"
+              ],
+              "overlap": 0
+            }
+          ],
+          "avgOverlap": 4.666666666666667
+        },
+        {
+          "questionId": "co_07",
+          "originalChunks": [
+            "cmndssvn80839ad01ipkxfzpi",
+            "cmndw9tw802byad01em59gkmm",
+            "cmnduj1tb02ajad01ll8oygxh",
+            "cmnerdin4045iad01e4dflc11",
+            "cmo6prpay0495ad01o3gq268g",
+            "cmo211th202d5ad01tjzcvtig",
+            "cmndw9tw402bwad018p1da3nd",
+            "cmo7idurw02iwad01uxe0627e",
+            "cmo6prpb40499ad01oacbg2un",
+            "cmneto54z003iad01ctvp6qq4"
+          ],
+          "paraphrasedRuns": [
+            {
+              "paraphrase": "¿Cuál era la naturaleza del M-19 y cuáles fueron los acontecimientos más importantes en los que estuvo involucrado?",
+              "chunks": [
+                "cmnduj1tb02ajad01ll8oygxh",
+                "cmo7idurw02iwad01uxe0627e",
+                "cmndssvn80839ad01ipkxfzpi",
+                "cmndw9twc02c0ad01d3883pt4",
+                "cmneto54z003iad01ctvp6qq4",
+                "cmo7hh80g0d6had017uxbt861",
+                "cmnduj7ww02r2ad014kpx4smq",
+                "cmo6prpb40499ad01oacbg2un",
+                "cmnnualme0guaad01nnq9mglk",
+                "cmo6prpay0495ad01o3gq268g"
+              ],
+              "overlap": 6
+            },
+            {
+              "paraphrase": "¿En qué consistió el movimiento conocido como M-19 y qué hechos relevantes marcaron su historia?",
+              "chunks": [
+                "cmo7hh7os0cz5ad0115jpx8lk",
+                "cmndw9tw802byad01em59gkmm",
+                "cmnerdin4045iad01e4dflc11",
+                "cmnduj1tb02ajad01ll8oygxh",
+                "cmo211th202d5ad01tjzcvtig",
+                "cmo7f8e0j0lomad01h6nhfin4",
+                "cmo7idt4v01tkad01l60e0fy7",
+                "cmnnualme0guaad01nnq9mglk",
+                "cmo7idurw02iwad01uxe0627e",
+                "cmndw9tw402bwad018p1da3nd"
+              ],
+              "overlap": 6
+            },
+            {
+              "paraphrase": "¿Qué tipo de organización era el M-19 y cuáles fueron los episodios más destacados que llevó a cabo?",
+              "chunks": [
+                "cmndssvn80839ad01ipkxfzpi",
+                "cmndw9tw802byad01em59gkmm",
+                "cmnduj1tb02ajad01ll8oygxh",
+                "cmnerdin4045iad01e4dflc11",
+                "cmo211th202d5ad01tjzcvtig",
+                "cmnnualme0guaad01nnq9mglk",
+                "cmo6prpay0495ad01o3gq268g",
+                "cmo7idurw02iwad01uxe0627e",
+                "cmnez7qih0eb7ad01fjo4leod",
+                "cmndw9tw402bwad018p1da3nd"
+              ],
+              "overlap": 8
+            }
+          ],
+          "avgOverlap": 6.666666666666667
+        },
+        {
+          "questionId": "fe_01",
+          "originalChunks": [
+            "cmo6j5ffu05w5ad01zaln2kfd",
+            "cmo3mlbr3089uad01rs6nenqw",
+            "cmnexbain08hiad01w3979rnn",
+            "cmnduj7s702nkad017s6w2noy",
+            "cmndbvdcu010gjj1h5e34h8d2",
+            "cmo7idfie00fxad01p3k4iz2s",
+            "cmndvqi8t09gdad01zbjxxlfw",
+            "cmnduj7r802n2ad0189f4vv39",
+            "cmo3mlc6608jkad01cksfcq83",
+            "cmnduj7us02q4ad010ihnq0tq"
+          ],
+          "paraphrasedRuns": [
+            {
+              "paraphrase": "¿Cuáles fueron los eventos que tuvieron lugar en el Palacio de Justicia durante los días 6 y 7 de noviembre de 1985?",
+              "chunks": [
+                "cmo6j5ffu05w5ad01zaln2kfd",
+                "cmo3mlbr3089uad01rs6nenqw",
+                "cmnduj7s702nkad017s6w2noy",
+                "cmnexbain08hiad01w3979rnn",
+                "cmndbvdcu010gjj1h5e34h8d2",
+                "cmo7idfie00fxad01p3k4iz2s",
+                "cmndvqi8t09gdad01zbjxxlfw",
+                "cmnezwdrh0j56ad01tou5xcw4",
+                "cmo3mlc6608jkad01cksfcq83",
+                "cmnnualnr0gv0ad01roil1lfq"
+              ],
+              "overlap": 8
+            },
+            {
+              "paraphrase": "¿Qué sucesos ocurrieron en el Palacio de Justicia a lo largo del 6 y el 7 de noviembre de 1985?",
+              "chunks": [
+                "cmo6j5ffu05w5ad01zaln2kfd",
+                "cmo3mlbr3089uad01rs6nenqw",
+                "cmnnualnr0gv0ad01roil1lfq",
+                "cmnduj7s702nkad017s6w2noy",
+                "cmnexbain08hiad01w3979rnn",
+                "cmndbvdcu010gjj1h5e34h8d2",
+                "cmo7idfie00fxad01p3k4iz2s",
+                "cmndvqi8t09gdad01zbjxxlfw",
+                "cmnezwdrh0j56ad01tou5xcw4",
+                "cmo3mlc6608jkad01cksfcq83"
+              ],
+              "overlap": 8
+            },
+            {
+              "paraphrase": "¿Cómo se desarrollaron los hechos en el Palacio de Justicia el 6 y 7 de noviembre del año 1985?",
+              "chunks": [
+                "cmo6j5ffu05w5ad01zaln2kfd",
+                "cmnduj7s702nkad017s6w2noy",
+                "cmnexbain08hiad01w3979rnn",
+                "cmndbvdcu010gjj1h5e34h8d2",
+                "cmo7idfie00fxad01p3k4iz2s",
+                "cmo3mlbr3089uad01rs6nenqw",
+                "cmo3mlc6608jkad01cksfcq83",
+                "cmnduj7r802n2ad0189f4vv39",
+                "cmo7h7e3l0a9oad0158gxy727",
+                "cmnezwdrh0j56ad01tou5xcw4"
+              ],
+              "overlap": 8
+            }
+          ],
+          "avgOverlap": 8
+        },
+        {
+          "questionId": "mh_01",
+          "originalChunks": [
+            "cmo7glzs204yqad01zne5j8qb",
+            "cmo7glzqr04xsad01gjpez9ja",
+            "cmo7glyxs04cwad01aoonkzqt",
+            "cmo7glyzv04ecad01225e7dzx",
+            "cmnnu6bj70ekdad016o7i1k7j",
+            "cmnnkdue50egdad01ra5zxppi",
+            "cmo7glzrx04ymad01zm6te1uy",
+            "cmo7glzv3050qad01z523lmbs",
+            "cmnesinn40f6vad016pdndj66",
+            "cmnez75dl0ddiad01ljgtx2up"
+          ],
+          "paraphrasedRuns": [
+            {
+              "paraphrase": "¿De qué manera está relacionada la muerte de Manuel Cepeda Vargas con la destrucción sistemática de la Unión Patriótica?",
+              "chunks": [
+                "cmo7glzs204yqad01zne5j8qb",
+                "cmo7glzqr04xsad01gjpez9ja",
+                "cmo7glz0z04f2ad011aofqzuw",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmo7glzse04yyad01uld5ya0b",
+                "cmo7glzrx04ymad01zm6te1uy",
+                "cmnez75dl0ddiad01ljgtx2up",
+                "cmo7glzsa04ywad01ek7sno31",
+                "cmo7glyxs04cwad01aoonkzqt"
+              ],
+              "overlap": 7
+            },
+            {
+              "paraphrase": "¿Qué vínculo existe entre el homicidio de Manuel Cepeda Vargas y el aniquilamiento del partido Unión Patriótica?",
+              "chunks": [
+                "cmo7glzs204yqad01zne5j8qb",
+                "cmo7glzrx04ymad01zm6te1uy",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmnnj6ihg08oaad01t581ixtb",
+                "cmnnrhw1n09fwad01zlwabxf5",
+                "cmo7glyxs04cwad01aoonkzqt",
+                "cmo7f8f4o0m8iad01wq872cp3",
+                "cmo7glztj04zoad01k33dtion",
+                "cmo7glzse04yyad01uld5ya0b"
+              ],
+              "overlap": 5
+            },
+            {
+              "paraphrase": "¿Cómo se articula el caso del asesinato de Manuel Cepeda Vargas dentro del contexto del exterminio sufrido por la Unión Patriótica?",
+              "chunks": [
+                "cmo7glzs204yqad01zne5j8qb",
+                "cmnnu6bj70ekdad016o7i1k7j",
+                "cmnnkdue50egdad01ra5zxppi",
+                "cmo7glzse04yyad01uld5ya0b",
+                "cmo7glzqr04xsad01gjpez9ja",
+                "cmo7glztj04zoad01k33dtion",
+                "cmo7glzsa04ywad01ek7sno31",
+                "cmo7glyxs04cwad01aoonkzqt",
+                "cmo7glz0z04f2ad011aofqzuw",
+                "cmnezwdcq0iogad01na6gwzhn"
+              ],
+              "overlap": 5
+            }
+          ],
+          "avgOverlap": 5.666666666666667
+        }
+      ],
+      "avgOverlap": 6.250000000000001
+    }
+  ]
+}

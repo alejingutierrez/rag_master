@@ -11,14 +11,33 @@ export interface SearchResult {
   documentFilename?: string;
 }
 
+// Tuning del índice vectorial — recall mucho mayor que defaults de pgvector.
+// IVFFLAT default probes=1 visita solo 1 de 100 listas (~10% recall en lists=100).
+// HNSW default ef_search=40 es bajo; 200+ da ~98% recall.
+const IVFFLAT_PROBES = Number(process.env.PGVECTOR_PROBES || 20);
+const HNSW_EF_SEARCH = Number(process.env.PGVECTOR_EF_SEARCH || 200);
+
+let indexTypeCache: "ivfflat" | "hnsw" | null = null;
+async function getIndexType(): Promise<"ivfflat" | "hnsw"> {
+  if (indexTypeCache) return indexTypeCache;
+  const rows = await prisma.$queryRawUnsafe<Array<{ indexdef: string }>>(
+    `SELECT indexdef FROM pg_indexes
+     WHERE tablename = 'chunks' AND indexname LIKE '%embedding%'`
+  );
+  indexTypeCache = rows.some((r) => r.indexdef.toLowerCase().includes("hnsw"))
+    ? "hnsw"
+    : "ivfflat";
+  return indexTypeCache;
+}
+
 /**
  * Busca los chunks más similares a un vector de consulta usando cosine similarity
  * Usa pgvector con el operador <=> (distancia coseno)
  */
 export async function searchSimilarChunks(
   queryEmbedding: number[],
-  topK: number = 50,
-  similarityThreshold: number = 0.35,
+  topK: number = 100,
+  similarityThreshold: number = 0.25,
   documentIds?: string[]
 ): Promise<SearchResult[]> {
   const embeddingStr = `[${queryEmbedding.join(",")}]`;
@@ -27,6 +46,23 @@ export async function searchSimilarChunks(
   const documentFilter = documentIds?.length
     ? `AND c."documentId" IN (${documentIds.map((id) => `'${id}'`).join(",")})`
     : "";
+
+  // Subir recall del índice (Fase 1 quick wins).
+  const idxType = await getIndexType();
+  try {
+    if (idxType === "ivfflat") {
+      await prisma.$executeRawUnsafe(`SET LOCAL ivfflat.probes = ${IVFFLAT_PROBES}`);
+    } else {
+      await prisma.$executeRawUnsafe(`SET LOCAL hnsw.ef_search = ${HNSW_EF_SEARCH}`);
+    }
+  } catch {
+    // SET LOCAL solo aplica en transacción; en autocommit Prisma usa SET regular como fallback.
+    if (idxType === "ivfflat") {
+      await prisma.$executeRawUnsafe(`SET ivfflat.probes = ${IVFFLAT_PROBES}`);
+    } else {
+      await prisma.$executeRawUnsafe(`SET hnsw.ef_search = ${HNSW_EF_SEARCH}`);
+    }
+  }
 
   // NOTA: Se interpola el vector directamente en el SQL porque Prisma $queryRawUnsafe
   // no castea correctamente parámetros posicionales ($1::vector) con el operador <=>

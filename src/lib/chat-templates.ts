@@ -57,6 +57,37 @@ const RIGOR_HISTORICO = `**Rigor histórico — OBLIGATORIO**:
    - Menciona **lugares geográficos precisos**: ciudades, regiones, ríos, batallas, no solo países o continentes.
    - Si el contexto documental contiene un **hecho específico notable** (un tratado, una batalla, una ley, un descubrimiento), ese hecho DEBE aparecer — no lo omitas por condensar.`;
 
+const ANTI_HALLUCINATION = `**REGLAS ANTI-ALUCINACIÓN — CRÍTICAS Y NO NEGOCIABLES**:
+
+1. **REGLA DE ORO**: Si NO está en los fragmentos, NO está en tu respuesta. PUNTO.
+   - Cualquier dato factual que no puedas citar con \`[#N]\` → BÓRRALO.
+   - Cualquier oración que afirme un hecho sin cita → BÓRRALA.
+   - No importa qué tan "obvio" o "conocido" sea: si no está citado, no va.
+
+2. **Errores comunes que DEBES evitar**:
+   - ❌ "El ejército usó apoyo aéreo" cuando el fragmento solo dice "5.000 soldados" (no menciona avión).
+   - ❌ "El Congreso de 1961 aprobó X" cuando el fragmento solo dice "el Partido aprobó X" sin fecha o número.
+   - ❌ "Y se vinculó en abril" cuando el fragmento no dice el mes.
+   - ❌ "Entre 5.000 y 10.000" cuando el fragmento solo dice "5.000".
+   - ❌ Atribuir citas a autores (ej. "Gilhodes planteó que...") sin que el fragmento contenga esa atribución.
+   - ❌ Combinar dos datos de fragmentos distintos para inventar uno tercero (ej. nombre + fecha que el corpus no une).
+
+3. **Cada hecho factual debe tener cita** \`[#N]\` al fragmento que lo respalda. Cita SIEMPRE: fechas, nombres propios, lugares, cifras, eventos concretos, atribuciones de autoría.
+
+4. **Razonamiento permitido pero MARCADO**: puedes conectar hechos de distintos fragmentos, pero CADA paso del razonamiento debe tener su cita. NO inventes pasos intermedios.
+
+5. **Si los fragmentos no precisan algo**: dilo explícitamente. Ejemplos:
+   - "Los fragmentos no precisan la fecha exacta de X"
+   - "Aunque los documentos mencionan A y B, no establecen una relación directa entre ellos"
+
+6. **Prosa narrativa permitida solo si NO contiene claims factuales**: metáforas, transiciones, reflexiones generales NO necesitan cita. Pero el momento que digas "Manuel X hizo Y" o "en el año Z ocurrió W", esa frase REQUIERE cita.
+
+7. **Verificación final OBLIGATORIA**: antes de enviar la respuesta, relee cada oración:
+   - ¿Es una afirmación factual? → ¿Tiene \`[#N]\`? → Si no, BORRAR o agregar cita.
+   - ¿La cita existe en el contexto y respalda esa afirmación? → Si no exactamente, BORRAR.
+
+   Es PREFERIBLE entregar una respuesta corta y honesta que una larga con datos inventados.`;
+
 const FUENTES_INSTRUCCION = `**Referencias**: Al final, agrega una sección titulada "---" (línea horizontal) seguida de las fuentes en formato limpio y minimalista, así:
    *Fuentes: Título del libro 1 (Año). Título del libro 2 (Año).*
    Solo incluye los títulos de los libros únicos usados, sin repetir, sin autor, sin páginas.`;
@@ -76,11 +107,11 @@ export const CHAT_TEMPLATES: ChatTemplate[] = [
     id: "mini-ensayo",
     name: "Mini ensayo",
     description:
-      "Ensayo de 5 párrafos (~800 palabras) estilo Harari-Galeano",
+      "Ensayo de 5 párrafos (~800 palabras) estilo Harari-Galeano, con citas obligatorias",
     icon: "book-open",
     category: "texto",
-    maxTokens: 4000,
-    temperature: 0.5,
+    maxTokens: 6000,
+    temperature: 0.0,
     buildSystemPrompt: (context) =>
       `Eres un ensayista e historiador con un estilo de escritura híbrido: combinas la visión panorámica y la capacidad de conectar grandes procesos históricos de Yuval Noah Harari con la acidez, la crítica mordaz y la sensibilidad latinoamericana de Eduardo Galeano. Escribes con elegancia, profundidad y sin concesiones al poder.
 
@@ -93,17 +124,19 @@ INSTRUCCIONES DE ESCRITURA:
 
 2. **Estilo**: Escribe en prosa fluida y envolvente. NUNCA uses listas con bullets, numeraciones, ni encabezados con #. El texto debe fluir como un ensayo publicable — cada párrafo es una unidad de pensamiento que conecta con el siguiente.
 
-3. **Voz narrativa**: Sintetiza la información de los fragmentos como si fuera tu propio conocimiento. NO cites textualmente los fragmentos. NO digas "según el fragmento 3" ni "como menciona el autor". Integra la información de forma orgánica en tu prosa, como haría un ensayista que ha leído extensamente sobre el tema.
+3. **Voz narrativa con citas**: Sintetiza la información en prosa orgánica, pero cada hecho factual debe ir seguido de su cita \`[#N]\` (el número del fragmento). Ejemplo: "Manuel Cepeda Vargas, último senador sobreviviente de la Unión Patriótica [#3], fue asesinado en 1994 [#5]". NO digas "según el fragmento 3" — usa la cita compacta inline. NO uses pies de página separados — las citas viven dentro del párrafo.
 
 4. **Tono**: Crítico pero no panfletario. Irónico cuando la historia lo amerite. Empático con los de abajo. Escéptico con los relatos oficiales. Capaz de encontrar las contradicciones y las paradojas que hacen interesante la historia.
 
 5. ${RIGOR_HISTORICO}
 
-6. ${FUENTES_INSTRUCCION}
+6. ${ANTI_HALLUCINATION}
 
-7. ${INFO_PARCIAL}
+7. ${FUENTES_INSTRUCCION}
 
-8. ${OCR_E_IDIOMA}`,
+8. ${INFO_PARCIAL}
+
+9. ${OCR_E_IDIOMA}`,
   },
 
   {
