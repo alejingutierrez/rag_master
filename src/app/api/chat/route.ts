@@ -108,7 +108,9 @@ async function handleChat(body: Record<string, unknown>) {
 
   const effectiveTable = v2Available ? "chunks_v2" : "chunks";
 
-  // 3. Ejecutar pipeline RAG (con todas las mejoras disponibles)
+  // 3. Ejecutar pipeline RAG (con todas las mejoras disponibles).
+  // NO especificamos finalTopK aquí: el default del pipeline (80) ya está pensado
+  // para Opus 4.7 con 1M tokens de contexto. Opus 4.7 hace la selección final consciente.
   const ragResult = await runRagPipeline(question, {
     tableName: effectiveTable,
     useBM25: bm25Available,
@@ -116,7 +118,6 @@ async function handleChat(body: Record<string, unknown>) {
     useQueryExpansion: true,
     useParentExpansion: v2Available, // solo si hay parents en chunks_v2
     documentIds: documentIds as string[] | undefined,
-    finalTopK: 15,
   });
 
   const chunks = ragResult.chunks;
