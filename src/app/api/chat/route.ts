@@ -3,9 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { askClaude } from "@/lib/claude";
 import { runRagPipeline } from "@/lib/rag-pipeline";
 import { validateAndClean } from "@/lib/citation-validator";
+import { getTemplateById, DEFAULT_TEMPLATE_ID } from "@/lib/chat-templates";
 
-// Flag para habilitar validación post-hoc de citas (default: on en producción).
-// Sube factualidad pero añade ~3-5s de latencia y 1 llamada extra a Haiku.
+// Flag para habilitar validación post-hoc de citas inline `[#N]`.
+// Solo aplica si el template usa citas inline (no si usa APA al final).
 const ENABLE_CITATION_VALIDATION =
   (process.env.ENABLE_CITATION_VALIDATION ?? "true").toLowerCase() === "true";
 
@@ -15,7 +16,7 @@ export const maxDuration = 300;
 
 // Prefijo que distingue un mensaje de error de una respuesta real.
 // No usar caracteres especiales que puedan aparecer en respuestas de Claude.
-const ERROR_PREFIX = "\u0000ERROR:";
+const ERROR_PREFIX = "[[RAG_ERROR]] ";
 
 // POST /api/chat — RAG pipeline: embedding + search, crea registro, Claude corre en after().
 // No depende de columnas nuevas: usa answer="" (generando) / respuesta real (listo) / ERROR (fallo).
@@ -187,11 +188,14 @@ async function handleChat(body: Record<string, unknown>) {
         }
       }
 
-      // Validación post-hoc de citas — sube factualidad removiendo oraciones
-      // con citas que no respaldan el claim. Solo si la respuesta tiene >100 chars
-      // (saltar para respuestas cortas/errores).
+      // Validación post-hoc de citas inline [#N].
+      // Solo aplica si el template usa citas inline. Si el template usa APA al final
+      // (appendApaReferences=true), saltamos porque la respuesta no tiene [#N].
+      const tpl = getTemplateById((templateId as string) || DEFAULT_TEMPLATE_ID);
+      const usesInlineCitations = tpl?.appendApaReferences !== true;
+
       let finalAnswer = fullAnswer;
-      if (ENABLE_CITATION_VALIDATION && fullAnswer.length > 100) {
+      if (ENABLE_CITATION_VALIDATION && usesInlineCitations && fullAnswer.length > 100) {
         try {
           const validated = await validateAndClean(fullAnswer, chunks);
           if (validated.removedCount > 0) {

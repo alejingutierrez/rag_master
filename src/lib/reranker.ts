@@ -93,17 +93,24 @@ interface ChunkScore {
 /**
  * Claude Haiku como judge: para cada chunk, decide qué tan relevante es para la pregunta.
  * Más caro que Cohere Rerank pero entiende razonamiento complejo y multi-hop.
+ *
+ * @param topK máximo de chunks a devolver
+ * @param minScore filtro: solo chunks con score >= minScore pasan (default 6 = "relevante")
  */
 export async function haikuJudgeRerank(
   query: string,
   chunks: SearchResult[],
-  topK: number = 15
+  topK: number = 15,
+  minScore: number = 6
 ): Promise<SearchResult[]> {
   if (chunks.length === 0) return [];
   if (chunks.length <= topK) return chunks;
 
+  // El judge ahora evalúa hasta 100 chunks (no 50)
+  const MAX_TO_EVAL = Math.min(100, chunks.length);
+
   // Construir lista numerada de chunks (truncados a 600 chars cada uno)
-  const chunkLines = chunks.slice(0, 50).map((c, i) => {
+  const chunkLines = chunks.slice(0, MAX_TO_EVAL).map((c, i) => {
     const truncated = c.content.length > 600 ? c.content.substring(0, 600) + "..." : c.content;
     return `[${i}] ${truncated}`;
   }).join("\n\n");
@@ -153,14 +160,28 @@ Califica cada fragmento del 0 al 10. JSON output:`;
       scoreMap.set(s.index, s.score);
     }
 
-    const reranked = chunks
-      .slice(0, 50)
+    const scored = chunks
+      .slice(0, MAX_TO_EVAL)
       .map((c, i) => ({ chunk: c, score: scoreMap.get(i) ?? 0 }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topK)
-      .map((x) => ({ ...x.chunk, similarity: x.score / 10 })); // Normalizar a 0-1
+      .sort((a, b) => b.score - a.score);
 
-    return reranked;
+    // Aplicar filtro de calidad
+    let filtered = scored.filter((x) => x.score >= minScore);
+
+    // Fallback: si el filtro dejó muy pocos, relajar al menos a 4 (= "tangencialmente relacionado")
+    // y si aún hay pocos, devolver top-K sin filtro
+    if (filtered.length < 5) {
+      filtered = scored.filter((x) => x.score >= 4);
+      console.log(`[reranker] minScore=${minScore} filtró demasiado, bajando a 4 → ${filtered.length} chunks`);
+    }
+    if (filtered.length < 5) {
+      filtered = scored;
+      console.log(`[reranker] Fallback: ningún umbral funcionó, devolviendo top-${topK} sin filtro`);
+    }
+
+    return filtered
+      .slice(0, topK)
+      .map((x) => ({ ...x.chunk, similarity: x.score / 10 }));
   } catch (error) {
     console.warn("[reranker] Haiku judge falló, devolviendo top-K original:", (error as Error).message);
     return chunks.slice(0, topK);
@@ -170,27 +191,33 @@ Califica cada fragmento del 0 al 10. JSON output:`;
 // ─── Pipeline completo ───────────────────────────────────────────────
 
 export interface RerankOptions {
-  cohereTopN?: number;  // 30 default
-  haikuTopK?: number;   // 15 default
-  useHaikuJudge?: boolean; // true default (false = solo Cohere)
+  cohereTopN?: number;          // 60 default (era 30)
+  haikuTopK?: number;           // 50 default (era 15)
+  useHaikuJudge?: boolean;      // true default
+  minJudgeScore?: number;       // 6 default — chunks con score < esto se descartan
 }
 
 /**
- * Pipeline: top-100 → Cohere Rerank → top-30 → Haiku judge → top-K final.
+ * Pipeline: top-150 → Cohere Rerank → top-80 → Haiku judge reordena → top-50 final.
+ *
+ * NOTA: el filtro por score (minJudgeScore) está desactivado por defecto (=0).
+ * Cohere Rerank ya filtra por relevancia; Haiku solo reordena entre los top-K
+ * para dar más peso a chunks que responden directamente la pregunta.
+ * Si quieres filtrar agresivamente, pasa minJudgeScore: 6.
  */
 export async function rerankChunks(
   query: string,
   chunks: SearchResult[],
   opts: RerankOptions = {}
 ): Promise<SearchResult[]> {
-  const { cohereTopN = 30, haikuTopK = 15, useHaikuJudge = true } = opts;
+  const { cohereTopN = 80, haikuTopK = 50, useHaikuJudge = true, minJudgeScore = 0 } = opts;
 
   // Stage 1
   const stage1 = await cohereRerank(query, chunks, cohereTopN);
 
-  // Stage 2 (opcional)
+  // Stage 2 (opcional): filtra chunks irrelevantes y devuelve top-K
   if (useHaikuJudge && stage1.length > haikuTopK) {
-    return await haikuJudgeRerank(query, stage1, haikuTopK);
+    return await haikuJudgeRerank(query, stage1, haikuTopK, minJudgeScore);
   }
 
   return stage1.slice(0, haikuTopK);

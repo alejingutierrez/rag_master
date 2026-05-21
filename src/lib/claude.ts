@@ -6,6 +6,7 @@ import { awsConfig } from "./aws-config";
 import type { SearchResult } from "./vector-search";
 import {
   buildContextBlock,
+  buildReferencesSection,
   getTemplateById,
   DEFAULT_TEMPLATE_ID,
 } from "./chat-templates";
@@ -14,8 +15,7 @@ import { withBedrockSemaphore } from "./bedrock-semaphore";
 const bedrock = new BedrockRuntimeClient(awsConfig);
 
 const CLAUDE_MODEL =
-  process.env.BEDROCK_CLAUDE_MODEL_ID ||
-  "us.anthropic.claude-opus-4-6-20250610-v1:0";
+  process.env.BEDROCK_CLAUDE_MODEL_ID || "us.anthropic.claude-opus-4-7";
 
 /**
  * Envía una pregunta a Claude con los chunks como contexto
@@ -36,6 +36,17 @@ export async function askClaude(
   const systemPrompt = template.buildSystemPrompt(contextBlock);
   const resolvedMaxTokens = maxTokens ?? template.maxTokens;
 
+  // Opus 4.7 y posteriores son "thinking models" y NO aceptan temperature
+  // (lanzan ValidationException: "temperature is deprecated for this model").
+  // Detectamos por nombre del modelo. Para modelos viejos seguimos pasando temperature.
+  const isThinkingModel = /claude-(opus|sonnet)-(4-7|4-8|5)/.test(CLAUDE_MODEL);
+  const inferenceConfig: { maxTokens: number; temperature?: number } = {
+    maxTokens: resolvedMaxTokens,
+  };
+  if (!isThinkingModel) {
+    inferenceConfig.temperature = template.temperature;
+  }
+
   const command = new ConverseStreamCommand({
     modelId: CLAUDE_MODEL,
     system: [{ text: systemPrompt }],
@@ -45,10 +56,7 @@ export async function askClaude(
         content: [{ text: question }],
       },
     ],
-    inferenceConfig: {
-      maxTokens: resolvedMaxTokens,
-      temperature: template.temperature,
-    },
+    inferenceConfig,
   });
 
   // Serializar acceso a Bedrock + retry con backoff exponencial
@@ -84,6 +92,7 @@ export async function askClaude(
 
   // Convertir el stream de Bedrock a un ReadableStream web
   const encoder = new TextEncoder();
+  const shouldAppendApa = template.appendApaReferences === true;
 
   return new ReadableStream({
     async start(controller) {
@@ -99,6 +108,15 @@ export async function askClaude(
             }
 
             if (event.messageStop) {
+              // Si el template lo pide, añadir sección APA al final
+              if (shouldAppendApa) {
+                const apa = buildReferencesSection(chunks);
+                if (apa) {
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ text: apa })}\n\n`)
+                  );
+                }
+              }
               controller.enqueue(
                 encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`)
               );

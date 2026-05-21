@@ -68,15 +68,15 @@ const DEFAULTS: Required<Omit<RagPipelineOptions, "documentIds" | "tableName">> 
   tableName: "chunks" | "chunks_v2";
   documentIds?: string[];
 } = {
-  retrievalCandidates: 100,
+  retrievalCandidates: 150,    // 100→150 con Opus 4.7 (1M tokens permite más)
   vectorThreshold: 0.20,
   useQueryExpansion: true,
   useHyDE: true,
   useBM25: true,
   tableName: "chunks_v2",
   useReranker: true,
-  rerankTopN: 30,
-  finalTopK: 15,
+  rerankTopN: 80,              // Cohere reordena 80
+  finalTopK: 80,               // Pasamos los 80 directos a Opus 4.7 (no Haiku judge)
   useHaikuJudge: true,
   useParentExpansion: true,
 };
@@ -150,14 +150,17 @@ export async function runRagPipeline(
   const totalCandidates = candidates.length;
 
   // 5. Re-ranking
-  const safeFinalTopK = Number.isFinite(opts.finalTopK) && opts.finalTopK > 0 ? opts.finalTopK : 15;
+  // Stack: vector + BM25 → top-150 → Cohere Rerank (cross-encoder) → top-80 → Opus 4.7
+  // El Haiku judge intermedio está deshabilitado por defecto: Opus 4.7 hace su propia
+  // selección final consciente desde los 80 chunks (es más smart que Haiku para esto).
+  const safeFinalTopK = Number.isFinite(opts.finalTopK) && opts.finalTopK > 0 ? opts.finalTopK : 80;
   let afterRerank = candidates.length;
   if (opts.useReranker && candidates.length > safeFinalTopK) {
     const tRr = Date.now();
     candidates = await rerankChunks(question, candidates, {
-      cohereTopN: opts.rerankTopN,
+      cohereTopN: safeFinalTopK,
       haikuTopK: safeFinalTopK,
-      useHaikuJudge: opts.useHaikuJudge,
+      useHaikuJudge: false, // Opus 4.7 hace la selección final consciente
     });
     afterRerank = candidates.length;
     latency.reranking = Date.now() - tRr;
