@@ -5,13 +5,14 @@ import { generateQuestionsForDocument } from "./questions-generator";
  * Procesa generación de preguntas para documentos READY que aún no tienen preguntas.
  * Diseñado para correr dentro de `after()` — continúa aunque el cliente se desconecte.
  *
- * - Procesa documentos secuencialmente (Bedrock rate limits)
- * - Reintentos automáticos ante throttling
- * - Pausa reducida entre documentos (Sonnet es más rápido que Opus)
+ * - Procesa documentos en paralelo (Sonnet aguanta varios concurrentes)
+ * - Reintentos automáticos ante throttling (en questions-generator)
+ * - Pausa corta entre ráfagas para no saturar Bedrock
  */
 
-const INTER_DOC_PAUSE_MS = 2000; // 2s entre docs (Sonnet es más tolerante)
-const MAX_DOCS_PER_RUN = 20; // Procesar hasta 20 docs por invocación after()
+const INTER_DOC_PAUSE_MS = 500; // 500ms entre ráfagas concurrentes
+const MAX_DOCS_PER_RUN = 60; // Procesar hasta 60 docs por invocación after()
+const CONCURRENCY = 3; // Cuántos docs procesar a la vez (Sonnet aguanta 3-5 sin throttling)
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,6 +23,76 @@ export interface BatchProgress {
   failed: number;
   total: number;
   remaining: number;
+}
+
+async function processOneDoc(
+  doc: { id: string; filename: string },
+  position: string
+): Promise<"generated" | "failed"> {
+  const start = Date.now();
+
+  try {
+    // Verificar que no se hayan generado preguntas mientras tanto
+    const existingQuestions = await prisma.question.count({
+      where: { documentId: doc.id },
+    });
+    if (existingQuestions > 0) {
+      console.log(`[questions-batch] ${doc.filename} — already has questions, skipping`);
+      return "generated";
+    }
+
+    const chunks = await prisma.chunk.findMany({
+      where: { documentId: doc.id },
+      select: { content: true, pageNumber: true, chunkIndex: true },
+      orderBy: { chunkIndex: "asc" },
+    });
+
+    if (chunks.length === 0) {
+      console.warn(`[questions-batch] ${doc.filename} — no chunks, skipping`);
+      return "failed";
+    }
+
+    const questions = await generateQuestionsForDocument(chunks, doc.filename);
+
+    // Guardar preguntas
+    await prisma.question.deleteMany({ where: { documentId: doc.id } });
+
+    const batchId = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const now = Date.now();
+
+    await prisma.question.createMany({
+      data: questions.map((q, idx) => ({
+        id: `q_${now}_${idx}_${Math.random().toString(36).slice(2, 8)}`,
+        documentId: doc.id,
+        questionNumber: q.questionNumber,
+        pregunta: q.pregunta,
+        periodoCode: q.periodoCode,
+        periodoNombre: q.periodoNombre,
+        periodoRango: q.periodoRango,
+        categoriaCode: q.categoriaCode,
+        categoriaNombre: q.categoriaNombre,
+        subcategoriaCode: q.subcategoriaCode,
+        subcategoriaNombre: q.subcategoriaNombre,
+        periodosRelacionados: q.periodosRelacionados,
+        categoriasRelacionadas: q.categoriasRelacionadas,
+        justificacion: q.justificacion,
+        batchId,
+      })),
+    });
+
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+    console.log(
+      `[questions-batch] ✅ ${doc.filename} — ${questions.length} questions in ${elapsed}s ${position}`
+    );
+    return "generated";
+  } catch (error) {
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+    console.error(
+      `[questions-batch] ❌ ${doc.filename} — error after ${elapsed}s:`,
+      error instanceof Error ? error.message : error
+    );
+    return "failed";
+  }
 }
 
 export async function processQuestionsBatch(): Promise<BatchProgress> {
@@ -42,83 +113,34 @@ export async function processQuestionsBatch(): Promise<BatchProgress> {
   }
 
   console.log(
-    `[questions-batch] Starting batch: ${pendingDocs.length} docs (${totalPending} total pending)`
+    `[questions-batch] Starting batch: ${pendingDocs.length} docs (${totalPending} total pending), concurrency=${CONCURRENCY}`
   );
 
   let generated = 0;
   let failed = 0;
 
-  for (let i = 0; i < pendingDocs.length; i++) {
-    const doc = pendingDocs[i];
-    const start = Date.now();
+  // Procesar en ráfagas de CONCURRENCY docs en paralelo
+  for (let i = 0; i < pendingDocs.length; i += CONCURRENCY) {
+    const chunk = pendingDocs.slice(i, i + CONCURRENCY);
+    const positions: string[] = chunk.map(
+      (_doc: { id: string; filename: string }, idx: number) =>
+        `[${i + idx + 1}/${pendingDocs.length}]`
+    );
 
-    try {
-      // Verificar que no se hayan generado preguntas mientras tanto
-      const existingQuestions = await prisma.question.count({
-        where: { documentId: doc.id },
-      });
-      if (existingQuestions > 0) {
-        console.log(`[questions-batch] ${doc.filename} — already has questions, skipping`);
-        generated++;
-        continue;
-      }
+    const results = await Promise.all(
+      chunk.map(
+        (doc: { id: string; filename: string }, idx: number) =>
+          processOneDoc(doc, positions[idx])
+      )
+    );
 
-      const chunks = await prisma.chunk.findMany({
-        where: { documentId: doc.id },
-        select: { content: true, pageNumber: true, chunkIndex: true },
-        orderBy: { chunkIndex: "asc" },
-      });
-
-      if (chunks.length === 0) {
-        console.warn(`[questions-batch] ${doc.filename} — no chunks, skipping`);
-        failed++;
-        continue;
-      }
-
-      const questions = await generateQuestionsForDocument(chunks, doc.filename);
-
-      // Guardar preguntas
-      await prisma.question.deleteMany({ where: { documentId: doc.id } });
-
-      const batchId = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      const now = Date.now();
-
-      await prisma.question.createMany({
-        data: questions.map((q, idx) => ({
-          id: `q_${now}_${idx}_${Math.random().toString(36).slice(2, 8)}`,
-          documentId: doc.id,
-          questionNumber: q.questionNumber,
-          pregunta: q.pregunta,
-          periodoCode: q.periodoCode,
-          periodoNombre: q.periodoNombre,
-          periodoRango: q.periodoRango,
-          categoriaCode: q.categoriaCode,
-          categoriaNombre: q.categoriaNombre,
-          subcategoriaCode: q.subcategoriaCode,
-          subcategoriaNombre: q.subcategoriaNombre,
-          periodosRelacionados: q.periodosRelacionados,
-          categoriasRelacionadas: q.categoriasRelacionadas,
-          justificacion: q.justificacion,
-          batchId,
-        })),
-      });
-
-      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-      console.log(
-        `[questions-batch] ✅ ${doc.filename} — ${questions.length} questions in ${elapsed}s [${i + 1}/${pendingDocs.length}]`
-      );
-      generated++;
-    } catch (error) {
-      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-      console.error(
-        `[questions-batch] ❌ ${doc.filename} — error after ${elapsed}s:`,
-        error instanceof Error ? error.message : error
-      );
-      failed++;
+    for (const r of results) {
+      if (r === "generated") generated++;
+      else failed++;
     }
 
-    // Pausa entre documentos para no saturar Bedrock
-    if (i < pendingDocs.length - 1) {
+    // Pausa corta entre ráfagas para no saturar Bedrock
+    if (i + CONCURRENCY < pendingDocs.length) {
       await sleep(INTER_DOC_PAUSE_MS);
     }
   }

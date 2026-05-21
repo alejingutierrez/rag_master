@@ -1,15 +1,36 @@
 # AWS.md - Guia de Despliegue en AWS
 
+## URL de Produccion
+
+**https://fbrwkqtydz.us-east-1.awsapprunner.com**
+
+Servicio AWS App Runner `rag-master` en `us-east-1`. Deploy continuo via GitHub Actions en cada push a `main`.
+
 ## Arquitectura AWS
 
 ```
-[Usuarios] --> [AWS Amplify / EC2] --> [Next.js App]
+[Usuarios] --> [AWS App Runner] --> [Next.js App (Docker)]
                                            |
                     ┌──────────────────────┼──────────────────────┐
                     |                      |                      |
                [AWS S3]          [Amazon RDS]          [Amazon Bedrock]
              (PDFs storage)    (PostgreSQL +           (Titan Embeddings +
                                 pgvector)               Claude Opus 4.6)
+```
+
+Pipeline de deploy:
+
+```
+git push main --> GitHub Actions --> docker build (linux/amd64)
+                                          |
+                                          v
+                                       Amazon ECR (rag-master)
+                                          |
+                                          v
+                                  aws apprunner update-service
+                                          |
+                                          v
+                                  App Runner pull + restart
 ```
 
 ## Prerequisitos en AWS
@@ -119,75 +140,89 @@ BEDROCK_EMBEDDING_MODEL_ID=amazon.titan-embed-text-v2:0
 }
 ```
 
-## Opciones de Despliegue del Frontend
+## Despliegue Actual: AWS App Runner + ECR + GitHub Actions
 
-### Opcion A: AWS Amplify (Recomendado)
+El proyecto se despliega automaticamente en App Runner con el workflow `.github/workflows/deploy.yml`. No se usa Amplify (la app `d2sayha59t6h2h` quedo en estado FAILED y esta inactiva).
 
-```bash
-# 1. Instalar CLI de Amplify
-npm install -g @aws-amplify/cli
+### Recursos en AWS
 
-# 2. Inicializar
-amplify init
+| Recurso | Identificador |
+|---------|---------------|
+| App Runner Service | `rag-master` (ARN: `arn:aws:apprunner:us-east-1:741448945431:service/rag-master/d8fd8b57f0ef41eda8deaf856697bb65`) |
+| URL publica | `https://fbrwkqtydz.us-east-1.awsapprunner.com` |
+| ECR Repository | `741448945431.dkr.ecr.us-east-1.amazonaws.com/rag-master` |
+| IAM Role (ECR access) | `AppRunnerECRAccessRole` |
 
-# 3. Conectar repositorio Git a Amplify Console
-# Ir a AWS Console > Amplify > New App > Host web app
-# Seleccionar repositorio Git
+### Flujo de despliegue
 
-# 4. Configurar variables de entorno en Amplify Console:
-#    - DATABASE_URL
-#    - S3_BUCKET_NAME
-#    - AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-#    - BEDROCK_CLAUDE_MODEL_ID, BEDROCK_EMBEDDING_MODEL_ID
+1. Push a `main` -> dispara `.github/workflows/deploy.yml`.
+2. Build de imagen Docker (`--platform linux/amd64 --provenance=false`).
+3. Push a ECR con tags `:<commit-sha>` y `:latest`.
+4. `aws apprunner update-service` con la nueva imagen.
+5. App Runner hace pull, reinicia el contenedor y vuelve a `RUNNING`.
 
-# 5. Build settings (amplify.yml):
-# version: 1
-# frontend:
-#   phases:
-#     preBuild:
-#       commands:
-#         - npm ci
-#         - npx prisma generate
-#     build:
-#       commands:
-#         - npm run build
-#   artifacts:
-#     baseDirectory: .next
-#     files:
-#       - '**/*'
-#   cache:
-#     paths:
-#       - node_modules/**/*
-```
+El contenedor ejecuta `node server.js` (Next.js standalone build) en el puerto 3000 y aplica migraciones al startup via `scripts/apply-migrations.js` (configurado en el `Dockerfile`).
 
-### Opcion B: EC2 con Docker
+### Variables de entorno en App Runner
 
-**Dockerfile:**
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npx prisma generate
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
+Se inyectan desde GitHub Secrets en el paso `update-service`:
+
+- `DATABASE_URL`
+- `S3_BUCKET_NAME`
+- `AWS_REGION`, `APP_AWS_ACCESS_KEY_ID`, `APP_AWS_SECRET_ACCESS_KEY`
+- `BEDROCK_CLAUDE_MODEL_ID`, `BEDROCK_EMBEDDING_MODEL_ID`
+- `NODE_ENV=production`, `HOSTNAME=0.0.0.0`, `PORT=3000`
+
+### Deploy manual (sin GitHub Actions)
 
 ```bash
-# Build y deploy
+# Build local y push a ECR
+aws ecr get-login-password --region us-east-1 \
+  | docker login --username AWS --password-stdin 741448945431.dkr.ecr.us-east-1.amazonaws.com
+
+docker build --platform linux/amd64 --provenance=false \
+  -t 741448945431.dkr.ecr.us-east-1.amazonaws.com/rag-master:latest .
+docker push 741448945431.dkr.ecr.us-east-1.amazonaws.com/rag-master:latest
+
+# Forzar despliegue de :latest
+aws apprunner start-deployment \
+  --service-arn arn:aws:apprunner:us-east-1:741448945431:service/rag-master/d8fd8b57f0ef41eda8deaf856697bb65
+```
+
+### Operaciones comunes
+
+```bash
+# Estado del servicio
+aws apprunner describe-service \
+  --service-arn arn:aws:apprunner:us-east-1:741448945431:service/rag-master/d8fd8b57f0ef41eda8deaf856697bb65 \
+  --query 'Service.Status'
+
+# Logs (CloudWatch)
+aws logs tail /aws/apprunner/rag-master/<service-id>/application --follow
+```
+
+## Opciones alternativas (no usadas)
+
+Conservadas como referencia. La produccion vive en App Runner.
+
+### EC2 con Docker
+
+```bash
 docker build -t rag-manager .
 docker run -p 3000:3000 --env-file .env rag-manager
 ```
 
-### Opcion C: ECS Fargate (Produccion)
+### ECS Fargate
 
-1. Crear ECR repository
-2. Push imagen Docker a ECR
-3. Crear ECS cluster con Fargate
-4. Crear Task Definition con variables de entorno
-5. Crear Service con ALB
+1. Crear ECR repository (ya existe: `rag-master`).
+2. Push imagen Docker a ECR.
+3. Crear ECS cluster con Fargate.
+4. Crear Task Definition con variables de entorno.
+5. Crear Service con ALB.
+
+### AWS Amplify
+
+App `d2sayha59t6h2h` quedo creada pero sus deploys fallan (Next.js 16 + Prisma + Docker no encaja bien con el runtime de Amplify SSR). Se mantiene por historico, no es la ruta activa.
 
 ## Costos Estimados (Mensuales)
 

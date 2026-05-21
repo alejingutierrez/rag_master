@@ -195,6 +195,60 @@ Las migraciones SQL se aplican **automaticamente** al iniciar el contenedor via 
 
 Configuradas como secrets de GitHub y se inyectan como env vars de App Runner en el workflow. Ver `.github/workflows/deploy.yml` para la lista completa.
 
+#### Variables opcionales para tuning
+
+- `BEDROCK_QUESTIONS_MODEL_ID` — Modelo para el batch de generación de preguntas. Default en código: `us.anthropic.claude-sonnet-4-6`. Override solo si quieres forzar otro modelo (Haiku para más velocidad y menos calidad, Opus para máxima calidad y menos velocidad).
+
+## Tuning del batch de generación de preguntas
+
+El batch (`POST /api/questions/generate-batch` → `processQuestionsBatch()` vía `after()`) está tuneado para procesar **60 docs por invocación**, con **3 concurrentes**, usando **Sonnet 4.6**. Razón histórica: hasta el deploy anterior caía a Opus (vía `BEDROCK_CLAUDE_MODEL_ID`), se serializaba con `/api/chat` por el semáforo, y procesaba 20 docs en serie con 2s de pausa — ~30-60s/doc.
+
+### Configuración actual (post-tuning)
+
+| Parámetro | Valor | Archivo |
+|---|---|---|
+| Modelo | Sonnet 4.6 (default) | [src/lib/questions-generator.ts:13](src/lib/questions-generator.ts:13) |
+| `maxTokens` | 8000 (era 16000) | [src/lib/questions-generator.ts:329](src/lib/questions-generator.ts:329) |
+| `INTER_DOC_PAUSE_MS` | 500 (era 2000) | [src/lib/questions-batch-processor.ts:13](src/lib/questions-batch-processor.ts:13) |
+| `MAX_DOCS_PER_RUN` | 60 (era 20) | [src/lib/questions-batch-processor.ts:14](src/lib/questions-batch-processor.ts:14) |
+| `CONCURRENCY` | 3 (nuevo, antes secuencial) | [src/lib/questions-batch-processor.ts:15](src/lib/questions-batch-processor.ts:15) |
+| `maxDuration` | 900s (era 300s) | [src/app/api/questions/generate-batch/route.ts:8](src/app/api/questions/generate-batch/route.ts:8) |
+| Semáforo Bedrock | OFF (modelo ≠ chat) | [src/lib/questions-generator.ts:19](src/lib/questions-generator.ts:19) |
+
+Con esto se espera ~10-15s/doc procesando 3 en paralelo → ~60 docs en 3-5 min por invocación en lugar de los ~20-40 min anteriores.
+
+### Cuándo desplegar este cambio
+
+**Importante**: el deploy reinicia el contenedor de App Runner y mata cualquier `after()` en curso. Si hay un batch corriendo (revisar logs de CloudWatch), espera a que termine antes de hacer push.
+
+```bash
+# Ver si hay un batch activo en CloudWatch
+aws logs tail /aws/apprunner/rag-master/<service-id>/application --since 5m \
+  --filter-pattern "questions-batch" --follow
+```
+
+Si ves líneas `[questions-batch] ✅ ... [N/M]` recientes, espera al `Batch complete`. Si no ves nada, está libre.
+
+### Después del deploy
+
+Trigger el siguiente lote con:
+
+```bash
+curl -X POST https://fbrwkqtydz.us-east-1.awsapprunner.com/api/questions/generate-batch
+```
+
+Repetir hasta que `GET /api/questions/generate-batch` reporte `pendingCount: 0`.
+
+### Rollback
+
+Si la calidad de Sonnet no es suficiente, añadir a App Runner el env var:
+
+```
+BEDROCK_QUESTIONS_MODEL_ID=us.anthropic.claude-opus-4-6-v1
+```
+
+Eso reactiva Opus + el semáforo automáticamente (USES_SHARED_MODEL pasa a true porque coincide con `BEDROCK_CLAUDE_MODEL_ID`). Bajar también `CONCURRENCY` a 1 para Opus.
+
 ## Variables de Entorno Requeridas
 
 Ver `.env` - requiere: AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DATABASE_URL, S3_BUCKET_NAME, BEDROCK_CLAUDE_MODEL_ID, BEDROCK_EMBEDDING_MODEL_ID, GITHUB_TOKEN

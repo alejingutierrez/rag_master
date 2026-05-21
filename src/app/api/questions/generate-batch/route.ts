@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { processQuestionsBatch } from "@/lib/questions-batch-processor";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+// 15 min de headroom para batches grandes en App Runner (default 300s era ajustado para 60 docs).
+export const maxDuration = 900;
 
 // GET /api/questions/generate-batch — Conteo de documentos pendientes + progreso
 export async function GET() {

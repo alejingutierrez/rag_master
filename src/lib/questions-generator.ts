@@ -8,15 +8,17 @@ import { withBedrockSemaphore } from "./bedrock-semaphore";
 const bedrock = new BedrockRuntimeClient(awsConfig);
 
 // Modelo para generación de preguntas.
-// Si BEDROCK_QUESTIONS_MODEL_ID está configurado, usa ese (recomendado: Sonnet para velocidad).
-// Si no, usa el mismo modelo de Claude del chat (Opus) como fallback seguro.
+// Default = Sonnet 4.6 (2-3× más rápido que Opus para este prompt y suficiente calidad).
+// Override con BEDROCK_QUESTIONS_MODEL_ID si se quiere otro modelo.
+// NOTA: ya no cae a BEDROCK_CLAUDE_MODEL_ID (que es Opus) — esa caída era el bottleneck del batch.
 const QUESTIONS_MODEL =
   process.env.BEDROCK_QUESTIONS_MODEL_ID ||
-  process.env.BEDROCK_CLAUDE_MODEL_ID ||
   "us.anthropic.claude-sonnet-4-6";
 
-// Si usa el mismo modelo que el chat (Opus), necesita el semáforo para no competir
-const USES_SHARED_MODEL = QUESTIONS_MODEL === (process.env.BEDROCK_CLAUDE_MODEL_ID || "");
+// Si por configuración el modelo de preguntas coincide con el del chat, serializa con el semáforo
+// para no pelearnos con /api/chat. Con default = Sonnet ≠ Opus (chat), el semáforo queda OFF.
+const USES_SHARED_MODEL =
+  QUESTIONS_MODEL === (process.env.BEDROCK_CLAUDE_MODEL_ID || "");
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -326,7 +328,7 @@ ${context}`;
       toolChoice: { tool: { name: GENERATE_TOOL_NAME } },
     },
     inferenceConfig: {
-      maxTokens: 16000,
+      maxTokens: 8000,
       temperature: 0.7,
     },
   });

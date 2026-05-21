@@ -53,8 +53,11 @@
 | RDS PostgreSQL + pgvector | Creado | `rag-master-db.c1062iio6flw.us-east-1.rds.amazonaws.com:5432` |
 | Security Group | Creado | `sg-0ceba63b9c79e57b3` (puerto 5432 abierto) |
 | Migracion SQL | Ejecutada | 4 tablas + pgvector + indices + config default |
-| Bedrock Model Access (Titan + Claude) | Pendiente de verificar | Requiere habilitar modelos en Bedrock console |
-| Despliegue (Amplify/EC2/ECS) | Pendiente | App funciona en desarrollo local |
+| Bedrock Model Access (Titan + Claude) | Habilitado | Modelos accesibles via Bedrock runtime |
+| ECR Repository | Creado | `rag-master` (imagenes Docker) |
+| App Runner Service | RUNNING | `https://fbrwkqtydz.us-east-1.awsapprunner.com` (servicio `rag-master`) |
+| CI/CD | Activo | GitHub Actions: build -> ECR -> App Runner en cada push a `main` (`.github/workflows/deploy.yml`) |
+| Amplify App (legacy) | Inactivo | `d2sayha59t6h2h` existe pero ultimos deploys FAILED; no se usa |
 
 ## Dependencias Principales
 
@@ -106,13 +109,17 @@ npm run dev
 
 ## Proximos Pasos
 
-1. **Habilitar modelos Bedrock**: Ir a AWS Console > Bedrock > Model access y habilitar Titan Embeddings v2 y Claude
-2. **Probar flujo completo**: Subir un PDF y hacer preguntas
-3. **Desplegar**: Usar Amplify, EC2 o ECS
-4. **Mejoras futuras**:
+1. **Probar flujo completo**: Subir un PDF y hacer preguntas en produccion (App Runner)
+2. **Mejoras futuras**:
    - Autenticacion de usuarios
    - Soporte multi-archivo en upload
    - Historial de chat persistente en UI
    - Dashboard con estadisticas
    - Soporte para mas formatos (DOCX, TXT)
    - Batch processing con SQS + Lambda
+
+## URL de Produccion
+
+**App Runner**: https://fbrwkqtydz.us-east-1.awsapprunner.com
+
+Deploy automatico: push a `main` -> GitHub Actions build & push a ECR (`rag-master`) -> `aws apprunner update-service`. Workflow en `.github/workflows/deploy.yml`.
