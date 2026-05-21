@@ -328,7 +328,7 @@ ${context}`;
       toolChoice: { tool: { name: GENERATE_TOOL_NAME } },
     },
     inferenceConfig: {
-      maxTokens: 8000,
+      maxTokens: 16000,
       temperature: 0.7,
     },
   });
