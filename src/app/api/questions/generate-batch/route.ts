@@ -39,7 +39,8 @@ export async function GET() {
   }
 }
 
-// POST /api/questions/generate-batch — Dispara generación server-side via after()
+// POST /api/questions/generate-batch — Dispara generación server-side via after().
+// El N por documento se calcula automáticamente según sus chunks (20–100).
 // Responde inmediatamente. El procesamiento continúa en background.
 export async function POST() {
   try {
@@ -61,7 +62,7 @@ export async function POST() {
     });
 
     return NextResponse.json({
-      message: `Generación de preguntas iniciada en background para hasta 20 de ${pendingCount} documentos pendientes`,
+      message: `Generación adaptativa iniciada en background para hasta 60 de ${pendingCount} documentos pendientes`,
       pendingCount,
     });
   } catch (error) {

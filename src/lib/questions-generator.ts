@@ -8,17 +8,35 @@ import { withBedrockSemaphore } from "./bedrock-semaphore";
 const bedrock = new BedrockRuntimeClient(awsConfig);
 
 // Modelo para generación de preguntas.
-// Default = Sonnet 4.6 (2-3× más rápido que Opus para este prompt y suficiente calidad).
-// Override con BEDROCK_QUESTIONS_MODEL_ID si se quiere otro modelo.
-// NOTA: ya no cae a BEDROCK_CLAUDE_MODEL_ID (que es Opus) — esa caída era el bottleneck del batch.
+// Siempre Opus 4.7 — el usuario quiere máxima calidad para esta tarea crítica.
+// Override con BEDROCK_QUESTIONS_MODEL_ID solo para experimentación.
 const QUESTIONS_MODEL =
-  process.env.BEDROCK_QUESTIONS_MODEL_ID ||
-  "us.anthropic.claude-sonnet-4-6";
+  process.env.BEDROCK_QUESTIONS_MODEL_ID || "us.anthropic.claude-opus-4-7";
 
-// Si por configuración el modelo de preguntas coincide con el del chat, serializa con el semáforo
-// para no pelearnos con /api/chat. Con default = Sonnet ≠ Opus (chat), el semáforo queda OFF.
+// Si compartimos modelo con el chat (mismo Opus 4.7 por default), serializa
+// con el semáforo para no chocar con /api/chat.
 const USES_SHARED_MODEL =
-  QUESTIONS_MODEL === (process.env.BEDROCK_CLAUDE_MODEL_ID || "");
+  QUESTIONS_MODEL === (process.env.BEDROCK_CLAUDE_MODEL_ID || "us.anthropic.claude-opus-4-7");
+
+// Constantes y curva del N adaptativo viven en módulo isomorfo
+// (usable por el cliente sin arrastrar AWS SDK).
+export {
+  MIN_QUESTIONS_COUNT,
+  MAX_QUESTIONS_COUNT,
+  computeTargetCount,
+} from "./questions-config";
+
+import {
+  MIN_QUESTIONS_COUNT,
+  MAX_QUESTIONS_COUNT,
+  computeTargetCount,
+} from "./questions-config";
+
+// Heurística para maxTokens según N: ~400 tokens/pregunta + overhead.
+// 20 → 16k, 50 → 28k, 80 → 40k, 100 → 48k.
+function maxTokensFor(count: number): number {
+  return Math.min(60_000, 8_000 + count * 400);
+}
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -45,7 +63,8 @@ interface ChunkForGeneration {
 
 // ─── Prompt del sistema (taxonomía completa) ──────────────────────────────────
 
-const QUESTIONS_SYSTEM_PROMPT = `Eres un historiador experto en Colombia con formación interdisciplinaria (historia, ciencia política, economía, sociología, antropología). Tu tarea es analizar el documento proporcionado y generar exactamente 20 preguntas de investigación profundas sobre la historia de Colombia.
+function buildSystemPrompt(targetCount: number): string {
+  return `Eres un historiador experto en Colombia con formación interdisciplinaria (historia, ciencia política, economía, sociología, antropología). Tu tarea es analizar el documento proporcionado y generar exactamente ${targetCount} preguntas de investigación profundas sobre la historia de Colombia.
 
 ## REGLAS DE GENERACIÓN
 
@@ -142,123 +161,157 @@ HIS.MAR, HIS.ACA, HIS.OFI, HIS.NUE, HIS.ORA, HIS.REG, HIS.COM, HIS.MEM, HIS.FUE
 4. Al menos 3 preguntas deben conectar con procesos más amplios de América Latina o del mundo.
 5. Al menos 2 preguntas deben cuestionar narrativas establecidas o supuestos historiográficos.
 6. Ninguna pregunta debe requerir haber leído el documento para ser comprendida.`;
+}
 
-// ─── Selección representativa de chunks ───────────────────────────────────────
+// ─── Selección de chunks para la generación ──────────────────────────────────
+//
+// Estrategia: pasar el LIBRO COMPLETO a Opus 4.7 por defecto. La sampling solo
+// activa cuando el corpus supera el techo seguro de contexto del modelo.
+//
+// Opus 4.7 en Bedrock tiene 200K tokens de contexto. Presupuesto:
+//   - system prompt (~2.5K) + tool spec (~1K) + user prefix (~0.2K) = ~4K tokens
+//   - output reservado (maxTokens): hasta 48K (caso N=100)
+//   - headroom defensivo: 20K tokens (errores de estimación, latencias, retries)
+//   = 72K tokens reservados. Resto del contexto: 128K tokens ≈ 512K chars.
+// Dejamos un poco extra de margen: 480K chars.
 
-const MAX_CHARS_PER_CHUNK = 1500;
-const MAX_TOTAL_CHARS = 50_000;
+const MAX_CHARS_PER_CHUNK = 4000; // Permitimos chunks completos (los chunks reales rara vez pasan de 2K).
+const MAX_TOTAL_CHARS = 480_000;  // ~120K tokens — libro completo cabe holgado con headroom.
 
-export function selectRepresentativeChunks(
-  chunks: ChunkForGeneration[],
-  targetCount = 30
+/**
+ * Selecciona los chunks que se le pasarán a Opus para generar las preguntas.
+ *
+ * - Caso común (libro chico/mediano, ≤600K chars): TODOS los chunks ordenados.
+ * - Caso extremo (libro gigante): preserva inicio + fin + sampling uniforme
+ *   del medio, hasta llenar MAX_TOTAL_CHARS. Esto mantiene la cobertura de
+ *   apertura/cierre + transversal del cuerpo, sin truncar arbitrariamente.
+ */
+export function selectChunksForGeneration(
+  chunks: ChunkForGeneration[]
 ): ChunkForGeneration[] {
   const sorted = [...chunks].sort((a, b) => a.chunkIndex - b.chunkIndex);
-  const total = sorted.length;
+  if (sorted.length === 0) return [];
 
-  if (total <= targetCount) return sorted;
+  const chunkCost = (c: ChunkForGeneration) =>
+    Math.min(c.content.length, MAX_CHARS_PER_CHUNK);
 
-  // Distribuir uniformemente: inicio + medio + fin
-  const selected: ChunkForGeneration[] = [];
-  const step = Math.floor(total / targetCount);
+  // Path rápido: si el libro entero cabe, no recortamos nada.
+  const fullSize = sorted.reduce((acc, c) => acc + chunkCost(c), 0);
+  if (fullSize <= MAX_TOTAL_CHARS) return sorted;
 
-  for (let i = 0; i < targetCount; i++) {
-    const idx = Math.min(i * step, total - 1);
-    selected.push(sorted[idx]);
+  // Libro mayor al techo: sampling defensivo conservando bordes y middle pass.
+  // Garantizamos los primeros y últimos N chunks (apertura y cierre del libro)
+  // y luego rellenamos el centro con pasos uniformes hasta el techo.
+  const EDGE = 8;
+  const head = sorted.slice(0, Math.min(EDGE, sorted.length));
+  const tail = sorted.slice(Math.max(0, sorted.length - EDGE));
+  const middle = sorted.slice(EDGE, Math.max(EDGE, sorted.length - EDGE));
+
+  const picked = new Map<number, ChunkForGeneration>();
+  let usedChars = 0;
+  for (const c of [...head, ...tail]) {
+    if (picked.has(c.chunkIndex)) continue;
+    picked.set(c.chunkIndex, c);
+    usedChars += chunkCost(c);
   }
 
-  // Garantizar primeros y últimos 3 chunks (contexto de apertura y cierre)
-  const firstThree = sorted.slice(0, 3);
-  const lastThree = sorted.slice(-3);
-  const combined = [
-    ...firstThree,
-    ...selected,
-    ...lastThree,
-  ];
+  // Recorrer el medio con paso uniforme hasta agotar el presupuesto.
+  if (middle.length > 0 && usedChars < MAX_TOTAL_CHARS) {
+    const remainingBudget = MAX_TOTAL_CHARS - usedChars;
+    const avgCost = Math.max(1, Math.round(fullSize / sorted.length));
+    const targetMiddle = Math.max(1, Math.floor(remainingBudget / avgCost));
+    const step = Math.max(1, Math.floor(middle.length / targetMiddle));
 
-  // Deduplicar por chunkIndex
-  const seen = new Set<number>();
-  const deduped = combined.filter((c) => {
-    if (seen.has(c.chunkIndex)) return false;
-    seen.add(c.chunkIndex);
-    return true;
-  });
+    for (let i = 0; i < middle.length; i += step) {
+      const c = middle[i];
+      if (picked.has(c.chunkIndex)) continue;
+      const cost = chunkCost(c);
+      if (usedChars + cost > MAX_TOTAL_CHARS) break;
+      picked.set(c.chunkIndex, c);
+      usedChars += cost;
+    }
+  }
 
-  return deduped.sort((a, b) => a.chunkIndex - b.chunkIndex);
+  return [...picked.values()].sort((a, b) => a.chunkIndex - b.chunkIndex);
 }
+
+// Alias retrocompatible — algunos imports externos pueden usar el nombre viejo.
+export const selectRepresentativeChunks = selectChunksForGeneration;
 
 // ─── Tool use schema (garantiza JSON válido siempre) ─────────────────────────
 
 const GENERATE_TOOL_NAME = "generate_research_questions";
 
-const GENERATE_TOOL_SPEC = {
-  name: GENERATE_TOOL_NAME,
-  description:
-    "Genera exactamente 20 preguntas de investigación histórica sobre Colombia en formato estructurado, clasificadas con la taxonomía de períodos y categorías.",
-  inputSchema: {
-    json: {
-      type: "object",
-      properties: {
-        preguntas: {
-          type: "array",
-          minItems: 1,
-          maxItems: 20,
-          items: {
-            type: "object",
-            required: [
-              "id",
-              "pregunta",
-              "periodo_historico",
-              "categoria",
-              "subcategoria",
-              "periodos_relacionados",
-              "categorias_relacionadas",
-              "justificacion",
-            ],
-            properties: {
-              id: { type: "integer", minimum: 1, maximum: 20 },
-              pregunta: { type: "string", minLength: 20 },
-              periodo_historico: {
-                type: "object",
-                required: ["codigo", "nombre", "rango_temporal"],
-                properties: {
-                  codigo: { type: "string" },
-                  nombre: { type: "string" },
-                  rango_temporal: { type: "string" },
+function buildGenerateToolSpec(targetCount: number) {
+  return {
+    name: GENERATE_TOOL_NAME,
+    description: `Genera exactamente ${targetCount} preguntas de investigación histórica sobre Colombia en formato estructurado, clasificadas con la taxonomía de períodos y categorías.`,
+    inputSchema: {
+      json: {
+        type: "object",
+        properties: {
+          preguntas: {
+            type: "array",
+            minItems: Math.max(1, Math.floor(targetCount * 0.9)),
+            maxItems: targetCount,
+            items: {
+              type: "object",
+              required: [
+                "id",
+                "pregunta",
+                "periodo_historico",
+                "categoria",
+                "subcategoria",
+                "periodos_relacionados",
+                "categorias_relacionadas",
+                "justificacion",
+              ],
+              properties: {
+                id: { type: "integer", minimum: 1, maximum: targetCount },
+                pregunta: { type: "string", minLength: 20 },
+                periodo_historico: {
+                  type: "object",
+                  required: ["codigo", "nombre", "rango_temporal"],
+                  properties: {
+                    codigo: { type: "string" },
+                    nombre: { type: "string" },
+                    rango_temporal: { type: "string" },
+                  },
                 },
-              },
-              categoria: {
-                type: "object",
-                required: ["codigo", "nombre"],
-                properties: {
-                  codigo: { type: "string" },
-                  nombre: { type: "string" },
+                categoria: {
+                  type: "object",
+                  required: ["codigo", "nombre"],
+                  properties: {
+                    codigo: { type: "string" },
+                    nombre: { type: "string" },
+                  },
                 },
-              },
-              subcategoria: {
-                type: "object",
-                required: ["codigo", "nombre"],
-                properties: {
-                  codigo: { type: "string" },
-                  nombre: { type: "string" },
+                subcategoria: {
+                  type: "object",
+                  required: ["codigo", "nombre"],
+                  properties: {
+                    codigo: { type: "string" },
+                    nombre: { type: "string" },
+                  },
                 },
+                periodos_relacionados: {
+                  type: "array",
+                  items: { type: "string" },
+                },
+                categorias_relacionadas: {
+                  type: "array",
+                  items: { type: "string" },
+                },
+                justificacion: { type: "string", minLength: 10 },
               },
-              periodos_relacionados: {
-                type: "array",
-                items: { type: "string" },
-              },
-              categorias_relacionadas: {
-                type: "array",
-                items: { type: "string" },
-              },
-              justificacion: { type: "string", minLength: 10 },
             },
           },
         },
+        required: ["preguntas"],
       },
-      required: ["preguntas"],
     },
-  },
-};
+  };
+}
 
 function normalizeQuestions(raw: unknown[]): QuestionData[] {
   return raw.map((q: unknown, i: number) => {
@@ -286,11 +339,28 @@ function normalizeQuestions(raw: unknown[]): QuestionData[] {
 
 // ─── Función principal ─────────────────────────────────────────────────────────
 
+export interface GenerateOptions {
+  /**
+   * Cantidad de preguntas a generar (MIN_QUESTIONS_COUNT–MAX_QUESTIONS_COUNT).
+   * Si no se pasa, se calcula automáticamente con computeTargetCount(chunks.length).
+   */
+  targetCount?: number;
+}
+
 export async function generateQuestionsForDocument(
   chunks: ChunkForGeneration[],
-  filename: string
+  filename: string,
+  opts: GenerateOptions = {}
 ): Promise<QuestionData[]> {
-  const selected = selectRepresentativeChunks(chunks);
+  const requestedCount = opts.targetCount ?? computeTargetCount(chunks.length);
+  const targetCount = Math.min(
+    MAX_QUESTIONS_COUNT,
+    Math.max(MIN_QUESTIONS_COUNT, requestedCount)
+  );
+
+  // Pasamos el libro completo. Si no cabe en el techo de contexto (~150K tokens
+  // para Opus 4.7 200K), aplicamos sampling defensivo conservando bordes.
+  const selected = selectChunksForGeneration(chunks);
 
   // Construir contexto con límite de chars
   let totalChars = 0;
@@ -310,13 +380,13 @@ export async function generateQuestionsForDocument(
 
   const context = parts.join("\n\n");
 
-  const userMessage = `Analiza los siguientes fragmentos del libro "${filename}" y genera exactamente 20 preguntas de investigación histórica sobre Colombia siguiendo todas las reglas y la taxonomía del sistema.
+  const userMessage = `Analiza los siguientes fragmentos del libro "${filename}" y genera exactamente ${targetCount} preguntas de investigación histórica sobre Colombia siguiendo todas las reglas y la taxonomía del sistema.
 
 ${context}`;
 
   const command = new ConverseCommand({
     modelId: QUESTIONS_MODEL,
-    system: [{ text: QUESTIONS_SYSTEM_PROMPT }],
+    system: [{ text: buildSystemPrompt(targetCount) }],
     messages: [
       {
         role: "user",
@@ -324,11 +394,11 @@ ${context}`;
       },
     ],
     toolConfig: {
-      tools: [{ toolSpec: GENERATE_TOOL_SPEC }],
+      tools: [{ toolSpec: buildGenerateToolSpec(targetCount) }],
       toolChoice: { tool: { name: GENERATE_TOOL_NAME } },
     },
     inferenceConfig: {
-      maxTokens: 16000,
+      maxTokens: maxTokensFor(targetCount),
       temperature: 0.7,
     },
   });

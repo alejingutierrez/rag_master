@@ -1,5 +1,10 @@
 import { prisma } from "./prisma";
-import { generateQuestionsForDocument } from "./questions-generator";
+import {
+  generateQuestionsForDocument,
+  computeTargetCount,
+} from "./questions-generator";
+import { reorderQuestions, ensureQuestionEmbeddings } from "./questions-orderer";
+import { periodOrderOf } from "./taxonomy";
 
 /**
  * Procesa generación de preguntas para documentos READY que aún no tienen preguntas.
@@ -52,7 +57,12 @@ async function processOneDoc(
       return "failed";
     }
 
-    const questions = await generateQuestionsForDocument(chunks, doc.filename);
+    // N adaptativo por libro: depende de la cantidad de chunks.
+    const targetCount = computeTargetCount(chunks.length);
+
+    const questions = await generateQuestionsForDocument(chunks, doc.filename, {
+      targetCount,
+    });
 
     // Guardar preguntas
     await prisma.question.deleteMany({ where: { documentId: doc.id } });
@@ -77,12 +87,28 @@ async function processOneDoc(
         categoriasRelacionadas: q.categoriasRelacionadas,
         justificacion: q.justificacion,
         batchId,
+        targetCount,
+        periodoOrden: periodOrderOf(q.periodoCode),
       })),
     });
 
+    // Embeddings (Cohere v4) para greedy chain narrativa dentro de cada período.
+    try {
+      await ensureQuestionEmbeddings(doc.id);
+    } catch (e) {
+      console.warn(`[questions-batch] embeddings failed for ${doc.filename}:`, e);
+    }
+
+    // Reorden narrativo: greedy chain dentro de cada período + cronología externa.
+    try {
+      await reorderQuestions({ documentId: doc.id });
+    } catch (e) {
+      console.warn(`[questions-batch] reorder failed for ${doc.filename}:`, e);
+    }
+
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
     console.log(
-      `[questions-batch] ✅ ${doc.filename} — ${questions.length} questions in ${elapsed}s ${position}`
+      `[questions-batch] ✅ ${doc.filename} — ${questions.length}/${targetCount} questions (${chunks.length} chunks) in ${elapsed}s ${position}`
     );
     return "generated";
   } catch (error) {
@@ -113,7 +139,7 @@ export async function processQuestionsBatch(): Promise<BatchProgress> {
   }
 
   console.log(
-    `[questions-batch] Starting batch: ${pendingDocs.length} docs (${totalPending} total pending), concurrency=${CONCURRENCY}`
+    `[questions-batch] Starting batch: ${pendingDocs.length} docs (${totalPending} total pending), N=adaptive, concurrency=${CONCURRENCY}`
   );
 
   let generated = 0;

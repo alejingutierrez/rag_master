@@ -242,15 +242,16 @@ export function QuestionFilters({
       <div className="w-px h-5 bg-border mx-0.5" />
 
       <select value={filters.sortBy} onChange={(e) => update({ sortBy: e.target.value })} className={selectClass}>
-        <option value="">Recientes</option>
+        <option value="cronologico">Cronologico</option>
         <option value="periodo">Por periodo</option>
         <option value="categoria">Por categoria</option>
         <option value="subcategoria">Por subcategoria</option>
+        <option value="recientes">Recientes</option>
       </select>
 
       {hasFilters && (
         <button
-          onClick={() => onFiltersChange({ documentId: "", periodo: "", categoria: "", subcategoria: "", search: "", sortBy: "" })}
+          onClick={() => onFiltersChange({ documentId: "", periodo: "", categoria: "", subcategoria: "", search: "", sortBy: "cronologico" })}
           className="h-8 px-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-md hover:bg-surface-hover transition-colors"
           title="Limpiar filtros"
         >

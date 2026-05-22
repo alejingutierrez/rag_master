@@ -84,6 +84,66 @@ const MIGRATIONS = [
   `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "source" TEXT NOT NULL DEFAULT 'batch'`,
   `CREATE INDEX IF NOT EXISTS deliverables_source_idx ON deliverables("source")`,
   `CREATE INDEX IF NOT EXISTS deliverables_createdAt_idx ON deliverables("createdAt" DESC)`,
+
+  // 2026-05-21: Question.targetCount + denormalizado de trazabilidad de respuestas.
+  // - targetCount: N de preguntas pedido a Claude en este batch (40 por default, configurable).
+  // - deliverableCount / completedTemplateIds / lastDeliveredAt: cache de "qué entregables
+  //   tiene esta pregunta", para badges y filtros en /questions sin joins caros.
+  //   Se mantiene desde el código en src/lib/question-stats-sync.ts.
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "targetCount" INTEGER NOT NULL DEFAULT 40`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "deliverableCount" INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "completedTemplateIds" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "lastDeliveredAt" TIMESTAMP(3)`,
+  `CREATE INDEX IF NOT EXISTS questions_documentId_deliverableCount_idx ON questions ("documentId", "deliverableCount")`,
+  // Backfill: contar entregables COMPLETE existentes y poblar las nuevas columnas.
+  // Solo corre la primera vez (idempotente porque WHERE q.deliverableCount = 0 limita el alcance,
+  // pero también es seguro repetirlo: recomputa lo mismo).
+  `UPDATE questions q SET
+     "deliverableCount" = sub.cnt,
+     "completedTemplateIds" = sub.templates,
+     "lastDeliveredAt" = sub.last_at
+   FROM (
+     SELECT "questionId" AS qid,
+            COUNT(*)::int AS cnt,
+            ARRAY_AGG(DISTINCT "templateId") AS templates,
+            MAX("updatedAt") AS last_at
+     FROM deliverables
+     WHERE "questionId" IS NOT NULL AND status = 'COMPLETE'
+     GROUP BY "questionId"
+   ) sub
+   WHERE q.id = sub.qid`,
+
+  // 2026-05-22: orden cronológico + narrativo.
+  // - periodoOrden: índice cronológico (PRE=0, CON=1, ..., POS=14, TRANS=15).
+  //   Necesario porque ORDER BY periodoCode es alfabético (C91 < CON < PRE),
+  //   no cronológico (PRE < CON < ... < POS).
+  // - embedding: vector(1536) Cohere v4 para greedy chain narrativa dentro
+  //   de cada período. Prisma no soporta pgvector → se accede vía $queryRaw.
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "periodoOrden" INTEGER NOT NULL DEFAULT 15`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS embedding vector(1536)`,
+  `CREATE INDEX IF NOT EXISTS questions_periodoOrden_ordenPeriodo_idx ON questions ("periodoOrden", "ordenPeriodo")`,
+  `CREATE INDEX IF NOT EXISTS questions_documentId_periodoOrden_idx ON questions ("documentId", "periodoOrden", "ordenPeriodo")`,
+  // Backfill periodoOrden: mapeo cronológico de PERIOD_OPTIONS.
+  `UPDATE questions SET "periodoOrden" = CASE "periodoCode"
+     WHEN 'PRE' THEN 0
+     WHEN 'CON' THEN 1
+     WHEN 'COL' THEN 2
+     WHEN 'PRE_IND' THEN 3
+     WHEN 'IND' THEN 4
+     WHEN 'NGR' THEN 5
+     WHEN 'EUC' THEN 6
+     WHEN 'REG' THEN 7
+     WHEN 'REP_LIB' THEN 8
+     WHEN 'VIO' THEN 9
+     WHEN 'FN' THEN 10
+     WHEN 'CNA' THEN 11
+     WHEN 'C91' THEN 12
+     WHEN 'SDE' THEN 13
+     WHEN 'POS' THEN 14
+     WHEN 'TRANS' THEN 15
+     ELSE 15
+   END
+   WHERE "periodoOrden" = 15 OR "periodoOrden" IS NULL`,
 ];
 
 async function main() {

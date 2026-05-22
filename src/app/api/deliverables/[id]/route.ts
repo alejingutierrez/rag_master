@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { syncQuestionStats } from "@/lib/question-stats-sync";
 
 // GET /api/deliverables/[id] — Get single deliverable with full answer
 export async function GET(
@@ -54,7 +55,21 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    // Necesitamos saber a qué pregunta pertenece ANTES de borrar para resincronizar.
+    const existing = await prisma.deliverable.findUnique({
+      where: { id },
+      select: { questionId: true },
+    });
+
     await prisma.deliverable.delete({ where: { id } });
+
+    if (existing?.questionId) {
+      try {
+        await syncQuestionStats(existing.questionId);
+      } catch (e) {
+        console.warn(`[deliverables] syncQuestionStats failed for ${existing.questionId}:`, e);
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,17 +1,28 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateQuestionsForDocument } from "@/lib/questions-generator";
+import {
+  generateQuestionsForDocument,
+  computeTargetCount,
+} from "@/lib/questions-generator";
+import { reorderQuestions, ensureQuestionEmbeddings } from "@/lib/questions-orderer";
+import { periodOrderOf } from "@/lib/taxonomy";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+// Libros grandes pasados completos a Opus 4.7 pueden tardar 3-5 min.
+export const maxDuration = 600;
 
-// POST /api/documents/[id]/questions/generate — SSE streaming
+// POST /api/documents/[id]/questions/generate — SSE streaming.
+// El N de preguntas se calcula automáticamente según el número de chunks del libro
+// (computeTargetCount). No acepta override desde el cliente.
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: documentId } = await params;
   const encoder = new TextEncoder();
+  const reqStart = Date.now();
+  const tag = `[questions/generate ${documentId.slice(-6)}]`;
+  console.log(`${tag} POST received`);
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -75,21 +86,40 @@ export async function POST(
           return;
         }
 
+        // N adaptativo: depende del tamaño del libro (chunks).
+        const targetCount = computeTargetCount(chunks.length);
+
         send({
           type: "progress",
           step: "selecting_chunks",
-          message: `Seleccionando fragmentos representativos de ${chunks.length} chunks...`,
+          message: `Preparando contexto completo del libro (${chunks.length} chunks) → ${targetCount} preguntas...`,
           totalChunks: chunks.length,
+          targetCount,
         });
 
         // 3. Llamar a Claude
         send({
           type: "progress",
           step: "calling_claude",
-          message: "Llamando a Claude Opus para generar preguntas...",
+          message: `Llamando a Claude Opus 4.7 para generar ${targetCount} preguntas...`,
+          targetCount,
         });
 
-        const questions = await generateQuestionsForDocument(chunks, document.filename);
+        console.log(
+          `${tag} calling Opus 4.7: ${chunks.length} chunks, target=${targetCount}`
+        );
+        const claudeStart = Date.now();
+        const questions = await generateQuestionsForDocument(
+          chunks,
+          document.filename,
+          { targetCount }
+        );
+        console.log(
+          `${tag} Opus returned ${questions.length} questions in ${(
+            (Date.now() - claudeStart) /
+            1000
+          ).toFixed(1)}s`
+        );
 
         send({
           type: "progress",
@@ -123,6 +153,8 @@ export async function POST(
               categoriasRelacionadas: q.categoriasRelacionadas,
               justificacion: q.justificacion,
               batchId,
+              targetCount,
+              periodoOrden: periodOrderOf(q.periodoCode),
             },
           });
 
@@ -142,17 +174,48 @@ export async function POST(
           });
         }
 
+        // Generar embeddings de las preguntas nuevas (Cohere v4, vector 1536).
+        // Sin esto el reorder cae a un fallback determinístico. Es barato:
+        // ~60 preguntas × 1 llamada Cohere por lote.
+        try {
+          await ensureQuestionEmbeddings(documentId);
+        } catch (e) {
+          console.warn(`[questions] embeddings failed for ${documentId}:`, e);
+        }
+
+        // Reordenar TODAS las preguntas del documento con greedy chain narrativa
+        // dentro de cada período + cronología entre períodos. Sin LLM, idempotente.
+        try {
+          await reorderQuestions({ documentId });
+        } catch (e) {
+          console.warn(`[questions] reorder failed for ${documentId}:`, e);
+        }
+
+        console.log(
+          `${tag} ✅ saved ${questions.length} questions in ${(
+            (Date.now() - reqStart) /
+            1000
+          ).toFixed(1)}s total`
+        );
+
         send({
           type: "complete",
           saved: questions.length,
           batchId,
           documentId,
+          targetCount,
         });
 
         clearInterval(heartbeat);
         if (!closed) controller.close();
       } catch (error) {
-        console.error(`Error generating questions for ${documentId}:`, error);
+        console.error(
+          `${tag} ❌ error after ${(
+            (Date.now() - reqStart) /
+            1000
+          ).toFixed(1)}s:`,
+          error
+        );
         send({
           type: "error",
           message: error instanceof Error ? error.message : "Error desconocido",

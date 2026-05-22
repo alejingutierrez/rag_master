@@ -74,7 +74,7 @@ model Question {
   periodosRelacionados   String[]
   categoriasRelacionadas String[]
 
-  // Ordenamiento inteligente (asignado por scripts/order-questions.mts)
+  // Ordenamiento inteligente (asignado por questions-orderer)
   ordenPeriodo           Int?
   ordenCategoria         Int?
   ordenSubcategoria      Int?
@@ -82,10 +82,31 @@ model Question {
   temaCategoria          String?
   temaSubcategoria       String?
 
+  // Índice denormalizado del período para sort cronológico real.
+  // periodoOrden = posición en PERIOD_OPTIONS (PRE=0, CON=1, ..., POS=14, TRANS=15).
+  // Sin este campo, ORDER BY periodoCode queda alfabético — POS antes que PRE, etc.
+  periodoOrden           Int     @default(15)
+
+  // NOTA: la columna `embedding vector(1536)` existe en BD (ver
+  // scripts/apply-migrations.js) pero Prisma no soporta pgvector nativamente.
+  // Se accede exclusivamente vía $queryRawUnsafe/$executeRawUnsafe desde
+  // src/lib/questions-orderer.ts (ensureQuestionEmbeddings + loadRowsWithEmbeddings).
+
   justificacion          String   @db.Text
 
   // Agrupación por batch de generación
   batchId                String
+
+  // Tamaño del batch que generó esta pregunta (N pedido a Claude). Permite saber
+  // si un libro tiene preguntas generadas con N=20 antiguo vs N=40 nuevo.
+  targetCount            Int      @default(40)
+
+  // Trazabilidad de respuestas: denormalizado para badges/filtros sin joins.
+  // Se mantiene desde el código en src/lib/question-stats-sync.ts cada vez que
+  // un Deliverable cambia de estado.
+  deliverableCount       Int      @default(0)
+  completedTemplateIds   String[] @default([])
+  lastDeliveredAt        DateTime?
 
   deliverables           Deliverable[]
 
@@ -100,6 +121,9 @@ model Question {
   @@index([periodoCode, ordenPeriodo])
   @@index([categoriaCode, ordenCategoria])
   @@index([subcategoriaCode, ordenSubcategoria])
+  @@index([documentId, deliverableCount])
+  @@index([periodoOrden, ordenPeriodo])
+  @@index([documentId, periodoOrden, ordenPeriodo])
   @@map("questions")
 }
 

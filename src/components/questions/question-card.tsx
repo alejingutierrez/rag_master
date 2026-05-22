@@ -91,21 +91,22 @@ export function QuestionCard({ question: q, showDocument = true }: QuestionCardP
           </div>
         )}
 
-        {/* Tags relacionados — compactos, solo si existen */}
+        {/* Tags relacionados — compactos, solo si existen.
+            Dedup interno: Claude a veces repite el mismo código en el array. */}
         {(q.periodosRelacionados.length > 0 || q.categoriasRelacionadas.length > 0) && (
           <div className="flex flex-wrap gap-1 mt-2 ml-9">
-            {q.periodosRelacionados.slice(0, 3).map((p) => {
+            {Array.from(new Set(q.periodosRelacionados)).slice(0, 3).map((p) => {
               const c = getPeriodColor(p);
               return (
-                <span key={p} className={cn("text-[10px] px-1.5 py-0.5 rounded opacity-50", c.bg, c.text)}>
+                <span key={`p-${p}`} className={cn("text-[10px] px-1.5 py-0.5 rounded opacity-50", c.bg, c.text)}>
                   {p}
                 </span>
               );
             })}
-            {q.categoriasRelacionadas.slice(0, 3).map((cat) => {
+            {Array.from(new Set(q.categoriasRelacionadas)).slice(0, 3).map((cat) => {
               const c = getCategoryColor(cat);
               return (
-                <span key={cat} className={cn("text-[10px] px-1.5 py-0.5 rounded opacity-50", c.bg, c.text)}>
+                <span key={`c-${cat}`} className={cn("text-[10px] px-1.5 py-0.5 rounded opacity-50", c.bg, c.text)}>
                   {cat}
                 </span>
               );
@@ -114,12 +115,11 @@ export function QuestionCard({ question: q, showDocument = true }: QuestionCardP
         )}
       </div>
 
-      {/* Deliverable badges */}
-      {q.deliverables && q.deliverables.length > 0 && (
-        <div className="px-4 pb-2">
-          <DeliverableBadges deliverables={q.deliverables} />
-        </div>
-      )}
+      {/* Deliverable badges — strip de TODOS los templates con estado */}
+      <div className="px-4 pb-2 ml-9">
+        <DeliverableBadges deliverables={q.deliverables ?? []} showAll />
+      </div>
+
 
       {/* Footer: documento + justificacion */}
       <div className="border-t border-border px-4 py-2 flex items-center justify-between">

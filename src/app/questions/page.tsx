@@ -7,12 +7,15 @@ import { QuestionFilters, FilterState } from "@/components/questions/question-fi
 import { QuestionStats } from "@/components/questions/question-stats";
 import { EmptyState } from "@/components/domain/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Sparkles, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Sparkles, Zap, ChevronLeft, ChevronRight, Grid3x3 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Dialog, DialogHeader, DialogBody } from "@/components/ui/dialog";
 import { BatchGeneratePanel } from "@/components/questions/batch-generate-panel";
+import { cn } from "@/lib/utils";
+
+type StateFilter = "all" | "pending" | "partial" | "complete";
 
 interface Question {
   id: string;
@@ -36,6 +39,9 @@ interface Question {
   temaPeriodo?: string | null;
   temaCategoria?: string | null;
   temaSubcategoria?: string | null;
+  deliverableCount?: number;
+  completedTemplateIds?: string[];
+  deliverables?: { id: string; templateId: string; status: string }[];
 }
 
 interface StatsData {
@@ -43,6 +49,8 @@ interface StatsData {
   byPeriodo: { code: string; nombre: string; count: number }[];
   totalDocuments: number;
   totalQuestions: number;
+  byState?: { pending: number; partial: number; complete: number; all: number };
+  totalTemplates?: number;
 }
 
 function QuestionsContent() {
@@ -55,8 +63,11 @@ function QuestionsContent() {
     categoria: "",
     subcategoria: "",
     search: "",
-    sortBy: "",
+    // Default = cronológico (orden narrativo + temporal). Para historia tiene
+    // mucho más sentido que el orden de generación de Claude.
+    sortBy: "cronologico",
   });
+  const [stateFilter, setStateFilter] = useState<StateFilter>("all");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [documents, setDocuments] = useState<{ id: string; filename: string }[]>([]);
@@ -67,7 +78,7 @@ function QuestionsContent() {
   const [showStats, setShowStats] = useState(false);
   const [showBatchGenerate, setShowBatchGenerate] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-  const LIMIT = 20;
+  const LIMIT = 50;
 
   useEffect(() => {
     fetch("/api/documents?limit=200")
@@ -102,6 +113,8 @@ function QuestionsContent() {
       if (filters.subcategoria) params.set("subcategoria", filters.subcategoria);
       if (filters.search) params.set("search", filters.search);
       if (filters.sortBy) params.set("sortBy", filters.sortBy);
+      if (stateFilter !== "all") params.set("state", stateFilter);
+      params.set("includeDeliverables", "true");
       params.set("page", String(page));
       params.set("limit", String(LIMIT));
 
@@ -115,9 +128,9 @@ function QuestionsContent() {
     } finally {
       setLoading(false);
     }
-  }, [filters, page]);
+  }, [filters, page, stateFilter]);
 
-  useEffect(() => { setPage(1); }, [filters]);
+  useEffect(() => { setPage(1); }, [filters, stateFilter]);
   useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
 
   const handleFiltersChange = (newFilters: FilterState) => {
@@ -146,6 +159,13 @@ function QuestionsContent() {
               {showStats ? "Ocultar stats" : "Ver stats"}
             </button>
           )}
+          <Link
+            href="/questions/matriz"
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-surface-hover transition-colors"
+          >
+            <Grid3x3 className="h-3.5 w-3.5" />
+            Matriz
+          </Link>
           {pendingCount > 0 && (
             <button
               onClick={() => setShowBatchGenerate(true)}
@@ -171,6 +191,34 @@ function QuestionsContent() {
           <QuestionStats stats={stats} />
         </div>
       )}
+
+      {/* Filtro de estado de trazabilidad */}
+      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+        {(
+          [
+            { key: "all", label: "Todas", count: stats?.byState?.all },
+            { key: "pending", label: "Pendientes", count: stats?.byState?.pending },
+            { key: "partial", label: "Parciales", count: stats?.byState?.partial },
+            { key: "complete", label: "Completas", count: stats?.byState?.complete },
+          ] as { key: StateFilter; label: string; count?: number }[]
+        ).map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setStateFilter(tab.key)}
+            className={cn(
+              "px-3 py-1 rounded-md text-xs font-medium border transition-colors",
+              stateFilter === tab.key
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-surface text-muted-foreground border-border hover:text-foreground hover:bg-surface-hover"
+            )}
+          >
+            {tab.label}
+            {typeof tab.count === "number" && (
+              <span className="ml-1.5 opacity-70 font-mono text-[10px]">{tab.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
 
       {/* Filtros inline */}
       <div className="mb-4">
@@ -204,11 +252,55 @@ function QuestionsContent() {
         />
       ) : (
         <>
-          <div className="space-y-2">
-            {questions.map((q) => (
-              <QuestionCard key={q.id} question={q} showDocument={!filters.documentId} />
-            ))}
-          </div>
+          {/* Cuando sort = cronológico o por periodo, agrupamos visualmente
+              con un header por bloque temporal. Esto hace evidente la flecha
+              cronológica PRE→POS y ayuda a navegar bloques grandes. */}
+          {(filters.sortBy === "cronologico" || filters.sortBy === "periodo" || !filters.sortBy) ? (
+            <div className="space-y-6">
+              {(() => {
+                // Agrupar preservando el orden que vino del API
+                const groups: { code: string; nombre: string; rango: string; items: Question[] }[] = [];
+                for (const q of questions) {
+                  const last = groups[groups.length - 1];
+                  if (last && last.code === q.periodoCode) {
+                    last.items.push(q);
+                  } else {
+                    groups.push({
+                      code: q.periodoCode,
+                      nombre: q.periodoNombre,
+                      rango: q.periodoRango,
+                      items: [q],
+                    });
+                  }
+                }
+                return groups.map((g) => (
+                  <section key={g.code + groups.indexOf(g)} className="space-y-2">
+                    <div className="sticky top-0 z-10 -mx-2 px-2 py-2 bg-background/95 backdrop-blur border-b border-border flex items-center gap-2">
+                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary">
+                        {g.code}
+                      </span>
+                      <h2 className="text-sm font-semibold text-foreground">{g.nombre}</h2>
+                      <span className="text-xs text-muted-foreground">{g.rango}</span>
+                      <span className="ml-auto text-[10px] font-mono text-muted-foreground">
+                        {g.items.length} pregunta{g.items.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {g.items.map((q) => (
+                        <QuestionCard key={q.id} question={q} showDocument={!filters.documentId} />
+                      ))}
+                    </div>
+                  </section>
+                ));
+              })()}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {questions.map((q) => (
+                <QuestionCard key={q.id} question={q} showDocument={!filters.documentId} />
+              ))}
+            </div>
+          )}
 
           {/* Paginacion */}
           {totalPages > 1 && (

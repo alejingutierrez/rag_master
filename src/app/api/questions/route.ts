@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { CHAT_TEMPLATES } from "@/lib/chat-templates";
 
 export const dynamic = "force-dynamic";
 
@@ -12,14 +13,31 @@ export async function GET(request: NextRequest) {
   const categoriaCode = searchParams.get("categoria") || undefined;
   const subcategoriaCode = searchParams.get("subcategoria") || undefined;
   const search = searchParams.get("search") || undefined;
+  // state: pending | partial | complete — filtro de trazabilidad
+  const stateParam = searchParams.get("state");
+  const state = stateParam && ["pending", "partial", "complete"].includes(stateParam)
+    ? (stateParam as "pending" | "partial" | "complete")
+    : undefined;
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20")));
   const includeStats = searchParams.get("includeStats") === "true";
   const includeDeliverables = searchParams.get("includeDeliverables") === "true";
   const sortBy = searchParams.get("sortBy") || "default";
 
+  const totalTemplates = CHAT_TEMPLATES.length;
+
   try {
+    const stateFilter =
+      state === "pending"
+        ? { deliverableCount: 0 }
+        : state === "partial"
+        ? { deliverableCount: { gt: 0, lt: totalTemplates } }
+        : state === "complete"
+        ? { deliverableCount: { gte: totalTemplates } }
+        : {};
+
     const where = {
+      ...stateFilter,
       ...(documentId && { documentId }),
       ...(periodoCode && { periodoCode }),
       ...(categoriaCode && { categoriaCode }),
@@ -48,12 +66,15 @@ export async function GET(request: NextRequest) {
         },
         orderBy:
           sortBy === "periodo"
-            ? [{ periodoCode: "asc" }, { ordenPeriodo: { sort: "asc" as const, nulls: "last" as const } }]
+            ? [{ periodoOrden: "asc" }, { ordenPeriodo: { sort: "asc" as const, nulls: "last" as const } }]
             : sortBy === "categoria"
               ? [{ categoriaCode: "asc" }, { ordenCategoria: { sort: "asc" as const, nulls: "last" as const } }]
               : sortBy === "subcategoria"
                 ? [{ subcategoriaCode: "asc" }, { ordenSubcategoria: { sort: "asc" as const, nulls: "last" as const } }]
-                : [{ createdAt: "desc" }, { questionNumber: "asc" }],
+                : sortBy === "recientes"
+                  ? [{ createdAt: "desc" }, { questionNumber: "asc" }]
+                  // Default = cronologico (incluye sortBy="cronologico" o vacío)
+                  : [{ periodoOrden: "asc" }, { ordenPeriodo: { sort: "asc" as const, nulls: "last" as const } }, { questionNumber: "asc" }],
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -83,6 +104,23 @@ export async function GET(request: NextRequest) {
           .then((r) => r.length),
       ]);
 
+      const [pendingC, partialC, completeC, allC] = await Promise.all([
+        prisma.question.count({ where: { ...(documentId && { documentId }), deliverableCount: 0 } }),
+        prisma.question.count({
+          where: {
+            ...(documentId && { documentId }),
+            deliverableCount: { gt: 0, lt: totalTemplates },
+          },
+        }),
+        prisma.question.count({
+          where: {
+            ...(documentId && { documentId }),
+            deliverableCount: { gte: totalTemplates },
+          },
+        }),
+        prisma.question.count({ where: documentId ? { documentId } : undefined }),
+      ]);
+
       stats = {
         byCategoria: byCategoria.map((c) => ({
           code: c.categoriaCode,
@@ -96,6 +134,13 @@ export async function GET(request: NextRequest) {
         })),
         totalDocuments: totalDocs,
         totalQuestions: await prisma.question.count(),
+        byState: {
+          pending: pendingC,
+          partial: partialC,
+          complete: completeC,
+          all: allC,
+        },
+        totalTemplates,
       };
     }
 

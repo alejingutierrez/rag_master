@@ -4,6 +4,7 @@ import { generateEmbedding } from "@/lib/bedrock";
 import { searchSimilarChunks } from "@/lib/vector-search";
 import { askClaude } from "@/lib/claude";
 import { getTemplateById } from "@/lib/chat-templates";
+import { syncQuestionStats } from "@/lib/question-stats-sync";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -261,6 +262,14 @@ export async function POST(request: NextRequest) {
               },
             });
 
+            // Mantener Question.deliverableCount / completedTemplateIds /
+            // lastDeliveredAt al día. No bloquea el SSE si falla — solo loggea.
+            try {
+              await syncQuestionStats(questionId);
+            } catch (e) {
+              console.warn(`[deliverables] syncQuestionStats failed for ${questionId}:`, e);
+            }
+
             send({
               type: "template_complete",
               templateId,
@@ -288,6 +297,14 @@ export async function POST(request: NextRequest) {
                   error instanceof Error ? error.message : "Error desconocido",
               },
             });
+
+            // Si la pregunta tenía un Deliverable COMPLETE previo con este template
+            // (lo estamos regenerando y falló), el sync revierte el conteo.
+            try {
+              await syncQuestionStats(questionId);
+            } catch (e) {
+              console.warn(`[deliverables] syncQuestionStats failed for ${questionId}:`, e);
+            }
 
             send({
               type: "template_error",

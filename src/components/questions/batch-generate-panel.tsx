@@ -69,8 +69,10 @@ export function BatchGeneratePanel({
     setError(null);
 
     try {
-      // Disparar procesamiento server-side
-      const res = await fetch("/api/questions/generate-batch", { method: "POST" });
+      // Disparar procesamiento server-side (N adaptativo se calcula por libro)
+      const res = await fetch("/api/questions/generate-batch", {
+        method: "POST",
+      });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Error al iniciar generación");
@@ -94,7 +96,9 @@ export function BatchGeneratePanel({
 
     try {
       // Disparar otro batch
-      const res = await fetch("/api/questions/generate-batch", { method: "POST" });
+      const res = await fetch("/api/questions/generate-batch", {
+        method: "POST",
+      });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Error al continuar");
@@ -116,13 +120,15 @@ export function BatchGeneratePanel({
 
   return (
     <div className="space-y-4">
-      {/* Action button */}
+      {/* Action button (N adaptativo por libro) */}
       {pendingCount > 0 && !result && !generating && !error && (
         <button
           onClick={handleGenerate}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary-hover"
         >
-          <Sparkles className="h-4 w-4" /> Generar preguntas para {pendingCount} documento{pendingCount !== 1 ? "s" : ""}
+          <Sparkles className="h-4 w-4" />
+          Generar preguntas (20–100 por libro según tamaño) ×{" "}
+          {pendingCount} documento{pendingCount !== 1 ? "s" : ""}
         </button>
       )}
 
@@ -143,7 +149,7 @@ export function BatchGeneratePanel({
           </div>
           <p className="text-xs text-muted-foreground">
             <Loader2 className="inline h-3 w-3 animate-spin mr-1" />
-            Generando con Claude Sonnet — continúa aunque cierre esta pestaña
+            Generando con Claude Opus 4.7 — continúa aunque cierre esta pestaña
           </p>
         </div>
       )}

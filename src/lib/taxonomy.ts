@@ -53,6 +53,20 @@ export const CATEGORY_OPTIONS: CategoryOption[] = [
 export const PERIOD_CODES = PERIOD_OPTIONS.map((p) => p.code);
 export const CATEGORY_CODES = CATEGORY_OPTIONS.map((c) => c.code);
 
+/**
+ * Índice cronológico de cada período: PRE=0, CON=1, ..., POS=14, TRANS=15.
+ * Necesario porque ORDER BY periodoCode es alfabético y rompe la flecha temporal.
+ * Códigos desconocidos caen a PERIOD_ORDER_FALLBACK (16).
+ */
+export const PERIOD_ORDER: Record<string, number> = Object.fromEntries(
+  PERIOD_OPTIONS.map((p, i) => [p.code, i])
+);
+export const PERIOD_ORDER_FALLBACK = PERIOD_OPTIONS.length;
+
+export function periodOrderOf(code: string): number {
+  return PERIOD_ORDER[code] ?? PERIOD_ORDER_FALLBACK;
+}
+
 export function getPeriodByCode(code: string): PeriodOption | undefined {
   return PERIOD_OPTIONS.find((p) => p.code === code);
 }

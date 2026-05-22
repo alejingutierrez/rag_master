@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { getDocumentDisplayName } from "@/lib/enrichment-types";
+import { computeTargetCount } from "@/lib/questions-config";
 
 interface DocumentWithQuestions {
   id: string;
@@ -75,6 +76,9 @@ export function GeneratePanel() {
 
   const selectedDocument = documents.find((d) => d.id === selectedDoc);
   const hasQuestions = (selectedDocument?._count.questions ?? 0) > 0;
+  const projectedN = selectedDocument
+    ? computeTargetCount(selectedDocument._count.chunks)
+    : 0;
 
   const handleGenerate = async () => {
     if (!selectedDoc) return;
@@ -87,13 +91,39 @@ export function GeneratePanel() {
 
     const steps = [
       { step: "fetching_chunks", message: "Obteniendo chunks del documento..." },
-      { step: "selecting_chunks", message: "Seleccionando fragmentos representativos..." },
+      { step: "selecting_chunks", message: "Preparando contexto completo del libro..." },
       { step: "calling_claude", message: "Llamando a Claude Opus..." },
       { step: "parsing", message: "Procesando respuesta..." },
     ];
 
+    // Si pierdes el stream a mitad (ERR_INCOMPLETE_CHUNKED_ENCODING, timeout
+    // intermedio, hot reload en dev, etc.), las preguntas pueden estar guardadas
+    // igual en BD — el work del servidor no se aborta. Verificamos al final.
+    const verifyAfterFailure = async () => {
+      try {
+        const res = await fetch(`/api/documents/${selectedDoc}/questions`);
+        const data = await res.json();
+        if ((data.count ?? 0) > 0) {
+          setDone(true);
+          setError(
+            "Se perdió la conexión con el stream, pero las preguntas se generaron correctamente. Refresca para verlas."
+          );
+          loadDocuments();
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    };
+
+    let sawComplete = false;
+    let sawAnyQuestion = false;
+
     try {
-      const response = await fetch(`/api/documents/${selectedDoc}/questions/generate`, { method: "POST" });
+      const response = await fetch(`/api/documents/${selectedDoc}/questions/generate`, {
+        method: "POST",
+      });
       if (!response.body) throw new Error("No stream");
 
       const reader = response.body.getReader();
@@ -125,6 +155,7 @@ export function GeneratePanel() {
             }
 
             if (event.type === "question") {
+              sawAnyQuestion = true;
               setProgress((prev) => prev.map((s) => ({ ...s, done: true })));
               setGeneratedQuestions((prev) => [...prev, {
                 index: event.index, pregunta: event.question.pregunta,
@@ -133,6 +164,7 @@ export function GeneratePanel() {
             }
 
             if (event.type === "complete") {
+              sawComplete = true;
               setProgress((prev) => prev.map((s) => ({ ...s, done: true })));
               setDone(true);
               loadDocuments();
@@ -142,8 +174,26 @@ export function GeneratePanel() {
           } catch {/* skip malformed events */}
         }
       }
+
+      // El stream terminó sin recibir el evento "complete" — probablemente
+      // se cortó por timeout intermedio. Verificamos contra la BD.
+      if (!sawComplete) {
+        const recovered = await verifyAfterFailure();
+        if (!recovered) {
+          setError(
+            sawAnyQuestion
+              ? "El stream se interrumpió antes de terminar. Refresca para verificar el estado."
+              : "El stream se cerró sin generar preguntas. Reintenta."
+          );
+        }
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
+      // ERR_INCOMPLETE_CHUNKED_ENCODING / network error / hot reload: el server
+      // pudo haber terminado bien aun así. Verificamos antes de mostrar error.
+      const recovered = await verifyAfterFailure();
+      if (!recovered) {
+        setError(err instanceof Error ? err.message : "Error desconocido");
+      }
     } finally {
       setGenerating(false);
     }
@@ -226,11 +276,28 @@ export function GeneratePanel() {
               )}
             </div>
 
+            {/* N adaptativo según el tamaño del libro */}
+            <div className="mt-4 p-3 bg-surface border border-border rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-foreground">
+                    Preguntas a generar
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Calculado según el tamaño del libro ({selectedDocument._count.chunks} chunks)
+                  </p>
+                </div>
+                <span className="text-2xl font-mono font-bold text-accent">
+                  {projectedN}
+                </span>
+              </div>
+            </div>
+
             <button
               onClick={handleGenerate}
               disabled={generating}
               className={cn(
-                "mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                "mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 generating
                   ? "bg-muted text-muted-foreground cursor-not-allowed"
                   : hasQuestions
@@ -239,11 +306,11 @@ export function GeneratePanel() {
               )}
             >
               {generating ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Generando preguntas...</>
+                <><Loader2 className="h-4 w-4 animate-spin" /> Generando {projectedN} preguntas con Opus 4.7...</>
               ) : hasQuestions ? (
-                <><RefreshCw className="h-4 w-4" /> Regenerar preguntas</>
+                <><RefreshCw className="h-4 w-4" /> Regenerar {projectedN} preguntas</>
               ) : (
-                <><BookOpen className="h-4 w-4" /> Generar 20 preguntas</>
+                <><BookOpen className="h-4 w-4" /> Generar {projectedN} preguntas</>
               )}
             </button>
           </div>
@@ -284,7 +351,7 @@ export function GeneratePanel() {
         <div className="bg-surface border border-border rounded-lg p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-foreground">
-              {done ? `${generatedQuestions.length} preguntas generadas` : `Generando... ${generatedQuestions.length}/20`}
+              {done ? `${generatedQuestions.length} preguntas generadas` : `Generando... ${generatedQuestions.length}/${projectedN || "?"}`}
             </h3>
             {done && (
               <Link href={selectedDoc ? `/questions?documentId=${selectedDoc}` : "/questions"} className="text-xs text-accent hover:text-accent/80 flex items-center gap-1 transition-colors">

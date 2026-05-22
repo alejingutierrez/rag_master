@@ -4,8 +4,9 @@
     {
       "name": "dev",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Volumes/MyApps/rag_master && npx next dev"],
-      "port": 3000
+      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/alegut/MyApps/rag_master && exec npx next dev --port \"$PORT\""],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }
