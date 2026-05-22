@@ -24,10 +24,11 @@ interface ChunkCitation {
   content: string;
 }
 
+// maxTokens NO se especifica aquí — el endpoint /api/chat usa el del template
+// (mini-ensayo: 10000, ensayo-largo: 20000, etc). Pasar 4000 truncaba los textos.
 const RAG_CONFIG = {
   topK: 100,
   similarityThreshold: 0.25,
-  maxTokens: 4000,
 } as const;
 
 export default function ChatPage() {
@@ -68,8 +69,8 @@ export default function ChatPage() {
           question,
           topK: RAG_CONFIG.topK,
           similarityThreshold: RAG_CONFIG.similarityThreshold,
-          maxTokens: RAG_CONFIG.maxTokens,
           templateId: selectedTemplateId,
+          // maxTokens NO se envía — backend usa el del template (mini-ensayo: 10000, ensayo-largo: 20000)
         }),
       });
 

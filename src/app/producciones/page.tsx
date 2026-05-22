@@ -1,29 +1,17 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
-import { DeliverableViewer } from "@/components/deliverables/deliverable-viewer";
+import { NewProductionModal } from "@/components/deliverables/new-production-modal";
 import { getTemplateById, CHAT_TEMPLATES, CATEGORY_LABELS, type TemplateCategory } from "@/lib/chat-templates";
 import { PeriodBadge } from "@/components/domain/period-badge";
 import { CategoryBadge } from "@/components/domain/category-badge";
 import {
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  BookOpen,
-  BookText,
-  AtSign,
-  Camera,
-  Palette,
-  Video,
-  Clapperboard,
-  Mic,
-  Package,
+  Loader2, ChevronLeft, ChevronRight, BookOpen, BookText, AtSign,
+  Camera, Palette, Video, Clapperboard, Mic, Package, Plus, MessageSquare, Database,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   "book-open": BookOpen,
@@ -40,11 +28,13 @@ interface DeliverableItem {
   id: string;
   templateId: string;
   status: string;
+  source: "chat" | "batch";
   modelUsed: string;
   batchId: string;
   createdAt: string;
   answerPreview: string;
-  question: {
+  userQuestion: string | null;
+  question: null | {
     id: string;
     pregunta: string;
     periodoCode: string;
@@ -56,19 +46,21 @@ interface DeliverableItem {
 }
 
 export default function ProduccionesPage() {
+  const router = useRouter();
   const [deliverables, setDeliverables] = useState<DeliverableItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [templateFilter, setTemplateFilter] = useState("");
-  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
-  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [sourceFilter, setSourceFilter] = useState<"" | "chat" | "batch">("");
+  const [showNewModal, setShowNewModal] = useState(false);
 
   const fetchDeliverables = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: "50" });
+      const params = new URLSearchParams({ page: String(page), limit: "30" });
       if (templateFilter) params.set("templateId", templateFilter);
+      if (sourceFilter) params.set("source", sourceFilter);
 
       const res = await fetch(`/api/deliverables?${params}`);
       const data = await res.json();
@@ -79,7 +71,7 @@ export default function ProduccionesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, templateFilter]);
+  }, [page, templateFilter, sourceFilter]);
 
   useEffect(() => {
     fetchDeliverables();
@@ -87,42 +79,41 @@ export default function ProduccionesPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [templateFilter]);
+  }, [templateFilter, sourceFilter]);
 
-  // Group deliverables by question
-  const groupedByQuestion = deliverables.reduce<
-    Record<string, { question: DeliverableItem["question"]; items: DeliverableItem[] }>
-  >((acc, d) => {
-    const qId = d.question.id;
-    if (!acc[qId]) {
-      acc[qId] = { question: d.question, items: [] };
-    }
-    acc[qId].items.push(d);
-    return acc;
-  }, {});
-
-  const toggleExpanded = (qId: string) => {
-    setExpandedQuestions((prev) => {
-      const next = new Set(prev);
-      if (next.has(qId)) next.delete(qId);
-      else next.add(qId);
-      return next;
-    });
-  };
-
-  const selectClass = "h-8 px-2.5 bg-surface border border-border rounded-md text-xs text-foreground focus:outline-none focus:border-ring";
+  const selectClass =
+    "h-8 px-2.5 bg-surface border border-border rounded-md text-xs text-foreground focus:outline-none focus:border-ring";
 
   return (
     <PageContainer maxWidth="xl">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground">Producciones</h2>
-        <p className="text-muted-foreground mt-1">
-          Entregables generados a partir de las preguntas de investigacion.
-        </p>
+      {/* Header con CTA */}
+      <div className="flex items-start justify-between mb-6 gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Producciones</h2>
+          <p className="text-muted-foreground mt-1">
+            Todos los entregables que has generado, en un solo lugar.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowNewModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Nueva producción
+        </button>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <select
+          value={sourceFilter}
+          onChange={(e) => setSourceFilter(e.target.value as "" | "chat" | "batch")}
+          className={selectClass}
+        >
+          <option value="">Todos los orígenes</option>
+          <option value="chat">Chat libre</option>
+          <option value="batch">Batch de preguntas</option>
+        </select>
         <select
           value={templateFilter}
           onChange={(e) => setTemplateFilter(e.target.value)}
@@ -137,6 +128,17 @@ export default function ProduccionesPage() {
             </optgroup>
           ))}
         </select>
+        {(templateFilter || sourceFilter) && (
+          <button
+            onClick={() => {
+              setTemplateFilter("");
+              setSourceFilter("");
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -144,81 +146,93 @@ export default function ProduccionesPage() {
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : Object.keys(groupedByQuestion).length === 0 ? (
+      ) : deliverables.length === 0 ? (
         <div className="text-center py-16">
           <div className="rounded-full bg-muted p-4 w-fit mx-auto mb-4">
             <Package className="h-8 w-8 text-muted-foreground" />
           </div>
-          <p className="text-lg font-medium text-foreground">No hay producciones todavia</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Usa el boton &quot;+ Producir&quot; en la seccion Consultar para generar entregables.
+          <p className="text-lg font-medium text-foreground">No hay producciones todavía</p>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">
+            Empieza creando una nueva.
           </p>
+          <button
+            onClick={() => setShowNewModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva producción
+          </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {Object.entries(groupedByQuestion).map(([qId, { question, items }]) => {
-            const isExpanded = expandedQuestions.has(qId);
-            return (
-              <div key={qId} className="bg-surface border border-border rounded-lg">
-                {/* Question header */}
-                <button
-                  onClick={() => toggleExpanded(qId)}
-                  className="w-full text-left p-4 flex items-start gap-3"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground leading-relaxed line-clamp-2">
-                      {question.pregunta}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <PeriodBadge code={question.periodoCode} name={question.periodoNombre} range="" />
-                      <CategoryBadge code={question.categoriaCode} name={question.categoriaNombre} />
-                      <span className="text-[10px] text-muted-foreground ml-2">
-                        {items.length} entregable{items.length !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  </div>
-                  {isExpanded ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground mt-1" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground mt-1" />
-                  )}
-                </button>
+        <div className="space-y-2">
+          {deliverables.map((d) => {
+            const template = getTemplateById(d.templateId);
+            const Icon = template ? ICON_MAP[template.icon] : Package;
+            const questionText = d.question?.pregunta || d.userQuestion || "(sin pregunta)";
+            const isGenerating = d.status === "GENERATING";
 
-                {/* Deliverable cards */}
-                {isExpanded && (
-                  <div className="border-t border-border px-4 py-3 space-y-2">
-                    {items.map((d) => {
-                      const template = getTemplateById(d.templateId);
-                      const Icon = template ? ICON_MAP[template.icon] : null;
-                      return (
-                        <button
-                          key={d.id}
-                          onClick={() => setViewingId(d.id)}
-                          className="w-full text-left p-3 rounded-lg border border-border hover:border-border-hover transition-colors flex items-start gap-3"
-                        >
-                          <div className={cn(
-                            "h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0",
-                            "bg-primary/10"
-                          )}>
-                            {Icon && <Icon className="h-4 w-4 text-primary" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground">
-                              {template?.name || d.templateId}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                              {d.answerPreview}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground mt-1">
-                              {new Date(d.createdAt).toLocaleString("es-CO")}
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })}
+            return (
+              <button
+                key={d.id}
+                onClick={() => router.push(`/producciones/${d.id}`)}
+                className="w-full text-left p-4 rounded-lg border border-border bg-surface hover:border-border-hover transition-colors flex items-start gap-3"
+              >
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-primary/10">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-xs font-medium text-foreground">
+                      {template?.name || d.templateId}
+                    </span>
+                    <span className="text-xs text-muted-foreground">·</span>
+                    {d.source === "chat" ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <MessageSquare className="h-3 w-3" /> Chat
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Database className="h-3 w-3" /> Batch
+                      </span>
+                    )}
+                    {isGenerating && (
+                      <span className="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Generando…
+                      </span>
+                    )}
                   </div>
-                )}
-              </div>
+                  <p className="text-sm text-foreground line-clamp-2 leading-snug mb-1">
+                    {questionText}
+                  </p>
+                  {d.answerPreview && !isGenerating && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-snug">
+                      {d.answerPreview}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 flex-wrap mt-2">
+                    {d.question && (
+                      <>
+                        <PeriodBadge
+                          code={d.question.periodoCode}
+                          name={d.question.periodoNombre}
+                          range=""
+                        />
+                        <CategoryBadge
+                          code={d.question.categoriaCode}
+                          name={d.question.categoriaNombre}
+                        />
+                      </>
+                    )}
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(d.createdAt).toLocaleString("es-CO", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </button>
             );
           })}
         </div>
@@ -245,14 +259,8 @@ export default function ProduccionesPage() {
         </div>
       )}
 
-      {/* Viewer modal */}
-      {viewingId && (
-        <DeliverableViewer
-          deliverableId={viewingId}
-          open={!!viewingId}
-          onClose={() => setViewingId(null)}
-        />
-      )}
+      {/* Modal Nueva producción */}
+      <NewProductionModal open={showNewModal} onClose={() => setShowNewModal(false)} />
     </PageContainer>
   );
 }

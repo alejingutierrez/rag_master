@@ -44,7 +44,7 @@ async function handleChat(body: Record<string, unknown>) {
     question,
     topK = 100,
     similarityThreshold = 0.25,
-    maxTokens = 4000,
+    maxTokens,                 // undefined → askClaude usa template.maxTokens
     documentIds,
     configurationId,
     templateId,
@@ -75,11 +75,16 @@ async function handleChat(body: Record<string, unknown>) {
     );
   }
 
-  // 1. Configuración
-  let config = {
+  // 1. Configuración. maxTokens queda undefined si no se pasa explícitamente —
+  // askClaude entonces toma el del template (mini-ensayo: 10000, ensayo-largo: 20000).
+  let config: {
+    topK: number;
+    similarityThreshold: number;
+    maxTokens?: number;
+  } = {
     topK: topK as number,
     similarityThreshold: similarityThreshold as number,
-    maxTokens: maxTokens as number,
+    maxTokens,
   };
   if (configurationId) {
     const dbConfig = await prisma.configuration.findUnique({
@@ -147,19 +152,37 @@ async function handleChat(body: Record<string, unknown>) {
     process.env.BEDROCK_CLAUDE_MODEL_ID ||
     "us.anthropic.claude-opus-4-6-20250610-v1:0";
 
-  // 5. Crear registro de conversación.
-  //    answer="" → generando  |  answer=texto → completo  |  answer=ERROR_PREFIX+msg → error
-  //    NO usa campos nuevos (status/updatedAt) para no depender de migraciones.
-  const conversation = await prisma.conversation.create({
-    data: {
-      question,
-      answer: "",          // Vacío = todavía generando
-      modelUsed,
-      templateId: (templateId as string) || null,
-      chunksUsed: chunksMetadata,
-      configurationId: (configurationId as string) || null,
-    },
-  });
+  // 5. Crear registros en paralelo:
+  //    - Conversation (legacy, para histórico de chat)
+  //    - Deliverable (unificado en /producciones, fuente "chat")
+  //    status: GENERATING → COMPLETE | ERROR
+  const effectiveTemplateId = (templateId as string) || DEFAULT_TEMPLATE_ID;
+
+  const [conversation, deliverable] = await Promise.all([
+    prisma.conversation.create({
+      data: {
+        question,
+        answer: "",
+        modelUsed,
+        templateId: effectiveTemplateId,
+        chunksUsed: chunksMetadata,
+        configurationId: (configurationId as string) || null,
+      },
+    }),
+    prisma.deliverable.create({
+      data: {
+        // questionId null para chat libre
+        userQuestion: question,
+        templateId: effectiveTemplateId,
+        status: "GENERATING",
+        answer: "",
+        modelUsed,
+        chunksUsed: chunksMetadata,
+        source: "chat",
+        batchId: `chat-${Date.now()}`, // único por request
+      },
+    }),
+  ]);
 
   // 6. Claude corre en background — después de que el HTTP response es enviado.
   //    Puede tardar varios minutos sin ningún timeout de conexión activo.
@@ -210,25 +233,42 @@ async function handleChat(body: Record<string, unknown>) {
         }
       }
 
-      await prisma.conversation.update({
-        where: { id: conversation.id },
-        data: { answer: finalAnswer },
-      });
+      // Si el template tiene APA, anexar la sección al final de la respuesta guardada
+      const apaSection = tpl?.appendApaReferences ? (await import("@/lib/chat-templates")).buildReferencesSection(chunks) : "";
+      const fullWithRefs = finalAnswer + apaSection;
+
+      await Promise.all([
+        prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { answer: fullWithRefs },
+        }),
+        prisma.deliverable.update({
+          where: { id: deliverable.id },
+          data: { answer: fullWithRefs, status: "COMPLETE" },
+        }),
+      ]);
     } catch (error) {
       console.error("Background Claude error:", error);
       const msg = error instanceof Error ? error.message : "Error al generar respuesta";
-      await prisma.conversation
-        .update({
+      await Promise.all([
+        prisma.conversation.update({
           where: { id: conversation.id },
           data: { answer: ERROR_PREFIX + msg },
-        })
-        .catch((e) => console.error("Error saving error state:", e));
+        }).catch(() => {}),
+        prisma.deliverable.update({
+          where: { id: deliverable.id },
+          data: { status: "ERROR", answer: ERROR_PREFIX + msg },
+        }).catch(() => {}),
+      ]).catch((e) => console.error("Error saving error state:", e));
     }
   });
 
   // 7. Devolver en < 5s — el cliente empieza a hacer polling con el id.
+  // Devolvemos AMBOS ids: el chat usa conversation.id para el polling (compat),
+  // y deliverable.id para redirigir a /producciones/[id].
   return Response.json({
     id: conversation.id,
+    deliverableId: deliverable.id,
     chunks: chunksMetadata,
     totalChunksUsed: chunks.length,
   });

@@ -156,21 +156,31 @@ model Conversation {
 }
 
 model Deliverable {
-  id          String            @id @default(cuid())
-  questionId  String
-  question    Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  templateId  String
-  status      DeliverableStatus @default(PENDING)
-  answer      String            @db.Text @default("")
-  modelUsed   String            @default("")
-  chunksUsed  Json              @default("[]")
-  batchId     String
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id           String            @id @default(cuid())
+  // questionId: opcional. Si viene del flujo /chat (pregunta libre), es null
+  // y userQuestion guarda el texto que escribió el usuario.
+  questionId   String?
+  question     Question?         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  userQuestion String?           @db.Text  // Pregunta libre del usuario (chat)
+  templateId   String
+  status       DeliverableStatus @default(PENDING)
+  answer       String            @db.Text @default("")
+  modelUsed    String            @default("")
+  chunksUsed   Json              @default("[]")
+  // source: "batch" (viene de Question del batch) | "chat" (pregunta libre).
+  // Permite filtrar en /producciones.
+  source       String            @default("batch")
+  batchId      String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
+  // unique constraint solo aplica a entregables de batch (cuando questionId existe).
+  // Para chat, no hay restricción — cada conversación es independiente.
   @@unique([questionId, templateId])
   @@index([questionId])
   @@index([templateId])
   @@index([batchId])
+  @@index([source])
+  @@index([createdAt])
   @@map("deliverables")
 }

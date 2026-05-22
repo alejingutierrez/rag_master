@@ -76,6 +76,14 @@ const MIGRATIONS = [
        EXECUTE 'CREATE INDEX chunks_embedding_hnsw_idx ON chunks USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64)';
      END IF;
    END $$`,
+
+  // 2026-05-22: Deliverable acepta chat libre (sin Question del batch).
+  // Hacemos questionId opcional y añadimos userQuestion + source para distinguir el origen.
+  `ALTER TABLE deliverables ALTER COLUMN "questionId" DROP NOT NULL`,
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "userQuestion" TEXT`,
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "source" TEXT NOT NULL DEFAULT 'batch'`,
+  `CREATE INDEX IF NOT EXISTS deliverables_source_idx ON deliverables("source")`,
+  `CREATE INDEX IF NOT EXISTS deliverables_createdAt_idx ON deliverables("createdAt" DESC)`,
 ];
 
 async function main() {

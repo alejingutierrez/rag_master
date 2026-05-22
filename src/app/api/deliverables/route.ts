@@ -7,12 +7,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const questionId = searchParams.get("questionId");
     const templateId = searchParams.get("templateId");
+    const source = searchParams.get("source"); // "chat" | "batch" | null (all)
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
 
     const where: Record<string, unknown> = {};
     if (questionId) where.questionId = questionId;
     if (templateId) where.templateId = templateId;
+    if (source && (source === "chat" || source === "batch")) where.source = source;
 
     const [deliverables, total] = await Promise.all([
       prisma.deliverable.findMany({
@@ -20,6 +22,8 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           questionId: true,
+          userQuestion: true,
+          source: true,
           templateId: true,
           status: true,
           answer: false,
