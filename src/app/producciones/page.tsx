@@ -1,28 +1,39 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { PageContainer } from "@/components/layout/page-container";
-import { NewProductionModal } from "@/components/deliverables/new-production-modal";
-import { getTemplateById, CHAT_TEMPLATES, CATEGORY_LABELS, type TemplateCategory } from "@/lib/chat-templates";
-import { PeriodBadge } from "@/components/domain/period-badge";
-import { CategoryBadge } from "@/components/domain/category-badge";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
-  Loader2, ChevronLeft, ChevronRight, BookOpen, BookText, AtSign,
-  Camera, Palette, Video, Clapperboard, Mic, Package, Plus, MessageSquare, Database,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+  Card,
+  Typography,
+  Tag,
+  Space,
+  Button,
+  Select,
+  Input,
+  Pagination,
+  Empty,
+  theme,
+  Row,
+  Col,
+  Skeleton,
+  Modal,
+  App,
+  Segmented,
+  Form,
+} from "antd";
+import {
+  AppstoreOutlined,
+  SearchOutlined,
+  PlusOutlined,
+  MessageOutlined,
+  DatabaseOutlined,
+  UnorderedListOutlined,
+} from "@ant-design/icons";
+import dayjs from "dayjs";
+import { CHAT_TEMPLATES, CATEGORY_LABELS, getTemplateById, type TemplateCategory } from "@/lib/chat-templates";
+import { getPeriodColor, getCategoryColor } from "@/lib/theme";
 
-const ICON_MAP: Record<string, LucideIcon> = {
-  "book-open": BookOpen,
-  "book-text": BookText,
-  "at-sign": AtSign,
-  camera: Camera,
-  palette: Palette,
-  video: Video,
-  clapperboard: Clapperboard,
-  mic: Mic,
-};
+const { Title, Text, Paragraph } = Typography;
 
 interface DeliverableItem {
   id: string;
@@ -30,7 +41,6 @@ interface DeliverableItem {
   status: string;
   source: "chat" | "batch";
   modelUsed: string;
-  batchId: string;
   createdAt: string;
   answerPreview: string;
   userQuestion: string | null;
@@ -46,221 +56,338 @@ interface DeliverableItem {
 }
 
 export default function ProduccionesPage() {
-  const router = useRouter();
-  const [deliverables, setDeliverables] = useState<DeliverableItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { token } = theme.useToken();
+  const { message } = App.useApp();
+  const [items, setItems] = useState<DeliverableItem[]>([]);
+  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [templateFilter, setTemplateFilter] = useState("");
-  const [sourceFilter, setSourceFilter] = useState<"" | "chat" | "batch">("");
-  const [showNewModal, setShowNewModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [templateId, setTemplateId] = useState<string | undefined>();
+  const [category, setCategory] = useState<TemplateCategory | undefined>();
+  const [source, setSource] = useState<string | undefined>();
+  const [search, setSearch] = useState("");
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [showNew, setShowNew] = useState(false);
+  const LIMIT = 30;
 
-  const fetchDeliverables = useCallback(async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: "30" });
-      if (templateFilter) params.set("templateId", templateFilter);
-      if (sourceFilter) params.set("source", sourceFilter);
-
-      const res = await fetch(`/api/deliverables?${params}`);
+      const p = new URLSearchParams();
+      p.set("page", String(page));
+      p.set("limit", String(LIMIT));
+      if (templateId) p.set("templateId", templateId);
+      if (source) p.set("source", source);
+      const res = await fetch(`/api/deliverables?${p}`);
       const data = await res.json();
-      setDeliverables(data.deliverables || []);
-      setTotalPages(data.pagination?.totalPages || 1);
-    } catch {
-      setDeliverables([]);
+      let list = data.deliverables ?? [];
+      if (category) {
+        list = list.filter((d: DeliverableItem) => getTemplateById(d.templateId)?.category === category);
+      }
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        list = list.filter(
+          (d: DeliverableItem) =>
+            d.question?.pregunta?.toLowerCase().includes(q) ||
+            d.userQuestion?.toLowerCase().includes(q) ||
+            d.answerPreview?.toLowerCase().includes(q),
+        );
+      }
+      setItems(list);
+      setTotal(data.pagination?.total ?? 0);
     } finally {
       setLoading(false);
     }
-  }, [page, templateFilter, sourceFilter]);
+  }, [page, templateId, source, category, search]);
 
   useEffect(() => {
-    fetchDeliverables();
-  }, [fetchDeliverables]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [templateFilter, sourceFilter]);
-
-  const selectClass =
-    "h-8 px-2.5 bg-surface border border-border rounded-md text-xs text-foreground focus:outline-none focus:border-ring";
+    fetchItems();
+  }, [fetchItems]);
 
   return (
-    <PageContainer maxWidth="xl">
-      {/* Header con CTA */}
-      <div className="flex items-start justify-between mb-6 gap-4">
+    <div className="app-page-wide">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Producciones</h2>
-          <p className="text-muted-foreground mt-1">
-            Todos los entregables que has generado, en un solo lugar.
-          </p>
+          <Title level={2} className="serif-title" style={{ margin: 0 }}>
+            Producciones
+          </Title>
+          <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0" }}>
+            Respuestas generadas. {total} producciones en total.
+          </Paragraph>
         </div>
-        <button
-          onClick={() => setShowNewModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Nueva producción
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <select
-          value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value as "" | "chat" | "batch")}
-          className={selectClass}
-        >
-          <option value="">Todos los orígenes</option>
-          <option value="chat">Chat libre</option>
-          <option value="batch">Batch de preguntas</option>
-        </select>
-        <select
-          value={templateFilter}
-          onChange={(e) => setTemplateFilter(e.target.value)}
-          className={selectClass}
-        >
-          <option value="">Todos los formatos</option>
-          {(Object.keys(CATEGORY_LABELS) as TemplateCategory[]).map((cat) => (
-            <optgroup key={cat} label={CATEGORY_LABELS[cat]}>
-              {CHAT_TEMPLATES.filter((t) => t.category === cat).map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-        {(templateFilter || sourceFilter) && (
-          <button
-            onClick={() => {
-              setTemplateFilter("");
-              setSourceFilter("");
-            }}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            Limpiar filtros
-          </button>
-        )}
-      </div>
-
-      {/* Content */}
-      {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : deliverables.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="rounded-full bg-muted p-4 w-fit mx-auto mb-4">
-            <Package className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <p className="text-lg font-medium text-foreground">No hay producciones todavía</p>
-          <p className="text-sm text-muted-foreground mt-1 mb-4">
-            Empieza creando una nueva.
-          </p>
-          <button
-            onClick={() => setShowNewModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm"
-          >
-            <Plus className="h-4 w-4" />
+        <Space>
+          <Link href="/bibliography">
+            <Button>Bibliografía</Button>
+          </Link>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowNew(true)}>
             Nueva producción
-          </button>
-        </div>
+          </Button>
+        </Space>
+      </div>
+
+      <Card bordered style={{ marginBottom: 16 }}>
+        <Space wrap size={10}>
+          <Input
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="Buscar en preguntas y respuestas…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 300 }}
+          />
+          <Select
+            allowClear
+            placeholder="Categoría"
+            style={{ width: 160 }}
+            value={category}
+            onChange={setCategory}
+            options={Object.entries(CATEGORY_LABELS).map(([k, v]) => ({ value: k, label: v }))}
+          />
+          <Select
+            allowClear
+            placeholder="Template"
+            style={{ width: 240 }}
+            value={templateId}
+            onChange={setTemplateId}
+            showSearch
+            optionFilterProp="label"
+            options={CHAT_TEMPLATES.map((t) => ({ value: t.id, label: `${t.icon} ${t.name}` }))}
+          />
+          <Select
+            allowClear
+            placeholder="Origen"
+            style={{ width: 140 }}
+            value={source}
+            onChange={setSource}
+            options={[
+              { value: "chat", label: <><MessageOutlined /> Chat</> },
+              { value: "batch", label: <><DatabaseOutlined /> Batch</> },
+            ]}
+          />
+          <Segmented
+            value={view}
+            onChange={(v) => setView(v as "grid" | "list")}
+            options={[
+              { value: "grid", icon: <AppstoreOutlined /> },
+              { value: "list", icon: <UnorderedListOutlined /> },
+            ]}
+          />
+        </Space>
+      </Card>
+
+      {loading ? (
+        <Card bordered><Skeleton active paragraph={{ rows: 8 }} /></Card>
+      ) : items.length === 0 ? (
+        <Card bordered>
+          <Empty description="Sin producciones con estos filtros" />
+        </Card>
+      ) : view === "grid" ? (
+        <Row gutter={[12, 12]}>
+          {items.map((d) => (
+            <Col key={d.id} xs={24} md={12} lg={8} xl={6}>
+              <ProductionCard item={d} />
+            </Col>
+          ))}
+        </Row>
       ) : (
-        <div className="space-y-2">
-          {deliverables.map((d) => {
-            const template = getTemplateById(d.templateId);
-            const Icon = template ? ICON_MAP[template.icon] : Package;
-            const questionText = d.question?.pregunta || d.userQuestion || "(sin pregunta)";
-            const isGenerating = d.status === "GENERATING";
-
-            return (
-              <button
-                key={d.id}
-                onClick={() => router.push(`/producciones/${d.id}`)}
-                className="w-full text-left p-4 rounded-lg border border-border bg-surface hover:border-border-hover transition-colors flex items-start gap-3"
-              >
-                <div className="h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0 bg-primary/10">
-                  <Icon className="h-4 w-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-xs font-medium text-foreground">
-                      {template?.name || d.templateId}
-                    </span>
-                    <span className="text-xs text-muted-foreground">·</span>
-                    {d.source === "chat" ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <MessageSquare className="h-3 w-3" /> Chat
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <Database className="h-3 w-3" /> Batch
-                      </span>
-                    )}
-                    {isGenerating && (
-                      <span className="inline-flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        Generando…
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-foreground line-clamp-2 leading-snug mb-1">
-                    {questionText}
-                  </p>
-                  {d.answerPreview && !isGenerating && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-snug">
-                      {d.answerPreview}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 flex-wrap mt-2">
-                    {d.question && (
-                      <>
-                        <PeriodBadge
-                          code={d.question.periodoCode}
-                          name={d.question.periodoNombre}
-                          range=""
-                        />
-                        <CategoryBadge
-                          code={d.question.categoriaCode}
-                          name={d.question.categoriaNombre}
-                        />
-                      </>
-                    )}
-                    <span className="text-[10px] text-muted-foreground">
-                      {new Date(d.createdAt).toLocaleString("es-CO", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+          {items.map((d) => (
+            <ProductionRow key={d.id} item={d} />
+          ))}
+        </Space>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="p-1.5 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="p-1.5 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
+        <Pagination
+          current={page}
+          pageSize={LIMIT}
+          total={total}
+          onChange={setPage}
+          showSizeChanger={false}
+          showTotal={(t) => `${t} producciones`}
+        />
+      </div>
 
-      {/* Modal Nueva producción */}
-      <NewProductionModal open={showNewModal} onClose={() => setShowNewModal(false)} />
-    </PageContainer>
+      <NewProductionModal
+        open={showNew}
+        onClose={() => setShowNew(false)}
+        onSuccess={() => {
+          fetchItems();
+          message.success("Producción encolada");
+        }}
+      />
+    </div>
+  );
+}
+
+function ProductionCard({ item }: { item: DeliverableItem }) {
+  const { token } = theme.useToken();
+  const tpl = getTemplateById(item.templateId);
+  const periodColor = item.question?.periodoCode ? getPeriodColor(item.question.periodoCode) : token.colorTextTertiary;
+  const categoryColor = item.question?.categoriaCode ? getCategoryColor(item.question.categoriaCode) : undefined;
+  const title = item.question?.pregunta ?? item.userQuestion ?? "(producción libre)";
+
+  return (
+    <Link href={`/producciones/${item.id}`}>
+      <Card
+        hoverable
+        bordered
+        style={{ borderTop: `3px solid ${periodColor}`, height: "100%" }}
+        bodyStyle={{ padding: 14 }}
+      >
+        <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 8 }}>
+          <Space size={6}>
+            <span style={{ fontSize: 18 }}>{tpl?.icon ?? "📝"}</span>
+            <Text strong style={{ fontSize: 12 }}>
+              {tpl?.name ?? item.templateId}
+            </Text>
+          </Space>
+          <Tag color={item.source === "chat" ? "geekblue" : "purple"} style={{ fontSize: 10, margin: 0 }}>
+            {item.source === "chat" ? "chat" : "batch"}
+          </Tag>
+        </Space>
+        <Paragraph
+          ellipsis={{ rows: 3 }}
+          style={{ fontFamily: "var(--font-serif)", fontSize: 13.5, lineHeight: 1.55, color: token.colorText, margin: 0, marginBottom: 10 }}
+        >
+          {title}
+        </Paragraph>
+        <Paragraph
+          ellipsis={{ rows: 3 }}
+          style={{ fontSize: 12, lineHeight: 1.5, color: token.colorTextSecondary, margin: 0, marginBottom: 10 }}
+        >
+          {item.answerPreview}
+        </Paragraph>
+        <Space size={4} wrap>
+          {item.question?.periodoNombre && (
+            <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10, margin: 0 }}>
+              {item.question.periodoNombre}
+            </Tag>
+          )}
+          {item.question?.categoriaNombre && categoryColor && (
+            <Tag style={{ background: `${categoryColor}1A`, border: "none", color: categoryColor, fontSize: 10, margin: 0 }}>
+              {item.question.categoriaNombre}
+            </Tag>
+          )}
+          {item.status === "GENERATING" && <Tag color="processing" style={{ margin: 0, fontSize: 10 }}>generando</Tag>}
+        </Space>
+        <Text style={{ fontSize: 11, color: token.colorTextTertiary, display: "block", marginTop: 8 }}>
+          {dayjs(item.createdAt).format("DD MMM YY · HH:mm")}
+        </Text>
+      </Card>
+    </Link>
+  );
+}
+
+function ProductionRow({ item }: { item: DeliverableItem }) {
+  const { token } = theme.useToken();
+  const tpl = getTemplateById(item.templateId);
+  const periodColor = item.question?.periodoCode ? getPeriodColor(item.question.periodoCode) : token.colorTextTertiary;
+  const title = item.question?.pregunta ?? item.userQuestion ?? "(producción libre)";
+
+  return (
+    <Link href={`/producciones/${item.id}`}>
+      <Card hoverable bordered bodyStyle={{ padding: 12 }} style={{ borderLeft: `3px solid ${periodColor}` }}>
+        <Row gutter={12} align="middle">
+          <Col flex="auto">
+            <Space direction="vertical" size={4} style={{ width: "100%" }}>
+              <Space>
+                <span style={{ fontSize: 16 }}>{tpl?.icon}</span>
+                <Text strong style={{ fontSize: 13 }}>{tpl?.name}</Text>
+                {item.question?.periodoNombre && (
+                  <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10, margin: 0 }}>
+                    {item.question.periodoNombre}
+                  </Tag>
+                )}
+              </Space>
+              <Text style={{ fontSize: 13.5, color: token.colorText, fontFamily: "var(--font-serif)" }}>{title}</Text>
+              <Text type="secondary" style={{ fontSize: 11 }}>{item.answerPreview.slice(0, 180)}…</Text>
+            </Space>
+          </Col>
+          <Col>
+            <Space direction="vertical" align="end" size={4}>
+              <Tag color={item.source === "chat" ? "geekblue" : "purple"} style={{ fontSize: 10, margin: 0 }}>
+                {item.source}
+              </Tag>
+              <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>
+                {dayjs(item.createdAt).format("DD MMM YY")}
+              </Text>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
+    </Link>
+  );
+}
+
+function NewProductionModal({
+  open,
+  onClose,
+  onSuccess,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { message } = App.useApp();
+  const [form] = Form.useForm();
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      setSubmitting(true);
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: values.question,
+          templateId: values.templateId,
+          topK: 100,
+          similarityThreshold: 0.25,
+        }),
+      });
+      if (!res.ok) throw new Error("HTTP error");
+      message.success("Producción iniciada");
+      form.resetFields();
+      onSuccess();
+      onClose();
+    } catch {
+      message.error("Error al crear producción");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      onCancel={onClose}
+      title="Nueva producción"
+      okText="Generar"
+      onOk={handleSubmit}
+      confirmLoading={submitting}
+      width={580}
+    >
+      <Form form={form} layout="vertical">
+        <Form.Item
+          name="question"
+          label="Pregunta"
+          rules={[{ required: true, message: "Pregunta requerida" }]}
+        >
+          <Input.TextArea rows={4} placeholder="¿Qué quieres investigar?" />
+        </Form.Item>
+        <Form.Item
+          name="templateId"
+          label="Template"
+          rules={[{ required: true, message: "Selecciona un template" }]}
+          initialValue="mini-ensayo"
+        >
+          <Select
+            options={CHAT_TEMPLATES.map((t) => ({ value: t.id, label: `${t.icon} ${t.name}` }))}
+          />
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 }

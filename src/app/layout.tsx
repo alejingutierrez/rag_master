@@ -1,57 +1,45 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Header } from "@/components/layout/header";
+import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { Toaster } from "sonner";
+import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const sans = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const serif = Source_Serif_4({
+  variable: "--font-serif",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const mono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "RAG Master",
-  description: "Archivo Historico Digital — Gestion de documentos RAG con Claude",
+  title: "Archivo Histórico Digital · Colombia",
+  description:
+    "Plataforma de investigación con RAG, agentes y búsqueda semántica sobre la historia de Colombia.",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <div className="flex-1 flex flex-col min-w-0">
-              <Header />
-              <main className="flex-1 overflow-auto">
-                {children}
-              </main>
-            </div>
-          </div>
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              style: {
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                color: "var(--foreground)",
-              },
-            }}
-          />
-        </ThemeProvider>
+    <html lang="es" suppressHydrationWarning data-theme="dark">
+      <body className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
+        <AntdRegistry>
+          <ThemeProvider>
+            <AppShell>{children}</AppShell>
+          </ThemeProvider>
+        </AntdRegistry>
       </body>
     </html>
   );

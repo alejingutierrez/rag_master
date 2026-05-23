@@ -1,21 +1,44 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { PageContainer } from "@/components/layout/page-container";
-import { Dropzone } from "@/components/upload/dropzone";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { useCallback, useRef, useState } from "react";
 import {
   Upload,
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  FileText,
-  Copy,
-} from "lucide-react";
+  Card,
+  Typography,
+  Space,
+  Button,
+  Progress,
+  Steps,
+  Tag,
+  Alert,
+  theme,
+  App,
+  Row,
+  Col,
+  Statistic,
+  Empty,
+} from "antd";
+import {
+  InboxOutlined,
+  FileTextOutlined,
+  CloudUploadOutlined,
+  ApartmentOutlined,
+  ExperimentOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  CopyOutlined,
+  LoadingOutlined,
+  ReloadOutlined,
+  ClearOutlined,
+} from "@ant-design/icons";
+import type { UploadProps } from "antd";
+import type { RcFile } from "antd/es/upload";
+
+const { Title, Text, Paragraph } = Typography;
+const { Dragger } = Upload;
 
 type FileStatus =
-  | "pending"
+  | "queued"
   | "hashing"
   | "uploading"
   | "processing"
@@ -25,28 +48,25 @@ type FileStatus =
   | "duplicate";
 
 interface FileUploadState {
+  id: string;
   file: File;
   status: FileStatus;
   message: string;
   chunkCount?: number;
   embeddingProgress?: { processed: number; total: number };
-  retryCount?: number;
 }
 
 const CHUNK_CONFIG = {
   chunkSize: 3000,
   chunkOverlap: 750,
-  strategy: "FIXED",
-} as const;
+  strategy: "FIXED" as const,
+};
 
-// --- Configuración de robustez ---
-const CONCURRENCY = 2; // Reducido de 4 a 2 para evitar saturar el backend en AWS
+const CONCURRENCY = 2;
 const MAX_RETRIES = 3;
-const RETRY_BASE_DELAY = 2000; // 2s base para backoff exponencial
-const POLLING_INTERVAL = 4000; // 4s entre polls
-const POLLING_TIMEOUT = 20 * 60 * 1000; // 20 minutos max de polling
-
-// --- Utilidades ---
+const RETRY_BASE_DELAY = 2000;
+const POLLING_INTERVAL = 4000;
+const POLLING_TIMEOUT = 20 * 60 * 1000;
 
 async function computeFileHash(file: File): Promise<string> {
   const buffer = await file.arrayBuffer();
@@ -55,149 +75,112 @@ async function computeFileHash(file: File): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function fetchWithRetry(
-  url: string,
-  options: RequestInit,
-  maxRetries = MAX_RETRIES
-): Promise<Response> {
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = MAX_RETRIES): Promise<Response> {
   let lastError: Error | null = null;
-
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const res = await fetch(url, options);
-
-      // Solo reintentar en errores de servidor (502, 503, 504) o rate limit (429)
       if (res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504) {
         if (attempt < maxRetries) {
-          const delay = RETRY_BASE_DELAY * Math.pow(2, attempt) + Math.random() * 1000;
-          await new Promise((r) => setTimeout(r, delay));
+          await new Promise((r) => setTimeout(r, RETRY_BASE_DELAY * 2 ** attempt + Math.random() * 1000));
           continue;
         }
       }
-
       return res;
     } catch (err) {
-      // Error de red (fetch failed, timeout, etc.)
       lastError = err instanceof Error ? err : new Error(String(err));
       if (attempt < maxRetries) {
-        const delay = RETRY_BASE_DELAY * Math.pow(2, attempt) + Math.random() * 1000;
-        await new Promise((r) => setTimeout(r, delay));
+        await new Promise((r) => setTimeout(r, RETRY_BASE_DELAY * 2 ** attempt + Math.random() * 1000));
         continue;
       }
     }
   }
-
   throw lastError || new Error("Fetch failed after retries");
 }
 
+const PIPELINE_STEPS = [
+  { key: "queued", title: "En cola", icon: <FileTextOutlined /> },
+  { key: "hashing", title: "Hash SHA-256", icon: <CopyOutlined /> },
+  { key: "uploading", title: "Subir a S3", icon: <CloudUploadOutlined /> },
+  { key: "processing", title: "Chunking", icon: <ApartmentOutlined /> },
+  { key: "embedding", title: "Embeddings", icon: <ExperimentOutlined /> },
+  { key: "success", title: "Listo", icon: <CheckCircleOutlined /> },
+];
+
+function pipelineStepIndex(s: FileStatus): number {
+  const idx = PIPELINE_STEPS.findIndex((p) => p.key === s);
+  return idx === -1 ? 0 : idx;
+}
+
 export default function UploadPage() {
-  const [files, setFiles] = useState<File[]>([]);
-  const [uploadStates, setUploadStates] = useState<FileUploadState[]>([]);
+  const { token } = theme.useToken();
+  const { message } = App.useApp();
+  const [states, setStates] = useState<FileUploadState[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const abortRef = useRef(false);
-
-  // Set de hashes ya subidos en esta sesión (para detectar duplicados locales)
   const sessionHashesRef = useRef<Set<string>>(new Set());
 
-  const handleFilesSelect = useCallback((newFiles: File[]) => {
-    setFiles((prev) => {
-      // Filtrar duplicados por nombre+tamaño dentro de la lista actual
-      const existing = new Set(prev.map((f) => `${f.name}|${f.size}`));
-      const unique = newFiles.filter((f) => !existing.has(`${f.name}|${f.size}`));
-      if (unique.length < newFiles.length) {
-        // Algunos archivos ya estaban seleccionados
-      }
-      return [...prev, ...unique];
-    });
-  }, []);
+  const updateState = (id: string, update: Partial<FileUploadState>) => {
+    setStates((prev) => prev.map((s) => (s.id === id ? { ...s, ...update } : s)));
+  };
 
-  const handleRemoveFile = useCallback((index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  const removeState = (id: string) => {
+    setStates((prev) => prev.filter((s) => s.id !== id));
+  };
 
   const handleClear = useCallback(() => {
-    setFiles([]);
-    setUploadStates([]);
+    setStates([]);
     abortRef.current = false;
     sessionHashesRef.current.clear();
   }, []);
 
-  const updateFileState = (index: number, update: Partial<FileUploadState>) => {
-    setUploadStates((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], ...update };
-      return next;
-    });
-  };
-
-  const uploadSingleFile = async (file: File, index: number): Promise<void> => {
+  const uploadSingle = async (state: FileUploadState) => {
+    const { file, id } = state;
     if (abortRef.current) return;
-
     try {
-      // --- Paso 0: Calcular hash para detección de duplicados ---
-      updateFileState(index, { status: "hashing", message: "Verificando duplicados..." });
-
+      updateState(id, { status: "hashing", message: "Calculando hash SHA-256…" });
       const fileHash = await computeFileHash(file);
 
-      // Verificar duplicado local (misma sesión de carga)
       if (sessionHashesRef.current.has(fileHash)) {
-        updateFileState(index, {
-          status: "duplicate",
-          message: "Archivo duplicado (mismo contenido que otro archivo en esta carga)",
-        });
+        updateState(id, { status: "duplicate", message: "Duplicado en esta carga (mismo contenido)." });
         return;
       }
 
-      // Verificar duplicado en el servidor
       const checkRes = await fetchWithRetry("/api/documents/check-duplicate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileHash, filename: file.name }),
       });
-
       if (checkRes.ok) {
         const checkData = await checkRes.json();
         if (checkData.isDuplicate) {
-          updateFileState(index, {
+          updateState(id, {
             status: "duplicate",
-            message: `Documento ya existe: "${checkData.existingFilename}" (subido el ${new Date(checkData.createdAt).toLocaleDateString()})`,
+            message: `Ya existe en el sistema como "${checkData.existingFilename}".`,
           });
           return;
         }
       }
-
       sessionHashesRef.current.add(fileHash);
 
-      // --- Paso 1: Obtener presigned URL (con retry) ---
-      updateFileState(index, { status: "uploading", message: "Obteniendo URL de subida..." });
-
+      updateState(id, { status: "uploading", message: "Obteniendo URL de subida…" });
       const presignRes = await fetchWithRetry("/api/documents/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filename: file.name, contentType: file.type }),
       });
-
       if (!presignRes.ok) throw new Error("Error al obtener URL de subida");
       const { url, s3Key, s3Url } = await presignRes.json();
 
-      // --- Paso 2: Subir a S3 (con retry) ---
-      updateFileState(index, { status: "uploading", message: "Subiendo a S3..." });
-
-      const uploadRes = await fetchWithRetry(
-        url,
-        {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        },
-        MAX_RETRIES
-      );
-
+      updateState(id, { message: "Subiendo a S3…" });
+      const uploadRes = await fetchWithRetry(url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
       if (!uploadRes.ok) throw new Error(`Error al subir a S3 (${uploadRes.status})`);
 
-      // --- Paso 3: Procesar PDF en servidor (con retry) ---
-      updateFileState(index, { status: "processing", message: "Parseando PDF y creando chunks..." });
-
+      updateState(id, { status: "processing", message: "Parseando PDF y creando chunks…" });
       const processRes = await fetchWithRetry("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -207,244 +190,329 @@ export default function UploadPage() {
           filename: file.name,
           fileSize: file.size,
           fileHash,
-          chunkSize: CHUNK_CONFIG.chunkSize,
-          chunkOverlap: CHUNK_CONFIG.chunkOverlap,
-          strategy: CHUNK_CONFIG.strategy,
+          ...CHUNK_CONFIG,
         }),
       });
-
       if (!processRes.ok) {
-        const error = await processRes.json().catch(() => ({ error: `Error ${processRes.status}` }));
-        throw new Error(error.error || "Error al procesar");
+        const err = await processRes.json().catch(() => ({ error: `HTTP ${processRes.status}` }));
+        throw new Error(err.error || "Error al procesar");
       }
-
       const data = await processRes.json();
       const documentId = data.document.id;
       const chunkCount = data.document._count?.chunks ?? 0;
 
-      // --- Paso 4: Disparar procesamiento de embeddings ---
       await fetchWithRetry(`/api/documents/${documentId}/process`, { method: "POST" });
 
-      updateFileState(index, {
+      updateState(id, {
         status: "embedding",
-        message: `Generando embeddings en servidor: 0/${chunkCount}`,
+        message: `Generando embeddings: 0/${chunkCount}`,
         chunkCount,
         embeddingProgress: { processed: 0, total: chunkCount },
       });
 
-      // --- Paso 5: Polling de progreso con timeout ---
       const pollingStart = Date.now();
       let consecutiveErrors = 0;
-
       while (!abortRef.current) {
         await new Promise((r) => setTimeout(r, POLLING_INTERVAL));
-
-        // Timeout de seguridad
         if (Date.now() - pollingStart > POLLING_TIMEOUT) {
-          updateFileState(index, {
+          updateState(id, {
             status: "success",
             message: `${chunkCount} chunks — embeddings continuando en servidor`,
             chunkCount,
           });
           return;
         }
-
         try {
           const progressRes = await fetch(`/api/documents/${documentId}/process`);
-
           if (!progressRes.ok) {
-            consecutiveErrors++;
-            if (consecutiveErrors >= 10) {
-              // Demasiados errores seguidos, pero el servidor sigue procesando
-              updateFileState(index, {
-                status: "success",
-                message: `Embeddings continuando en background (sin conexión de polling)`,
-                chunkCount,
-              });
+            if (++consecutiveErrors >= 10) {
+              updateState(id, { status: "success", message: "Embeddings continuando en background", chunkCount });
               return;
             }
             continue;
           }
-
           consecutiveErrors = 0;
           const progress = await progressRes.json();
-
-          updateFileState(index, {
-            message: `Generando embeddings en servidor: ${progress.processedChunks}/${progress.totalChunks}`,
+          updateState(id, {
+            message: `Generando embeddings: ${progress.processedChunks}/${progress.totalChunks}`,
             embeddingProgress: { processed: progress.processedChunks, total: progress.totalChunks },
           });
-
           if (progress.status === "READY") break;
           if (progress.status === "ERROR") throw new Error("Error al generar embeddings");
         } catch (e) {
           if (e instanceof Error && e.message === "Error al generar embeddings") throw e;
-          consecutiveErrors++;
-          if (consecutiveErrors >= 10) {
-            updateFileState(index, {
-              status: "success",
-              message: `Embeddings continuando en background`,
-              chunkCount,
-            });
+          if (++consecutiveErrors >= 10) {
+            updateState(id, { status: "success", message: "Embeddings continuando en background", chunkCount });
             return;
           }
-          continue;
         }
       }
 
-      updateFileState(index, {
+      updateState(id, {
         status: "success",
         message: `${chunkCount} chunks con embeddings`,
         chunkCount,
         embeddingProgress: { processed: chunkCount, total: chunkCount },
       });
-    } catch (error) {
-      updateFileState(index, {
+    } catch (err) {
+      updateState(id, {
         status: "error",
-        message: error instanceof Error ? error.message : "Error desconocido",
+        message: err instanceof Error ? err.message : "Error desconocido",
       });
     }
   };
 
-  const handleUploadAll = async () => {
-    if (files.length === 0) return;
+  const draggerProps: UploadProps = {
+    name: "file",
+    multiple: true,
+    accept: ".pdf,application/pdf",
+    showUploadList: false,
+    beforeUpload: (file: RcFile, fileList: RcFile[]) => {
+      const newFiles = fileList.filter((f) => f.type === "application/pdf");
+      const newStates: FileUploadState[] = newFiles.map((f) => ({
+        id: `${f.name}-${f.size}-${f.lastModified}-${Math.random()}`,
+        file: f,
+        status: "queued",
+        message: "En cola",
+      }));
+      // Dedup contra estado actual
+      setStates((prev) => {
+        const existing = new Set(prev.map((s) => `${s.file.name}|${s.file.size}`));
+        const filtered = newStates.filter((s) => !existing.has(`${s.file.name}|${s.file.size}`));
+        if (filtered.length < newStates.length) {
+          message.info(`${newStates.length - filtered.length} duplicados ya en la lista`);
+        }
+        return [...prev, ...filtered];
+      });
+      return Upload.LIST_IGNORE;
+    },
+  };
+
+  const startUpload = async () => {
+    const pendingStates = states.filter((s) => s.status === "queued" || s.status === "error");
+    if (pendingStates.length === 0) return;
     setIsProcessing(true);
     abortRef.current = false;
-
-    const initialStates: FileUploadState[] = files.map((file) => ({
-      file,
-      status: "pending" as FileStatus,
-      message: "En cola...",
-    }));
-    setUploadStates(initialStates);
-
-    const queue = [...files.map((f, i) => ({ file: f, index: i }))];
-
+    const queue = [...pendingStates];
     const workers = Array.from({ length: CONCURRENCY }, async () => {
       while (queue.length > 0 && !abortRef.current) {
         const item = queue.shift();
         if (!item) break;
-        await uploadSingleFile(item.file, item.index);
+        await uploadSingle(item);
       }
     });
-
     await Promise.all(workers);
     setIsProcessing(false);
   };
 
-  const successCount = uploadStates.filter((s) => s.status === "success").length;
-  const errorCount = uploadStates.filter((s) => s.status === "error").length;
-  const duplicateCount = uploadStates.filter((s) => s.status === "duplicate").length;
-  const totalChunks = uploadStates.reduce((sum, s) => sum + (s.chunkCount || 0), 0);
+  const successCount = states.filter((s) => s.status === "success").length;
+  const errorCount = states.filter((s) => s.status === "error").length;
+  const dupCount = states.filter((s) => s.status === "duplicate").length;
+  const totalChunks = states.reduce((s, x) => s + (x.chunkCount ?? 0), 0);
+  const pendingCount = states.filter((s) => s.status === "queued" || s.status === "error").length;
 
   return (
-    <PageContainer maxWidth="md">
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Cargar PDFs</h2>
-          <p className="text-muted-foreground mt-1">
-            Sube documentos PDF para analizarlos y vectorizarlos.
-          </p>
-        </div>
-
-        {!isProcessing && uploadStates.length === 0 && (
-          <Dropzone
-            onFilesSelect={handleFilesSelect}
-            selectedFiles={files}
-            onRemoveFile={handleRemoveFile}
-            onClear={handleClear}
-          />
-        )}
-
-        {uploadStates.length > 0 && (
-          <div className="space-y-2">
-            {!isProcessing && successCount > 0 && (
-              <div className="rounded-lg border border-success/30 bg-success-muted p-4">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-success" />
-                  <p className="text-sm text-success">
-                    {successCount} de {uploadStates.length} archivos procesados correctamente.{" "}
-                    {totalChunks} chunks totales creados.
-                    {errorCount > 0 && (
-                      <span className="text-destructive ml-2">{errorCount} con error.</span>
-                    )}
-                    {duplicateCount > 0 && (
-                      <span className="text-muted-foreground ml-2">{duplicateCount} duplicados omitidos.</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {uploadStates.map((state, i) => (
-              <div
-                key={`${state.file.name}-${i}`}
-                className={`border rounded-lg px-4 py-3 flex items-center gap-3 ${
-                  state.status === "success"
-                    ? "bg-success-muted/50 border-success/20"
-                    : state.status === "error"
-                      ? "bg-destructive-muted/50 border-destructive/20"
-                      : state.status === "duplicate"
-                        ? "bg-warning-muted/50 border-warning/20"
-                        : "bg-surface border-border"
-                }`}
-              >
-                {state.status === "pending" && <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />}
-                {(state.status === "hashing" || state.status === "uploading" || state.status === "processing" || state.status === "embedding") && (
-                  <Loader2 className="h-5 w-5 text-info animate-spin flex-shrink-0" />
-                )}
-                {state.status === "success" && <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />}
-                {state.status === "error" && <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />}
-                {state.status === "duplicate" && <Copy className="h-5 w-5 text-warning flex-shrink-0" />}
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground truncate">{state.file.name}</p>
-                  <p
-                    className={`text-xs ${
-                      state.status === "success"
-                        ? "text-success"
-                        : state.status === "error"
-                          ? "text-destructive"
-                          : state.status === "duplicate"
-                            ? "text-warning"
-                            : "text-muted-foreground"
-                    }`}
-                  >
-                    {state.message}
-                  </p>
-                  {state.status === "embedding" && state.embeddingProgress && (
-                    <Progress
-                      value={state.embeddingProgress.processed}
-                      max={state.embeddingProgress.total}
-                      variant="default"
-                      className="mt-1.5"
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {!isProcessing && (
-              <Button variant="outline" onClick={handleClear} className="w-full mt-2">
-                Cargar mas documentos
-              </Button>
-            )}
-          </div>
-        )}
-
-        {uploadStates.length === 0 && (
-          <Button onClick={handleUploadAll} disabled={files.length === 0 || isProcessing} className="w-full" size="lg">
-            {isProcessing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Procesando...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4" /> Subir y Procesar{" "}
-                {files.length > 0 ? `${files.length} PDF${files.length > 1 ? "s" : ""}` : "PDFs"}
-              </>
-            )}
-          </Button>
-        )}
+    <div className="app-page-narrow">
+      <div style={{ marginBottom: 24 }}>
+        <Title level={2} className="serif-title" style={{ margin: 0 }}>
+          Cargar PDFs
+        </Title>
+        <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0" }}>
+          Sube fuentes históricas. El sistema calcula el hash para evitar duplicados, las divide en chunks de 3000 caracteres con overlap de 750, y genera embeddings con Cohere Embed v4.
+        </Paragraph>
       </div>
-    </PageContainer>
+
+      <Card bordered style={{ marginBottom: 20 }}>
+        <Dragger {...draggerProps} disabled={isProcessing}>
+          <p className="ant-upload-drag-icon" style={{ color: token.colorPrimary }}>
+            <InboxOutlined style={{ fontSize: 48 }} />
+          </p>
+          <p className="ant-upload-text" style={{ fontSize: 16, fontWeight: 500 }}>
+            Arrastra PDFs aquí o haz click para seleccionar
+          </p>
+          <p className="ant-upload-hint" style={{ color: token.colorTextTertiary }}>
+            Soporta múltiples archivos. El procesamiento es paralelo (concurrencia {CONCURRENCY}).
+          </p>
+        </Dragger>
+      </Card>
+
+      {states.length > 0 && (
+        <>
+          <Card bordered style={{ marginBottom: 16 }}>
+            <Row gutter={16}>
+              <Col xs={12} md={6}>
+                <Statistic title="En cola" value={pendingCount} valueStyle={{ fontSize: 22 }} />
+              </Col>
+              <Col xs={12} md={6}>
+                <Statistic title="Listos" value={successCount} valueStyle={{ fontSize: 22, color: token.colorSuccess }} />
+              </Col>
+              <Col xs={12} md={6}>
+                <Statistic title="Duplicados" value={dupCount} valueStyle={{ fontSize: 22, color: token.colorWarning }} />
+              </Col>
+              <Col xs={12} md={6}>
+                <Statistic title="Chunks totales" value={totalChunks} valueStyle={{ fontSize: 22 }} />
+              </Col>
+            </Row>
+            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              <Button
+                type="primary"
+                icon={isProcessing ? <LoadingOutlined /> : <CloudUploadOutlined />}
+                onClick={startUpload}
+                disabled={isProcessing || pendingCount === 0}
+                size="large"
+              >
+                {isProcessing
+                  ? "Procesando…"
+                  : `Subir y procesar ${pendingCount} archivo${pendingCount !== 1 ? "s" : ""}`}
+              </Button>
+              {isProcessing && (
+                <Button icon={<CloseCircleOutlined />} onClick={() => (abortRef.current = true)}>
+                  Detener
+                </Button>
+              )}
+              {!isProcessing && (
+                <Button icon={<ClearOutlined />} onClick={handleClear}>
+                  Limpiar
+                </Button>
+              )}
+            </div>
+          </Card>
+
+          {successCount > 0 && !isProcessing && errorCount === 0 && (
+            <Alert
+              showIcon
+              type="success"
+              message={`${successCount} archivo${successCount !== 1 ? "s" : ""} procesado${successCount !== 1 ? "s" : ""}`}
+              description={`${totalChunks} chunks creados y vectorizados. Ya puedes consultarlos en /chat o generar preguntas.`}
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
+          <Space direction="vertical" size={10} style={{ width: "100%" }}>
+            {states.map((s) => (
+              <FileRow
+                key={s.id}
+                state={s}
+                onRemove={() => removeState(s.id)}
+                onRetry={() => uploadSingle(s)}
+                disabled={isProcessing}
+              />
+            ))}
+          </Space>
+        </>
+      )}
+
+      {states.length === 0 && (
+        <Card bordered>
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="Arrastra archivos arriba para comenzar"
+          />
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function FileRow({
+  state,
+  onRemove,
+  onRetry,
+  disabled,
+}: {
+  state: FileUploadState;
+  onRemove: () => void;
+  onRetry: () => void;
+  disabled: boolean;
+}) {
+  const { token } = theme.useToken();
+  const stepIdx = pipelineStepIndex(state.status);
+  const isError = state.status === "error";
+  const isDup = state.status === "duplicate";
+  const isSuccess = state.status === "success";
+  const isWorking = ["hashing", "uploading", "processing", "embedding"].includes(state.status);
+
+  const statusColor = isError
+    ? token.colorError
+    : isDup
+    ? token.colorWarning
+    : isSuccess
+    ? token.colorSuccess
+    : token.colorPrimary;
+
+  return (
+    <Card
+      size="small"
+      bordered
+      style={{
+        borderLeft: `3px solid ${statusColor}`,
+      }}
+      bodyStyle={{ padding: 12 }}
+    >
+      <Row gutter={12} align="middle">
+        <Col flex="auto">
+          <Space direction="vertical" size={6} style={{ width: "100%" }}>
+            <Space style={{ width: "100%", justifyContent: "space-between" }}>
+              <Space size={8}>
+                <FileTextOutlined style={{ color: statusColor }} />
+                <Text strong style={{ fontSize: 13 }}>{state.file.name}</Text>
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  {(state.file.size / 1024 / 1024).toFixed(2)} MB
+                </Text>
+              </Space>
+              <Space size={6}>
+                {state.chunkCount !== undefined && (
+                  <Tag style={{ fontSize: 10, margin: 0 }}>{state.chunkCount} chunks</Tag>
+                )}
+                {isError && (
+                  <Button size="small" icon={<ReloadOutlined />} onClick={onRetry} disabled={disabled}>
+                    Reintentar
+                  </Button>
+                )}
+                {!isWorking && (
+                  <Button size="small" type="text" icon={<CloseCircleOutlined />} onClick={onRemove} />
+                )}
+              </Space>
+            </Space>
+            <Text style={{ fontSize: 12, color: statusColor }}>
+              {isWorking && <LoadingOutlined style={{ marginRight: 6 }} />}
+              {state.message}
+            </Text>
+            {state.status === "embedding" && state.embeddingProgress && (
+              <Progress
+                percent={Math.round(
+                  (state.embeddingProgress.processed / Math.max(1, state.embeddingProgress.total)) * 100,
+                )}
+                size="small"
+                showInfo={false}
+                strokeColor={token.colorPrimary}
+              />
+            )}
+            {!isError && !isDup && (
+              <Steps
+                current={stepIdx}
+                size="small"
+                items={PIPELINE_STEPS.map((p, i) => ({
+                  title: p.title,
+                  status:
+                    isSuccess && i <= stepIdx
+                      ? "finish"
+                      : i < stepIdx
+                      ? "finish"
+                      : i === stepIdx
+                      ? isWorking
+                        ? "process"
+                        : isSuccess
+                        ? "finish"
+                        : "wait"
+                      : "wait",
+                }))}
+                style={{ marginTop: 8 }}
+              />
+            )}
+          </Space>
+        </Col>
+      </Row>
+    </Card>
   );
 }

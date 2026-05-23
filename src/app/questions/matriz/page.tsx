@@ -1,14 +1,36 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, Loader2, CheckCircle2, AlertCircle, Circle,
-  Sparkles, RefreshCw,
-} from "lucide-react";
-import { PageContainer } from "@/components/layout/page-container";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+  Card,
+  Typography,
+  Tag,
+  Space,
+  Button,
+  Select,
+  theme,
+  App,
+  Empty,
+  Skeleton,
+  Checkbox,
+  Tooltip,
+  Tabs,
+  Badge,
+} from "antd";
+import {
+  ArrowLeftOutlined,
+  ThunderboltOutlined,
+  ReloadOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
+  SyncOutlined,
+  ClockCircleOutlined,
+  TableOutlined,
+} from "@ant-design/icons";
+import { getPeriodColor, getCategoryColor } from "@/lib/theme";
+
+const { Title, Text, Paragraph } = Typography;
 
 type CellStatus = "PENDING" | "GENERATING" | "COMPLETE" | "ERROR" | null;
 
@@ -41,32 +63,40 @@ interface MatrixResponse {
   counts: { all: number; complete: number; partial: number; pending: number };
 }
 
+export default function MatrixPage() {
+  return (
+    <Suspense fallback={<div className="app-page"><Skeleton active /></div>}>
+      <MatrixContent />
+    </Suspense>
+  );
+}
+
 function MatrixContent() {
+  const { token } = theme.useToken();
+  const { message } = App.useApp();
   const [data, setData] = useState<MatrixResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [stateFilter, setStateFilter] = useState<"all" | "pending" | "partial" | "complete">("all");
   const [documentId, setDocumentId] = useState<string>("");
-  const [documents, setDocuments] = useState<{ id: string; filename: string }[]>([]);
-  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set());
-  const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set());
+  const [docs, setDocs] = useState<Array<{ id: string; filename: string }>>([]);
+  const [selectedQs, setSelectedQs] = useState<Set<string>>(new Set());
+  const [selectedTpls, setSelectedTpls] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
-  const [jobMsg, setJobMsg] = useState<string | null>(null);
 
-  // Cargar documentos para el dropdown
   useEffect(() => {
-    fetch("/api/documents?limit=200")
+    fetch("/api/documents?limit=300")
       .then((r) => r.json())
-      .then((d) => setDocuments(d.documents ?? []))
+      .then((d) => setDocs(d.documents ?? []))
       .catch(console.error);
   }, []);
 
   const fetchMatrix = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (documentId) params.set("documentId", documentId);
-      if (stateFilter !== "all") params.set("status", stateFilter);
-      const res = await fetch(`/api/questions/matrix?${params.toString()}`);
+      const p = new URLSearchParams();
+      if (documentId) p.set("documentId", documentId);
+      if (stateFilter !== "all") p.set("status", stateFilter);
+      const res = await fetch(`/api/questions/matrix?${p}`);
       const json = (await res.json()) as MatrixResponse;
       setData(json);
     } finally {
@@ -78,343 +108,242 @@ function MatrixContent() {
     fetchMatrix();
   }, [fetchMatrix]);
 
-  // Limpiar selección cuando cambian filtros
   useEffect(() => {
-    setSelectedQuestions(new Set());
+    setSelectedQs(new Set());
   }, [documentId, stateFilter]);
 
-  const toggleQuestion = (id: string) => {
-    setSelectedQuestions((s) => {
-      const next = new Set(s);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  const togQ = (id: string) => {
+    setSelectedQs((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
     });
   };
 
-  const toggleTemplate = (id: string) => {
-    setSelectedTemplates((s) => {
-      const next = new Set(s);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  const togT = (id: string) => {
+    setSelectedTpls((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
     });
   };
 
-  const selectAllQuestions = () => {
-    if (!data) return;
-    setSelectedQuestions(new Set(data.rows.map((r) => r.id)));
-  };
+  const cellsToGenerate = useMemo(() => {
+    if (!data) return 0;
+    let count = 0;
+    for (const qId of selectedQs) {
+      const row = data.rows.find((r) => r.id === qId);
+      if (!row) continue;
+      for (const tId of selectedTpls) {
+        const cell = row.byTemplate[tId];
+        if (!cell || cell.status === "PENDING" || cell.status === "ERROR") count++;
+      }
+    }
+    return count;
+  }, [selectedQs, selectedTpls, data]);
 
-  const clearSelection = () => {
-    setSelectedQuestions(new Set());
-    setSelectedTemplates(new Set());
-  };
-
-  const handleBulkGenerate = async () => {
-    if (selectedQuestions.size === 0 || selectedTemplates.size === 0) return;
+  const submit = async () => {
+    if (cellsToGenerate === 0) return;
     setSubmitting(true);
-    setJobMsg(null);
     try {
       const res = await fetch("/api/deliverables/bulk-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          questionIds: Array.from(selectedQuestions),
-          templateIds: Array.from(selectedTemplates),
-          onlyMissing: true,
+          questionIds: Array.from(selectedQs),
+          templateIds: Array.from(selectedTpls),
         }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Error");
-      setJobMsg(json.message || `Job ${json.jobId} encolado: ${json.totalPairs} entregables`);
-    } catch (e) {
-      setJobMsg(e instanceof Error ? e.message : "Error desconocido");
+      if (!res.ok) throw new Error("HTTP error");
+      message.success(`Generación encolada (${cellsToGenerate} producciones)`);
+      setSelectedQs(new Set());
+      setSelectedTpls(new Set());
+      setTimeout(fetchMatrix, 1500);
+    } catch {
+      message.error("Error al encolar producciones");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const pairsToGenerate = useMemo(() => {
-    if (!data) return 0;
-    let count = 0;
-    for (const qid of selectedQuestions) {
-      const row = data.rows.find((r) => r.id === qid);
-      if (!row) continue;
-      for (const tid of selectedTemplates) {
-        if (row.byTemplate[tid]?.status !== "COMPLETE") count++;
-      }
-    }
-    return count;
-  }, [data, selectedQuestions, selectedTemplates]);
+  const renderCell = (status: CellStatus) => {
+    if (!status || status === "PENDING")
+      return <ClockCircleOutlined style={{ color: token.colorTextTertiary }} />;
+    if (status === "GENERATING")
+      return <SyncOutlined spin style={{ color: token.colorPrimary }} />;
+    if (status === "COMPLETE")
+      return <CheckCircleFilled style={{ color: token.colorSuccess }} />;
+    if (status === "ERROR")
+      return <CloseCircleFilled style={{ color: token.colorError }} />;
+    return null;
+  };
 
   return (
-    <PageContainer maxWidth="xl">
-      <div className="mb-4">
-        <Link
-          href="/questions"
-          className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
+    <div className="app-page-wide">
+      <Link href="/questions">
+        <Button type="text" icon={<ArrowLeftOutlined />} style={{ marginBottom: 12 }}>
           Volver a preguntas
-        </Link>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Matriz de Producción</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Selecciona preguntas y templates para generar entregables faltantes en lote.
-            </p>
-          </div>
-          <button
-            onClick={fetchMatrix}
-            disabled={loading}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground border border-border hover:bg-surface-hover transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={cn("h-3.5 w-3.5 inline mr-1", loading && "animate-spin")} />
-            Refrescar
-          </button>
-        </div>
-      </div>
+        </Button>
+      </Link>
 
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-3 mb-4">
-        <select
-          value={documentId}
-          onChange={(e) => setDocumentId(e.target.value)}
-          className="px-3 py-1.5 bg-surface border border-border rounded-lg text-xs text-foreground focus:outline-none focus:border-ring max-w-md"
-        >
-          <option value="">Todos los documentos</option>
-          {documents.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.filename.slice(0, 60)}
-            </option>
-          ))}
-        </select>
+      <Title level={2} className="serif-title" style={{ margin: 0 }}>
+        <TableOutlined /> Matriz de producción
+      </Title>
+      <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 24px", maxWidth: 800 }}>
+        Selecciona preguntas (filas) y templates (columnas) para generar producciones masivamente.
+        Cada celda muestra el estado de ese par pregunta×template.
+      </Paragraph>
 
-        <div className="flex gap-1.5">
-          {([
-            { key: "all", label: "Todas", n: data?.counts.all },
-            { key: "pending", label: "Pendientes", n: data?.counts.pending },
-            { key: "partial", label: "Parciales", n: data?.counts.partial },
-            { key: "complete", label: "Completas", n: data?.counts.complete },
-          ] as const).map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setStateFilter(tab.key)}
-              className={cn(
-                "px-3 py-1 rounded-md text-xs font-medium border transition-colors",
-                stateFilter === tab.key
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-surface text-muted-foreground border-border hover:text-foreground"
-              )}
-            >
-              {tab.label}
-              {typeof tab.n === "number" && (
-                <span className="ml-1.5 opacity-70 font-mono text-[10px]">{tab.n}</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+      <Card bordered style={{ marginBottom: 16 }}>
+        <Space wrap size={12}>
+          <Select
+            allowClear
+            placeholder="Filtrar por documento"
+            style={{ width: 280 }}
+            value={documentId || undefined}
+            onChange={(v) => setDocumentId(v ?? "")}
+            showSearch
+            optionFilterProp="label"
+            options={docs.map((d) => ({ value: d.id, label: d.filename }))}
+          />
+          <Button icon={<ReloadOutlined />} onClick={fetchMatrix}>Recargar</Button>
+          {cellsToGenerate > 0 && (
+            <Badge count={cellsToGenerate} offset={[-6, 6]}>
+              <Button
+                type="primary"
+                icon={<ThunderboltOutlined />}
+                loading={submitting}
+                onClick={submit}
+              >
+                Producir {cellsToGenerate} producciones
+              </Button>
+            </Badge>
+          )}
+        </Space>
+      </Card>
 
-      {/* Toolbar selección + acción */}
-      {data && data.rows.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mb-3 p-3 bg-surface border border-border rounded-lg">
-          <button
-            onClick={selectAllQuestions}
-            disabled={selectedQuestions.size === data.rows.length}
-            className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
-          >
-            Seleccionar visibles ({data.rows.length})
-          </button>
-          <span className="text-muted-foreground/40">·</span>
-          <button
-            onClick={clearSelection}
-            disabled={selectedQuestions.size === 0 && selectedTemplates.size === 0}
-            className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
-          >
-            Limpiar selección
-          </button>
-          <span className="text-xs text-muted-foreground ml-auto">
-            <strong className="text-foreground">{selectedQuestions.size}</strong> preguntas ×{" "}
-            <strong className="text-foreground">{selectedTemplates.size}</strong> templates ={" "}
-            <strong className="text-accent">{pairsToGenerate}</strong> entregables a generar
-          </span>
-          <button
-            onClick={handleBulkGenerate}
-            disabled={
-              submitting ||
-              pairsToGenerate === 0 ||
-              selectedQuestions.size === 0 ||
-              selectedTemplates.size === 0
-            }
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-              submitting || pairsToGenerate === 0
-                ? "bg-muted text-muted-foreground cursor-not-allowed"
-                : "bg-primary text-primary-foreground hover:bg-primary-hover"
-            )}
-          >
-            {submitting ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5" />
-            )}
-            Generar faltantes ({pairsToGenerate})
-          </button>
-        </div>
-      )}
+      <Tabs
+        activeKey={stateFilter}
+        onChange={(k) => setStateFilter(k as typeof stateFilter)}
+        items={[
+          { key: "all", label: `Todas (${data?.counts.all ?? 0})` },
+          { key: "pending", label: `Sin producción (${data?.counts.pending ?? 0})` },
+          { key: "partial", label: `Parciales (${data?.counts.partial ?? 0})` },
+          { key: "complete", label: `Completas (${data?.counts.complete ?? 0})` },
+        ]}
+      />
 
-      {jobMsg && (
-        <div className="mb-3 p-3 rounded-lg bg-info/10 border border-info/30 text-xs text-info">
-          {jobMsg}
-        </div>
-      )}
-
-      {/* Matriz */}
       {loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 rounded" />
-          ))}
-        </div>
+        <Card bordered><Skeleton active paragraph={{ rows: 12 }} /></Card>
       ) : !data || data.rows.length === 0 ? (
-        <div className="text-center py-12 text-sm text-muted-foreground">
-          No hay preguntas con los filtros actuales.
-        </div>
+        <Card bordered>
+          <Empty description="Sin preguntas con estos filtros" />
+        </Card>
       ) : (
-        <div className="overflow-auto rounded-lg border border-border">
-          <table className="w-full text-xs">
-            <thead className="bg-muted/50 sticky top-0 z-10">
-              <tr>
-                <th className="px-2 py-2 text-left w-8">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedQuestions.size === data.rows.length && data.rows.length > 0
-                    }
-                    onChange={(e) =>
-                      e.target.checked ? selectAllQuestions() : setSelectedQuestions(new Set())
-                    }
-                    className="accent-accent"
-                    aria-label="Seleccionar todas"
-                  />
-                </th>
-                <th className="px-2 py-2 text-left font-medium text-muted-foreground min-w-[24rem]">
-                  Pregunta
-                </th>
-                {data.templates.map((t) => (
-                  <th
-                    key={t.id}
-                    className="px-1 py-2 text-center font-medium text-muted-foreground"
-                  >
-                    <label className="flex flex-col items-center gap-1 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedTemplates.has(t.id)}
-                        onChange={() => toggleTemplate(t.id)}
-                        className="accent-accent"
-                      />
-                      <span className="text-[10px] writing-mode-vertical-rl whitespace-nowrap rotate-180 [writing-mode:vertical-rl]">
-                        {t.name}
-                      </span>
-                    </label>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className={cn(
-                    "border-t border-border hover:bg-surface-hover transition-colors",
-                    selectedQuestions.has(row.id) && "bg-primary/5"
-                  )}
-                >
-                  <td className="px-2 py-2 align-top">
-                    <input
-                      type="checkbox"
-                      checked={selectedQuestions.has(row.id)}
-                      onChange={() => toggleQuestion(row.id)}
-                      className="accent-accent"
-                      aria-label="Seleccionar pregunta"
+        <Card bordered bodyStyle={{ padding: 0 }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ minWidth: 800, width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: token.colorFillQuaternary, borderBottom: `2px solid ${token.colorBorderSecondary}` }}>
+                  <th style={{ padding: "10px 8px", fontSize: 12, textAlign: "center", borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
+                    <Checkbox
+                      checked={selectedQs.size === data.rows.length && data.rows.length > 0}
+                      indeterminate={selectedQs.size > 0 && selectedQs.size < data.rows.length}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedQs(new Set(data.rows.map((r) => r.id)));
+                        else setSelectedQs(new Set());
+                      }}
                     />
-                  </td>
-                  <td className="px-2 py-2 align-top">
-                    <p className="text-xs text-foreground leading-snug line-clamp-2">
-                      {row.pregunta}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      <span className="font-mono">{row.periodoCode}</span> ·{" "}
-                      <span className="font-mono">{row.categoriaCode}</span> ·{" "}
-                      <span className="font-mono">{row.subcategoriaCode}</span> ·{" "}
-                      <span className="truncate">{row.documentFilename.slice(0, 50)}</span>
-                    </p>
-                  </td>
-                  {data.templates.map((t) => {
-                    const cell = row.byTemplate[t.id];
-                    const status = cell?.status;
-                    return (
-                      <td key={t.id} className="px-1 py-2 text-center align-top">
-                        {status === "COMPLETE" && cell ? (
-                          <Link
-                            href={`/producciones/${cell.deliverableId}`}
-                            title="Ver entregable"
-                            className="inline-flex items-center justify-center h-6 w-6 rounded bg-success/15 text-success hover:bg-success/25 transition-colors"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                          </Link>
-                        ) : status === "GENERATING" ? (
-                          <span
-                            title="Generando"
-                            className="inline-flex items-center justify-center h-6 w-6 rounded bg-info/15 text-info"
-                          >
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          </span>
-                        ) : status === "ERROR" ? (
-                          <span
-                            title="Error"
-                            className="inline-flex items-center justify-center h-6 w-6 rounded bg-destructive/15 text-destructive"
-                          >
-                            <AlertCircle className="h-3.5 w-3.5" />
-                          </span>
-                        ) : (
-                          <span
-                            title="Pendiente"
-                            className="inline-flex items-center justify-center h-6 w-6 rounded text-muted-foreground/50"
-                          >
-                            <Circle className="h-3.5 w-3.5" />
-                          </span>
-                        )}
-                      </td>
-                    );
-                  })}
+                  </th>
+                  <th style={{ padding: "10px 8px", fontSize: 12, width: "30%", textAlign: "left", color: token.colorTextSecondary }}>Pregunta</th>
+                  {data.templates.map((t) => (
+                    <th key={t.id} style={{ padding: "10px 8px", fontSize: 12, width: 90, textAlign: "center", color: token.colorTextSecondary }}>
+                      <Space direction="vertical" size={4}>
+                        <Checkbox
+                          checked={selectedTpls.has(t.id)}
+                          onChange={() => togT(t.id)}
+                        />
+                        <Tooltip title={t.name}>
+                          <div style={{ fontSize: 18 }}>{t.icon}</div>
+                        </Tooltip>
+                        <Text style={{ fontSize: 10, color: token.colorTextSecondary, display: "block", maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {t.name}
+                        </Text>
+                      </Space>
+                    </th>
+                  ))}
+                  <th style={{ padding: "10px 8px", fontSize: 12, width: 80, textAlign: "center", color: token.colorTextSecondary }}>Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </PageContainer>
-  );
-}
-
-export default function MatrixPage() {
-  return (
-    <Suspense
-      fallback={
-        <PageContainer maxWidth="xl">
-          <Skeleton className="h-8 w-64 mb-4" />
-          <div className="space-y-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 rounded" />
-            ))}
+              </thead>
+              <tbody>
+                {data.rows.map((row) => {
+                  const periodColor = getPeriodColor(row.periodoCode);
+                  const categoryColor = getCategoryColor(row.categoriaCode);
+                  const selected = selectedQs.has(row.id);
+                  return (
+                    <tr
+                      key={row.id}
+                      style={{
+                        background: selected ? `${token.colorPrimary}08` : "transparent",
+                        borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                      }}
+                    >
+                      <td style={{ padding: "10px 8px", textAlign: "center" }}>
+                        <Checkbox checked={selected} onChange={() => togQ(row.id)} />
+                      </td>
+                      <td style={{ padding: "10px 8px" }}>
+                        <Space direction="vertical" size={4} style={{ maxWidth: 480 }}>
+                          <Text style={{ fontSize: 13, lineHeight: 1.45 }}>{row.pregunta}</Text>
+                          <Space size={4} wrap>
+                            <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10, margin: 0 }}>
+                              {row.periodoNombre}
+                            </Tag>
+                            <Tag style={{ background: `${categoryColor}1A`, border: "none", color: categoryColor, fontSize: 10, margin: 0 }}>
+                              {row.categoriaNombre}
+                            </Tag>
+                          </Space>
+                        </Space>
+                      </td>
+                      {data.templates.map((t) => {
+                        const cell = row.byTemplate[t.id];
+                        const isProducible =
+                          selected &&
+                          selectedTpls.has(t.id) &&
+                          (!cell || cell.status === "PENDING" || cell.status === "ERROR");
+                        return (
+                          <td
+                            key={t.id}
+                            style={{
+                              padding: "10px 8px",
+                              textAlign: "center",
+                              background: isProducible ? `${token.colorPrimary}1A` : "transparent",
+                            }}
+                          >
+                            {cell?.deliverableId && cell.status === "COMPLETE" ? (
+                              <Link href={`/producciones/${cell.deliverableId}`}>
+                                {renderCell(cell.status)}
+                              </Link>
+                            ) : (
+                              renderCell(cell?.status ?? null)
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td style={{ padding: "10px 8px", textAlign: "center" }}>
+                        <Text style={{ fontSize: 12, color: row.completedCount > 0 ? token.colorSuccess : token.colorTextTertiary }}>
+                          {row.completedCount}/{data.totalTemplates}
+                        </Text>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </PageContainer>
-      }
-    >
-      <MatrixContent />
-    </Suspense>
+        </Card>
+      )}
+    </div>
   );
 }

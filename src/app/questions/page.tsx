@@ -1,19 +1,41 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { PageContainer } from "@/components/layout/page-container";
-import { QuestionCard } from "@/components/questions/question-card";
-import { QuestionFilters, FilterState } from "@/components/questions/question-filters";
-import { QuestionStats } from "@/components/questions/question-stats";
-import { EmptyState } from "@/components/domain/empty-state";
-import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Sparkles, Zap, ChevronLeft, ChevronRight, Grid3x3 } from "lucide-react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
-import { Dialog, DialogHeader, DialogBody } from "@/components/ui/dialog";
-import { BatchGeneratePanel } from "@/components/questions/batch-generate-panel";
-import { cn } from "@/lib/utils";
+import {
+  Card,
+  Typography,
+  Tag,
+  Space,
+  Button,
+  Input,
+  Select,
+  Pagination,
+  Empty,
+  theme,
+  Row,
+  Col,
+  Tooltip,
+  Skeleton,
+  Segmented,
+  Tabs,
+} from "antd";
+import {
+  SearchOutlined,
+  ThunderboltOutlined,
+  TableOutlined,
+  AppstoreOutlined,
+  UnorderedListOutlined,
+  FileTextOutlined,
+  PlusOutlined,
+  CheckCircleFilled,
+  ClockCircleOutlined,
+} from "@ant-design/icons";
+import { PERIOD_OPTIONS, CATEGORY_OPTIONS, getPeriodByCode, getCategoryByCode } from "@/lib/taxonomy";
+import { getPeriodColor, getCategoryColor } from "@/lib/theme";
+
+const { Title, Text, Paragraph } = Typography;
 
 type StateFilter = "all" | "pending" | "partial" | "complete";
 
@@ -33,57 +55,66 @@ interface Question {
   justificacion: string;
   document: { id: string; filename: string };
   createdAt: string;
-  ordenPeriodo?: number | null;
-  ordenCategoria?: number | null;
-  ordenSubcategoria?: number | null;
   temaPeriodo?: string | null;
   temaCategoria?: string | null;
-  temaSubcategoria?: string | null;
   deliverableCount?: number;
   completedTemplateIds?: string[];
-  deliverables?: { id: string; templateId: string; status: string }[];
+  deliverables?: Array<{ id: string; templateId: string; status: string }>;
 }
 
 interface StatsData {
-  byCategoria: { code: string; nombre: string; count: number }[];
-  byPeriodo: { code: string; nombre: string; count: number }[];
-  totalDocuments: number;
   totalQuestions: number;
+  totalDocuments: number;
+  byCategoria: Array<{ code: string; nombre: string; count: number }>;
+  byPeriodo: Array<{ code: string; nombre: string; count: number }>;
   byState?: { pending: number; partial: number; complete: number; all: number };
   totalTemplates?: number;
 }
 
-function QuestionsContent() {
-  const searchParams = useSearchParams();
-  const initialDocId = searchParams.get("documentId") ?? "";
+const SORT_OPTIONS = [
+  { value: "cronologico", label: "Cronológico" },
+  { value: "periodo", label: "Por periodo" },
+  { value: "categoria", label: "Por categoría" },
+  { value: "subcategoria", label: "Por subcategoría" },
+  { value: "recientes", label: "Recientes" },
+];
 
-  const [filters, setFilters] = useState<FilterState>({
+export default function QuestionsPage() {
+  return (
+    <Suspense fallback={<div className="app-page-wide"><Skeleton active /></div>}>
+      <QuestionsContent />
+    </Suspense>
+  );
+}
+
+function QuestionsContent() {
+  const params = useSearchParams();
+  const { token } = theme.useToken();
+  const initialDocId = params.get("documentId") ?? "";
+  const initialPeriodo = params.get("periodo") ?? "";
+
+  const [filters, setFilters] = useState({
     documentId: initialDocId,
-    periodo: "",
+    periodo: initialPeriodo,
     categoria: "",
-    subcategoria: "",
     search: "",
-    // Default = cronológico (orden narrativo + temporal). Para historia tiene
-    // mucho más sentido que el orden de generación de Claude.
     sortBy: "cronologico",
   });
   const [stateFilter, setStateFilter] = useState<StateFilter>("all");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
-  const [documents, setDocuments] = useState<{ id: string; filename: string }[]>([]);
+  const [docs, setDocs] = useState<Array<{ id: string; filename: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [showStats, setShowStats] = useState(false);
-  const [showBatchGenerate, setShowBatchGenerate] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-  const LIMIT = 50;
+  const [view, setView] = useState<"list" | "cards">("list");
+  const LIMIT = 30;
 
   useEffect(() => {
-    fetch("/api/documents?limit=200")
+    fetch("/api/documents?limit=300")
       .then((r) => r.json())
-      .then((data) => setDocuments(data.documents ?? []))
+      .then((data) => setDocs(data.documents ?? []))
       .catch(console.error);
   }, []);
 
@@ -94,272 +125,337 @@ function QuestionsContent() {
       .catch(console.error);
   }, []);
 
-  const fetchPendingCount = useCallback(() => {
+  useEffect(() => {
     fetch("/api/questions/generate-batch")
       .then((r) => r.json())
-      .then((data) => setPendingCount(data.pendingCount ?? 0))
+      .then((d) => setPendingCount(d.pendingCount ?? 0))
       .catch(console.error);
   }, []);
-
-  useEffect(() => { fetchPendingCount(); }, [fetchPendingCount]);
 
   const fetchQuestions = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (filters.documentId) params.set("documentId", filters.documentId);
-      if (filters.periodo) params.set("periodo", filters.periodo);
-      if (filters.categoria) params.set("categoria", filters.categoria);
-      if (filters.subcategoria) params.set("subcategoria", filters.subcategoria);
-      if (filters.search) params.set("search", filters.search);
-      if (filters.sortBy) params.set("sortBy", filters.sortBy);
-      if (stateFilter !== "all") params.set("state", stateFilter);
-      params.set("includeDeliverables", "true");
-      params.set("page", String(page));
-      params.set("limit", String(LIMIT));
-
-      const res = await fetch(`/api/questions?${params.toString()}`);
+      const p = new URLSearchParams();
+      if (filters.documentId) p.set("documentId", filters.documentId);
+      if (filters.periodo) p.set("periodo", filters.periodo);
+      if (filters.categoria) p.set("categoria", filters.categoria);
+      if (filters.search) p.set("search", filters.search);
+      if (filters.sortBy) p.set("sortBy", filters.sortBy);
+      if (stateFilter !== "all") p.set("state", stateFilter);
+      p.set("includeDeliverables", "true");
+      p.set("page", String(page));
+      p.set("limit", String(LIMIT));
+      const res = await fetch(`/api/questions?${p}`);
       const data = await res.json();
       setQuestions(data.questions ?? []);
       setTotal(data.pagination?.total ?? 0);
-      setTotalPages(data.pagination?.totalPages ?? 1);
-    } catch (err) {
-      console.error("Error fetching questions:", err);
     } finally {
       setLoading(false);
     }
-  }, [filters, page, stateFilter]);
+  }, [filters, stateFilter, page]);
 
-  useEffect(() => { setPage(1); }, [filters, stateFilter]);
-  useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
-
-  const handleFiltersChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
+  useEffect(() => {
     setPage(1);
-  };
+  }, [filters, stateFilter]);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
+
+  const grouped = (() => {
+    if (filters.sortBy === "periodo" || filters.sortBy === "cronologico") {
+      const out: Record<string, Question[]> = {};
+      for (const q of questions) {
+        (out[q.periodoCode] = out[q.periodoCode] || []).push(q);
+      }
+      return out;
+    }
+    if (filters.sortBy === "categoria") {
+      const out: Record<string, Question[]> = {};
+      for (const q of questions) {
+        (out[q.categoriaCode] = out[q.categoriaCode] || []).push(q);
+      }
+      return out;
+    }
+    return null;
+  })();
 
   return (
-    <PageContainer maxWidth="xl">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-5">
+    <div className="app-page-wide">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 16 }}>
         <div>
-          <h1 className="text-xl font-bold text-foreground">Preguntas de Investigacion</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {total > 0
-              ? `${total} preguntas generadas con Claude Opus`
-              : "No hay preguntas generadas aun"}
-          </p>
+          <Title level={2} className="serif-title" style={{ margin: 0 }}>
+            Preguntas de investigación
+          </Title>
+          <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0" }}>
+            {total > 0 ? `${total} preguntas generadas` : "Sin preguntas aún"} · taxonomía histórica colombiana
+          </Paragraph>
         </div>
-        <div className="flex items-center gap-2">
-          {stats && stats.totalQuestions > 0 && (
-            <button
-              onClick={() => setShowStats(!showStats)}
-              className="px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-surface-hover transition-colors"
-            >
-              {showStats ? "Ocultar stats" : "Ver stats"}
-            </button>
-          )}
-          <Link
-            href="/questions/matriz"
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-surface-hover transition-colors"
-          >
-            <Grid3x3 className="h-3.5 w-3.5" />
-            Matriz
+        <Space wrap>
+          <Link href="/questions/matriz">
+            <Button icon={<TableOutlined />}>Matriz de producción</Button>
           </Link>
           {pendingCount > 0 && (
-            <button
-              onClick={() => setShowBatchGenerate(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-secondary text-secondary-foreground border border-border rounded-lg text-xs font-medium hover:bg-secondary/80 transition-colors"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              Generar Todas ({pendingCount})
-            </button>
+            <Link href="/questions/matriz">
+              <Tooltip title="Producir respuestas en lote para preguntas sin producción">
+                <Button type="default" icon={<ThunderboltOutlined />}>
+                  Producir {pendingCount} pendientes
+                </Button>
+              </Tooltip>
+            </Link>
           )}
-          <Link
-            href="/questions/generate"
-            className="flex items-center gap-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary-hover transition-colors"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Generar
+          <Link href="/questions/generate">
+            <Button type="primary" icon={<PlusOutlined />}>
+              Generar preguntas
+            </Button>
           </Link>
-        </div>
+        </Space>
       </div>
 
-      {/* Stats colapsables */}
-      {showStats && stats && stats.totalQuestions > 0 && (
-        <div className="mb-5">
-          <QuestionStats stats={stats} />
-        </div>
-      )}
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col xs={24} md={6}>
+          <Card bordered bodyStyle={{ padding: 14 }}>
+            <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Total</Text>
+            <div style={{ fontSize: 22, fontWeight: 600, color: token.colorText }}>{stats?.totalQuestions ?? 0}</div>
+          </Card>
+        </Col>
+        <Col xs={24} md={6}>
+          <Card bordered bodyStyle={{ padding: 14 }}>
+            <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Sin producción</Text>
+            <div style={{ fontSize: 22, fontWeight: 600, color: token.colorWarning }}>{stats?.byState?.pending ?? 0}</div>
+          </Card>
+        </Col>
+        <Col xs={24} md={6}>
+          <Card bordered bodyStyle={{ padding: 14 }}>
+            <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Parciales</Text>
+            <div style={{ fontSize: 22, fontWeight: 600, color: token.colorPrimary }}>{stats?.byState?.partial ?? 0}</div>
+          </Card>
+        </Col>
+        <Col xs={24} md={6}>
+          <Card bordered bodyStyle={{ padding: 14 }}>
+            <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Completas</Text>
+            <div style={{ fontSize: 22, fontWeight: 600, color: token.colorSuccess }}>{stats?.byState?.complete ?? 0}</div>
+          </Card>
+        </Col>
+      </Row>
 
-      {/* Filtro de estado de trazabilidad */}
-      <div className="mb-3 flex flex-wrap items-center gap-1.5">
-        {(
-          [
-            { key: "all", label: "Todas", count: stats?.byState?.all },
-            { key: "pending", label: "Pendientes", count: stats?.byState?.pending },
-            { key: "partial", label: "Parciales", count: stats?.byState?.partial },
-            { key: "complete", label: "Completas", count: stats?.byState?.complete },
-          ] as { key: StateFilter; label: string; count?: number }[]
-        ).map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setStateFilter(tab.key)}
-            className={cn(
-              "px-3 py-1 rounded-md text-xs font-medium border transition-colors",
-              stateFilter === tab.key
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-surface text-muted-foreground border-border hover:text-foreground hover:bg-surface-hover"
-            )}
-          >
-            {tab.label}
-            {typeof tab.count === "number" && (
-              <span className="ml-1.5 opacity-70 font-mono text-[10px]">{tab.count}</span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Filtros inline */}
-      <div className="mb-4">
-        <QuestionFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          documents={documents}
-          periodos={[]}
-          categorias={[]}
-        />
-      </div>
-
-      {/* Lista de preguntas */}
-      {loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-lg" />
-          ))}
-        </div>
-      ) : questions.length === 0 ? (
-        <EmptyState
-          icon={BookOpen}
-          title={total === 0 ? "Sin preguntas generadas" : "Sin resultados"}
-          description={total === 0
-            ? "Genera preguntas de investigacion a partir de tus documentos"
-            : "Intenta con otros filtros"}
-          action={total === 0 ? {
-            label: "Generar preguntas",
-            onClick: () => window.location.href = "/questions/generate",
-          } : undefined}
-        />
-      ) : (
-        <>
-          {/* Cuando sort = cronológico o por periodo, agrupamos visualmente
-              con un header por bloque temporal. Esto hace evidente la flecha
-              cronológica PRE→POS y ayuda a navegar bloques grandes. */}
-          {(filters.sortBy === "cronologico" || filters.sortBy === "periodo" || !filters.sortBy) ? (
-            <div className="space-y-6">
-              {(() => {
-                // Agrupar preservando el orden que vino del API
-                const groups: { code: string; nombre: string; rango: string; items: Question[] }[] = [];
-                for (const q of questions) {
-                  const last = groups[groups.length - 1];
-                  if (last && last.code === q.periodoCode) {
-                    last.items.push(q);
-                  } else {
-                    groups.push({
-                      code: q.periodoCode,
-                      nombre: q.periodoNombre,
-                      rango: q.periodoRango,
-                      items: [q],
-                    });
-                  }
-                }
-                return groups.map((g) => (
-                  <section key={g.code + groups.indexOf(g)} className="space-y-2">
-                    <div className="sticky top-0 z-10 -mx-2 px-2 py-2 bg-background/95 backdrop-blur border-b border-border flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary">
-                        {g.code}
-                      </span>
-                      <h2 className="text-sm font-semibold text-foreground">{g.nombre}</h2>
-                      <span className="text-xs text-muted-foreground">{g.rango}</span>
-                      <span className="ml-auto text-[10px] font-mono text-muted-foreground">
-                        {g.items.length} pregunta{g.items.length !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {g.items.map((q) => (
-                        <QuestionCard key={q.id} question={q} showDocument={!filters.documentId} />
-                      ))}
-                    </div>
-                  </section>
-                ));
-              })()}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {questions.map((q) => (
-                <QuestionCard key={q.id} question={q} showDocument={!filters.documentId} />
-              ))}
-            </div>
-          )}
-
-          {/* Paginacion */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
-              <p className="text-xs text-muted-foreground">
-                Pagina {page} de {totalPages} &middot; {total} preguntas
-              </p>
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="p-1.5 rounded-md bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="p-1.5 rounded-md bg-muted text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-      {/* Dialog generacion en lote */}
-      <Dialog open={showBatchGenerate} onClose={() => setShowBatchGenerate(false)}>
-        <DialogHeader onClose={() => setShowBatchGenerate(false)}>
-          Generar Preguntas en Lote
-        </DialogHeader>
-        <DialogBody>
-          <BatchGeneratePanel
-            pendingCount={pendingCount}
-            onComplete={() => {
-              fetchQuestions();
-              fetchPendingCount();
-            }}
+      <Card bordered style={{ marginBottom: 16 }}>
+        <Space wrap size={10}>
+          <Input
+            allowClear
+            placeholder="Buscar en preguntas y justificaciones…"
+            prefix={<SearchOutlined />}
+            style={{ width: 320 }}
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           />
-        </DialogBody>
-      </Dialog>
-    </PageContainer>
+          <Select
+            allowClear
+            placeholder="Documento"
+            style={{ width: 240 }}
+            value={filters.documentId || undefined}
+            onChange={(v) => setFilters({ ...filters, documentId: v ?? "" })}
+            showSearch
+            optionFilterProp="label"
+            options={docs.map((d) => ({ value: d.id, label: d.filename }))}
+          />
+          <Select
+            allowClear
+            placeholder="Período"
+            style={{ width: 220 }}
+            value={filters.periodo || undefined}
+            onChange={(v) => setFilters({ ...filters, periodo: v ?? "" })}
+            showSearch
+            optionFilterProp="label"
+            options={PERIOD_OPTIONS.map((p) => ({ value: p.code, label: p.nombre }))}
+          />
+          <Select
+            allowClear
+            placeholder="Categoría"
+            style={{ width: 220 }}
+            value={filters.categoria || undefined}
+            onChange={(v) => setFilters({ ...filters, categoria: v ?? "" })}
+            showSearch
+            optionFilterProp="label"
+            options={CATEGORY_OPTIONS.map((c) => ({ value: c.code, label: c.nombre }))}
+          />
+          <Select
+            style={{ width: 160 }}
+            value={filters.sortBy}
+            onChange={(v) => setFilters({ ...filters, sortBy: v })}
+            options={SORT_OPTIONS}
+          />
+          <Segmented
+            value={view}
+            onChange={(v) => setView(v as "list" | "cards")}
+            options={[
+              { value: "list", icon: <UnorderedListOutlined /> },
+              { value: "cards", icon: <AppstoreOutlined /> },
+            ]}
+          />
+        </Space>
+      </Card>
+
+      <Tabs
+        activeKey={stateFilter}
+        onChange={(k) => setStateFilter(k as StateFilter)}
+        items={[
+          { key: "all", label: `Todas (${stats?.byState?.all ?? 0})` },
+          { key: "pending", label: `Sin producción (${stats?.byState?.pending ?? 0})` },
+          { key: "partial", label: `Parciales (${stats?.byState?.partial ?? 0})` },
+          { key: "complete", label: `Completas (${stats?.byState?.complete ?? 0})` },
+        ]}
+      />
+
+      {loading ? (
+        <Card bordered><Skeleton active paragraph={{ rows: 8 }} /></Card>
+      ) : questions.length === 0 ? (
+        <Card bordered>
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="Sin preguntas con estos filtros"
+          />
+        </Card>
+      ) : grouped ? (
+        <div>
+          {Object.entries(grouped).map(([code, qs]) => {
+            const isPeriod = filters.sortBy === "periodo" || filters.sortBy === "cronologico";
+            const p = isPeriod ? getPeriodByCode(code) : undefined;
+            const c = !isPeriod ? getCategoryByCode(code) : undefined;
+            const color = isPeriod ? getPeriodColor(code) : getCategoryColor(code);
+            return (
+              <div key={code} style={{ marginBottom: 24 }}>
+                <div
+                  style={{
+                    position: "sticky",
+                    top: 64,
+                    zIndex: 2,
+                    background: token.colorBgLayout,
+                    padding: "12px 0",
+                    borderBottom: `2px solid ${color}`,
+                    marginBottom: 12,
+                  }}
+                >
+                  <Space>
+                    <Tag style={{ background: `${color}1A`, border: "none", color, fontWeight: 600 }}>
+                      {p?.nombre || c?.nombre || code}
+                    </Tag>
+                    {p?.rango && <Text type="secondary" style={{ fontSize: 12 }}>{p.rango}</Text>}
+                    <Text type="secondary" style={{ fontSize: 12 }}>{qs.length} preguntas</Text>
+                  </Space>
+                </div>
+                <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                  {qs.map((q) => (
+                    <QuestionRow key={q.id} question={q} view={view} />
+                  ))}
+                </Space>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+          {questions.map((q) => (
+            <QuestionRow key={q.id} question={q} view={view} />
+          ))}
+        </Space>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
+        <Pagination
+          current={page}
+          pageSize={LIMIT}
+          total={total}
+          onChange={setPage}
+          showSizeChanger={false}
+          showTotal={(t) => `${t} preguntas`}
+        />
+      </div>
+    </div>
   );
 }
 
-export default function QuestionsPage() {
+function QuestionRow({ question, view }: { question: Question; view: "list" | "cards" }) {
+  const { token } = theme.useToken();
+  const periodColor = getPeriodColor(question.periodoCode);
+  const categoryColor = getCategoryColor(question.categoriaCode);
+  const totalDelivs = question.deliverableCount ?? 0;
+
   return (
-    <Suspense fallback={
-      <PageContainer maxWidth="xl">
-        <div className="space-y-3">
-          <Skeleton className="h-8 w-64" />
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-lg" />
-          ))}
-        </div>
-      </PageContainer>
-    }>
-      <QuestionsContent />
-    </Suspense>
+    <Card
+      bordered
+      hoverable
+      bodyStyle={{ padding: 14 }}
+      style={{ borderLeft: `3px solid ${periodColor}` }}
+    >
+      <Row gutter={12} align="middle">
+        <Col flex="auto">
+          <Space direction="vertical" size={6} style={{ width: "100%" }}>
+            <Text style={{ fontSize: 14, lineHeight: 1.5, color: token.colorText, fontWeight: 500 }}>
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 26,
+                  textAlign: "center",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  background: token.colorFillSecondary,
+                  borderRadius: 4,
+                  padding: "1px 4px",
+                  marginRight: 8,
+                  color: token.colorTextSecondary,
+                }}
+              >
+                {question.questionNumber}
+              </span>
+              {question.pregunta}
+            </Text>
+            <Space wrap size={4}>
+              <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10 }}>
+                {question.periodoNombre}
+              </Tag>
+              <Tag style={{ background: `${categoryColor}1A`, border: "none", color: categoryColor, fontSize: 10 }}>
+                {question.categoriaNombre}
+              </Tag>
+              {question.subcategoriaNombre && <Tag style={{ fontSize: 10 }}>{question.subcategoriaNombre}</Tag>}
+            </Space>
+            {view === "cards" && (
+              <Paragraph
+                ellipsis={{ rows: 2, expandable: true, symbol: "leer más" }}
+                style={{ fontSize: 12, color: token.colorTextTertiary, margin: 0 }}
+              >
+                {question.justificacion}
+              </Paragraph>
+            )}
+          </Space>
+        </Col>
+        <Col>
+          <Space direction="vertical" size={4} align="end">
+            <Tag
+              color={totalDelivs > 0 ? "success" : "default"}
+              icon={totalDelivs > 0 ? <CheckCircleFilled /> : <ClockCircleOutlined />}
+              style={{ margin: 0, fontSize: 11 }}
+            >
+              {totalDelivs} producciones
+            </Tag>
+            {question.document && (
+              <Tooltip title={question.document.filename}>
+                <Link
+                  href={`/documents/${question.document.id}`}
+                  style={{ fontSize: 11, color: token.colorTextTertiary }}
+                >
+                  <FileTextOutlined /> {question.document.filename.slice(0, 24)}
+                </Link>
+              </Tooltip>
+            )}
+            <Space size={4}>
+              <Link href={`/questions/matriz?focus=${question.id}`}>
+                <Button size="small" type="text">Producir</Button>
+              </Link>
+            </Space>
+          </Space>
+        </Col>
+      </Row>
+    </Card>
   );
 }

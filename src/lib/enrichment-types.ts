@@ -21,7 +21,7 @@ export interface EnrichmentMetadata {
  * bookTitle si fue enriquecido, filename como fallback.
  */
 export function getDocumentDisplayName(
-  doc: { filename: string; metadata?: Record<string, unknown> | null }
+  doc: { filename: string; metadata?: EnrichmentMetadata | Record<string, unknown> | null }
 ): string {
   if (!doc.metadata || typeof doc.metadata !== "object") return doc.filename;
   const meta = doc.metadata as EnrichmentMetadata;
