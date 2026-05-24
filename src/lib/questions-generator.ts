@@ -52,6 +52,13 @@ export interface QuestionData {
   subcategoriaNombre: string;
   periodosRelacionados: string[];
   categoriasRelacionadas: string[];
+  // Anclaje temporal preciso
+  yearPrincipal: number | null;
+  yearsSecondary: number[];
+  // Entidades extraídas con conteo estricto
+  entidadesPersonas: string[]; // 5
+  entidadesLugares: string[];  // 3
+  entidadesConceptos: string[]; // 4
   justificacion: string;
 }
 
@@ -98,9 +105,30 @@ Responde EXCLUSIVAMENTE con un bloque JSON válido. Sin texto antes ni después.
     },
     "periodos_relacionados": ["códigos de otros períodos que la pregunta toca tangencialmente"],
     "categorias_relacionadas": ["códigos de otras categorías que la pregunta toca tangencialmente"],
+    "anio_principal": 1810,
+    "anios_secundarios": [1808, 1819, 1821],
+    "entidades": {
+      "personas": ["Persona 1", "Persona 2", "Persona 3", "Persona 4", "Persona 5"],
+      "lugares": ["Lugar 1", "Lugar 2", "Lugar 3"],
+      "conceptos": ["Concepto 1", "Concepto 2", "Concepto 3", "Concepto 4"]
+    },
     "justificacion": "Breve explicación (1-2 oraciones) de por qué esta pregunta es relevante para la investigación histórica sobre Colombia"
   }
 ]
+
+## REGLAS PARA AÑOS Y ENTIDADES
+
+### Años
+- **anio_principal**: el año único más representativo del foco temporal de la pregunta (entero, ej. 1810, 1948, 1991). Si la pregunta abarca un proceso largo, elige el año pivote (ej. inicio del proceso, hito central, fin de etapa). Si es genuinamente transversal (siglos), usa el punto medio del período principal.
+- **anios_secundarios**: 2 a 4 años adicionales que la pregunta toca de forma significativa (antecedentes, consecuencias, hitos paralelos). En orden cronológico ascendente. NO repitas anio_principal. Si la pregunta es muy puntual y no hay años secundarios claros, usa [].
+
+### Entidades (conteo ESTRICTO)
+Cada pregunta debe incluir exactamente:
+- **5 personas**: actores históricos individuales (Bolívar, Gaitán, Uribe, etc.). Si la pregunta no tiene 5 personas obvias, incluye actores institucionales personificables (un presidente, un líder gremial, un caudillo regional) o actores colectivos con nombre propio (FARC, M-19, ANUC). Nombres completos cuando sea posible.
+- **3 lugares**: territorios, regiones, ciudades, países o accidentes geográficos relevantes (Bogotá, Antioquia, Panamá, Magdalena Medio). Si la pregunta es nacional, mezcla escalas (nacional + regional + local o internacional).
+- **4 conceptos**: nociones analíticas, procesos, ideologías o instituciones (liberalismo, federalismo, hacienda cafetera, narcotráfico, paz negociada, soberanía popular). Evita repetir el título del período histórico.
+
+REGLA CRÍTICA: los conteos son ESTRICTOS — exactamente 5/3/4. No menos, no más. Si tienes dudas, fuerza la inclusión con entidades plausibles del contexto histórico (no inventes nombres falsos, pero sí puedes nombrar entidades estructurales del período).
 
 ## TAXONOMÍA DE PERÍODOS HISTÓRICOS
 
@@ -264,6 +292,9 @@ function buildGenerateToolSpec(targetCount: number) {
                 "subcategoria",
                 "periodos_relacionados",
                 "categorias_relacionadas",
+                "anio_principal",
+                "anios_secundarios",
+                "entidades",
                 "justificacion",
               ],
               properties: {
@@ -302,6 +333,41 @@ function buildGenerateToolSpec(targetCount: number) {
                   type: "array",
                   items: { type: "string" },
                 },
+                anio_principal: {
+                  type: "integer",
+                  minimum: 1000,
+                  maximum: 2100,
+                },
+                anios_secundarios: {
+                  type: "array",
+                  items: { type: "integer", minimum: 1000, maximum: 2100 },
+                  minItems: 0,
+                  maxItems: 4,
+                },
+                entidades: {
+                  type: "object",
+                  required: ["personas", "lugares", "conceptos"],
+                  properties: {
+                    personas: {
+                      type: "array",
+                      items: { type: "string", minLength: 2 },
+                      minItems: 5,
+                      maxItems: 5,
+                    },
+                    lugares: {
+                      type: "array",
+                      items: { type: "string", minLength: 2 },
+                      minItems: 3,
+                      maxItems: 3,
+                    },
+                    conceptos: {
+                      type: "array",
+                      items: { type: "string", minLength: 2 },
+                      minItems: 4,
+                      maxItems: 4,
+                    },
+                  },
+                },
                 justificacion: { type: "string", minLength: 10 },
               },
             },
@@ -319,6 +385,21 @@ function normalizeQuestions(raw: unknown[]): QuestionData[] {
     const periodo = (item.periodo_historico as Record<string, string>) ?? {};
     const categoria = (item.categoria as Record<string, string>) ?? {};
     const subcategoria = (item.subcategoria as Record<string, string>) ?? {};
+    const entidades = (item.entidades as Record<string, unknown>) ?? {};
+
+    const yearPrincipal =
+      typeof item.anio_principal === "number" && Number.isFinite(item.anio_principal)
+        ? Math.trunc(item.anio_principal as number)
+        : null;
+
+    const yearsSecondary = ((item.anios_secundarios as unknown[]) ?? [])
+      .filter((y) => typeof y === "number" && Number.isFinite(y))
+      .map((y) => Math.trunc(y as number));
+
+    const cleanList = (arr: unknown): string[] =>
+      ((arr as unknown[]) ?? [])
+        .map((x) => (typeof x === "string" ? x.trim() : ""))
+        .filter((s) => s.length > 0);
 
     return {
       questionNumber: (item.id as number) ?? i + 1,
@@ -332,6 +413,11 @@ function normalizeQuestions(raw: unknown[]): QuestionData[] {
       subcategoriaNombre: subcategoria.nombre ?? "Historia académica",
       periodosRelacionados: ((item.periodos_relacionados as string[]) ?? []).filter(Boolean),
       categoriasRelacionadas: ((item.categorias_relacionadas as string[]) ?? []).filter(Boolean),
+      yearPrincipal,
+      yearsSecondary,
+      entidadesPersonas: cleanList(entidades.personas),
+      entidadesLugares: cleanList(entidades.lugares),
+      entidadesConceptos: cleanList(entidades.conceptos),
       justificacion: (item.justificacion as string) ?? "",
     };
   });

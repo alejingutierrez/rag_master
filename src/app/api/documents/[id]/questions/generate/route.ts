@@ -151,6 +151,11 @@ export async function POST(
               subcategoriaNombre: q.subcategoriaNombre,
               periodosRelacionados: q.periodosRelacionados,
               categoriasRelacionadas: q.categoriasRelacionadas,
+              yearPrincipal: q.yearPrincipal,
+              yearsSecondary: q.yearsSecondary,
+              entidadesPersonas: q.entidadesPersonas,
+              entidadesLugares: q.entidadesLugares,
+              entidadesConceptos: q.entidadesConceptos,
               justificacion: q.justificacion,
               batchId,
               targetCount,
@@ -170,6 +175,11 @@ export async function POST(
               categoriaNombre: q.categoriaNombre,
               subcategoriaCode: q.subcategoriaCode,
               justificacion: q.justificacion,
+              yearPrincipal: q.yearPrincipal,
+              yearsSecondary: q.yearsSecondary,
+              entidadesPersonas: q.entidadesPersonas,
+              entidadesLugares: q.entidadesLugares,
+              entidadesConceptos: q.entidadesConceptos,
             },
           });
         }

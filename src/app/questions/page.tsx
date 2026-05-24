@@ -53,6 +53,11 @@ interface Question {
   subcategoriaNombre: string;
   periodosRelacionados: string[];
   categoriasRelacionadas: string[];
+  yearPrincipal?: number | null;
+  yearsSecondary?: number[];
+  entidadesPersonas?: string[];
+  entidadesLugares?: string[];
+  entidadesConceptos?: string[];
   justificacion: string;
   document: { id: string; filename: string };
   createdAt: string;
@@ -392,6 +397,12 @@ function QuestionRow({ question, view }: { question: Question; view: "list" | "c
   const categoryColor = getCategoryColor(question.categoriaCode);
   const totalDelivs = question.deliverableCount ?? 0;
 
+  const personas = question.entidadesPersonas ?? [];
+  const lugares = question.entidadesLugares ?? [];
+  const conceptos = question.entidadesConceptos ?? [];
+  const yearsSec = question.yearsSecondary ?? [];
+  const hasEntities = personas.length + lugares.length + conceptos.length > 0;
+
   return (
     <Card
       hoverable
@@ -424,6 +435,25 @@ function QuestionRow({ question, view }: { question: Question; view: "list" | "c
               <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10 }}>
                 {question.periodoNombre}
               </Tag>
+              {question.yearPrincipal != null && (
+                <Tag
+                  style={{
+                    background: token.colorFillSecondary,
+                    border: "none",
+                    color: token.colorText,
+                    fontSize: 10,
+                    fontFamily: "var(--font-mono)",
+                    fontWeight: 600,
+                  }}
+                >
+                  {question.yearPrincipal}
+                  {yearsSec.length > 0 && (
+                    <span style={{ color: token.colorTextTertiary, fontWeight: 400 }}>
+                      {" "}· {yearsSec.join(", ")}
+                    </span>
+                  )}
+                </Tag>
+              )}
               <Tag style={{ background: `${categoryColor}1A`, border: "none", color: categoryColor, fontSize: 10 }}>
                 {question.categoriaNombre}
               </Tag>
@@ -436,6 +466,9 @@ function QuestionRow({ question, view }: { question: Question; view: "list" | "c
               >
                 {question.justificacion}
               </Paragraph>
+            )}
+            {view === "cards" && hasEntities && (
+              <EntitiesRow personas={personas} lugares={lugares} conceptos={conceptos} />
             )}
           </Space>
         </Col>
@@ -467,5 +500,54 @@ function QuestionRow({ question, view }: { question: Question; view: "list" | "c
         </Col>
       </Row>
     </Card>
+  );
+}
+
+function EntitiesRow({
+  personas,
+  lugares,
+  conceptos,
+}: {
+  personas: string[];
+  lugares: string[];
+  conceptos: string[];
+}) {
+  const { token } = theme.useToken();
+
+  const group = (
+    label: string,
+    items: string[],
+    color: string,
+  ) => {
+    if (items.length === 0) return null;
+    return (
+      <Space size={4} wrap>
+        <Text style={{ fontSize: 10, color: token.colorTextTertiary, textTransform: "uppercase", letterSpacing: 0.4 }}>
+          {label}
+        </Text>
+        {items.map((it) => (
+          <Tag
+            key={`${label}-${it}`}
+            style={{
+              fontSize: 10,
+              border: `1px solid ${color}33`,
+              background: `${color}0F`,
+              color,
+              margin: 0,
+            }}
+          >
+            {it}
+          </Tag>
+        ))}
+      </Space>
+    );
+  };
+
+  return (
+    <Space vertical size={4} style={{ width: "100%", marginTop: 4 }}>
+      {group("Personas", personas, token.colorInfo)}
+      {group("Lugares", lugares, token.colorSuccess)}
+      {group("Conceptos", conceptos, token.colorWarning)}
+    </Space>
   );
 }

@@ -74,6 +74,19 @@ model Question {
   periodosRelacionados   String[]
   categoriasRelacionadas String[]
 
+  // Anclaje temporal preciso (complementa periodoCode/periodoRango).
+  // yearPrincipal: año único más representativo del foco temporal de la pregunta.
+  // yearsSecondary: años que la pregunta toca tangencialmente (orden cronológico).
+  yearPrincipal          Int?
+  yearsSecondary         Int[]    @default([])
+
+  // Entidades segmentadas por tipo. El generador las produce con conteo estricto
+  // (5 personas / 3 lugares / 4 conceptos). Permiten construir índices de entidades
+  // a nivel de pregunta sin re-procesar el chunk source.
+  entidadesPersonas      String[] @default([])
+  entidadesLugares       String[] @default([])
+  entidadesConceptos     String[] @default([])
+
   // Ordenamiento inteligente (asignado por questions-orderer)
   ordenPeriodo           Int?
   ordenCategoria         Int?

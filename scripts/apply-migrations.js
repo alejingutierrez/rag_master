@@ -144,6 +144,16 @@ const MIGRATIONS = [
      ELSE 15
    END
    WHERE "periodoOrden" = 15 OR "periodoOrden" IS NULL`,
+
+  // 2026-05-23: anclaje temporal preciso + entidades segmentadas por tipo.
+  // yearPrincipal / yearsSecondary: complementan periodoCode con años concretos.
+  // entidadesPersonas / Lugares / Conceptos: extracción estructurada que evita
+  // re-procesar chunks para construir índices de entidades a nivel pregunta.
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "yearPrincipal" INTEGER`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "yearsSecondary" INTEGER[] NOT NULL DEFAULT ARRAY[]::INTEGER[]`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "entidadesPersonas" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "entidadesLugares" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "entidadesConceptos" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
 ];
 
 async function main() {
