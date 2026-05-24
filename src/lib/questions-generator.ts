@@ -2,10 +2,22 @@ import {
   BedrockRuntimeClient,
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { awsConfig } from "./aws-config";
 import { withBedrockSemaphore } from "./bedrock-semaphore";
 
-const bedrock = new BedrockRuntimeClient(awsConfig);
+// Cliente dedicado con timeout extendido (10 min). El default global de
+// aws-config es 180s, suficiente para chat normal pero NO para esta tarea:
+// con los campos extendidos (yearPrincipal + yearsSecondary + 12 entidades por
+// pregunta) Opus 4.7 puede tardar 3-6 min en producir 60+ preguntas via tool use.
+// Sin este override el SDK aborta silenciosamente y el stream queda colgado.
+const bedrock = new BedrockRuntimeClient({
+  ...awsConfig,
+  requestHandler: new NodeHttpHandler({
+    requestTimeout: 600_000,
+    connectionTimeout: 10_000,
+  }),
+});
 
 // Modelo para generación de preguntas.
 // Siempre Opus 4.7 — el usuario quiere máxima calidad para esta tarea crítica.
@@ -32,10 +44,13 @@ import {
   computeTargetCount,
 } from "./questions-config";
 
-// Heurística para maxTokens según N: ~400 tokens/pregunta + overhead.
-// 20 → 16k, 50 → 28k, 80 → 40k, 100 → 48k.
+// Heurística para maxTokens según N. Con los campos extendidos (yearPrincipal,
+// yearsSecondary, 5 personas + 3 lugares + 4 conceptos), cada pregunta ocupa
+// ~600-700 tokens de output. Calculamos generoso para evitar truncamiento
+// silencioso (que rompe el tool use por JSON inválido).
+// 20 → 20k, 50 → 38k, 80 → 56k, 100 → 68k.
 function maxTokensFor(count: number): number {
-  return Math.min(60_000, 8_000 + count * 400);
+  return Math.min(80_000, 8_000 + count * 600);
 }
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -533,20 +548,42 @@ ${context}`;
     : await sendWithRetry();
 
   // Con tool use, Bedrock garantiza JSON válido conforme al schema
-  const toolUseBlock = response.output?.message?.content?.find(
+  const stopReason = response.stopReason;
+  const usage = response.usage;
+  const content = response.output?.message?.content ?? [];
+
+  console.log(
+    `[questions-gen] Bedrock response: stopReason=${stopReason}, usage=${JSON.stringify(usage)}, blocks=${content.length}, types=${content.map((b) => Object.keys(b).join("|")).join(",")}`
+  );
+
+  const toolUseBlock = content.find(
     (block) => block.toolUse?.name === GENERATE_TOOL_NAME
   );
 
   if (!toolUseBlock?.toolUse?.input) {
-    throw new Error("Claude no retornó el tool use con las preguntas");
+    // Diagnóstico: si Bedrock devuelve solo texto (no tool use), suele ser por
+    // schema imposible de satisfacer o stopReason=max_tokens. Dump del texto.
+    const textBlock = content.find((b) => b.text);
+    const preview = textBlock?.text?.slice(0, 500) ?? "(sin texto)";
+    throw new Error(
+      `Claude no retornó tool use válido. stopReason=${stopReason}. Texto: ${preview}`
+    );
   }
 
   const input = toolUseBlock.toolUse.input as Record<string, unknown>;
   const preguntas = input.preguntas as unknown[];
 
   if (!Array.isArray(preguntas) || preguntas.length === 0) {
-    throw new Error("El tool use no contiene preguntas válidas");
+    const inputKeys = Object.keys(input).join(",");
+    const inputPreview = JSON.stringify(input).slice(0, 500);
+    throw new Error(
+      `Tool use con preguntas vacías. stopReason=${stopReason}. Keys=${inputKeys}. Input: ${inputPreview}`
+    );
   }
+
+  console.log(
+    `[questions-gen] ✅ ${preguntas.length} preguntas en tool use. stopReason=${stopReason}`
+  );
 
   return normalizeQuestions(preguntas);
 }
