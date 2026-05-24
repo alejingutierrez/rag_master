@@ -1,8 +1,9 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useUrlFilters } from "@/lib/use-url-state";
 import {
   Card,
   Typography,
@@ -90,77 +91,84 @@ export default function QuestionsPage() {
 function QuestionsContent() {
   const params = useSearchParams();
   const { token } = theme.useToken();
-  const initialDocId = params.get("documentId") ?? "";
-  const initialPeriodo = params.get("periodo") ?? "";
 
-  const [filters, setFilters] = useState({
-    documentId: initialDocId,
-    periodo: initialPeriodo,
+  const [filters, updateFilters] = useUrlFilters({
+    documentId: params.get("documentId") ?? "",
+    periodo: params.get("periodo") ?? "",
     categoria: "",
     search: "",
     sortBy: "cronologico",
+    state: "all",
+    view: "list",
+    page: "1",
   });
-  const [stateFilter, setStateFilter] = useState<StateFilter>("all");
+
+  const stateFilter = filters.state as StateFilter;
+  const page = Math.max(1, Number(filters.page) || 1);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [docs, setDocs] = useState<Array<{ id: string; filename: string }>>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
-  const [view, setView] = useState<"list" | "cards">("list");
   const LIMIT = 30;
 
   useEffect(() => {
-    fetch("/api/documents?limit=300")
+    const ctrl = new AbortController();
+    fetch("/api/documents?limit=300", { signal: ctrl.signal })
       .then((r) => r.json())
       .then((data) => setDocs(data.documents ?? []))
-      .catch(console.error);
+      .catch((e) => { if ((e as Error).name !== "AbortError") console.error(e); });
+    return () => ctrl.abort();
   }, []);
 
   useEffect(() => {
-    fetch("/api/questions?includeStats=true&limit=1")
+    const ctrl = new AbortController();
+    fetch("/api/questions?includeStats=true&limit=1", { signal: ctrl.signal })
       .then((r) => r.json())
       .then((data) => setStats(data.stats ?? null))
-      .catch(console.error);
+      .catch((e) => { if ((e as Error).name !== "AbortError") console.error(e); });
+    return () => ctrl.abort();
   }, []);
 
   useEffect(() => {
-    fetch("/api/questions/generate-batch")
+    const ctrl = new AbortController();
+    fetch("/api/questions/generate-batch", { signal: ctrl.signal })
       .then((r) => r.json())
       .then((d) => setPendingCount(d.pendingCount ?? 0))
-      .catch(console.error);
+      .catch((e) => { if ((e as Error).name !== "AbortError") console.error(e); });
+    return () => ctrl.abort();
   }, []);
 
-  const fetchQuestions = useCallback(async () => {
+  useEffect(() => {
+    const ctrl = new AbortController();
     setLoading(true);
-    try {
-      const p = new URLSearchParams();
-      if (filters.documentId) p.set("documentId", filters.documentId);
-      if (filters.periodo) p.set("periodo", filters.periodo);
-      if (filters.categoria) p.set("categoria", filters.categoria);
-      if (filters.search) p.set("search", filters.search);
-      if (filters.sortBy) p.set("sortBy", filters.sortBy);
-      if (stateFilter !== "all") p.set("state", stateFilter);
-      p.set("includeDeliverables", "true");
-      p.set("page", String(page));
-      p.set("limit", String(LIMIT));
-      const res = await fetch(`/api/questions?${p}`);
-      const data = await res.json();
-      setQuestions(data.questions ?? []);
-      setTotal(data.pagination?.total ?? 0);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, stateFilter, page]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [filters, stateFilter]);
-
-  useEffect(() => {
-    fetchQuestions();
-  }, [fetchQuestions]);
+    (async () => {
+      try {
+        const p = new URLSearchParams();
+        if (filters.documentId) p.set("documentId", filters.documentId);
+        if (filters.periodo) p.set("periodo", filters.periodo);
+        if (filters.categoria) p.set("categoria", filters.categoria);
+        if (filters.search) p.set("search", filters.search);
+        if (filters.sortBy) p.set("sortBy", filters.sortBy);
+        if (stateFilter !== "all") p.set("state", stateFilter);
+        p.set("includeDeliverables", "true");
+        p.set("page", String(page));
+        p.set("limit", String(LIMIT));
+        const res = await fetch(`/api/questions?${p}`, { signal: ctrl.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (ctrl.signal.aborted) return;
+        setQuestions(data.questions ?? []);
+        setTotal(data.pagination?.total ?? 0);
+      } catch (e) {
+        if ((e as Error).name !== "AbortError") console.error(e);
+      } finally {
+        if (!ctrl.signal.aborted) setLoading(false);
+      }
+    })();
+    return () => ctrl.abort();
+  }, [filters.documentId, filters.periodo, filters.categoria, filters.search, filters.sortBy, stateFilter, page]);
 
   const grouped = (() => {
     if (filters.sortBy === "periodo" || filters.sortBy === "cronologico") {
@@ -247,14 +255,14 @@ function QuestionsContent() {
             prefix={<SearchOutlined />}
             style={{ width: 320 }}
             value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            onChange={(e) => updateFilters({ search: e.target.value, page: "1" })}
           />
           <Select
             allowClear
             placeholder="Documento"
             style={{ width: 240 }}
             value={filters.documentId || undefined}
-            onChange={(v) => setFilters({ ...filters, documentId: v ?? "" })}
+            onChange={(v) => updateFilters({ documentId: v ?? "", page: "1" })}
             showSearch
             optionFilterProp="label"
             options={docs.map((d) => ({ value: d.id, label: d.filename }))}
@@ -264,7 +272,7 @@ function QuestionsContent() {
             placeholder="Período"
             style={{ width: 220 }}
             value={filters.periodo || undefined}
-            onChange={(v) => setFilters({ ...filters, periodo: v ?? "" })}
+            onChange={(v) => updateFilters({ periodo: v ?? "", page: "1" })}
             showSearch
             optionFilterProp="label"
             options={PERIOD_OPTIONS.map((p) => ({ value: p.code, label: p.nombre }))}
@@ -274,7 +282,7 @@ function QuestionsContent() {
             placeholder="Categoría"
             style={{ width: 220 }}
             value={filters.categoria || undefined}
-            onChange={(v) => setFilters({ ...filters, categoria: v ?? "" })}
+            onChange={(v) => updateFilters({ categoria: v ?? "", page: "1" })}
             showSearch
             optionFilterProp="label"
             options={CATEGORY_OPTIONS.map((c) => ({ value: c.code, label: c.nombre }))}
@@ -282,12 +290,12 @@ function QuestionsContent() {
           <Select
             style={{ width: 160 }}
             value={filters.sortBy}
-            onChange={(v) => setFilters({ ...filters, sortBy: v })}
+            onChange={(v) => updateFilters({ sortBy: v, page: "1" })}
             options={SORT_OPTIONS}
           />
           <Segmented
-            value={view}
-            onChange={(v) => setView(v as "list" | "cards")}
+            value={filters.view}
+            onChange={(v) => updateFilters({ view: String(v) })}
             options={[
               { value: "list", icon: <UnorderedListOutlined /> },
               { value: "cards", icon: <AppstoreOutlined /> },
@@ -298,7 +306,7 @@ function QuestionsContent() {
 
       <Tabs
         activeKey={stateFilter}
-        onChange={(k) => setStateFilter(k as StateFilter)}
+        onChange={(k) => updateFilters({ state: k, page: "1" })}
         items={[
           { key: "all", label: `Todas (${stats?.byState?.all ?? 0})` },
           { key: "pending", label: `Sin producción (${stats?.byState?.pending ?? 0})` },
@@ -346,7 +354,7 @@ function QuestionsContent() {
                 </div>
                 <Space vertical size={8} style={{ width: "100%" }}>
                   {qs.map((q) => (
-                    <QuestionRow key={q.id} question={q} view={view} />
+                    <QuestionRow key={q.id} question={q} view={filters.view as "list" | "cards"} />
                   ))}
                 </Space>
               </div>
@@ -356,7 +364,7 @@ function QuestionsContent() {
       ) : (
         <Space vertical size={8} style={{ width: "100%" }}>
           {questions.map((q) => (
-            <QuestionRow key={q.id} question={q} view={view} />
+            <QuestionRow key={q.id} question={q} view={filters.view as "list" | "cards"} />
           ))}
         </Space>
       )}
@@ -366,7 +374,10 @@ function QuestionsContent() {
           current={page}
           pageSize={LIMIT}
           total={total}
-          onChange={setPage}
+          onChange={(p) => {
+            updateFilters({ page: String(p) });
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
           showSizeChanger={false}
           showTotal={(t) => `${t} preguntas`}
         />

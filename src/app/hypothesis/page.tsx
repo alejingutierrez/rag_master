@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Card,
   Typography,
@@ -94,6 +94,14 @@ export default function HypothesisPage() {
     }
   };
 
+  // Limpiar pollers al desmontar
+  useEffect(() => {
+    return () => {
+      if (forPoller.current) clearInterval(forPoller.current);
+      if (againstPoller.current) clearInterval(againstPoller.current);
+    };
+  }, []);
+
   const run = async () => {
     const h = hypothesis.trim();
     if (h.length < 10) {
@@ -164,6 +172,17 @@ export default function HypothesisPage() {
           </Space>
         </Space>
       </Card>
+
+      {(forResult.status !== "idle" || againstResult.status !== "idle") && hypothesis.trim() && (
+        <Card style={{ marginBottom: 16, borderLeft: `3px solid ${token.colorPrimary}` }} styles={{ body: { padding: 14 } }}>
+          <Text type="secondary" style={{ fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            Hipótesis evaluada
+          </Text>
+          <Paragraph style={{ margin: "6px 0 0", fontFamily: "var(--font-serif)", fontSize: 15, lineHeight: 1.5 }}>
+            {hypothesis.trim()}
+          </Paragraph>
+        </Card>
+      )}
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>

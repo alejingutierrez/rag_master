@@ -29,6 +29,7 @@ import {
 } from "@ant-design/icons";
 import ReactMarkdown from "react-markdown";
 import { CHAT_TEMPLATES, DEFAULT_TEMPLATE_ID, getTemplateById, CATEGORY_LABELS } from "@/lib/chat-templates";
+import { safeGet, safeSet } from "@/lib/safe-storage";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -68,15 +69,30 @@ export default function ChatPage() {
   const [streamingText, setStreamingText] = useState("");
   const [citations, setCitations] = useState<ChunkCitation[]>([]);
   const [totalChunksUsed, setTotalChunksUsed] = useState(0);
-  const [selectedTemplateId, setSelectedTemplateId] = useState(DEFAULT_TEMPLATE_ID);
+  const [selectedTemplateId, setSelectedTemplateIdState] = useState(DEFAULT_TEMPLATE_ID);
+  const setSelectedTemplateId = (id: string) => {
+    setSelectedTemplateIdState(id);
+    safeSet("rag-master-chat-template", id);
+  };
   const [showCitations, setShowCitations] = useState(false);
   const [selectedCitation, setSelectedCitation] = useState<ChunkCitation | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Restaurar template seleccionado
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const stored = safeGet<string>("rag-master-chat-template", "");
+    if (stored && getTemplateById(stored)) setSelectedTemplateIdState(stored);
+  }, []);
+
+  // Auto-scroll throttled — no scrollear en cada delta del streaming
+  const lastScrollRef = useRef(0);
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastScrollRef.current < 120) return;
+    lastScrollRef.current = now;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, streamingText]);
 
   useEffect(() => {

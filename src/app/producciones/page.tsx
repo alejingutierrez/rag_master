@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useUrlFilters } from "@/lib/use-url-state";
 import {
   Card,
   Typography,
@@ -11,7 +12,6 @@ import {
   Select,
   Input,
   Pagination,
-  Empty,
   theme,
   Row,
   Col,
@@ -21,6 +21,7 @@ import {
   Segmented,
   Form,
 } from "antd";
+import { EmptyAcademic } from "@/components/layout/empty-academic";
 import {
   AppstoreOutlined,
   SearchOutlined,
@@ -29,8 +30,8 @@ import {
   DatabaseOutlined,
   UnorderedListOutlined,
 } from "@ant-design/icons";
-import dayjs from "dayjs";
-import { CHAT_TEMPLATES, CATEGORY_LABELS, getTemplateById, type TemplateCategory } from "@/lib/chat-templates";
+import dayjs from "@/lib/dayjs-config";
+import { CHAT_TEMPLATES, CATEGORY_LABELS, getTemplateById } from "@/lib/chat-templates";
 import { getPeriodColor, getCategoryColor } from "@/lib/theme";
 
 const { Title, Text, Paragraph } = Typography;
@@ -56,53 +57,81 @@ interface DeliverableItem {
 }
 
 export default function ProduccionesPage() {
+  return (
+    <Suspense fallback={<div className="app-page-wide"><Skeleton active /></div>}>
+      <ProduccionesContent />
+    </Suspense>
+  );
+}
+
+function ProduccionesContent() {
   const { token } = theme.useToken();
   const { message } = App.useApp();
   const [items, setItems] = useState<DeliverableItem[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [templateId, setTemplateId] = useState<string | undefined>();
-  const [category, setCategory] = useState<TemplateCategory | undefined>();
-  const [source, setSource] = useState<string | undefined>();
-  const [search, setSearch] = useState("");
-  const [view, setView] = useState<"grid" | "list">("grid");
   const [showNew, setShowNew] = useState(false);
   const LIMIT = 30;
 
-  const fetchItems = useCallback(async () => {
-    setLoading(true);
-    try {
-      const p = new URLSearchParams();
-      p.set("page", String(page));
-      p.set("limit", String(LIMIT));
-      if (templateId) p.set("templateId", templateId);
-      if (source) p.set("source", source);
-      const res = await fetch(`/api/deliverables?${p}`);
-      const data = await res.json();
-      let list = data.deliverables ?? [];
-      if (category) {
-        list = list.filter((d: DeliverableItem) => getTemplateById(d.templateId)?.category === category);
-      }
-      if (search.trim()) {
-        const q = search.trim().toLowerCase();
-        list = list.filter(
-          (d: DeliverableItem) =>
-            d.question?.pregunta?.toLowerCase().includes(q) ||
-            d.userQuestion?.toLowerCase().includes(q) ||
-            d.answerPreview?.toLowerCase().includes(q),
-        );
-      }
-      setItems(list);
-      setTotal(data.pagination?.total ?? 0);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, templateId, source, category, search]);
+  const [filters, updateFilters] = useUrlFilters({
+    search: "",
+    templateId: "",
+    category: "",
+    source: "",
+    view: "grid",
+    page: "1",
+  });
+
+  const page = Math.max(1, Number(filters.page) || 1);
+
+  const [refreshTick, setRefreshTick] = useState(0);
+  const fetchItems = () => setRefreshTick((n) => n + 1);
 
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    const ctrl = new AbortController();
+    setLoading(true);
+    (async () => {
+      try {
+        const p = new URLSearchParams();
+        p.set("page", String(page));
+        p.set("limit", String(LIMIT));
+        if (filters.templateId) p.set("templateId", filters.templateId);
+        if (filters.source) p.set("source", filters.source);
+        if (filters.search) p.set("search", filters.search);
+        const res = await fetch(`/api/deliverables?${p}`, { signal: ctrl.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (ctrl.signal.aborted) return;
+        let list = data.deliverables ?? [];
+        if (filters.category) {
+          list = list.filter((d: DeliverableItem) => getTemplateById(d.templateId)?.category === filters.category);
+        }
+        if (filters.search.trim()) {
+          const q = filters.search.trim().toLowerCase();
+          list = list.filter(
+            (d: DeliverableItem) =>
+              d.question?.pregunta?.toLowerCase().includes(q) ||
+              d.userQuestion?.toLowerCase().includes(q) ||
+              d.answerPreview?.toLowerCase().includes(q),
+          );
+        }
+        setItems(list);
+        setTotal(data.pagination?.total ?? 0);
+      } catch (e) {
+        if ((e as Error).name !== "AbortError") console.error(e);
+      } finally {
+        if (!ctrl.signal.aborted) setLoading(false);
+      }
+    })();
+    return () => ctrl.abort();
+  }, [page, filters.templateId, filters.source, filters.category, filters.search, refreshTick]);
+
+  // Polling si hay items GENERATING
+  useEffect(() => {
+    if (!items.some((i) => i.status === "GENERATING")) return;
+    const t = setInterval(() => setRefreshTick((n) => n + 1), 5000);
+    return () => clearInterval(t);
+  }, [items]);
 
   return (
     <div className="app-page-wide">
@@ -131,24 +160,24 @@ export default function ProduccionesPage() {
             allowClear
             prefix={<SearchOutlined />}
             placeholder="Buscar en preguntas y respuestas…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={filters.search}
+            onChange={(e) => updateFilters({ search: e.target.value, page: "1" })}
             style={{ width: 300 }}
           />
           <Select
             allowClear
             placeholder="Categoría"
             style={{ width: 160 }}
-            value={category}
-            onChange={setCategory}
+            value={filters.category || undefined}
+            onChange={(v) => updateFilters({ category: (v as string) ?? "", page: "1" })}
             options={Object.entries(CATEGORY_LABELS).map(([k, v]) => ({ value: k, label: v }))}
           />
           <Select
             allowClear
             placeholder="Template"
             style={{ width: 240 }}
-            value={templateId}
-            onChange={setTemplateId}
+            value={filters.templateId || undefined}
+            onChange={(v) => updateFilters({ templateId: v ?? "", page: "1" })}
             showSearch
             optionFilterProp="label"
             options={CHAT_TEMPLATES.map((t) => ({ value: t.id, label: `${t.icon} ${t.name}` }))}
@@ -157,16 +186,16 @@ export default function ProduccionesPage() {
             allowClear
             placeholder="Origen"
             style={{ width: 140 }}
-            value={source}
-            onChange={setSource}
+            value={filters.source || undefined}
+            onChange={(v) => updateFilters({ source: v ?? "", page: "1" })}
             options={[
               { value: "chat", label: <><MessageOutlined /> Chat</> },
               { value: "batch", label: <><DatabaseOutlined /> Batch</> },
             ]}
           />
           <Segmented
-            value={view}
-            onChange={(v) => setView(v as "grid" | "list")}
+            value={filters.view}
+            onChange={(v) => updateFilters({ view: String(v) })}
             options={[
               { value: "grid", icon: <AppstoreOutlined /> },
               { value: "list", icon: <UnorderedListOutlined /> },
@@ -179,9 +208,13 @@ export default function ProduccionesPage() {
         <Card><Skeleton active paragraph={{ rows: 8 }} /></Card>
       ) : items.length === 0 ? (
         <Card>
-          <Empty description="Sin producciones con estos filtros" />
+          <EmptyAcademic
+            title="Sin producciones con estos filtros"
+            description="Ajusta los filtros o crea una producción nueva."
+            action={<Button type="primary" icon={<PlusOutlined />} onClick={() => setShowNew(true)}>Nueva producción</Button>}
+          />
         </Card>
-      ) : view === "grid" ? (
+      ) : filters.view === "grid" ? (
         <Row gutter={[12, 12]}>
           {items.map((d) => (
             <Col key={d.id} xs={24} md={12} lg={8} xl={6}>
@@ -202,7 +235,10 @@ export default function ProduccionesPage() {
           current={page}
           pageSize={LIMIT}
           total={total}
-          onChange={setPage}
+          onChange={(p) => {
+            updateFilters({ page: String(p) });
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
           showSizeChanger={false}
           showTotal={(t) => `${t} producciones`}
         />

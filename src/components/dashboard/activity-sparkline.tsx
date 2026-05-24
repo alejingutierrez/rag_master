@@ -1,7 +1,7 @@
 "use client";
 
 import { theme, Space, Typography } from "antd";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs-config";
 
 const { Text } = Typography;
 

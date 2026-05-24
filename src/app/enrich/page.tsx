@@ -142,17 +142,34 @@ function EnrichContent() {
   const runBatchEnrich = async () => {
     setBatchRunning(true);
     const pending = docs.filter((d) => !d.enriched);
-    message.info(`Iniciando enriquecimiento de ${pending.length} documentos…`);
-    let success = 0;
-    for (const doc of pending) {
-      try {
-        await fetch(`/api/documents/${doc.id}/enrich`, { method: "POST" });
-        success++;
-      } catch {
-        /* keep going */
-      }
+    if (pending.length === 0) {
+      setBatchRunning(false);
+      return;
     }
-    message.success(`${success} de ${pending.length} documentos enriquecidos`);
+    message.info(`Enriqueciendo ${pending.length} documentos (paralelo 3)…`);
+    const concurrency = 3;
+    let success = 0;
+    let errors = 0;
+    const queue = [...pending];
+    const workers = Array.from({ length: concurrency }, async () => {
+      while (queue.length > 0) {
+        const doc = queue.shift();
+        if (!doc) break;
+        try {
+          const res = await fetch(`/api/documents/${doc.id}/enrich`, { method: "POST" });
+          if (res.ok) success++;
+          else errors++;
+        } catch {
+          errors++;
+        }
+      }
+    });
+    await Promise.all(workers);
+    if (errors > 0) {
+      message.warning(`${success} enriquecidos · ${errors} con error`);
+    } else {
+      message.success(`${success} de ${pending.length} documentos enriquecidos`);
+    }
     setBatchRunning(false);
     loadDocs();
   };

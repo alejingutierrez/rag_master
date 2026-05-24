@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Pagination } from "antd";
 import Link from "next/link";
 import {
   Card,
@@ -41,12 +42,15 @@ const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label:
   concept: { icon: <ReadOutlined />, color: "#A855F7", label: "Concepto" },
 };
 
+const PAGE_SIZE = 48;
+
 export default function EntitiesPage() {
   const { token } = theme.useToken();
   const [entities, setEntities] = useState<Entity[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "person" | "place" | "concept">("all");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const load = () => {
     setLoading(true);
@@ -67,6 +71,16 @@ export default function EntitiesPage() {
     if (q) list = list.filter((e) => e.name.toLowerCase().includes(q));
     return list;
   }, [entities, filter, search]);
+
+  // Reset paginación al cambiar filtros
+  useEffect(() => {
+    setPage(1);
+  }, [filter, search]);
+
+  const paged = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page],
+  );
 
   const maxMentions = Math.max(1, ...entities.map((e) => e.mentions));
 
@@ -123,7 +137,7 @@ export default function EntitiesPage() {
         <Empty description="Sin entidades" />
       ) : (
         <Row gutter={[12, 12]}>
-          {filtered.map((e) => {
+          {paged.map((e) => {
             const cfg = TYPE_CONFIG[e.type];
             const intensity = e.mentions / maxMentions;
             const size = 12 + intensity * 12;
@@ -159,6 +173,22 @@ export default function EntitiesPage() {
             );
           })}
         </Row>
+      )}
+
+      {filtered.length > PAGE_SIZE && (
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+          <Pagination
+            current={page}
+            pageSize={PAGE_SIZE}
+            total={filtered.length}
+            onChange={(p) => {
+              setPage(p);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            showSizeChanger={false}
+            showTotal={(t) => `${t} entidades`}
+          />
+        </div>
       )}
     </div>
   );

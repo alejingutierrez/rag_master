@@ -160,7 +160,13 @@ function MatrixContent() {
       message.success(`Generación encolada (${cellsToGenerate} producciones)`);
       setSelectedQs(new Set());
       setSelectedTpls(new Set());
-      setTimeout(fetchMatrix, 1500);
+      // Polling progresivo durante 30s para mostrar progreso del batch
+      let attempts = 0;
+      const poll = setInterval(() => {
+        attempts += 1;
+        fetchMatrix();
+        if (attempts >= 10) clearInterval(poll);
+      }, 3000);
     } catch {
       message.error("Error al encolar producciones");
     } finally {
@@ -243,11 +249,22 @@ function MatrixContent() {
         </Card>
       ) : (
         <Card styles={{ body: { padding: 0 } }}>
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ overflowX: "auto", position: "relative" }}>
             <table style={{ minWidth: 800, width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: token.colorFillQuaternary, borderBottom: `2px solid ${token.colorBorderSecondary}` }}>
-                  <th style={{ padding: "10px 8px", fontSize: 12, textAlign: "center", borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
+                  <th
+                    style={{
+                      padding: "10px 8px",
+                      fontSize: 12,
+                      textAlign: "center",
+                      borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                      position: "sticky",
+                      left: 0,
+                      background: token.colorFillQuaternary,
+                      zIndex: 2,
+                    }}
+                  >
                     <Checkbox
                       checked={selectedQs.size === data.rows.length && data.rows.length > 0}
                       indeterminate={selectedQs.size > 0 && selectedQs.size < data.rows.length}
@@ -257,7 +274,21 @@ function MatrixContent() {
                       }}
                     />
                   </th>
-                  <th style={{ padding: "10px 8px", fontSize: 12, width: "30%", textAlign: "left", color: token.colorTextSecondary }}>Pregunta</th>
+                  <th
+                    style={{
+                      padding: "10px 8px",
+                      fontSize: 12,
+                      width: "30%",
+                      textAlign: "left",
+                      color: token.colorTextSecondary,
+                      position: "sticky",
+                      left: 40,
+                      background: token.colorFillQuaternary,
+                      zIndex: 2,
+                    }}
+                  >
+                    Pregunta
+                  </th>
                   {data.templates.map((t) => (
                     <th key={t.id} style={{ padding: "10px 8px", fontSize: 12, width: 90, textAlign: "center", color: token.colorTextSecondary }}>
                       <Space vertical size={4}>
@@ -282,18 +313,36 @@ function MatrixContent() {
                   const periodColor = getPeriodColor(row.periodoCode);
                   const categoryColor = getCategoryColor(row.categoriaCode);
                   const selected = selectedQs.has(row.id);
+                  const rowBg = selected ? `${token.colorPrimary}08` : token.colorBgContainer;
                   return (
                     <tr
                       key={row.id}
                       style={{
-                        background: selected ? `${token.colorPrimary}08` : "transparent",
+                        background: rowBg,
                         borderBottom: `1px solid ${token.colorBorderSecondary}`,
                       }}
                     >
-                      <td style={{ padding: "10px 8px", textAlign: "center" }}>
+                      <td
+                        style={{
+                          padding: "10px 8px",
+                          textAlign: "center",
+                          position: "sticky",
+                          left: 0,
+                          background: rowBg,
+                          zIndex: 1,
+                        }}
+                      >
                         <Checkbox checked={selected} onChange={() => togQ(row.id)} />
                       </td>
-                      <td style={{ padding: "10px 8px" }}>
+                      <td
+                        style={{
+                          padding: "10px 8px",
+                          position: "sticky",
+                          left: 40,
+                          background: rowBg,
+                          zIndex: 1,
+                        }}
+                      >
                         <Space vertical size={4} style={{ maxWidth: 480 }}>
                           <Text style={{ fontSize: 13, lineHeight: 1.45 }}>{row.pregunta}</Text>
                           <Space size={4} wrap>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Card,
   Typography,
@@ -53,6 +53,15 @@ export default function ComparePage() {
   const [results, setResults] = useState<Record<string, CompareResult>>({});
   const [isRunning, setIsRunning] = useState(false);
   const pollersRef = useRef<Record<string, ReturnType<typeof setInterval> | null>>({});
+
+  // Cleanup global on unmount
+  useEffect(() => {
+    return () => {
+      for (const t of Object.values(pollersRef.current)) {
+        if (t) clearInterval(t);
+      }
+    };
+  }, []);
 
   const run = async () => {
     const q = question.trim();

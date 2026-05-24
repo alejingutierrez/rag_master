@@ -45,19 +45,16 @@ interface Thread {
   createdAt: string;
 }
 
+import { safeGet, safeSet, uid } from "@/lib/safe-storage";
+
 const STORAGE_KEY = "rag-master-threads";
 
 function loadThreads(): Thread[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
-  } catch {
-    return [];
-  }
+  return safeGet<Thread[]>(STORAGE_KEY, []);
 }
 
 function saveThreads(t: Thread[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(t));
+  return safeSet(STORAGE_KEY, t);
 }
 
 export default function ThreadDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -101,7 +98,7 @@ export default function ThreadDetailPage({ params }: { params: Promise<{ id: str
     try {
       const v = await form.validateFields();
       const step: Step = {
-        id: Math.random().toString(36).slice(2),
+        id: uid("st"),
         type: v.type,
         refId: v.refId,
         text: v.text,

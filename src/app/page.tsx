@@ -14,7 +14,7 @@ import {
   theme,
   Progress,
   Tooltip,
-  Empty,
+  Alert,
 } from "antd";
 import {
   FileTextOutlined,
@@ -34,8 +34,10 @@ import {
 import { getPeriodColor, getCategoryColor } from "@/lib/theme";
 import { PERIOD_OPTIONS } from "@/lib/taxonomy";
 import { getDocumentDisplayName } from "@/lib/enrichment-types";
+import { getTemplateById } from "@/lib/chat-templates";
 import { ActivitySparkline } from "@/components/dashboard/activity-sparkline";
 import { PeriodDistributionBar } from "@/components/dashboard/period-distribution";
+import { EmptyAcademic } from "@/components/layout/empty-academic";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -89,23 +91,50 @@ interface DashboardData {
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { token } = theme.useToken();
 
   useEffect(() => {
-    fetch("/api/dashboard")
-      .then((r) => r.json())
-      .then(setData)
-      .catch(console.error)
+    const ctrl = new AbortController();
+    fetch("/api/dashboard", { signal: ctrl.signal })
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((d) => {
+        setData(d);
+        setError(null);
+      })
+      .catch((e) => {
+        if ((e as Error).name !== "AbortError") {
+          console.error(e);
+          setError((e as Error).message);
+        }
+      })
       .finally(() => setLoading(false));
+    return () => ctrl.abort();
   }, []);
 
   const totalDocs = data?.stats.documents ?? 0;
-  const completionPct =
-    data && data.stats.questions > 0
-      ? Math.round((data.stats.completedDeliverables / data.stats.questions) * 100)
-      : 0;
-  const enrichmentPct =
-    totalDocs > 0 ? Math.round((data!.stats.enrichedDocs / totalDocs) * 100) : 0;
+  const completionPct = (() => {
+    if (!data || data.stats.questions <= 0) return 0;
+    const raw = (data.stats.completedDeliverables / data.stats.questions) * 100;
+    return Math.min(100, Math.max(0, Math.round(raw)));
+  })();
+  const enrichmentPct = (() => {
+    if (!data || totalDocs <= 0) return 0;
+    const raw = (data.stats.enrichedDocs / totalDocs) * 100;
+    return Math.min(100, Math.max(0, Math.round(raw)));
+  })();
+  // Excluir TRANS de "Periodos cubiertos"
+  const periodsTotal = PERIOD_OPTIONS.filter((p) => p.code !== "TRANS").length;
+  const periodsCovered = data
+    ? data.distribution.periodos.filter((p) => p.code !== "TRANS" && p.count > 0).length
+    : 0;
+  const periodsCoveredPct = Math.min(
+    100,
+    Math.max(0, Math.round((periodsCovered / Math.max(1, periodsTotal)) * 100)),
+  );
 
   return (
     <div className="app-page-wide">
@@ -125,6 +154,17 @@ export default function DashboardPage() {
           generación de preguntas guiadas y producciones académicas con citación.
         </Paragraph>
       </div>
+
+      {error && (
+        <Alert
+          type="error"
+          showIcon
+          closable
+          message="No pudimos cargar el dashboard"
+          description={error}
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={12} md={6}>
@@ -206,17 +246,9 @@ export default function DashboardPage() {
               />
               <ProgressMetric
                 label="Periodos cubiertos"
-                value={
-                  data
-                    ? Math.round(
-                        (data.distribution.periodos.filter((p) => p.count > 0).length /
-                          PERIOD_OPTIONS.length) *
-                          100,
-                      )
-                    : 0
-                }
+                value={periodsCoveredPct}
                 color="#F59E0B"
-                detail={`${data?.distribution.periodos.filter((p) => p.count > 0).length ?? 0} de ${PERIOD_OPTIONS.length}`}
+                detail={`${periodsCovered} de ${periodsTotal}`}
               />
             </Space>
           </Card>
@@ -276,7 +308,12 @@ export default function DashboardPage() {
               }
             >
               {!data || data.recentDocuments.length === 0 ? (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aún no hay documentos" />
+                <EmptyAcademic
+                  size="small"
+                  title="Aún no hay documentos"
+                  description="Sube tu primer PDF para activar el corpus."
+                  action={<Link href="/upload"><Button type="primary" icon={<CloudUploadOutlined />}>Cargar PDFs</Button></Link>}
+                />
               ) : (
                 <Space vertical size={6} style={{ width: "100%" }}>
                   {data.recentDocuments.map((doc) => (
@@ -328,11 +365,11 @@ export default function DashboardPage() {
                   style={{ height: "100%" }}
                 >
                   {!data || data.recentQuestions.length === 0 ? (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sin preguntas" />
+                    <EmptyAcademic size="small" description="Aún no se han generado preguntas." />
                   ) : (
                     <Space vertical size={10} style={{ width: "100%" }}>
                       {data.recentQuestions.map((q) => (
-                        <div key={q.id} style={{ borderLeft: `2px solid ${getPeriodColor(q.periodoCode)}`, paddingLeft: 10 }}>
+                        <div key={q.id} style={{ borderLeft: `3px solid ${getPeriodColor(q.periodoCode)}`, paddingLeft: 10 }}>
                           <Text style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", fontSize: 12.5, lineHeight: 1.4 }}>
                             {q.pregunta}
                           </Text>
@@ -358,19 +395,20 @@ export default function DashboardPage() {
                   style={{ height: "100%" }}
                 >
                   {!data || data.recentDeliverables.length === 0 ? (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sin producciones" />
+                    <EmptyAcademic size="small" description="Aún no se han generado producciones." />
                   ) : (
                     <Space vertical size={10} style={{ width: "100%" }}>
                       {data.recentDeliverables.map((p) => {
                         const periodColor = p.question?.periodoCode
                           ? getPeriodColor(p.question.periodoCode)
                           : token.colorTextTertiary;
+                        const tpl = getTemplateById(p.templateId);
                         return (
-                          <Link key={p.id} href={`/producciones/${p.id}`} style={{ display: "block", borderLeft: `2px solid ${periodColor}`, paddingLeft: 10 }}>
+                          <Link key={p.id} href={`/producciones/${p.id}`} style={{ display: "block", borderLeft: `3px solid ${periodColor}`, paddingLeft: 10 }}>
                             <Text style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", fontSize: 12.5, lineHeight: 1.4, color: token.colorText }}>
                               {p.question?.pregunta || p.userQuestion || "(producción)"}
                             </Text>
-                            <Tag style={{ marginTop: 4, fontSize: 10 }}>{p.templateId}</Tag>
+                            <Tag style={{ marginTop: 4, fontSize: 10 }}>{tpl ? `${tpl.icon} ${tpl.name}` : p.templateId}</Tag>
                           </Link>
                         );
                       })}

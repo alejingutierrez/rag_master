@@ -37,7 +37,7 @@ const STATIC_ITEMS: Item[] = [
   { id: "nav-enrich", label: "Enriquecer", href: "/enrich", icon: <ExperimentOutlined />, group: "Navegar" },
   { id: "nav-chat", label: "Consultar", href: "/chat", icon: <MessageOutlined />, group: "Navegar" },
   { id: "nav-deep", label: "Deep Research", href: "/deep-research", icon: <RocketOutlined />, group: "Navegar" },
-  { id: "nav-hyp", label: "Sistema de hipótesis", href: "/hypothesis", icon: <BulbOutlined />, group: "Navegar" },
+  { id: "nav-hyp", label: "Hipótesis", href: "/hypothesis", icon: <BulbOutlined />, group: "Navegar" },
   { id: "nav-q", label: "Preguntas", href: "/questions", icon: <BookOutlined />, group: "Navegar" },
   { id: "nav-threads", label: "Hilos de investigación", href: "/threads", icon: <NodeIndexOutlined />, group: "Navegar" },
   { id: "nav-ws", label: "Workspaces", href: "/workspaces", icon: <ReadOutlined />, group: "Navegar" },
@@ -75,7 +75,8 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
 
   // Búsqueda dinámica en docs/preguntas/producciones
   useEffect(() => {
-    if (!query || query.length < 2) {
+    if (!open) return;
+    if (!query || query.trim().length < 2) {
       setDynamicItems([]);
       setLoading(false);
       return;
@@ -139,7 +140,7 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
       clearTimeout(timer);
       ctrl.abort();
     };
-  }, [query]);
+  }, [query, open]);
 
   const items = useMemo(() => {
     const q = query.trim().toLowerCase();

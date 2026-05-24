@@ -1,6 +1,6 @@
 /* ============================================================================
  * Archivo Histórico Digital — globals.css
- * Sólo lo mínimo. Tipografía, scrollbar, helpers de layout y prose-académico.
+ * Tokens base (espaciado, tipografía, motion) + utilidades de layout y prose.
  * El resto del sistema visual vive en Ant Design tokens (lib/theme.ts).
  * ========================================================================== */
 
@@ -8,6 +8,34 @@
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: var(--font-serif), "Source Serif 4", Georgia, serif;
   --font-mono: var(--font-mono), ui-monospace, "SF Mono", Consolas, monospace;
+
+  /* Spacing scale (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Type scale */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
+  --text-4xl: 36px;
+
+  /* Header height (consumido por app-shell) */
+  --header-h: 64px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 * {
@@ -33,6 +61,14 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 kbd {
@@ -147,6 +183,29 @@ kbd {
   background: color-mix(in oklab, var(--ant-color-warning) 35%, transparent);
 }
 
+/* Print: producciones legibles en papel */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .ant-layout-sider,
+  .ant-layout-header,
+  [class*="ant-drawer"],
+  nav,
+  .no-print {
+    display: none !important;
+  }
+  .ant-layout {
+    margin-left: 0 !important;
+  }
+  .prose-academic {
+    max-width: none;
+    font-size: 12pt;
+    line-height: 1.6;
+  }
+}
+
 /* ── Glass panels ──────────────────────────────────────────────────────────── */
 .glass-panel {
   background: color-mix(in oklab, var(--ant-color-bg-container) 75%, transparent);
@@ -169,6 +228,21 @@ kbd {
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite linear;
+}
+
+/* Cursor de streaming */
+@keyframes caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.stream-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--ant-color-primary);
+  margin-left: 2px;
+  vertical-align: -2px;
+  animation: caret-blink 1s steps(2, start) infinite;
 }
 
 /* ── Container utility ─────────────────────────────────────────────────────── */

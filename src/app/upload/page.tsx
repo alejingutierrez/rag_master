@@ -33,6 +33,8 @@ import {
 } from "@ant-design/icons";
 import type { UploadProps } from "antd";
 import type { RcFile } from "antd/es/upload";
+import Link from "next/link";
+import { EyeOutlined } from "@ant-design/icons";
 
 const { Title, Text, Paragraph } = Typography;
 const { Dragger } = Upload;
@@ -54,7 +56,10 @@ interface FileUploadState {
   message: string;
   chunkCount?: number;
   embeddingProgress?: { processed: number; total: number };
+  documentId?: string;
 }
+
+const LARGE_FILE_MB = 50;
 
 const CHUNK_CONFIG = {
   chunkSize: 3000,
@@ -138,7 +143,15 @@ export default function UploadPage() {
     const { file, id } = state;
     if (abortRef.current) return;
     try {
-      updateState(id, { status: "hashing", message: "Calculando hash SHA-256…" });
+      const sizeMB = file.size / 1024 / 1024;
+      if (sizeMB > LARGE_FILE_MB) {
+        updateState(id, {
+          status: "hashing",
+          message: `Archivo grande (${sizeMB.toFixed(1)} MB). Calculando hash, puede tardar 10‑30s…`,
+        });
+      } else {
+        updateState(id, { status: "hashing", message: "Calculando hash SHA-256…" });
+      }
       const fileHash = await computeFileHash(file);
 
       if (sessionHashesRef.current.has(fileHash)) {
@@ -200,6 +213,7 @@ export default function UploadPage() {
       const data = await processRes.json();
       const documentId = data.document.id;
       const chunkCount = data.document._count?.chunks ?? 0;
+      updateState(id, { documentId });
 
       await fetchWithRetry(`/api/documents/${documentId}/process`, { method: "POST" });
 
@@ -461,7 +475,14 @@ function FileRow({
               </Space>
               <Space size={6}>
                 {state.chunkCount !== undefined && (
-                  <Tag style={{ fontSize: 10, margin: 0 }}>{state.chunkCount} chunks</Tag>
+                  <Tag style={{ fontSize: 10, margin: 0 }}>{state.chunkCount.toLocaleString("es")} chunks</Tag>
+                )}
+                {isSuccess && state.documentId && (
+                  <Link href={`/documents/${state.documentId}`}>
+                    <Button size="small" type="link" icon={<EyeOutlined />}>
+                      Abrir
+                    </Button>
+                  </Link>
                 )}
                 {isError && (
                   <Button size="small" icon={<ReloadOutlined />} onClick={onRetry} disabled={disabled}>

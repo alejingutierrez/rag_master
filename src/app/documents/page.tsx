@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -12,10 +12,10 @@ import {
   Input,
   Select,
   Tooltip,
-  Modal,
   App,
   theme,
   Segmented,
+  Skeleton,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import {
@@ -32,12 +32,16 @@ import {
   ClockCircleFilled,
   LoadingOutlined,
   CloseCircleFilled,
-  BookOutlined,
 } from "@ant-design/icons";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs-config";
 import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
 import { getPeriodColor } from "@/lib/theme";
 import { getPeriodByCode } from "@/lib/taxonomy";
+import { useUrlFilters } from "@/lib/use-url-state";
+
+function stripDiacritics(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -67,59 +71,82 @@ function formatBytes(n: number) {
 }
 
 export default function DocumentsPage() {
+  return (
+    <Suspense fallback={<div className="app-page-wide"><Skeleton active /></div>}>
+      <DocumentsContent />
+    </Suspense>
+  );
+}
+
+function DocumentsContent() {
   const { token } = theme.useToken();
   const { modal, message } = App.useApp();
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
   const [total, setTotal] = useState(0);
-  const [statusFilter, setStatusFilter] = useState<string | undefined>();
-  const [enrichedFilter, setEnrichedFilter] = useState<string | undefined>();
-  const [search, setSearch] = useState("");
-  const [view, setView] = useState<"table" | "grid">("table");
 
-  const fetchDocuments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
-      if (statusFilter) params.set("status", statusFilter);
-      if (enrichedFilter) params.set("enriched", enrichedFilter);
-      const res = await fetch(`/api/documents?${params}`);
-      const data = await res.json();
-      setDocuments(data.documents);
-      setTotal(data.pagination?.total ?? 0);
-    } catch (e) {
-      console.error(e);
-      message.error("Error al cargar documentos");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, statusFilter, enrichedFilter, message]);
+  const [filters, updateFilters, resetFilters] = useUrlFilters({
+    search: "",
+    status: "",
+    enriched: "",
+    view: "table",
+    page: "1",
+    pageSize: "20",
+  });
+
+  const page = Math.max(1, Number(filters.page) || 1);
+  const pageSize = Math.max(10, Number(filters.pageSize) || 20);
+
+  const [refreshTick, setRefreshTick] = useState(0);
+  const fetchDocuments = () => setRefreshTick((n) => n + 1);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    const ctrl = new AbortController();
+    setLoading(true);
+    (async () => {
+      try {
+        const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
+        if (filters.status) params.set("status", filters.status);
+        if (filters.enriched) params.set("enriched", filters.enriched);
+        if (filters.search) params.set("search", filters.search);
+        const res = await fetch(`/api/documents?${params}`, { signal: ctrl.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (ctrl.signal.aborted) return;
+        setDocuments(data.documents ?? []);
+        setTotal(data.pagination?.total ?? 0);
+      } catch (e) {
+        if ((e as Error).name !== "AbortError") {
+          console.error(e);
+          message.error("Error al cargar documentos");
+        }
+      } finally {
+        if (!ctrl.signal.aborted) setLoading(false);
+      }
+    })();
+    return () => ctrl.abort();
+  }, [page, pageSize, filters.status, filters.enriched, filters.search, refreshTick, message]);
 
   // Auto-refresh mientras procesa
   useEffect(() => {
     if (!documents.some((d) => d.status === "PROCESSING")) return;
-    const t = setInterval(fetchDocuments, 5000);
-    return () => clearInterval(t);
-  }, [documents, fetchDocuments]);
+    const id = setInterval(() => setRefreshTick((n) => n + 1), 5000);
+    return () => clearInterval(id);
+  }, [documents]);
 
+  // Filtrado local complementario (sin acentos) — el server ya filtra search,
+  // pero esto pule resultados si el server hace LIKE simple.
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = stripDiacritics(filters.search.trim());
     if (!q) return documents;
     return documents.filter((d) => {
-      const display = getDocumentDisplayName(d);
-      return (
-        display.toLowerCase().includes(q) ||
-        d.filename.toLowerCase().includes(q) ||
-        d.metadata?.author?.toLowerCase().includes(q)
-      );
+      const display = stripDiacritics(getDocumentDisplayName(d));
+      const file = stripDiacritics(d.filename);
+      const author = d.metadata?.author ? stripDiacritics(d.metadata.author) : "";
+      return display.includes(q) || file.includes(q) || author.includes(q);
     });
-  }, [documents, search]);
+  }, [documents, filters.search]);
+
 
   const handleDelete = (id: string, name: string) => {
     modal.confirm({
@@ -326,32 +353,35 @@ export default function DocumentsPage() {
             placeholder="Buscar por título, autor…"
             prefix={<SearchOutlined />}
             style={{ width: 280 }}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={filters.search}
+            onChange={(e) => updateFilters({ search: e.target.value, page: "1" })}
           />
           <Select
             allowClear
             placeholder="Estado"
             style={{ width: 140 }}
-            value={statusFilter}
-            onChange={setStatusFilter}
+            value={filters.status || undefined}
+            onChange={(v) => updateFilters({ status: v ?? "", page: "1" })}
             options={Object.entries(STATUS_CONFIG).map(([k, v]) => ({ value: k, label: v.label }))}
           />
           <Select
             allowClear
             placeholder="Enriquecimiento"
             style={{ width: 180 }}
-            value={enrichedFilter}
-            onChange={setEnrichedFilter}
+            value={filters.enriched || undefined}
+            onChange={(v) => updateFilters({ enriched: v ?? "", page: "1" })}
             options={[
               { value: "true", label: "Enriquecidos" },
               { value: "false", label: "Pendientes de enriquecer" },
             ]}
           />
-          <Button icon={<ReloadOutlined />} onClick={fetchDocuments}>Recargar</Button>
+          <Button icon={<ReloadOutlined />} onClick={() => fetchDocuments()}>Recargar</Button>
+          {(filters.search || filters.status || filters.enriched) && (
+            <Button type="text" onClick={resetFilters}>Limpiar filtros</Button>
+          )}
           <Segmented
-            value={view}
-            onChange={(v) => setView(v as "table" | "grid")}
+            value={filters.view}
+            onChange={(v) => updateFilters({ view: String(v) })}
             options={[
               { value: "table", icon: <UnorderedListOutlined /> },
               { value: "grid", icon: <AppstoreOutlined /> },
@@ -360,8 +390,8 @@ export default function DocumentsPage() {
         </Space>
       </Card>
 
-      <Card styles={{ body: { padding: view === "table" ? 0 : 16 } }}>
-        {view === "table" ? (
+      <Card styles={{ body: { padding: filters.view === "table" ? 0 : 16 } }}>
+        {filters.view === "table" ? (
           <Table<DocumentRow>
             rowKey="id"
             dataSource={filtered}
@@ -372,8 +402,7 @@ export default function DocumentsPage() {
               pageSize,
               total,
               onChange: (p, s) => {
-                setPage(p);
-                setPageSize(s);
+                updateFilters({ page: String(p), pageSize: String(s) });
               },
               showSizeChanger: true,
               showTotal: (t) => `${t} documentos`,

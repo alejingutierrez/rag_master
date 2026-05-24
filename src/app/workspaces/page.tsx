@@ -27,7 +27,6 @@ import {
   BookOutlined,
   AppstoreOutlined,
 } from "@ant-design/icons";
-import dayjs from "dayjs";
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -41,19 +40,17 @@ interface Workspace {
   updatedAt: string;
 }
 
+import { safeGet, safeSet, uid } from "@/lib/safe-storage";
+import dayjs from "@/lib/dayjs-config";
+
 const STORAGE_KEY = "rag-master-workspaces";
 
 function loadWS(): Workspace[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
-  } catch {
-    return [];
-  }
+  return safeGet<Workspace[]>(STORAGE_KEY, []);
 }
 
 function saveWS(w: Workspace[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(w));
+  return safeSet(STORAGE_KEY, w);
 }
 
 export default function WorkspacesPage() {
@@ -73,7 +70,7 @@ export default function WorkspacesPage() {
     try {
       const v = await form.validateFields();
       const newWs: Workspace = {
-        id: Math.random().toString(36).slice(2),
+        id: uid("ws"),
         name: v.name,
         description: v.description,
         pinned: { documents: [], questions: [], productions: [] },

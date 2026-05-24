@@ -119,6 +119,9 @@ export default function CoveragePage() {
                       borderLeft: `3px solid ${getCategoryColor(c.code)}`,
                       background: token.colorFillQuaternary,
                       borderRadius: 4,
+                      position: "sticky",
+                      left: 0,
+                      zIndex: 1,
                     }}
                   >
                     {c.nombre}

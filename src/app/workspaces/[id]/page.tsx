@@ -43,14 +43,15 @@ interface Workspace {
   updatedAt: string;
 }
 
+import { safeGet, safeSet } from "@/lib/safe-storage";
+
 const STORAGE_KEY = "rag-master-workspaces";
 
 function loadWS(): Workspace[] {
-  if (typeof window === "undefined") return [];
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]"); } catch { return []; }
+  return safeGet<Workspace[]>(STORAGE_KEY, []);
 }
 function saveWS(w: Workspace[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(w));
+  return safeSet(STORAGE_KEY, w);
 }
 
 export default function WorkspaceDetailPage({ params }: { params: Promise<{ id: string }> }) {

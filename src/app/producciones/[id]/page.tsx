@@ -27,7 +27,7 @@ import {
   SyncOutlined,
   BookOutlined,
 } from "@ant-design/icons";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs-config";
 import ReactMarkdown from "react-markdown";
 import { getTemplateById } from "@/lib/chat-templates";
 import { getPeriodColor, getCategoryColor } from "@/lib/theme";

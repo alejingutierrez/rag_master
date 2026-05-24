@@ -37,10 +37,12 @@ import {
   CopyOutlined,
   InfoCircleOutlined,
 } from "@ant-design/icons";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs-config";
 import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
 import { getPeriodColor, getCategoryColor } from "@/lib/theme";
 import { getPeriodByCode, getCategoryByCode } from "@/lib/taxonomy";
+import { safeGet, safeSet } from "@/lib/safe-storage";
+import { EmptyAcademic } from "@/components/layout/empty-academic";
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -84,38 +86,66 @@ export default function DocumentDetailPage() {
   const { message, modal } = App.useApp();
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [reprocessing, setReprocessing] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
-  const [readingMode, setReadingMode] = useState<"by-page" | "continuous">("by-page");
+  const [readingMode, setReadingMode] = useState<"by-page" | "continuous">(() =>
+    safeGet<"by-page" | "continuous">("rag-master-reading-mode", "by-page"),
+  );
+
+  const updateReadingMode = (m: "by-page" | "continuous") => {
+    setReadingMode(m);
+    safeSet("rag-master-reading-mode", m);
+  };
 
   useEffect(() => {
-    let cancelled = false;
+    const ctrl = new AbortController();
     async function fetchDoc() {
       try {
-        const res = await fetch(`/api/documents/${id}`);
+        const res = await fetch(`/api/documents/${id}`, { signal: ctrl.signal });
+        if (res.status === 404) {
+          setNotFound(true);
+          return;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (!cancelled) setDoc(data.document);
+        setDoc(data.document);
       } catch (e) {
-        console.error(e);
+        if ((e as Error).name !== "AbortError") console.error(e);
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     }
     fetchDoc();
-    return () => {
-      cancelled = true;
-    };
+    return () => ctrl.abort();
   }, [id]);
 
+  // Polling con backoff exponencial
   useEffect(() => {
     if (doc?.status !== "PROCESSING") return;
-    const t = setInterval(async () => {
-      const res = await fetch(`/api/documents/${id}`);
-      const data = await res.json();
-      setDoc(data.document);
-    }, 3000);
-    return () => clearInterval(t);
+    let cancelled = false;
+    let delay = 3000;
+    let tid: ReturnType<typeof setTimeout>;
+    const tick = async () => {
+      if (cancelled) return;
+      try {
+        const res = await fetch(`/api/documents/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setDoc(data.document);
+        }
+      } catch {
+        /* retry */
+      }
+      delay = Math.min(delay * 1.3, 15000);
+      tid = setTimeout(tick, delay);
+    };
+    tid = setTimeout(tick, delay);
+    return () => {
+      cancelled = true;
+      clearTimeout(tid);
+    };
   }, [doc?.status, id]);
 
   const filteredChunks = useMemo(() => {
@@ -190,10 +220,18 @@ export default function DocumentDetailPage() {
     );
   }
 
-  if (!doc) {
+  if (notFound || !doc) {
     return (
       <div className="app-page" style={{ textAlign: "center" }}>
-        <Empty description="Documento no encontrado" />
+        <EmptyAcademic
+          title="Documento no encontrado"
+          description="Este documento puede haber sido eliminado o no existe."
+          action={
+            <Link href="/documents">
+              <Button type="primary" icon={<ArrowLeftOutlined />}>Ver todos los documentos</Button>
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -207,7 +245,15 @@ export default function DocumentDetailPage() {
 
   return (
     <div className="app-page">
-      <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => router.back()} style={{ marginBottom: 16 }}>
+      <Button
+        type="text"
+        icon={<ArrowLeftOutlined />}
+        onClick={() => {
+          if (typeof window !== "undefined" && window.history.length > 1) router.back();
+          else router.push("/documents");
+        }}
+        style={{ marginBottom: 16 }}
+      >
         Volver
       </Button>
 
@@ -354,27 +400,31 @@ export default function DocumentDetailPage() {
               label: <span><InfoCircleOutlined /> Resumen</span>,
               children: <OverviewTab doc={doc} />,
             },
-            {
-              key: "reading",
-              label: <span><ReadOutlined /> Lectura inmersiva</span>,
-              children: (
-                <ReadingTab
-                  chunksByPage={chunksByPage}
-                  mode={readingMode}
-                  onModeChange={setReadingMode}
-                />
-              ),
-            },
-            {
-              key: "chunks",
-              label: (
-                <span>
-                  <ApartmentOutlined /> Chunks
-                  <Tag style={{ marginLeft: 6 }}>{doc.chunks.length}</Tag>
-                </span>
-              ),
-              children: <ChunksTab chunks={filteredChunks} search={search} onSearch={setSearch} />,
-            },
+            ...(doc.chunks.length > 0
+              ? [
+                  {
+                    key: "reading",
+                    label: <span><ReadOutlined /> Lectura inmersiva</span>,
+                    children: (
+                      <ReadingTab
+                        chunksByPage={chunksByPage}
+                        mode={readingMode}
+                        onModeChange={updateReadingMode}
+                      />
+                    ),
+                  },
+                  {
+                    key: "chunks",
+                    label: (
+                      <span>
+                        <ApartmentOutlined /> Chunks
+                        <Tag style={{ marginLeft: 6 }}>{doc.chunks.length}</Tag>
+                      </span>
+                    ),
+                    children: <ChunksTab chunks={filteredChunks} search={search} onSearch={setSearch} />,
+                  },
+                ]
+              : []),
           ]}
         />
       </Card>

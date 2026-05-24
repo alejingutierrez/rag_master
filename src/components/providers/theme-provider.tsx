@@ -20,48 +20,56 @@ const STORAGE_KEY = "rag-master-theme-mode";
 function resolveTheme(mode: ThemeMode): ResolvedTheme {
   if (mode === "auto") {
     if (typeof window === "undefined") return "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
   return mode;
 }
 
+function readStoredMode(): ThemeMode {
+  if (typeof window === "undefined") return "auto";
+  try {
+    const v = window.localStorage.getItem(STORAGE_KEY);
+    if (v === "light" || v === "dark" || v === "auto") return v;
+  } catch {
+    /* ignore */
+  }
+  return "auto";
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>("auto");
-  const [resolved, setResolved] = useState<ResolvedTheme>("dark");
-  const [mounted, setMounted] = useState(false);
+  // Inicializa síncrono desde localStorage para minimizar flash post-hydration.
+  const [mode, setModeState] = useState<ThemeMode>(() => readStoredMode());
+  const [resolved, setResolved] = useState<ResolvedTheme>(() => resolveTheme(readStoredMode()));
 
+  // Reaccionar a cambios del sistema cuando mode === auto
   useEffect(() => {
-    const stored = (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? "auto";
-    setModeState(stored);
-    setResolved(resolveTheme(stored));
-    setMounted(true);
-
+    if (mode !== "auto" || typeof window === "undefined") return;
     const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => {
-      const current = (localStorage.getItem(STORAGE_KEY) as ThemeMode | null) ?? "auto";
-      if (current === "auto") setResolved(mql.matches ? "dark" : "light");
-    };
+    const handler = () => setResolved(mql.matches ? "dark" : "light");
+    handler();
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);
-  }, []);
+  }, [mode]);
 
+  // Mantener el atributo data-theme y color-scheme sincronizados
   useEffect(() => {
-    if (!mounted) return;
+    if (typeof document === "undefined") return;
     document.documentElement.setAttribute("data-theme", resolved);
     document.documentElement.style.colorScheme = resolved;
-  }, [resolved, mounted]);
+  }, [resolved]);
 
   const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
-    localStorage.setItem(STORAGE_KEY, next);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      /* ignore */
+    }
     setResolved(resolveTheme(next));
   }, []);
 
   const activeTheme = resolved === "dark" ? darkTheme : lightTheme;
-  const algorithm =
-    resolved === "dark" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm;
+  const algorithm = resolved === "dark" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm;
 
   return (
     <ThemeContext.Provider value={{ mode, resolved, setMode }}>
