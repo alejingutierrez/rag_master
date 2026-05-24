@@ -470,6 +470,17 @@ export async function generateQuestionsForDocument(
 
 ${context}`;
 
+  // Opus 4.7+ son "thinking models" y NO aceptan `temperature` en inferenceConfig
+  // (Bedrock lanza ValidationException: "temperature is deprecated for this model").
+  // Para modelos previos seguimos pasando 0.7 por compatibilidad.
+  const isThinkingModel = /claude-(opus|sonnet)-(4-7|4-8|5)/.test(QUESTIONS_MODEL);
+  const inferenceConfig: { maxTokens: number; temperature?: number } = {
+    maxTokens: maxTokensFor(targetCount),
+  };
+  if (!isThinkingModel) {
+    inferenceConfig.temperature = 0.7;
+  }
+
   const command = new ConverseCommand({
     modelId: QUESTIONS_MODEL,
     system: [{ text: buildSystemPrompt(targetCount) }],
@@ -483,10 +494,7 @@ ${context}`;
       tools: [{ toolSpec: buildGenerateToolSpec(targetCount) }],
       toolChoice: { tool: { name: GENERATE_TOOL_NAME } },
     },
-    inferenceConfig: {
-      maxTokens: maxTokensFor(targetCount),
-      temperature: 0.7,
-    },
+    inferenceConfig,
   });
 
   // Retry con backoff exponencial.
