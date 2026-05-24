@@ -71,6 +71,43 @@ export function getPeriodByCode(code: string): PeriodOption | undefined {
   return PERIOD_OPTIONS.find((p) => p.code === code);
 }
 
+// ─── Rangos numéricos por período (para validación yearPrincipal vs período) ──
+// Usados solo para detectar incoherencias post-generación. TRANS es comodín
+// (cualquier año vale). PRE es histórico amplio (acepta cualquier año <= 1499).
+export const PERIOD_YEAR_BOUNDS: Record<string, { start: number; end: number }> = {
+  PRE: { start: -10000, end: 1499 },
+  CON: { start: 1499, end: 1599 },
+  COL: { start: 1600, end: 1780 },
+  PRE_IND: { start: 1780, end: 1809 },
+  IND: { start: 1810, end: 1831 },
+  NGR: { start: 1831, end: 1862 },
+  EUC: { start: 1863, end: 1885 },
+  REG: { start: 1886, end: 1929 },
+  REP_LIB: { start: 1930, end: 1946 },
+  VIO: { start: 1946, end: 1957 },
+  FN: { start: 1958, end: 1974 },
+  CNA: { start: 1974, end: 1990 },
+  C91: { start: 1991, end: 2002 },
+  SDE: { start: 2002, end: 2016 },
+  POS: { start: 2016, end: 2100 },
+  TRANS: { start: -10000, end: 2100 },
+};
+
+/**
+ * Encuentra el código de período al que pertenece un año dado.
+ * Retorna "TRANS" si no hay match (no debería ocurrir con años razonables).
+ */
+export function periodForYear(year: number): string {
+  for (const code of [
+    "PRE", "CON", "COL", "PRE_IND", "IND", "NGR", "EUC", "REG",
+    "REP_LIB", "VIO", "FN", "CNA", "C91", "SDE", "POS",
+  ]) {
+    const b = PERIOD_YEAR_BOUNDS[code];
+    if (b && year >= b.start && year <= b.end) return code;
+  }
+  return "TRANS";
+}
+
 export function getCategoryByCode(code: string): CategoryOption | undefined {
   return CATEGORY_OPTIONS.find((c) => c.code === code);
 }

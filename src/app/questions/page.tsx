@@ -402,100 +402,210 @@ function QuestionRow({ question, view }: { question: Question; view: "list" | "c
   const conceptos = question.entidadesConceptos ?? [];
   const yearsSec = question.yearsSecondary ?? [];
   const hasEntities = personas.length + lugares.length + conceptos.length > 0;
+  const isCards = view === "cards";
 
   return (
     <Card
       hoverable
-      styles={{ body: { padding: 14 } }}
-      style={{ borderLeft: `3px solid ${periodColor}` }}
+      styles={{ body: { padding: isCards ? 18 : 14 } }}
+      style={{ borderLeft: `4px solid ${periodColor}` }}
     >
-      <Row gutter={12} align="middle">
-        <Col flex="auto">
-          <Space vertical size={6} style={{ width: "100%" }}>
-            <Text style={{ fontSize: 14, lineHeight: 1.5, color: token.colorText, fontWeight: 500 }}>
+      <Row gutter={isCards ? 18 : 12} wrap={false} align="top">
+        {/* Estampa del año principal */}
+        {question.yearPrincipal != null && (
+          <Col flex="none" style={{ minWidth: isCards ? 72 : 56 }}>
+            <div
+              style={{
+                background: `${periodColor}14`,
+                border: `1px solid ${periodColor}33`,
+                borderRadius: 8,
+                padding: isCards ? "10px 8px" : "6px 6px",
+                textAlign: "center",
+                fontFamily: "var(--font-mono)",
+              }}
+              title={`Año principal del proceso central de la pregunta`}
+            >
+              <div
+                style={{
+                  fontSize: isCards ? 20 : 15,
+                  fontWeight: 700,
+                  color: periodColor,
+                  lineHeight: 1.1,
+                }}
+              >
+                {question.yearPrincipal}
+              </div>
+              <div
+                style={{
+                  fontSize: 9,
+                  color: token.colorTextTertiary,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  marginTop: 2,
+                }}
+              >
+                {question.periodoRango || "—"}
+              </div>
+            </div>
+          </Col>
+        )}
+
+        <Col flex="auto" style={{ minWidth: 0 }}>
+          <Space vertical size={isCards ? 10 : 6} style={{ width: "100%" }}>
+            {/* Pregunta */}
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
               <span
                 style={{
                   display: "inline-block",
-                  width: 26,
+                  minWidth: 26,
                   textAlign: "center",
                   fontFamily: "var(--font-mono)",
                   fontSize: 11,
                   background: token.colorFillSecondary,
                   borderRadius: 4,
-                  padding: "1px 4px",
-                  marginRight: 8,
+                  padding: "1px 6px",
                   color: token.colorTextSecondary,
+                  flex: "0 0 auto",
                 }}
               >
                 {question.questionNumber}
               </span>
-              {question.pregunta}
-            </Text>
-            <Space wrap size={4}>
-              <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10 }}>
-                {question.periodoNombre}
-              </Tag>
-              {question.yearPrincipal != null && (
+              <Text
+                style={{
+                  fontSize: isCards ? 15 : 14,
+                  lineHeight: 1.55,
+                  color: token.colorText,
+                  fontWeight: 500,
+                }}
+              >
+                {question.pregunta}
+              </Text>
+            </div>
+
+            {/* Meta: período + categoría + subcategoría + años secundarios */}
+            <Space wrap size={[6, 6]}>
+              <Tooltip title={question.periodoRango}>
                 <Tag
                   style={{
-                    background: token.colorFillSecondary,
-                    border: "none",
-                    color: token.colorText,
-                    fontSize: 10,
-                    fontFamily: "var(--font-mono)",
+                    background: `${periodColor}1F`,
+                    border: `1px solid ${periodColor}3D`,
+                    color: periodColor,
+                    fontSize: 11,
                     fontWeight: 600,
+                    margin: 0,
                   }}
                 >
-                  {question.yearPrincipal}
-                  {yearsSec.length > 0 && (
-                    <span style={{ color: token.colorTextTertiary, fontWeight: 400 }}>
-                      {" "}· {yearsSec.join(", ")}
-                    </span>
-                  )}
+                  {question.periodoNombre}
                 </Tag>
-              )}
-              <Tag style={{ background: `${categoryColor}1A`, border: "none", color: categoryColor, fontSize: 10 }}>
+              </Tooltip>
+              <Tag
+                style={{
+                  background: `${categoryColor}1F`,
+                  border: `1px solid ${categoryColor}3D`,
+                  color: categoryColor,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
                 {question.categoriaNombre}
               </Tag>
-              {question.subcategoriaNombre && <Tag style={{ fontSize: 10 }}>{question.subcategoriaNombre}</Tag>}
+              {question.subcategoriaNombre && (
+                <Tag
+                  style={{
+                    fontSize: 11,
+                    background: token.colorFillTertiary,
+                    border: "none",
+                    color: token.colorTextSecondary,
+                    margin: 0,
+                  }}
+                >
+                  {question.subcategoriaNombre}
+                </Tag>
+              )}
+              {yearsSec.length > 0 && (
+                <Tooltip title="Años secundarios — antecedentes, hitos, consecuencias">
+                  <Tag
+                    style={{
+                      fontSize: 11,
+                      background: "transparent",
+                      border: `1px dashed ${token.colorBorder}`,
+                      color: token.colorTextTertiary,
+                      fontFamily: "var(--font-mono)",
+                      margin: 0,
+                    }}
+                  >
+                    + {yearsSec.join(", ")}
+                  </Tag>
+                </Tooltip>
+              )}
             </Space>
-            {view === "cards" && (
+
+            {/* Justificación */}
+            {question.justificacion && (
               <Paragraph
-                ellipsis={{ rows: 2, expandable: true, symbol: "leer más" }}
-                style={{ fontSize: 12, color: token.colorTextTertiary, margin: 0 }}
+                ellipsis={{ rows: isCards ? 3 : 2, expandable: true, symbol: "más" }}
+                style={{
+                  fontSize: 12.5,
+                  color: token.colorTextSecondary,
+                  margin: 0,
+                  fontStyle: "italic",
+                  lineHeight: 1.55,
+                }}
               >
                 {question.justificacion}
               </Paragraph>
             )}
-            {view === "cards" && hasEntities && (
-              <EntitiesRow personas={personas} lugares={lugares} conceptos={conceptos} />
+
+            {/* Entidades — siempre visibles si existen */}
+            {hasEntities && (
+              <EntitiesRow
+                personas={personas}
+                lugares={lugares}
+                conceptos={conceptos}
+                compact={!isCards}
+              />
             )}
-          </Space>
-        </Col>
-        <Col>
-          <Space vertical size={4} align="end">
-            <Tag
-              color={totalDelivs > 0 ? "success" : "default"}
-              icon={totalDelivs > 0 ? <CheckCircleFilled /> : <ClockCircleOutlined />}
-              style={{ margin: 0, fontSize: 11 }}
+
+            {/* Footer compact: doc + producciones + producir */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: 4,
+                paddingTop: 8,
+                borderTop: `1px dashed ${token.colorBorderSecondary}`,
+                gap: 8,
+                flexWrap: "wrap",
+              }}
             >
-              {totalDelivs} producciones
-            </Tag>
-            {question.document && (
-              <Tooltip title={question.document.filename}>
-                <Link
-                  href={`/documents/${question.document.id}`}
-                  style={{ fontSize: 11, color: token.colorTextTertiary }}
+              <Space size={10} wrap>
+                {question.document && (
+                  <Tooltip title={question.document.filename}>
+                    <Link
+                      href={`/documents/${question.document.id}`}
+                      style={{ fontSize: 11, color: token.colorTextTertiary }}
+                    >
+                      <FileTextOutlined /> {question.document.filename.slice(0, 38)}
+                      {question.document.filename.length > 38 ? "…" : ""}
+                    </Link>
+                  </Tooltip>
+                )}
+                <Tag
+                  color={totalDelivs > 0 ? "success" : "default"}
+                  icon={totalDelivs > 0 ? <CheckCircleFilled /> : <ClockCircleOutlined />}
+                  style={{ margin: 0, fontSize: 11 }}
                 >
-                  <FileTextOutlined /> {question.document.filename.slice(0, 24)}
-                </Link>
-              </Tooltip>
-            )}
-            <Space size={4}>
+                  {totalDelivs} producciones
+                </Tag>
+              </Space>
               <Link href={`/questions/matriz?focus=${question.id}`}>
-                <Button size="small" type="text">Producir</Button>
+                <Button size="small" type="text">
+                  Producir →
+                </Button>
               </Link>
-            </Space>
+            </div>
           </Space>
         </Col>
       </Row>
@@ -507,47 +617,73 @@ function EntitiesRow({
   personas,
   lugares,
   conceptos,
+  compact = false,
 }: {
   personas: string[];
   lugares: string[];
   conceptos: string[];
+  compact?: boolean;
 }) {
   const { token } = theme.useToken();
 
   const group = (
     label: string,
+    icon: string,
     items: string[],
     color: string,
   ) => {
     if (items.length === 0) return null;
     return (
-      <Space size={4} wrap>
-        <Text style={{ fontSize: 10, color: token.colorTextTertiary, textTransform: "uppercase", letterSpacing: 0.4 }}>
-          {label}
-        </Text>
-        {items.map((it) => (
-          <Tag
-            key={`${label}-${it}`}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <Tooltip title={`${label} clave de la pregunta`}>
+          <span
             style={{
               fontSize: 10,
-              border: `1px solid ${color}33`,
-              background: `${color}0F`,
               color,
-              margin: 0,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: 0.6,
+              minWidth: compact ? 60 : 72,
+              paddingTop: 3,
+              flex: "0 0 auto",
             }}
           >
-            {it}
-          </Tag>
-        ))}
-      </Space>
+            {icon} {label}
+          </span>
+        </Tooltip>
+        <Space size={[4, 4]} wrap style={{ flex: 1 }}>
+          {items.map((it) => (
+            <Tag
+              key={`${label}-${it}`}
+              style={{
+                fontSize: 11,
+                border: `1px solid ${color}40`,
+                background: `${color}14`,
+                color,
+                margin: 0,
+                fontWeight: 500,
+              }}
+            >
+              {it}
+            </Tag>
+          ))}
+        </Space>
+      </div>
     );
   };
 
   return (
-    <Space vertical size={4} style={{ width: "100%", marginTop: 4 }}>
-      {group("Personas", personas, token.colorInfo)}
-      {group("Lugares", lugares, token.colorSuccess)}
-      {group("Conceptos", conceptos, token.colorWarning)}
+    <Space vertical size={compact ? 4 : 6} style={{ width: "100%" }}>
+      {group("Personas", "◐", personas, token.colorInfo)}
+      {group("Lugares", "◈", lugares, token.colorSuccess)}
+      {group("Conceptos", "◇", conceptos, token.colorWarning)}
     </Space>
   );
 }

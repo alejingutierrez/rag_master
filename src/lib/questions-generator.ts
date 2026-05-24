@@ -43,14 +43,23 @@ import {
   MAX_QUESTIONS_COUNT,
   computeTargetCount,
 } from "./questions-config";
+import {
+  PERIOD_YEAR_BOUNDS,
+  periodForYear,
+  getPeriodByCode,
+} from "./taxonomy";
 
 // Heurística para maxTokens según N. Con los campos extendidos (yearPrincipal,
 // yearsSecondary, 5 personas + 3 lugares + 4 conceptos), cada pregunta ocupa
-// ~600-700 tokens de output. Calculamos generoso para evitar truncamiento
-// silencioso (que rompe el tool use por JSON inválido).
-// 20 → 20k, 50 → 38k, 80 → 56k, 100 → 68k.
+// ~600-700 tokens de output. Además reservamos 16k para thinking budget de
+// Opus 4.7 (extended thinking razona antes de emitir el tool use).
+// Sin holgura suficiente, thinking se come el budget y el JSON se trunca.
+// 20 → 36k, 50 → 54k, 80 → 72k, 100 → 84k.
 function maxTokensFor(count: number): number {
-  return Math.min(80_000, 8_000 + count * 600);
+  const THINKING_RESERVE = 16_000;
+  const BASE_OVERHEAD = 8_000;
+  const PER_QUESTION = 600;
+  return Math.min(96_000, BASE_OVERHEAD + THINKING_RESERVE + count * PER_QUESTION);
 }
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -86,124 +95,168 @@ interface ChunkForGeneration {
 // ─── Prompt del sistema (taxonomía completa) ──────────────────────────────────
 
 function buildSystemPrompt(targetCount: number): string {
-  return `Eres un historiador experto en Colombia con formación interdisciplinaria (historia, ciencia política, economía, sociología, antropología). Tu tarea es analizar el documento proporcionado y generar exactamente ${targetCount} preguntas de investigación profundas sobre la historia de Colombia.
+  return `Eres un historiador experto en Colombia con formación interdisciplinaria (historia, ciencia política, economía, sociología, antropología, antropología histórica). Tu tarea es analizar el documento proporcionado y generar exactamente ${targetCount} preguntas de investigación profundas sobre la historia de Colombia.
+
+Antes de emitir el JSON final, RAZONA cuidadosamente: identifica los procesos centrales del documento, ubícalos cronológicamente, mapéalos a la taxonomía y verifica la coherencia entre año principal, período histórico y categoría.
 
 ## REGLAS DE GENERACIÓN
 
-1. Las preguntas deben ser PROFUNDAS e INTELIGENTES: no preguntas factuales simples, sino preguntas que revelen tensiones, contradicciones, causalidades no obvias o conexiones entre procesos.
-2. Las preguntas deben TRASCENDER el documento: usa el contenido como punto de partida pero conecta con procesos históricos más amplios de Colombia.
-3. Cada pregunta debe ser AUTOCONTENIDA: comprensible sin haber leído el documento original.
-4. DIVERSIFICA las preguntas: distribúyelas en al menos 7 categorías diferentes y al menos 5 períodos históricos distintos.
-5. Cada pregunta debe incluir CONTEXTO SUFICIENTE para que un lector entienda por qué es relevante.
-6. Prioriza preguntas que CRUZEN períodos o categorías: las mejores preguntas conectan épocas o dimensiones distintas.
+1. PROFUNDIDAD: nada de preguntas factuales. Revela tensiones, contradicciones, causalidades no obvias, conexiones entre procesos.
+2. TRASCENDENCIA: usa el documento como punto de partida pero conecta con procesos colombianos más amplios.
+3. AUTOCONTENIDAS: comprensibles sin haber leído el documento.
+4. DIVERSIDAD: al menos 7 categorías diferentes y al menos 5 períodos distintos.
+5. CRUCES: prioriza preguntas que conecten épocas o dimensiones (más interesantes).
+6. CONTEXTO INTERNO: cada pregunta incluye suficiente contexto para entender su relevancia.
 
-## FORMATO DE SALIDA
+## REGLA META — PERÍODO = ÉPOCA DEL PROCESO/DEBATE CENTRAL
 
-Responde EXCLUSIVAMENTE con un bloque JSON válido. Sin texto antes ni después. Sin markdown wrapping. El JSON debe seguir esta estructura exacta:
+**El \`periodo_historico\` se asigna a la ÉPOCA EN QUE OCURRE el proceso o debate central de la pregunta, NO a la época que el proceso ESTUDIA.**
 
-[
-  {
-    "id": 1,
-    "pregunta": "Texto completo de la pregunta de investigación",
-    "periodo_historico": {
-      "codigo": "código del período (ver taxonomía)",
-      "nombre": "nombre del período",
-      "rango_temporal": "rango de años"
-    },
-    "categoria": {
-      "codigo": "código de categoría (ver taxonomía)",
-      "nombre": "nombre de la categoría"
-    },
-    "subcategoria": {
-      "codigo": "código de subcategoría (ver taxonomía)",
-      "nombre": "nombre de la subcategoría"
-    },
-    "periodos_relacionados": ["códigos de otros períodos que la pregunta toca tangencialmente"],
-    "categorias_relacionadas": ["códigos de otras categorías que la pregunta toca tangencialmente"],
-    "anio_principal": 1810,
-    "anios_secundarios": [1808, 1819, 1821],
-    "entidades": {
-      "personas": ["Persona 1", "Persona 2", "Persona 3", "Persona 4", "Persona 5"],
-      "lugares": ["Lugar 1", "Lugar 2", "Lugar 3"],
-      "conceptos": ["Concepto 1", "Concepto 2", "Concepto 3", "Concepto 4"]
-    },
-    "justificacion": "Breve explicación (1-2 oraciones) de por qué esta pregunta es relevante para la investigación histórica sobre Colombia"
-  }
-]
+Casos guía:
+- Pregunta sobre arqueología precolombina debatida en los años 1920s → período REG (1886-1929) o REP_LIB (1930-1946), NO PRE. El debate científico ocurre en el siglo XX; lo prehispánico es el OBJETO de estudio. \`anio_principal\` debe estar en el rango del debate.
+- Pregunta sobre la memoria de La Violencia (1946-1957) reconstruida por la Comisión de la Verdad (2018-2022) → período POS (2016-presente). La construcción de memoria ocurre hoy; los hechos son objeto.
+- Pregunta sobre cómo las élites del siglo XIX reinterpretaron la Conquista → período según cuándo reinterpretan (NGR/EUC/REG), no CON.
+- Pregunta sobre un proceso ocurrido en su época (ej. la guerra de los Mil Días 1899-1902) → período REG, sin ambigüedad.
+- Pregunta de larga duración que abarca 3+ períodos sin un proceso pivote claro → TRANS.
+
+VERIFICACIÓN OBLIGATORIA antes de emitir cada pregunta:
+- \`anio_principal\` debe caer DENTRO del rango del \`periodo_historico\` asignado (o el período debe ser TRANS).
+- Si el año está fuera del rango → o cambias el período, o cambias el año, o usas TRANS. NUNCA dejes la incoherencia.
 
 ## REGLAS PARA AÑOS Y ENTIDADES
 
 ### Años
-- **anio_principal**: el año único más representativo del foco temporal de la pregunta (entero, ej. 1810, 1948, 1991). Si la pregunta abarca un proceso largo, elige el año pivote (ej. inicio del proceso, hito central, fin de etapa). Si es genuinamente transversal (siglos), usa el punto medio del período principal.
-- **anios_secundarios**: 2 a 4 años adicionales que la pregunta toca de forma significativa (antecedentes, consecuencias, hitos paralelos). En orden cronológico ascendente. NO repitas anio_principal. Si la pregunta es muy puntual y no hay años secundarios claros, usa [].
+- **anio_principal**: año único más representativo del foco temporal del proceso central (entero). Si abarca un proceso largo, elige el año pivote. Si es genuinamente transversal usa el punto medio.
+- **anios_secundarios**: 2-4 años adicionales (antecedentes, consecuencias, hitos paralelos), en orden cronológico ascendente, sin repetir anio_principal. Vacío [] solo si la pregunta es muy puntual.
+- COHERENCIA: anio_principal DEBE caer en el rango del periodo_historico (o el período es TRANS).
 
-### Entidades (conteo ESTRICTO)
-Cada pregunta debe incluir exactamente:
-- **5 personas**: actores históricos individuales (Bolívar, Gaitán, Uribe, etc.). Si la pregunta no tiene 5 personas obvias, incluye actores institucionales personificables (un presidente, un líder gremial, un caudillo regional) o actores colectivos con nombre propio (FARC, M-19, ANUC). Nombres completos cuando sea posible.
-- **3 lugares**: territorios, regiones, ciudades, países o accidentes geográficos relevantes (Bogotá, Antioquia, Panamá, Magdalena Medio). Si la pregunta es nacional, mezcla escalas (nacional + regional + local o internacional).
-- **4 conceptos**: nociones analíticas, procesos, ideologías o instituciones (liberalismo, federalismo, hacienda cafetera, narcotráfico, paz negociada, soberanía popular). Evita repetir el título del período histórico.
+### Entidades (conteo ESTRICTO 5/3/4)
+- **5 personas**: actores históricos individuales (Bolívar, Gaitán, Uribe, Núñez, Mosquera, Gaitán, etc.). Si la pregunta no tiene 5 personas obvias, incluye actores institucionales personificables o colectivos con nombre propio (FARC, M-19, ANUC, Comisión de la Verdad). NUNCA inventes nombres falsos — si dudas, usa actores estructurales reales del período.
+- **3 lugares**: territorios, regiones, ciudades, países, accidentes geográficos. Mezcla escalas (nacional + regional + local/internacional).
+- **4 conceptos**: nociones analíticas, procesos, ideologías, instituciones (liberalismo, federalismo, hacienda cafetera, paz negociada, soberanía popular, Patronato regio, Frente Nacional). Evita repetir el nombre del período.
 
-REGLA CRÍTICA: los conteos son ESTRICTOS — exactamente 5/3/4. No menos, no más. Si tienes dudas, fuerza la inclusión con entidades plausibles del contexto histórico (no inventes nombres falsos, pero sí puedes nombrar entidades estructurales del período).
+REGLA CRÍTICA: conteos ESTRICTOS — exactamente 5/3/4. No menos, no más.
 
-## TAXONOMÍA DE PERÍODOS HISTÓRICOS
+## FORMATO DE SALIDA
+
+OBLIGATORIO: tu respuesta DEBE ser una llamada al tool \`generate_research_questions\`. No emitas texto explicativo en la respuesta — todo el output va vía el tool use. Si emites texto sin llamar al tool, la respuesta es inválida.
+
+Estructura de cada pregunta dentro del tool input:
+
+\`\`\`
+{
+  "id": 1,
+  "pregunta": "Texto autocontenido (30-120 palabras)",
+  "periodo_historico": { "codigo": "REG", "nombre": "Regeneración y Hegemonía Conservadora", "rango_temporal": "1886–1929" },
+  "categoria": { "codigo": "HIS", "nombre": "Historiografía y Metodología Histórica" },
+  "subcategoria": { "codigo": "HIS.ACA", "nombre": "Historia académica" },
+  "periodos_relacionados": ["PRE", "REP_LIB"],
+  "categorias_relacionadas": ["CUL", "SOC"],
+  "anio_principal": 1925,
+  "anios_secundarios": [1908, 1930, 1951],
+  "entidades": {
+    "personas": ["Aleš Hrdlička", "Paul Rivet", "Florentino Ameghino", "Gregorio Hernández de Alba", "Luis Duque Gómez"],
+    "lugares": ["Bogotá", "Estados Unidos", "Argentina"],
+    "conceptos": ["Poblamiento americano", "Nacionalismo científico", "Antropología física", "Arqueología nacional"]
+  },
+  "justificacion": "Pregunta clave: trazar cómo Colombia recibió y adaptó los grandes debates científicos sobre el origen americano permite leer la institucionalización de la antropología nacional como proyecto político-cultural."
+}
+\`\`\`
+
+## TAXONOMÍA DE PERÍODOS HISTÓRICOS — DEFINICIONES Y TRAMPAS
 
 ### PRE — Período Prehispánico (antes de 1499)
+**Procesos**: culturas y cacicazgos andinos (muiscas, taironas, quimbayas, calimas, sinúes), sistemas de subsistencia y horticultura, redes de intercambio prehispánicas, organización social cacical, mitologías y cosmovisiones autóctonas.
+**Trampa común**: si la pregunta es sobre ARQUEOLOGÍA, ANTROPOLOGÍA o HISTORIOGRAFÍA del pasado precolombino realizada en los siglos XIX-XXI, el período NO es PRE — es el período del debate (EUC/REG/REP_LIB/FN/etc.) o HIS si es metodológica.
+
 ### CON — Conquista y Colonia Temprana (1499–1599)
+**Procesos**: expediciones conquistadoras (Jiménez de Quesada, Federmán, Belalcázar), fundaciones de ciudades, encomienda primigenia, evangelización inicial, primer choque demográfico, Real Audiencia de Santafé (1550), Leyes Nuevas (1542), guerras de pacificación.
+**Trampa común**: NO confundir con la Colonia madura (s. XVII-XVIII) que es COL.
+
 ### COL — Colonia Madura (1600–1780)
+**Procesos**: consolidación del sistema colonial, mita y mineralidad de Mariquita/Antioquia, Iglesia barroca, reformas borbónicas iniciales, sociedad de castas, Patronato regio, expulsión jesuita (1767), economía hacendaria, sublevaciones (Tupac Amaru ecos en Pasto).
+**Trampa común**: las reformas borbónicas tardías y la crisis pre-independentista son PRE_IND, no COL.
+
 ### PRE_IND — Crisis Colonial y Pre-Independencia (1780–1809)
+**Procesos**: Revolución de los Comuneros (1781), expedición botánica, ilustración criolla (Caldas, Nariño, Zea), traducción de los Derechos del Hombre (1793), invasión napoleónica a España, Junta Central, antecedentes inmediatos del 20 de julio.
+
 ### IND — Independencia y Gran Colombia (1810–1831)
+**Procesos**: Acta del 20 de julio, Patria Boba, reconquista de Morillo, campaña libertadora (Boyacá 1819), Cúcuta 1821, Gran Colombia, Convención de Ocaña, dictadura bolivariana, disolución (1830-1831).
+
 ### NGR — Nueva Granada y Reformas Liberales (1831–1862)
+**Procesos**: Constitución 1832, guerra de los Supremos, Mosquera, reformas liberales del medio siglo (abolición esclavitud 1851, libertad religiosa, expropiación bienes manos muertas), federalismo, Constitución 1853, guerras civiles, federalismo radical (Constitución de Rionegro 1863 pertenece a EUC).
+
 ### EUC — Estados Unidos de Colombia y Radicalismo (1863–1885)
+**Procesos**: Olimpo Radical, federalismo extremo (9 estados soberanos), educación laica, ferrocarriles, libertad de cultos, guerras civiles de fin de siglo, derrota radical en La Humareda (1885) → Regeneración.
+
 ### REG — Regeneración y Hegemonía Conservadora (1886–1929)
+**Procesos**: Constitución de 1886, Núñez, Caro, Concordato (1887), guerra de los Mil Días (1899-1902), pérdida de Panamá (1903), modernización conservadora, Quinquenio de Reyes, danza de los millones (1924-1928), masacre de las bananeras (1928).
+
 ### REP_LIB — República Liberal (1930–1946)
-### VIO — La Violencia y Dictadura (1946–1957)
-### FN — Frente Nacional (1958–1974)
-### CNA — Crisis, Narcotráfico y Apertura (1974–1990)
-### C91 — Constitución del 91 y Escalamiento del Conflicto (1991–2002)
-### SDE — Seguridad Democrática y Proceso de Paz (2002–2016)
+**Procesos**: Olaya Herrera, López Pumarejo (Revolución en Marcha 1934-1938), reforma agraria Ley 200 (1936), Constitución del 36, sufragio universal masculino, sindicalismo CTC, Gaitán ascendente, Eduardo Santos.
+
+### VIO — La Violencia y Dictadura (1946-1957)
+**Procesos**: gobierno Ospina, Bogotazo (9 abril 1948), Violencia bipartidista en el campo, Laureano Gómez, dictadura Rojas Pinilla (1953-1957), pacto Sitges-Benidorm, plebiscito (1957).
+
+### FN — Frente Nacional (1958-1974)
+**Procesos**: alternancia liberal-conservadora 16 años, frustración bipartidismo, surgimiento guerrillas (FARC 1964, ELN 1964, EPL 1967, M-19 1970 nace post-fraude), reforma agraria Ley 135/1961, despeje paro cívico, fin Frente.
+
+### CNA — Crisis, Narcotráfico y Apertura (1974-1990)
+**Procesos**: Turbay, Estatuto de Seguridad, amnistía Betancur, narcotráfico (Medellín y Cali), M-19, Palacio de Justicia (1985), Galán, paramilitarismo, apertura económica Gaviria inicia (formal 1991).
+
+### C91 — Constitución del 91 y Escalamiento del Conflicto (1991-2002)
+**Procesos**: ANC, Constitución del 91, multiculturalismo, Samper-Proceso 8000, Caguán y zona de despeje (1998-2002), expansión paramilitar AUC, masacres, Plan Colombia (1999).
+
+### SDE — Seguridad Democrática y Proceso de Paz (2002-2016)
+**Procesos**: Uribe (2002-2010), Seguridad Democrática, desmovilización AUC (Justicia y Paz 2005), falsos positivos, Santos, La Habana, Acuerdo de paz con FARC (2016).
+
 ### POS — Posconflicto y Colombia Contemporánea (2016–presente)
+**Procesos**: implementación Acuerdo, JEP, Comisión de la Verdad, paro nacional 2021, gobierno Petro, paz total, migración venezolana.
+
 ### TRANS — Transversal / Larga Duración (abarca 3+ períodos)
+**Uso correcto**: procesos genuinamente de larga duración sin pivote único (formación territorial colombiana s. XVI-XX, mestizaje, historia regional Antioquia s. XVIII-XX, evolución de un imaginario nacional, etc.). NO uses TRANS como "no sé qué período" — primero intenta ubicar el debate/proceso central.
 
 ## TAXONOMÍA DE CATEGORÍAS Y SUBCATEGORÍAS
 
 ### POL — Política y Estado
-POL.FOR, POL.REG, POL.PAR, POL.ELE, POL.CON, POL.DES, POL.COR, POL.MIL, POL.REF, POL.OPO
+POL.FOR (formación estatal), POL.REG (regímenes políticos), POL.PAR (partidos), POL.ELE (elecciones), POL.CON (constituciones), POL.DES (descentralización), POL.COR (corrupción), POL.MIL (relación civil-militar), POL.REF (reformas), POL.OPO (oposición).
 
 ### ECO — Economía y Desarrollo
-ECO.AGR, ECO.EXT, ECO.EXP, ECO.IND, ECO.FIS, ECO.MON, ECO.LAB, ECO.INF, ECO.APE, ECO.DES
+ECO.AGR (agraria), ECO.EXT (extractivismo), ECO.EXP (exportaciones), ECO.IND (industrialización), ECO.FIS (fiscal), ECO.MON (monetaria), ECO.LAB (trabajo), ECO.INF (infraestructura), ECO.APE (apertura), ECO.DES (desarrollo).
 
 ### CON — Conflicto Armado y Violencia
-CON.GCI, CON.VIO, CON.GUE, CON.PAR, CON.NAR, CON.DES, CON.PAZ, CON.JTR, CON.MEM, CON.DDH, CON.GEO
+CON.GCI (guerras civiles s. XIX), CON.VIO (Violencia), CON.GUE (guerrillas), CON.PAR (paramilitarismo), CON.NAR (narco-violencia), CON.DES (desplazamiento), CON.PAZ (procesos de paz), CON.JTR (justicia transicional), CON.MEM (memoria), CON.DDH (derechos humanos), CON.GEO (geografía del conflicto).
 
 ### SOC — Sociedad y Estructura Social
-SOC.CLA, SOC.RAZ, SOC.IND, SOC.AFR, SOC.GEN, SOC.URB, SOC.RUR, SOC.MIG, SOC.DEM, SOC.EDU, SOC.FAM
+SOC.CLA (clases), SOC.RAZ (raza), SOC.IND (indígenas), SOC.AFR (afrocolombianos), SOC.GEN (género), SOC.URB (urbanización), SOC.RUR (mundo rural), SOC.MIG (migraciones), SOC.DEM (demografía), SOC.EDU (educación), SOC.FAM (familia).
 
 ### CUL — Cultura, Ideología y Producción Intelectual
-CUL.IDE, CUL.REL, CUL.LIT, CUL.ART, CUL.PER, CUL.INT, CUL.POP, CUL.CIE, CUL.LEN
+CUL.IDE (ideologías), CUL.REL (religión), CUL.LIT (literatura), CUL.ART (artes), CUL.PER (prensa), CUL.INT (intelectuales), CUL.POP (cultura popular), CUL.CIE (ciencia y tecnología), CUL.LEN (lengua).
 
 ### REL — Relaciones Internacionales y Geopolítica
-REL.ESP, REL.USA, REL.LAT, REL.EUR, REL.GFR, REL.PAN, REL.FRO, REL.COM, REL.ORI, REL.MUL
+REL.ESP (España), REL.USA (Estados Unidos), REL.LAT (América Latina), REL.EUR (Europa), REL.GFR (Guerra Fría), REL.PAN (Panamá), REL.FRO (fronteras), REL.COM (comercio internacional), REL.ORI (oriente), REL.MUL (multilateralismo).
 
 ### TER — Territorio, Región y Medio Ambiente
-TER.REG, TER.FRO, TER.GEO, TER.AMB, TER.TIE, TER.COC, TER.RES, TER.CIU
+TER.REG (regiones), TER.FRO (fronteras internas), TER.GEO (geografía histórica), TER.AMB (medio ambiente), TER.TIE (tierras), TER.COC (coca/cultivos ilícitos), TER.RES (recursos), TER.CIU (ciudades).
 
 ### MOV — Movimientos Sociales y Acción Colectiva
-MOV.OBR, MOV.CAM, MOV.EST, MOV.CIV, MOV.ETN, MOV.MUJ, MOV.PAZ, MOV.AMB, MOV.DIG, MOV.PLE
+MOV.OBR (obrero), MOV.CAM (campesino), MOV.EST (estudiantil), MOV.CIV (ciudadanías), MOV.ETN (étnicos), MOV.MUJ (mujeres/feminismos), MOV.PAZ (pacifismo), MOV.AMB (ambientalismo), MOV.DIG (digital), MOV.PLE (plebes/multitudes).
 
 ### INS — Instituciones, Derecho y Justicia
-INS.JUD, INS.MIL, INS.POL, INS.IGE, INS.UNI, INS.BUR, INS.TIE, INS.BAN, INS.MED
+INS.JUD (sistema judicial), INS.MIL (fuerzas armadas), INS.POL (policía), INS.IGE (iglesia institución), INS.UNI (universidades), INS.BUR (burocracia), INS.TIE (catastro/tenencia), INS.BAN (bancos/Banco República), INS.MED (medios institucionalizados).
 
 ### HIS — Historiografía y Metodología Histórica
-HIS.MAR, HIS.ACA, HIS.OFI, HIS.NUE, HIS.ORA, HIS.REG, HIS.COM, HIS.MEM, HIS.FUE
+HIS.MAR (corrientes marxistas), HIS.ACA (academia/institucionalización), HIS.OFI (historia oficial), HIS.NUE (nueva historia), HIS.ORA (historia oral), HIS.REG (historia regional), HIS.COM (comparada), HIS.MEM (memoria histórica), HIS.FUE (fuentes y archivos).
 
 ## REGLAS DE CALIDAD
 
-1. NO hagas preguntas que se respondan con un dato factual.
-2. PRIORIZA preguntas causales, contrafactuales, comparativas y de consecuencias no obvias.
-3. Cada pregunta debe tener entre 30 y 120 palabras.
-4. Al menos 3 preguntas deben conectar con procesos más amplios de América Latina o del mundo.
-5. Al menos 2 preguntas deben cuestionar narrativas establecidas o supuestos historiográficos.
-6. Ninguna pregunta debe requerir haber leído el documento para ser comprendida.`;
+1. NUNCA preguntas factuales (que se resuelvan con un dato).
+2. Prioriza preguntas causales, contrafactuales, comparativas, de consecuencias no obvias.
+3. Cada pregunta entre 30 y 120 palabras.
+4. Al menos 3 conectan con procesos latinoamericanos/globales.
+5. Al menos 2 cuestionan narrativas o supuestos historiográficos.
+6. Ninguna requiere haber leído el documento.
+7. COHERENCIA CRONOLÓGICA: anio_principal DENTRO del rango del periodo_historico, salvo TRANS.`;
 }
 
 // ─── Selección de chunks para la generación ──────────────────────────────────
@@ -394,8 +447,46 @@ function buildGenerateToolSpec(targetCount: number) {
   };
 }
 
+/**
+ * Si el anio_principal cae fuera del rango del periodo asignado por más del
+ * margen tolerado, se coerciona a un período coherente o a TRANS. Devuelve
+ * los códigos finales + flag indicando si hubo coerción (para logs).
+ *
+ * Tolerancia: 5 años de margen (algunos procesos cruzan el límite, ej.
+ * Constitución 1991 técnicamente CNA→C91). Más de 5 años fuera = corregimos.
+ */
+function reconcilePeriodoYAnio(
+  periodoCode: string,
+  yearPrincipal: number | null,
+): { periodoCode: string; coerced: boolean; reason: string } {
+  if (yearPrincipal == null) {
+    return { periodoCode, coerced: false, reason: "" };
+  }
+  if (periodoCode === "TRANS") {
+    return { periodoCode, coerced: false, reason: "" };
+  }
+  const bounds = PERIOD_YEAR_BOUNDS[periodoCode];
+  if (!bounds) {
+    return { periodoCode: "TRANS", coerced: true, reason: `código desconocido ${periodoCode}` };
+  }
+  const TOLERANCE = 5;
+  const within = yearPrincipal >= bounds.start - TOLERANCE && yearPrincipal <= bounds.end + TOLERANCE;
+  if (within) {
+    return { periodoCode, coerced: false, reason: "" };
+  }
+  // Fuera de rango: intenta encontrar el período correcto basado en el año
+  const correct = periodForYear(yearPrincipal);
+  return {
+    periodoCode: correct,
+    coerced: true,
+    reason: `año ${yearPrincipal} fuera de ${periodoCode} (${bounds.start}-${bounds.end}) → ${correct}`,
+  };
+}
+
 function normalizeQuestions(raw: unknown[]): QuestionData[] {
-  return raw.map((q: unknown, i: number) => {
+  let coercions = 0;
+  const reasons: string[] = [];
+  const out = raw.map((q: unknown, i: number) => {
     const item = q as Record<string, unknown>;
     const periodo = (item.periodo_historico as Record<string, string>) ?? {};
     const categoria = (item.categoria as Record<string, string>) ?? {};
@@ -416,12 +507,27 @@ function normalizeQuestions(raw: unknown[]): QuestionData[] {
         .map((x) => (typeof x === "string" ? x.trim() : ""))
         .filter((s) => s.length > 0);
 
+    const rawPeriodoCode = periodo.codigo ?? "TRANS";
+    const rec = reconcilePeriodoYAnio(rawPeriodoCode, yearPrincipal);
+    const finalPeriodoCode = rec.periodoCode;
+    let finalPeriodoNombre = periodo.nombre ?? "Transversal";
+    let finalPeriodoRango = periodo.rango_temporal ?? "";
+    if (rec.coerced) {
+      coercions++;
+      reasons.push(`Q${(item.id as number) ?? i + 1}: ${rec.reason}`);
+      const meta = getPeriodByCode(finalPeriodoCode);
+      if (meta) {
+        finalPeriodoNombre = meta.nombre;
+        finalPeriodoRango = meta.rango;
+      }
+    }
+
     return {
       questionNumber: (item.id as number) ?? i + 1,
       pregunta: (item.pregunta as string) ?? "",
-      periodoCode: periodo.codigo ?? "TRANS",
-      periodoNombre: periodo.nombre ?? "Transversal",
-      periodoRango: periodo.rango_temporal ?? "",
+      periodoCode: finalPeriodoCode,
+      periodoNombre: finalPeriodoNombre,
+      periodoRango: finalPeriodoRango,
       categoriaCode: categoria.codigo ?? "HIS",
       categoriaNombre: categoria.nombre ?? "Historiografía",
       subcategoriaCode: subcategoria.codigo ?? "HIS.ACA",
@@ -436,6 +542,14 @@ function normalizeQuestions(raw: unknown[]): QuestionData[] {
       justificacion: (item.justificacion as string) ?? "",
     };
   });
+
+  if (coercions > 0) {
+    console.warn(
+      `[questions-gen] ⚠️ ${coercions}/${raw.length} preguntas con período coercionado por incoherencia año-período:\n  ${reasons.join("\n  ")}`
+    );
+  }
+
+  return out;
 }
 
 // ─── Función principal ─────────────────────────────────────────────────────────
@@ -489,12 +603,35 @@ ${context}`;
   // (Bedrock lanza ValidationException: "temperature is deprecated for this model").
   // Para modelos previos seguimos pasando 0.7 por compatibilidad.
   const isThinkingModel = /claude-(opus|sonnet)-(4-7|4-8|5)/.test(QUESTIONS_MODEL);
+  const maxTokens = maxTokensFor(targetCount);
   const inferenceConfig: { maxTokens: number; temperature?: number } = {
-    maxTokens: maxTokensFor(targetCount),
+    maxTokens,
   };
   if (!isThinkingModel) {
     inferenceConfig.temperature = 0.7;
   }
+
+  // Extended thinking adaptativo (Opus 4.7+ en Bedrock). Permite que el modelo
+  // razone antes de emitir el tool use, mejorando dramáticamente la clasificación
+  // taxonómica (período + categoría coherentes con anio_principal). Sin thinking,
+  // el modelo a veces emite combinaciones absurdas (pregunta de 1925 marcada
+  // como Prehispánico).
+  //
+  // API actual de Bedrock: thinking.type = "adaptive" + output_config.effort
+  // (low|medium|high). El bug "thinking.type.enabled is not supported" vino de
+  // usar la API vieja de Anthropic directo. Bedrock decide el budget en runtime.
+  // additionalModelRequestFields requiere DocumentType (Smithy); cast vía unknown.
+  // effort: "medium" balancea calidad de razonamiento con tiempos razonables.
+  // "high" provoca >20min y throttling para batches de 50+ preguntas.
+  // Override con BEDROCK_THINKING_EFFORT=high|medium|low si querés ajustar.
+  const wantsThinking = isThinkingModel;
+  const effort = process.env.BEDROCK_THINKING_EFFORT || "medium";
+  const additionalModelRequestFields = wantsThinking
+    ? ({
+        thinking: { type: "adaptive" },
+        output_config: { effort },
+      } as unknown as Record<string, never>)
+    : undefined;
 
   const command = new ConverseCommand({
     modelId: QUESTIONS_MODEL,
@@ -507,9 +644,15 @@ ${context}`;
     ],
     toolConfig: {
       tools: [{ toolSpec: buildGenerateToolSpec(targetCount) }],
-      toolChoice: { tool: { name: GENERATE_TOOL_NAME } },
+      // Con thinking habilitado Bedrock NO acepta forzar tool ("Thinking may
+      // not be enabled when tool_choice forces tool use"). Usamos `auto` y el
+      // prompt instruye explícitamente que debe llamarse el tool.
+      // Sin thinking, podríamos usar { tool: { name } }, pero auto funciona
+      // igual de bien cuando solo hay UN tool definido y el prompt es claro.
+      toolChoice: { auto: {} },
     },
     inferenceConfig,
+    ...(additionalModelRequestFields ? { additionalModelRequestFields } : {}),
   });
 
   // Retry con backoff exponencial.
@@ -571,7 +714,24 @@ ${context}`;
   }
 
   const input = toolUseBlock.toolUse.input as Record<string, unknown>;
-  const preguntas = input.preguntas as unknown[];
+  // Workaround Bedrock+thinking: a veces serializa preguntas como string JSON
+  // en vez de array nativo (sospechamos por cómo Smithy maneja additionalModelRequestFields).
+  // Si es string, intentamos parse antes de fallar.
+  let preguntas: unknown[];
+  if (typeof input.preguntas === "string") {
+    try {
+      const parsed = JSON.parse(input.preguntas);
+      preguntas = Array.isArray(parsed) ? parsed : [];
+      console.log(
+        `[questions-gen] ℹ️ preguntas vino como string JSON, parsed → ${preguntas.length} items`
+      );
+    } catch (e) {
+      preguntas = [];
+      console.warn(`[questions-gen] preguntas string no parseable:`, e);
+    }
+  } else {
+    preguntas = (input.preguntas as unknown[]) ?? [];
+  }
 
   if (!Array.isArray(preguntas) || preguntas.length === 0) {
     const inputKeys = Object.keys(input).join(",");
