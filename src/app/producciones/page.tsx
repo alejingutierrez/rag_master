@@ -125,7 +125,7 @@ export default function ProduccionesPage() {
         </Space>
       </div>
 
-      <Card bordered style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <Space wrap size={10}>
           <Input
             allowClear
@@ -176,9 +176,9 @@ export default function ProduccionesPage() {
       </Card>
 
       {loading ? (
-        <Card bordered><Skeleton active paragraph={{ rows: 8 }} /></Card>
+        <Card><Skeleton active paragraph={{ rows: 8 }} /></Card>
       ) : items.length === 0 ? (
-        <Card bordered>
+        <Card>
           <Empty description="Sin producciones con estos filtros" />
         </Card>
       ) : view === "grid" ? (
@@ -190,7 +190,7 @@ export default function ProduccionesPage() {
           ))}
         </Row>
       ) : (
-        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+        <Space vertical size={8} style={{ width: "100%" }}>
           {items.map((d) => (
             <ProductionRow key={d.id} item={d} />
           ))}
@@ -231,9 +231,8 @@ function ProductionCard({ item }: { item: DeliverableItem }) {
     <Link href={`/producciones/${item.id}`}>
       <Card
         hoverable
-        bordered
         style={{ borderTop: `3px solid ${periodColor}`, height: "100%" }}
-        bodyStyle={{ padding: 14 }}
+        styles={{ body: { padding: 14 } }}
       >
         <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 8 }}>
           <Space size={6}>
@@ -287,10 +286,10 @@ function ProductionRow({ item }: { item: DeliverableItem }) {
 
   return (
     <Link href={`/producciones/${item.id}`}>
-      <Card hoverable bordered bodyStyle={{ padding: 12 }} style={{ borderLeft: `3px solid ${periodColor}` }}>
+      <Card hoverable styles={{ body: { padding: 12 } }} style={{ borderLeft: `3px solid ${periodColor}` }}>
         <Row gutter={12} align="middle">
           <Col flex="auto">
-            <Space direction="vertical" size={4} style={{ width: "100%" }}>
+            <Space vertical size={4} style={{ width: "100%" }}>
               <Space>
                 <span style={{ fontSize: 16 }}>{tpl?.icon}</span>
                 <Text strong style={{ fontSize: 13 }}>{tpl?.name}</Text>
@@ -305,7 +304,7 @@ function ProductionRow({ item }: { item: DeliverableItem }) {
             </Space>
           </Col>
           <Col>
-            <Space direction="vertical" align="end" size={4}>
+            <Space vertical align="end" size={4}>
               <Tag color={item.source === "chat" ? "geekblue" : "purple"} style={{ fontSize: 10, margin: 0 }}>
                 {item.source}
               </Tag>

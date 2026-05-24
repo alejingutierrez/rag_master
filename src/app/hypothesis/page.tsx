@@ -138,8 +138,8 @@ export default function HypothesisPage() {
         </Paragraph>
       </div>
 
-      <Card bordered style={{ marginBottom: 16 }}>
-        <Space direction="vertical" size={12} style={{ width: "100%" }}>
+      <Card style={{ marginBottom: 16 }}>
+        <Space vertical size={12} style={{ width: "100%" }}>
           <TextArea
             value={hypothesis}
             onChange={(e) => setHypothesis(e.target.value)}
@@ -201,7 +201,6 @@ function SideCard({
   const { token } = theme.useToken();
   return (
     <Card
-      bordered
       style={{ borderTop: `3px solid ${color}`, minHeight: 380 }}
       title={
         <Space>

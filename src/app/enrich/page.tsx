@@ -168,10 +168,10 @@ function EnrichContent() {
         </Paragraph>
       </div>
 
-      <Card bordered style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <Row gutter={[16, 12]} align="middle">
           <Col xs={24} md={10}>
-            <Space direction="vertical" size={4} style={{ width: "100%" }}>
+            <Space vertical size={4} style={{ width: "100%" }}>
               <Text style={{ fontSize: 12, color: token.colorTextTertiary }}>
                 Cobertura de enriquecimiento
               </Text>
@@ -204,7 +204,6 @@ function EnrichContent() {
       <Row gutter={16}>
         <Col xs={24} lg={selectedId ? 8 : 24}>
           <Card
-            bordered
             title={
               <Space>
                 <FileTextOutlined />
@@ -212,10 +211,10 @@ function EnrichContent() {
                 <Tag>{filtered.length}</Tag>
               </Space>
             }
-            bodyStyle={{ padding: 0 }}
+            styles={{ body: { padding: 0 } }}
           >
             <div style={{ padding: 12, borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
-              <Space direction="vertical" size={8} style={{ width: "100%" }}>
+              <Space vertical size={8} style={{ width: "100%" }}>
                 <Input
                   allowClear
                   prefix={<SearchOutlined />}
@@ -292,7 +291,7 @@ function EnrichContent() {
         {selectedId && (
           <Col xs={24} lg={16}>
             {loadingDetail || !detail ? (
-              <Card bordered><Skeleton active paragraph={{ rows: 8 }} /></Card>
+              <Card><Skeleton active paragraph={{ rows: 8 }} /></Card>
             ) : (
               <EnrichmentEditor
                 key={detail.id}
@@ -391,11 +390,10 @@ function EnrichmentEditor({
 
   return (
     <Card
-      bordered
       title={
         <Space>
           <Button type="text" icon={<ArrowLeftOutlined />} size="small" onClick={onClose} />
-          <Space direction="vertical" size={0}>
+          <Space vertical size={0}>
             <Text strong className="serif-title" style={{ fontSize: 16 }}>
               {getDocumentDisplayName(doc)}
             </Text>

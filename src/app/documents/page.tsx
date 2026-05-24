@@ -149,12 +149,14 @@ export default function DocumentsPage() {
       title: "Documento",
       dataIndex: "filename",
       key: "filename",
+      width: 360,
+      ellipsis: true,
       render: (_v, doc) => {
         const display = getDocumentDisplayName(doc);
         const periodCode = doc.metadata?.primaryPeriod;
         const period = periodCode ? getPeriodByCode(periodCode) : undefined;
         return (
-          <Space size={10} style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <div
               style={{
                 width: 36,
@@ -171,14 +173,29 @@ export default function DocumentsPage() {
             >
               <FileTextOutlined />
             </div>
-            <Space direction="vertical" size={0} style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <Link href={`/documents/${doc.id}`}>
-                <Text strong style={{ color: token.colorText }}>
-                  {display}
-                </Text>
+                <Tooltip title={display} placement="topLeft">
+                  <Text
+                    strong
+                    style={{
+                      color: token.colorText,
+                      display: "block",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {display}
+                  </Text>
+                </Tooltip>
               </Link>
-              <Space size={6} style={{ fontSize: 11, color: token.colorTextTertiary }}>
-                {doc.metadata?.author && <span>{doc.metadata.author}</span>}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: token.colorTextTertiary, marginTop: 2 }}>
+                {doc.metadata?.author && (
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>
+                    {doc.metadata.author}
+                  </span>
+                )}
                 {period && (
                   <Tag
                     style={{
@@ -192,9 +209,9 @@ export default function DocumentsPage() {
                     {period.nombre}
                   </Tag>
                 )}
-              </Space>
-            </Space>
-          </Space>
+              </div>
+            </div>
+          </div>
         );
       },
     },
@@ -302,7 +319,7 @@ export default function DocumentsPage() {
         </Space>
       </div>
 
-      <Card bordered style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <Space wrap size={12}>
           <Input
             allowClear
@@ -343,7 +360,7 @@ export default function DocumentsPage() {
         </Space>
       </Card>
 
-      <Card bordered bodyStyle={{ padding: view === "table" ? 0 : 16 }}>
+      <Card styles={{ body: { padding: view === "table" ? 0 : 16 } }}>
         {view === "table" ? (
           <Table<DocumentRow>
             rowKey="id"
@@ -390,11 +407,10 @@ function GridView({ documents, onDelete }: { documents: DocumentRow[]; onDelete:
           <Card
             key={doc.id}
             hoverable
-            bordered
-            bodyStyle={{ padding: 16 }}
+            styles={{ body: { padding: 16 } }}
             style={{ borderTop: `3px solid ${color}` }}
           >
-            <Space direction="vertical" size={8} style={{ width: "100%" }}>
+            <Space vertical size={8} style={{ width: "100%" }}>
               <Space style={{ justifyContent: "space-between", width: "100%" }}>
                 <FileTextOutlined style={{ color, fontSize: 22 }} />
                 <Tag color={cfg.color} icon={cfg.icon} style={{ fontSize: 10 }}>{cfg.label}</Tag>

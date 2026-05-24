@@ -190,11 +190,11 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
       onCancel={onClose}
       footer={null}
       closable={false}
-      maskClosable
-      destroyOnClose
+      mask={{ closable: true }}
+      destroyOnHidden
       width={640}
       style={{ top: 96 }}
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
     >
       <div
         style={{

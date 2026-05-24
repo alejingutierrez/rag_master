@@ -125,7 +125,7 @@ function BibContent() {
         </Space>
       </div>
 
-      <Card bordered style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <Space wrap>
           <Button icon={<CopyOutlined />} onClick={copyAll} disabled={!data || data.formatted.length === 0}>
             Copiar todo ({data?.formatted.length ?? 0})
@@ -139,13 +139,13 @@ function BibContent() {
         </Space>
       </Card>
 
-      <Card bordered>
+      <Card>
         {loading ? (
           <Skeleton active paragraph={{ rows: 12 }} />
         ) : !data || data.formatted.length === 0 ? (
           <Empty description="Sin referencias" />
         ) : (
-          <Space direction="vertical" size={12} style={{ width: "100%" }}>
+          <Space vertical size={12} style={{ width: "100%" }}>
             {data.formatted.map((entry, i) => (
               <div
                 key={i}

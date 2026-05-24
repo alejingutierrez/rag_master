@@ -263,7 +263,7 @@ export default function ChatPage() {
             {isLoading && !streamingText && (
               <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "20px 0" }}>
                 <Avatar style={{ background: `${token.colorPrimary}22`, color: token.colorPrimary }} icon={<RobotOutlined />} />
-                <Card bordered size="small" bodyStyle={{ padding: "12px 16px" }}>
+                <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
                   <Space>
                     <Spin size="small" />
                     <Text type="secondary">Buscando en el corpus y razonando…</Text>
@@ -324,7 +324,7 @@ export default function ChatPage() {
         {citations.length === 0 ? (
           <Empty description="Sin citas" />
         ) : (
-          <Space direction="vertical" size={10} style={{ width: "100%" }}>
+          <Space vertical size={10} style={{ width: "100%" }}>
             {citations.map((c, i) => (
               <CitationCard key={c.id} idx={i + 1} citation={c} onExpand={() => setSelectedCitation(c)} />
             ))}
@@ -335,7 +335,7 @@ export default function ChatPage() {
       <Drawer
         title={
           selectedCitation && (
-            <Space direction="vertical" size={0}>
+            <Space vertical size={0}>
               <Text strong style={{ fontSize: 14 }}>Cita #{citations.indexOf(selectedCitation) + 1}</Text>
               <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>
                 {selectedCitation.documentFilename} · p. {selectedCitation.pageNumber}
@@ -356,7 +356,7 @@ export default function ChatPage() {
                 <Button size="small" icon={<FileTextOutlined />}>Abrir documento</Button>
               </Link>
             </Space>
-            <Card bordered bodyStyle={{ padding: 16 }}>
+            <Card styles={{ body: { padding: 16 } }}>
               <Paragraph
                 style={{ fontFamily: "var(--font-serif)", fontSize: 14.5, lineHeight: 1.7, margin: 0 }}
               >
@@ -402,8 +402,7 @@ function EmptyState({ onPick, template }: { onPick: (q: string) => void; templat
           <Card
             key={q}
             hoverable
-            bordered
-            bodyStyle={{ padding: 14 }}
+            styles={{ body: { padding: 14 } }}
             onClick={() => onPick(q)}
           >
             <Text style={{ fontSize: 13, textAlign: "left", display: "block", color: token.colorText }}>
@@ -449,8 +448,7 @@ function MessageBubble({
       />
       <div style={{ maxWidth: "calc(100% - 64px)" }}>
         <Card
-          bordered
-          bodyStyle={{ padding: "12px 16px" }}
+          styles={{ body: { padding: "12px 16px" } }}
           style={{
             background: isUser ? `${token.colorPrimary}10` : token.colorBgContainer,
             borderColor: isUser ? `${token.colorPrimary}33` : token.colorBorder,
@@ -539,7 +537,7 @@ function CitationCard({
 }) {
   const { token } = theme.useToken();
   return (
-    <Card bordered size="small" hoverable onClick={onExpand} bodyStyle={{ padding: 12 }}>
+    <Card size="small" hoverable onClick={onExpand} styles={{ body: { padding: 12 } }}>
       <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 6 }}>
         <Space size={6}>
           <Tag

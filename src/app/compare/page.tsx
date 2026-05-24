@@ -139,7 +139,7 @@ export default function ComparePage() {
 
   return (
     <div className="app-page-wide">
-      <Space direction="vertical" size={4} style={{ marginBottom: 24 }}>
+      <Space vertical size={4} style={{ marginBottom: 24 }}>
         <Title level={2} className="serif-title" style={{ margin: 0 }}>
           <ClusterOutlined /> Comparador de templates
         </Title>
@@ -148,8 +148,8 @@ export default function ComparePage() {
         </Paragraph>
       </Space>
 
-      <Card bordered style={{ marginBottom: 16 }}>
-        <Space direction="vertical" size={14} style={{ width: "100%" }}>
+      <Card style={{ marginBottom: 16 }}>
+        <Space vertical size={14} style={{ width: "100%" }}>
           <TextArea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -220,9 +220,8 @@ function ResultColumn({ templateId, result }: { templateId: string; result?: Com
 
   return (
     <Card
-      bordered
       style={{ height: "100%" }}
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
       title={
         <Space>
           <span style={{ fontSize: 18 }}>{tpl?.icon}</span>
@@ -257,7 +256,7 @@ function ResultColumn({ templateId, result }: { templateId: string; result?: Com
         {!result || result.status === "idle" ? (
           <Empty description="Sin resultado" />
         ) : result.status === "loading" ? (
-          <Space direction="vertical" size={12} style={{ width: "100%", alignItems: "center", padding: 30 }}>
+          <Space vertical size={12} style={{ width: "100%", alignItems: "center", padding: 30 }}>
             <Spin />
             <Text type="secondary" style={{ fontSize: 12 }}>Generando…</Text>
           </Space>

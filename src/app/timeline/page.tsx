@@ -72,7 +72,7 @@ export default function TimelinePage() {
         </Paragraph>
       </div>
 
-      <Card bordered style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         {/* Timeline horizontal */}
         <div style={{ overflowX: "auto", paddingBottom: 12 }}>
           <div style={{ minWidth: 1100, display: "flex", gap: 8, paddingTop: 32 }}>
@@ -183,7 +183,6 @@ export default function TimelinePage() {
       {/* Detalle del período seleccionado */}
       {selectedPeriod ? (
         <Card
-          bordered
           title={
             <Space>
               <Tag
@@ -212,8 +211,8 @@ export default function TimelinePage() {
         >
           <Row gutter={[16, 16]}>
             <Col xs={24} md={8}>
-              <Card bordered size="small">
-                <Space direction="vertical" size={4}>
+              <Card size="small">
+                <Space vertical size={4}>
                   <BookOutlined style={{ fontSize: 20, color: getPeriodColor(selectedPeriod.code) }} />
                   <Text type="secondary" style={{ fontSize: 12 }}>Preguntas</Text>
                   <Text style={{ fontSize: 26, fontWeight: 600 }}>{qByCode[selectedPeriod.code] ?? 0}</Text>
@@ -221,8 +220,8 @@ export default function TimelinePage() {
               </Card>
             </Col>
             <Col xs={24} md={8}>
-              <Card bordered size="small">
-                <Space direction="vertical" size={4}>
+              <Card size="small">
+                <Space vertical size={4}>
                   <FileTextOutlined style={{ fontSize: 20, color: getPeriodColor(selectedPeriod.code) }} />
                   <Text type="secondary" style={{ fontSize: 12 }}>Documentos</Text>
                   <Text style={{ fontSize: 26, fontWeight: 600 }}>{docsByCode[selectedPeriod.code] ?? 0}</Text>
@@ -230,8 +229,8 @@ export default function TimelinePage() {
               </Card>
             </Col>
             <Col xs={24} md={8}>
-              <Card bordered size="small">
-                <Space direction="vertical" size={4}>
+              <Card size="small">
+                <Space vertical size={4}>
                   <AppstoreOutlined style={{ fontSize: 20, color: getPeriodColor(selectedPeriod.code) }} />
                   <Text type="secondary" style={{ fontSize: 12 }}>Producciones</Text>
                   <Text style={{ fontSize: 26, fontWeight: 600 }}>{delivsByCode[selectedPeriod.code] ?? 0}</Text>

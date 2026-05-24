@@ -214,32 +214,32 @@ function QuestionsContent() {
 
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col xs={24} md={6}>
-          <Card bordered bodyStyle={{ padding: 14 }}>
+          <Card styles={{ body: { padding: 14 } }}>
             <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Total</Text>
             <div style={{ fontSize: 22, fontWeight: 600, color: token.colorText }}>{stats?.totalQuestions ?? 0}</div>
           </Card>
         </Col>
         <Col xs={24} md={6}>
-          <Card bordered bodyStyle={{ padding: 14 }}>
+          <Card styles={{ body: { padding: 14 } }}>
             <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Sin producción</Text>
             <div style={{ fontSize: 22, fontWeight: 600, color: token.colorWarning }}>{stats?.byState?.pending ?? 0}</div>
           </Card>
         </Col>
         <Col xs={24} md={6}>
-          <Card bordered bodyStyle={{ padding: 14 }}>
+          <Card styles={{ body: { padding: 14 } }}>
             <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Parciales</Text>
             <div style={{ fontSize: 22, fontWeight: 600, color: token.colorPrimary }}>{stats?.byState?.partial ?? 0}</div>
           </Card>
         </Col>
         <Col xs={24} md={6}>
-          <Card bordered bodyStyle={{ padding: 14 }}>
+          <Card styles={{ body: { padding: 14 } }}>
             <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Completas</Text>
             <div style={{ fontSize: 22, fontWeight: 600, color: token.colorSuccess }}>{stats?.byState?.complete ?? 0}</div>
           </Card>
         </Col>
       </Row>
 
-      <Card bordered style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <Space wrap size={10}>
           <Input
             allowClear
@@ -308,9 +308,9 @@ function QuestionsContent() {
       />
 
       {loading ? (
-        <Card bordered><Skeleton active paragraph={{ rows: 8 }} /></Card>
+        <Card><Skeleton active paragraph={{ rows: 8 }} /></Card>
       ) : questions.length === 0 ? (
-        <Card bordered>
+        <Card>
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description="Sin preguntas con estos filtros"
@@ -344,7 +344,7 @@ function QuestionsContent() {
                     <Text type="secondary" style={{ fontSize: 12 }}>{qs.length} preguntas</Text>
                   </Space>
                 </div>
-                <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                <Space vertical size={8} style={{ width: "100%" }}>
                   {qs.map((q) => (
                     <QuestionRow key={q.id} question={q} view={view} />
                   ))}
@@ -354,7 +354,7 @@ function QuestionsContent() {
           })}
         </div>
       ) : (
-        <Space direction="vertical" size={8} style={{ width: "100%" }}>
+        <Space vertical size={8} style={{ width: "100%" }}>
           {questions.map((q) => (
             <QuestionRow key={q.id} question={q} view={view} />
           ))}
@@ -383,14 +383,13 @@ function QuestionRow({ question, view }: { question: Question; view: "list" | "c
 
   return (
     <Card
-      bordered
       hoverable
-      bodyStyle={{ padding: 14 }}
+      styles={{ body: { padding: 14 } }}
       style={{ borderLeft: `3px solid ${periodColor}` }}
     >
       <Row gutter={12} align="middle">
         <Col flex="auto">
-          <Space direction="vertical" size={6} style={{ width: "100%" }}>
+          <Space vertical size={6} style={{ width: "100%" }}>
             <Text style={{ fontSize: 14, lineHeight: 1.5, color: token.colorText, fontWeight: 500 }}>
               <span
                 style={{
@@ -430,7 +429,7 @@ function QuestionRow({ question, view }: { question: Question; view: "list" | "c
           </Space>
         </Col>
         <Col>
-          <Space direction="vertical" size={4} align="end">
+          <Space vertical size={4} align="end">
             <Tag
               color={totalDelivs > 0 ? "success" : "default"}
               icon={totalDelivs > 0 ? <CheckCircleFilled /> : <ClockCircleOutlined />}

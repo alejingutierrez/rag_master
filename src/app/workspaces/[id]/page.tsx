@@ -131,9 +131,9 @@ export default function WorkspaceDetailPage({ params }: { params: Promise<{ id: 
                 {pinnedDocs.length === 0 ? (
                   <Empty description="Sin documentos anclados" />
                 ) : (
-                  <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                  <Space vertical size={8} style={{ width: "100%" }}>
                     {pinnedDocs.map((d) => (
-                      <Card key={d.id} bordered size="small">
+                      <Card key={d.id} size="small">
                         <Space style={{ justifyContent: "space-between", width: "100%" }}>
                           <Link href={`/documents/${d.id}`}>
                             <Space><FileTextOutlined /><Text>{d.filename}</Text></Space>
@@ -158,9 +158,9 @@ export default function WorkspaceDetailPage({ params }: { params: Promise<{ id: 
                 {pinnedQs.length === 0 ? (
                   <Empty description="Sin preguntas ancladas" />
                 ) : (
-                  <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                  <Space vertical size={8} style={{ width: "100%" }}>
                     {pinnedQs.map((q) => (
-                      <Card key={q.id} bordered size="small">
+                      <Card key={q.id} size="small">
                         <Space style={{ justifyContent: "space-between", width: "100%" }}>
                           <Text style={{ flex: 1, fontFamily: "var(--font-serif)" }}>{q.pregunta}</Text>
                           <Button type="text" danger icon={<DeleteOutlined />} onClick={() => togglePin("questions", q.id)} />
@@ -183,9 +183,9 @@ export default function WorkspaceDetailPage({ params }: { params: Promise<{ id: 
                 {pinnedProds.length === 0 ? (
                   <Empty description="Sin producciones ancladas" />
                 ) : (
-                  <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                  <Space vertical size={8} style={{ width: "100%" }}>
                     {pinnedProds.map((p) => (
-                      <Card key={p.id} bordered size="small">
+                      <Card key={p.id} size="small">
                         <Space style={{ justifyContent: "space-between", width: "100%" }}>
                           <Link href={`/producciones/${p.id}`}>
                             <Text>{p.question?.pregunta ?? p.userQuestion ?? "(producción)"}</Text>
@@ -204,7 +204,6 @@ export default function WorkspaceDetailPage({ params }: { params: Promise<{ id: 
             label: <><EditOutlined /> Notas</>,
             children: (
               <Card
-                bordered
                 extra={
                   editingNotes ? (
                     <Space>

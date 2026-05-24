@@ -122,7 +122,7 @@ export default function ThreadsPage() {
       </div>
 
       {threads.length === 0 ? (
-        <Card bordered>
+        <Card>
           <Empty description="Aún no has creado hilos">
             <Button type="primary" onClick={() => setShowNew(true)}>
               Crear primer hilo
@@ -134,7 +134,6 @@ export default function ThreadsPage() {
           {threads.map((t) => (
             <Col key={t.id} xs={24} md={12} lg={8}>
               <Card
-                bordered
                 title={
                   <Space>
                     <NodeIndexOutlined />

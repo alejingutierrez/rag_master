@@ -322,7 +322,7 @@ export default function UploadPage() {
         </Paragraph>
       </div>
 
-      <Card bordered style={{ marginBottom: 20 }}>
+      <Card style={{ marginBottom: 20 }}>
         <Dragger {...draggerProps} disabled={isProcessing}>
           <p className="ant-upload-drag-icon" style={{ color: token.colorPrimary }}>
             <InboxOutlined style={{ fontSize: 48 }} />
@@ -338,7 +338,7 @@ export default function UploadPage() {
 
       {states.length > 0 && (
         <>
-          <Card bordered style={{ marginBottom: 16 }}>
+          <Card style={{ marginBottom: 16 }}>
             <Row gutter={16}>
               <Col xs={12} md={6}>
                 <Statistic title="En cola" value={pendingCount} valueStyle={{ fontSize: 22 }} />
@@ -388,7 +388,7 @@ export default function UploadPage() {
             />
           )}
 
-          <Space direction="vertical" size={10} style={{ width: "100%" }}>
+          <Space vertical size={10} style={{ width: "100%" }}>
             {states.map((s) => (
               <FileRow
                 key={s.id}
@@ -403,7 +403,7 @@ export default function UploadPage() {
       )}
 
       {states.length === 0 && (
-        <Card bordered>
+        <Card>
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description="Arrastra archivos arriba para comenzar"
@@ -443,15 +443,14 @@ function FileRow({
   return (
     <Card
       size="small"
-      bordered
       style={{
         borderLeft: `3px solid ${statusColor}`,
       }}
-      bodyStyle={{ padding: 12 }}
+      styles={{ body: { padding: 12 } }}
     >
       <Row gutter={12} align="middle">
         <Col flex="auto">
-          <Space direction="vertical" size={6} style={{ width: "100%" }}>
+          <Space vertical size={6} style={{ width: "100%" }}>
             <Space style={{ width: "100%", justifyContent: "space-between" }}>
               <Space size={8}>
                 <FileTextOutlined style={{ color: statusColor }} />

@@ -81,7 +81,7 @@ export default function CoveragePage() {
         />
       </div>
 
-      <Card bordered bodyStyle={{ padding: 16 }}>
+      <Card styles={{ body: { padding: 16 } }}>
         <div style={{ overflowX: "auto" }}>
           <table style={{ borderCollapse: "separate", borderSpacing: 4, minWidth: 1100 }}>
             <thead>
@@ -182,7 +182,7 @@ export default function CoveragePage() {
         </div>
       </Card>
 
-      <Card bordered title="Lagunas detectadas" style={{ marginTop: 16 }}>
+      <Card title="Lagunas detectadas" style={{ marginTop: 16 }}>
         <Space wrap>
           {(() => {
             const gaps: Array<{ p: typeof PERIOD_OPTIONS[number]; c: typeof CATEGORY_OPTIONS[number] }> = [];

@@ -127,7 +127,7 @@ export default function WorkspacesPage() {
       </div>
 
       {ws.length === 0 ? (
-        <Card bordered>
+        <Card>
           <Empty description="Aún no has creado workspaces">
             <Button type="primary" onClick={() => setShowNew(true)}>Crear primero</Button>
           </Empty>
@@ -137,7 +137,6 @@ export default function WorkspacesPage() {
           {ws.map((w) => (
             <Col key={w.id} xs={24} md={12} lg={8}>
               <Card
-                bordered
                 title={<Text strong>{w.name}</Text>}
                 extra={
                   <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => remove(w.id)} />

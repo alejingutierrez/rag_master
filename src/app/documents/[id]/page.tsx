@@ -213,7 +213,6 @@ export default function DocumentDetailPage() {
 
       {/* Hero card */}
       <Card
-        bordered
         style={{
           marginBottom: 20,
           borderLeft: `4px solid ${color}`,
@@ -238,7 +237,7 @@ export default function DocumentDetailPage() {
               >
                 <FileTextOutlined />
               </div>
-              <Space direction="vertical" size={4} style={{ minWidth: 0 }}>
+              <Space vertical size={4} style={{ minWidth: 0 }}>
                 <Title level={3} className="serif-title" style={{ margin: 0 }}>
                   {display}
                 </Title>
@@ -278,7 +277,7 @@ export default function DocumentDetailPage() {
             </Space>
           </Col>
           <Col xs={24} md={8}>
-            <Space direction="vertical" size={8} align="end" style={{ width: "100%" }}>
+            <Space vertical size={8} align="end" style={{ width: "100%" }}>
               <Space wrap>
                 <Link href={`/enrich?docId=${doc.id}`}>
                   <Button icon={<ExperimentOutlined />}>Enriquecer</Button>
@@ -324,28 +323,28 @@ export default function DocumentDetailPage() {
 
       <Row gutter={16} style={{ marginBottom: 20 }}>
         <Col xs={12} md={6}>
-          <Card bordered bodyStyle={{ padding: 16 }}>
+          <Card styles={{ body: { padding: 16 } }}>
             <Statistic title="Páginas" value={doc.pageCount} prefix={<ReadOutlined style={{ color: token.colorTextTertiary }} />} valueStyle={{ fontSize: 22 }} />
           </Card>
         </Col>
         <Col xs={12} md={6}>
-          <Card bordered bodyStyle={{ padding: 16 }}>
+          <Card styles={{ body: { padding: 16 } }}>
             <Statistic title="Chunks" value={doc.chunks.length} prefix={<ApartmentOutlined style={{ color: token.colorTextTertiary }} />} valueStyle={{ fontSize: 22 }} />
           </Card>
         </Col>
         <Col xs={12} md={6}>
-          <Card bordered bodyStyle={{ padding: 16 }}>
+          <Card styles={{ body: { padding: 16 } }}>
             <Statistic title="Tamaño" value={formatBytes(doc.fileSize)} valueStyle={{ fontSize: 22 }} />
           </Card>
         </Col>
         <Col xs={12} md={6}>
-          <Card bordered bodyStyle={{ padding: 16 }}>
+          <Card styles={{ body: { padding: 16 } }}>
             <Statistic title="Cargado" value={dayjs(doc.createdAt).format("DD MMM YY")} valueStyle={{ fontSize: 22 }} />
           </Card>
         </Col>
       </Row>
 
-      <Card bordered>
+      <Card>
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
@@ -391,7 +390,7 @@ function OverviewTab({ doc }: { doc: DocumentDetail }) {
   return (
     <div>
       {summary ? (
-        <Card bordered style={{ marginBottom: 16, background: token.colorFillQuaternary }}>
+        <Card style={{ marginBottom: 16, background: token.colorFillQuaternary }}>
           <Text type="secondary" style={{ fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase" }}>
             Resumen
           </Text>
@@ -416,7 +415,7 @@ function OverviewTab({ doc }: { doc: DocumentDetail }) {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} md={12}>
-          <Card bordered size="small" title="Bibliografía">
+          <Card size="small" title="Bibliografía">
             <MetaList
               items={[
                 ["Autor", m.author],
@@ -431,7 +430,7 @@ function OverviewTab({ doc }: { doc: DocumentDetail }) {
           </Card>
         </Col>
         <Col xs={24} md={12}>
-          <Card bordered size="small" title="Clasificación">
+          <Card size="small" title="Clasificación">
             <MetaList
               items={[
                 ["Periodo primario", m.primaryPeriod && getPeriodByCode(m.primaryPeriod)?.nombre],
@@ -464,7 +463,7 @@ function MetaList({ items }: { items: Array<[string, string | number | undefined
   const filtered = items.filter(([, v]) => v !== undefined && v !== null && v !== "");
   if (filtered.length === 0) return <Text type="secondary">Sin información.</Text>;
   return (
-    <Space direction="vertical" size={6} style={{ width: "100%" }}>
+    <Space vertical size={6} style={{ width: "100%" }}>
       {filtered.map(([k, v]) => (
         <div key={k} style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: 8, fontSize: 13 }}>
           <Text type="secondary" style={{ fontSize: 12 }}>{k}</Text>
@@ -539,7 +538,6 @@ function ReadingTab({
         {chunksByPage.map(([p, chunks]) => (
           <Card
             key={p}
-            bordered
             size="small"
             style={{ marginBottom: 12 }}
             title={
@@ -588,11 +586,10 @@ function ChunksTab({
       {chunks.length === 0 ? (
         <Empty description={search ? "Sin coincidencias" : "Sin chunks"} />
       ) : (
-        <Space direction="vertical" size={10} style={{ width: "100%" }}>
+        <Space vertical size={10} style={{ width: "100%" }}>
           {chunks.map((c) => (
             <Card
               key={c.id}
-              bordered
               size="small"
               extra={
                 <Space size={6}>

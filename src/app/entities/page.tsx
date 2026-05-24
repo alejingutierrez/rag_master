@@ -94,7 +94,7 @@ export default function EntitiesPage() {
         style={{ marginBottom: 16 }}
       />
 
-      <Card bordered style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <Space wrap size={10}>
           <Input
             allowClear
@@ -118,7 +118,7 @@ export default function EntitiesPage() {
       </Card>
 
       {loading ? (
-        <Card bordered><Skeleton active paragraph={{ rows: 8 }} /></Card>
+        <Card><Skeleton active paragraph={{ rows: 8 }} /></Card>
       ) : filtered.length === 0 ? (
         <Empty description="Sin entidades" />
       ) : (
@@ -130,10 +130,9 @@ export default function EntitiesPage() {
             return (
               <Col key={e.name} xs={24} sm={12} md={8} lg={6}>
                 <Card
-                  bordered
                   hoverable
                   size="small"
-                  bodyStyle={{ padding: 14 }}
+                  styles={{ body: { padding: 14 } }}
                   style={{ borderLeft: `3px solid ${cfg.color}` }}
                 >
                   <Space style={{ width: "100%", justifyContent: "space-between" }}>

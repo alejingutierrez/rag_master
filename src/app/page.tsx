@@ -175,7 +175,6 @@ export default function DashboardPage() {
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} lg={16}>
           <Card
-            bordered
             title={
               <Space>
                 <RiseOutlined />
@@ -189,11 +188,10 @@ export default function DashboardPage() {
         </Col>
         <Col xs={24} lg={8}>
           <Card
-            bordered
             title="Progreso del corpus"
             style={{ height: "100%" }}
           >
-            <Space direction="vertical" size={20} style={{ width: "100%" }}>
+            <Space vertical size={20} style={{ width: "100%" }}>
               <ProgressMetric
                 label="Documentos enriquecidos"
                 value={enrichmentPct}
@@ -228,7 +226,6 @@ export default function DashboardPage() {
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24}>
           <Card
-            bordered
             title={
               <Space>
                 <HeatMapOutlined />
@@ -253,7 +250,7 @@ export default function DashboardPage() {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={8}>
-          <Space direction="vertical" size={12} style={{ width: "100%" }}>
+          <Space vertical size={12} style={{ width: "100%" }}>
             <Text strong style={{ fontSize: 12, letterSpacing: "0.06em", textTransform: "uppercase", color: token.colorTextTertiary }}>
               Acciones rápidas
             </Text>
@@ -267,9 +264,8 @@ export default function DashboardPage() {
         </Col>
 
         <Col xs={24} lg={16}>
-          <Space direction="vertical" size={16} style={{ width: "100%" }}>
+          <Space vertical size={16} style={{ width: "100%" }}>
             <Card
-              bordered
               title={<><FileTextOutlined /> <span style={{ marginLeft: 8 }}>Documentos recientes</span></>}
               extra={
                 <Link href="/documents">
@@ -282,7 +278,7 @@ export default function DashboardPage() {
               {!data || data.recentDocuments.length === 0 ? (
                 <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Aún no hay documentos" />
               ) : (
-                <Space direction="vertical" size={6} style={{ width: "100%" }}>
+                <Space vertical size={6} style={{ width: "100%" }}>
                   {data.recentDocuments.map((doc) => (
                     <Link
                       key={doc.id}
@@ -326,7 +322,6 @@ export default function DashboardPage() {
             <Row gutter={[12, 12]}>
               <Col xs={24} md={12}>
                 <Card
-                  bordered
                   size="small"
                   title={<><BookOutlined /> <span style={{ marginLeft: 8 }}>Preguntas recientes</span></>}
                   extra={<Link href="/questions"><Button type="link" size="small">Ver <ArrowRightOutlined /></Button></Link>}
@@ -335,7 +330,7 @@ export default function DashboardPage() {
                   {!data || data.recentQuestions.length === 0 ? (
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sin preguntas" />
                   ) : (
-                    <Space direction="vertical" size={10} style={{ width: "100%" }}>
+                    <Space vertical size={10} style={{ width: "100%" }}>
                       {data.recentQuestions.map((q) => (
                         <div key={q.id} style={{ borderLeft: `2px solid ${getPeriodColor(q.periodoCode)}`, paddingLeft: 10 }}>
                           <Text style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", fontSize: 12.5, lineHeight: 1.4 }}>
@@ -357,7 +352,6 @@ export default function DashboardPage() {
               </Col>
               <Col xs={24} md={12}>
                 <Card
-                  bordered
                   size="small"
                   title={<><AppstoreOutlined /> <span style={{ marginLeft: 8 }}>Producciones recientes</span></>}
                   extra={<Link href="/producciones"><Button type="link" size="small">Ver <ArrowRightOutlined /></Button></Link>}
@@ -366,7 +360,7 @@ export default function DashboardPage() {
                   {!data || data.recentDeliverables.length === 0 ? (
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sin producciones" />
                   ) : (
-                    <Space direction="vertical" size={10} style={{ width: "100%" }}>
+                    <Space vertical size={10} style={{ width: "100%" }}>
                       {data.recentDeliverables.map((p) => {
                         const periodColor = p.question?.periodoCode
                           ? getPeriodColor(p.question.periodoCode)
@@ -395,7 +389,7 @@ export default function DashboardPage() {
 function StatCard({ loading, label, value, delta, icon, color, footer }: { loading: boolean; label: string; value: number; delta?: number; icon: React.ReactNode; color: string; footer?: string }) {
   const { token } = theme.useToken();
   return (
-    <Card bordered loading={loading} bodyStyle={{ padding: 18 }}>
+    <Card loading={loading} styles={{ body: { padding: 18 } }}>
       <Space style={{ width: "100%", justifyContent: "space-between" }}>
         <div>
           <Text style={{ fontSize: 12, color: token.colorTextTertiary }}>{label}</Text>
@@ -451,7 +445,7 @@ function ProgressMetric({ label, value, color, detail }: { label: string; value:
         <Text style={{ fontSize: 12.5, color: token.colorTextSecondary }}>{label}</Text>
         <Text style={{ fontSize: 12.5, fontWeight: 600, color }}>{value}%</Text>
       </div>
-      <Progress percent={value} showInfo={false} strokeColor={color} trailColor={token.colorFillQuaternary} size="small" />
+      <Progress percent={value} showInfo={false} strokeColor={color} railColor={token.colorFillQuaternary} size="small" />
       <Text style={{ fontSize: 11, color: token.colorTextTertiary, marginTop: 2, display: "block" }}>{detail}</Text>
     </div>
   );

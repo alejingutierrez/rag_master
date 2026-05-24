@@ -128,8 +128,8 @@ export default function DeepResearchPage() {
         Tarda 2-5 minutos.
       </Paragraph>
 
-      <Card bordered style={{ marginBottom: 16 }}>
-        <Space direction="vertical" size={12} style={{ width: "100%" }}>
+      <Card style={{ marginBottom: 16 }}>
+        <Space vertical size={12} style={{ width: "100%" }}>
           <TextArea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -158,7 +158,7 @@ export default function DeepResearchPage() {
       </Card>
 
       {stage !== "idle" && (
-        <Card bordered title="Pipeline" style={{ marginBottom: 16 }}>
+        <Card title="Pipeline" style={{ marginBottom: 16 }}>
           <Steps
             size="small"
             current={
@@ -179,7 +179,7 @@ export default function DeepResearchPage() {
       )}
 
       {planThinking && (
-        <Card bordered size="small" style={{ marginBottom: 16, background: token.colorFillQuaternary }}>
+        <Card size="small" style={{ marginBottom: 16, background: token.colorFillQuaternary }}>
           <Text type="secondary" style={{ fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase" }}>
             Plan
           </Text>
@@ -190,10 +190,10 @@ export default function DeepResearchPage() {
       )}
 
       {subqueries.length > 0 && (
-        <Card bordered title={`Subqueries (${subqueries.length})`} style={{ marginBottom: 16 }}>
-          <Space direction="vertical" size={6} style={{ width: "100%" }}>
+        <Card title={`Subqueries (${subqueries.length})`} style={{ marginBottom: 16 }}>
+          <Space vertical size={6} style={{ width: "100%" }}>
             {subqueries.map((sq, i) => (
-              <Card key={i} bordered size="small" bodyStyle={{ padding: 10 }}>
+              <Card key={i} size="small" styles={{ body: { padding: 10 } }}>
                 <Space style={{ width: "100%", justifyContent: "space-between" }}>
                   <Space size={8} style={{ flex: 1 }}>
                     <Tag style={{ fontFamily: "var(--font-mono)", fontSize: 10 }}>#{i + 1}</Tag>
@@ -219,7 +219,7 @@ export default function DeepResearchPage() {
       {error && <Alert type="error" showIcon message={error} closable style={{ marginBottom: 16 }} />}
 
       {answer && (
-        <Card bordered title="Síntesis" bodyStyle={{ padding: "28px 32px" }}>
+        <Card title="Síntesis" styles={{ body: { padding: "28px 32px" } }}>
           <div className="prose-academic">
             <ReactMarkdown>{answer}</ReactMarkdown>
           </div>
@@ -227,7 +227,7 @@ export default function DeepResearchPage() {
       )}
 
       {stage === "idle" && (
-        <Card bordered>
+        <Card>
           <Empty description="Plantea una pregunta de investigación amplia para empezar" />
         </Card>
       )}

@@ -20,30 +20,23 @@
     "@prisma/client": "^6.19.2",
     "@types/pdfkit": "^0.17.6",
     "antd": "^6.4.3",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "dayjs": "^1.11.20",
     "docx": "^9.6.1",
-    "lucide-react": "^0.577.0",
-    "next": "16.1.7",
+    "next": "^16.2.6",
     "pdf-parse": "^2.4.5",
     "pdfkit": "^0.18.0",
     "prisma": "^6.19.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
-    "reactflow": "^11.11.4",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.5.0"
+    "reactflow": "^11.11.4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.7",
-    "tailwindcss": "^4",
+    "eslint-config-next": "^16.2.6",
     "typescript": "^5"
   }
 }

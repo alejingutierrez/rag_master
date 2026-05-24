@@ -233,26 +233,26 @@ function GenerateContent() {
 
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col xs={8}>
-          <Card bordered bodyStyle={{ padding: 14, textAlign: "center" }}>
+          <Card styles={{ body: { padding: 14, textAlign: "center" } }}>
             <div style={{ fontSize: 24, fontWeight: 600 }}>{ready.length}</div>
             <Text type="secondary" style={{ fontSize: 12 }}>Documentos disponibles</Text>
           </Card>
         </Col>
         <Col xs={8}>
-          <Card bordered bodyStyle={{ padding: 14, textAlign: "center" }}>
+          <Card styles={{ body: { padding: 14, textAlign: "center" } }}>
             <div style={{ fontSize: 24, fontWeight: 600, color: token.colorSuccess }}>{withQ}</div>
             <Text type="secondary" style={{ fontSize: 12 }}>Con preguntas</Text>
           </Card>
         </Col>
         <Col xs={8}>
-          <Card bordered bodyStyle={{ padding: 14, textAlign: "center" }}>
+          <Card styles={{ body: { padding: 14, textAlign: "center" } }}>
             <div style={{ fontSize: 24, fontWeight: 600, color: token.colorWarning }}>{ready.length - withQ}</div>
             <Text type="secondary" style={{ fontSize: 12 }}>Pendientes</Text>
           </Card>
         </Col>
       </Row>
 
-      <Card bordered title="Seleccionar documento" style={{ marginBottom: 16 }}>
+      <Card title="Seleccionar documento" style={{ marginBottom: 16 }}>
         <Select
           showSearch
           allowClear
@@ -275,10 +275,10 @@ function GenerateContent() {
         />
 
         {selected && (
-          <Card bordered bodyStyle={{ padding: 14 }} style={{ marginTop: 16, background: token.colorFillQuaternary }}>
+          <Card styles={{ body: { padding: 14 } }} style={{ marginTop: 16, background: token.colorFillQuaternary }}>
             <Row gutter={16} align="middle">
               <Col flex="auto">
-                <Space direction="vertical" size={4}>
+                <Space vertical size={4}>
                   <Text strong>{getDocumentDisplayName(selected)}</Text>
                   <Space size={6}>
                     <Tag>{selected._count.chunks} chunks</Tag>
@@ -298,7 +298,7 @@ function GenerateContent() {
                 </Space>
               </Col>
               <Col>
-                <Space direction="vertical" size={4} align="end">
+                <Space vertical size={4} align="end">
                   <Text type="secondary" style={{ fontSize: 11 }}>N adaptativo</Text>
                   <div style={{ fontSize: 28, fontWeight: 600, color: token.colorPrimary, fontFamily: "var(--font-mono)" }}>
                     {projectedN}
@@ -324,7 +324,7 @@ function GenerateContent() {
       </Card>
 
       {(generating || progress.length > 0) && (
-        <Card bordered title="Progreso" style={{ marginBottom: 16 }}>
+        <Card title="Progreso" style={{ marginBottom: 16 }}>
           <Steps
             size="small"
             current={progress.length}
@@ -367,14 +367,14 @@ function GenerateContent() {
       )}
 
       {questions.length > 0 && (
-        <Card bordered title={`Preguntas en streaming (${questions.length})`}>
-          <Space direction="vertical" size={8} style={{ width: "100%" }}>
+        <Card title={`Preguntas en streaming (${questions.length})`}>
+          <Space vertical size={8} style={{ width: "100%" }}>
             {questions.map((q) => {
               const periodColor = q.periodoCode ? getPeriodColor(q.periodoCode) : token.colorPrimary;
               const categoryColor = q.categoriaCode ? getCategoryColor(q.categoriaCode) : token.colorPrimary;
               return (
-                <Card key={q.index} bordered size="small" bodyStyle={{ padding: 12 }} style={{ borderLeft: `3px solid ${periodColor}` }}>
-                  <Space direction="vertical" size={4} style={{ width: "100%" }}>
+                <Card key={q.index} size="small" styles={{ body: { padding: 12 } }} style={{ borderLeft: `3px solid ${periodColor}` }}>
+                  <Space vertical size={4} style={{ width: "100%" }}>
                     <Space>
                       <Tag style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>#{q.index}</Tag>
                       <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10 }}>
@@ -394,7 +394,7 @@ function GenerateContent() {
       )}
 
       {ready.length === 0 && (
-        <Card bordered>
+        <Card>
           <Empty
             description={
               <span>

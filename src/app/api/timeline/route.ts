@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolveDeliverableTaxonomy } from "@/lib/deliverable-taxonomy";
 
 export const dynamic = "force-dynamic";
 
@@ -14,15 +15,18 @@ export async function GET() {
       _count: true,
     }),
     prisma.deliverable.findMany({
-      where: { status: "COMPLETE", question: { isNot: null } },
+      where: { status: "COMPLETE" },
       select: {
         id: true,
-        question: { select: { periodoCode: true } },
+        questionId: true,
+        chunksUsed: true,
+        question: { select: { periodoCode: true, categoriaCode: true, documentId: true } },
       },
     }),
   ]);
 
-  // Counts por periodo
+  const docMap = new Map(docs.map((d) => [d.id, d]));
+
   const docsByPeriod = new Map<string, number>();
   for (const d of docs) {
     const meta = (d.metadata ?? {}) as Record<string, unknown>;
@@ -34,8 +38,10 @@ export async function GET() {
 
   const delivsByPeriod = new Map<string, number>();
   for (const d of deliverables) {
-    const pc = d.question?.periodoCode;
-    if (pc) delivsByPeriod.set(pc, (delivsByPeriod.get(pc) ?? 0) + 1);
+    const tax = resolveDeliverableTaxonomy(d, docMap);
+    if (tax.periodoCode) {
+      delivsByPeriod.set(tax.periodoCode, (delivsByPeriod.get(tax.periodoCode) ?? 0) + 1);
+    }
   }
 
   return NextResponse.json({

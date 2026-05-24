@@ -142,7 +142,7 @@ export default function ThreadDetailPage({ params }: { params: Promise<{ id: str
         </Button>
       </div>
 
-      <Card bordered>
+      <Card>
         {thread.steps.length === 0 ? (
           <Empty description="Hilo vacío — añade preguntas, producciones o notas" />
         ) : (
@@ -159,7 +159,7 @@ export default function ThreadDetailPage({ params }: { params: Promise<{ id: str
                     <EditOutlined style={{ fontSize: 16, color: token.colorPrimary }} />
                   ),
                 children: (
-                  <Card bordered size="small" bodyStyle={{ padding: 12 }} style={{ marginBottom: 8 }}>
+                  <Card size="small" styles={{ body: { padding: 12 } }} style={{ marginBottom: 8 }}>
                     <Space style={{ width: "100%", justifyContent: "space-between" }}>
                       <Tag color={s.type === "question" ? "orange" : s.type === "production" ? "purple" : "blue"}>
                         {s.type}

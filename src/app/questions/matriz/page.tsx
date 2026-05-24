@@ -196,7 +196,7 @@ function MatrixContent() {
         Cada celda muestra el estado de ese par pregunta×template.
       </Paragraph>
 
-      <Card bordered style={{ marginBottom: 16 }}>
+      <Card style={{ marginBottom: 16 }}>
         <Space wrap size={12}>
           <Select
             allowClear
@@ -236,13 +236,13 @@ function MatrixContent() {
       />
 
       {loading ? (
-        <Card bordered><Skeleton active paragraph={{ rows: 12 }} /></Card>
+        <Card><Skeleton active paragraph={{ rows: 12 }} /></Card>
       ) : !data || data.rows.length === 0 ? (
-        <Card bordered>
+        <Card>
           <Empty description="Sin preguntas con estos filtros" />
         </Card>
       ) : (
-        <Card bordered bodyStyle={{ padding: 0 }}>
+        <Card styles={{ body: { padding: 0 } }}>
           <div style={{ overflowX: "auto" }}>
             <table style={{ minWidth: 800, width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -260,7 +260,7 @@ function MatrixContent() {
                   <th style={{ padding: "10px 8px", fontSize: 12, width: "30%", textAlign: "left", color: token.colorTextSecondary }}>Pregunta</th>
                   {data.templates.map((t) => (
                     <th key={t.id} style={{ padding: "10px 8px", fontSize: 12, width: 90, textAlign: "center", color: token.colorTextSecondary }}>
-                      <Space direction="vertical" size={4}>
+                      <Space vertical size={4}>
                         <Checkbox
                           checked={selectedTpls.has(t.id)}
                           onChange={() => togT(t.id)}
@@ -294,7 +294,7 @@ function MatrixContent() {
                         <Checkbox checked={selected} onChange={() => togQ(row.id)} />
                       </td>
                       <td style={{ padding: "10px 8px" }}>
-                        <Space direction="vertical" size={4} style={{ maxWidth: 480 }}>
+                        <Space vertical size={4} style={{ maxWidth: 480 }}>
                           <Text style={{ fontSize: 13, lineHeight: 1.45 }}>{row.pregunta}</Text>
                           <Space size={4} wrap>
                             <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10, margin: 0 }}>

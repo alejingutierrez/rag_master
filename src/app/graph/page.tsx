@@ -156,7 +156,7 @@ export default function GraphPage() {
         Pasa el cursor sobre un nodo para ver sus conexiones.
       </Paragraph>
 
-      <Card bordered style={{ marginBottom: 12 }}>
+      <Card style={{ marginBottom: 12 }}>
         <Space wrap size={16}>
           <Text strong style={{ fontSize: 12 }}>Mostrar:</Text>
           {Object.entries(TYPE_LABELS).map(([key, label]) => (
@@ -179,7 +179,7 @@ export default function GraphPage() {
         </Space>
       </Card>
 
-      <Card bordered bodyStyle={{ padding: 0 }}>
+      <Card styles={{ body: { padding: 0 } }}>
         {filtered.nodes.length === 0 ? (
           <div style={{ padding: 60 }}><Empty description="Sin nodos visibles" /></div>
         ) : (
@@ -266,8 +266,8 @@ export default function GraphPage() {
         const node = filtered.nodes.find((n) => n.id === hovered);
         if (!node) return null;
         return (
-          <Card bordered size="small" style={{ marginTop: 12 }}>
-            <Space direction="vertical" size={4}>
+          <Card size="small" style={{ marginTop: 12 }}>
+            <Space vertical size={4}>
               <Tag color={node.type === "document" ? "blue" : node.type === "question" ? "orange" : node.type === "production" ? "purple" : "default"}>
                 {TYPE_LABELS[node.type].slice(0, -1)}
               </Tag>

@@ -156,8 +156,8 @@ export default function ProduccionDetailPage({ params }: { params: Promise<{ id:
 
       <Row gutter={[24, 16]}>
         <Col xs={24} lg={17}>
-          <Card bordered style={{ borderTop: `3px solid ${periodColor}`, marginBottom: 16 }}>
-            <Space direction="vertical" size={12} style={{ width: "100%" }}>
+          <Card style={{ borderTop: `3px solid ${periodColor}`, marginBottom: 16 }}>
+            <Space vertical size={12} style={{ width: "100%" }}>
               <Space wrap>
                 <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor }}>
                   <span style={{ fontSize: 16, marginRight: 4 }}>{tpl?.icon}</span>
@@ -191,7 +191,7 @@ export default function ProduccionDetailPage({ params }: { params: Promise<{ id:
             </Space>
           </Card>
 
-          <Card bordered bodyStyle={{ padding: "32px 36px" }}>
+          <Card styles={{ body: { padding: "32px 36px" } }}>
             {data.status === "GENERATING" && !data.answer ? (
               <div style={{ textAlign: "center", padding: 60 }}>
                 <SyncOutlined spin style={{ fontSize: 28, color: token.colorPrimary }} />
@@ -227,8 +227,8 @@ export default function ProduccionDetailPage({ params }: { params: Promise<{ id:
         </Col>
 
         <Col xs={24} lg={7}>
-          <Card bordered title="Acciones" style={{ marginBottom: 16 }}>
-            <Space direction="vertical" size={8} style={{ width: "100%" }}>
+          <Card title="Acciones" style={{ marginBottom: 16 }}>
+            <Space vertical size={8} style={{ width: "100%" }}>
               <Button
                 block
                 icon={copied ? <CheckCircleOutlined /> : <CopyOutlined />}
@@ -266,8 +266,8 @@ export default function ProduccionDetailPage({ params }: { params: Promise<{ id:
             </Space>
           </Card>
 
-          <Card bordered title="Contexto" size="small">
-            <Space direction="vertical" size={10} style={{ width: "100%" }}>
+          <Card title="Contexto" size="small">
+            <Space vertical size={10} style={{ width: "100%" }}>
               {data.question?.document && (
                 <div>
                   <Text type="secondary" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>
@@ -311,9 +311,9 @@ export default function ProduccionDetailPage({ params }: { params: Promise<{ id:
         onClose={() => setShowSources(false)}
         width={560}
       >
-        <Space direction="vertical" size={10} style={{ width: "100%" }}>
+        <Space vertical size={10} style={{ width: "100%" }}>
           {(data.chunksUsed ?? []).map((c, i) => (
-            <Card key={i} bordered size="small" bodyStyle={{ padding: 12 }}>
+            <Card key={i} size="small" styles={{ body: { padding: 12 } }}>
               <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 6 }}>
                 <Space size={6}>
                   <Tag
