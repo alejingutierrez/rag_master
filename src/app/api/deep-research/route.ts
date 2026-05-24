@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { generateEmbedding } from "@/lib/bedrock";
 import { hybridSearch } from "@/lib/hybrid-search";
 import { askClaude } from "@/lib/claude";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -30,6 +31,14 @@ export async function POST(req: NextRequest) {
       };
 
       try {
+        // Detectar tabla disponible (chunks_v2 vacío → fallback a chunks)
+        const v2Available = await prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
+          `SELECT COUNT(*) as c FROM chunks_v2 WHERE embedding IS NOT NULL LIMIT 1`,
+        )
+          .then((r) => Number(r[0]?.c || 0) > 0)
+          .catch(() => false);
+        const tableName: "chunks" | "chunks_v2" = v2Available ? "chunks_v2" : "chunks";
+
         send({ type: "step", step: "planning", message: "Planificando subqueries…" });
 
         // Generamos subqueries hardcoded basadas en patrones históricos
@@ -63,7 +72,7 @@ export async function POST(req: NextRequest) {
           send({ type: "subquery_start", index: i, query: subqueries[i] });
           try {
             const emb = await generateEmbedding(subqueries[i], "search_query");
-            const results = await hybridSearch(emb, subqueries[i], 30, 0.2);
+            const results = await hybridSearch(emb, subqueries[i], 30, 0.2, undefined, tableName);
             for (const r of results.slice(0, 6)) {
               if (!allChunks.find((c) => c.id === r.id)) allChunks.push(r);
             }
