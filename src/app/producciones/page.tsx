@@ -29,6 +29,7 @@ import {
   MessageOutlined,
   DatabaseOutlined,
   UnorderedListOutlined,
+  CompassOutlined,
 } from "@ant-design/icons";
 import dayjs from "@/lib/dayjs-config";
 import { CHAT_TEMPLATES, CATEGORY_LABELS, getTemplateById } from "@/lib/chat-templates";
@@ -40,7 +41,7 @@ interface DeliverableItem {
   id: string;
   templateId: string;
   status: string;
-  source: "chat" | "batch";
+  source: "chat" | "batch" | "deep_research";
   modelUsed: string;
   createdAt: string;
   answerPreview: string;
@@ -185,12 +186,13 @@ function ProduccionesContent() {
           <Select
             allowClear
             placeholder="Origen"
-            style={{ width: 140 }}
+            style={{ width: 170 }}
             value={filters.source || undefined}
             onChange={(v) => updateFilters({ source: v ?? "", page: "1" })}
             options={[
               { value: "chat", label: <><MessageOutlined /> Chat</> },
               { value: "batch", label: <><DatabaseOutlined /> Batch</> },
+              { value: "deep_research", label: <><CompassOutlined /> Deep research</> },
             ]}
           />
           <Segmented
@@ -277,8 +279,8 @@ function ProductionCard({ item }: { item: DeliverableItem }) {
               {tpl?.name ?? item.templateId}
             </Text>
           </Space>
-          <Tag color={item.source === "chat" ? "geekblue" : "purple"} style={{ fontSize: 10, margin: 0 }}>
-            {item.source === "chat" ? "chat" : "batch"}
+          <Tag color={item.source === "chat" ? "geekblue" : item.source === "deep_research" ? "volcano" : "purple"} style={{ fontSize: 10, margin: 0 }}>
+            {item.source === "chat" ? "chat" : item.source === "deep_research" ? "deep" : "batch"}
           </Tag>
         </Space>
         <Paragraph
@@ -341,8 +343,8 @@ function ProductionRow({ item }: { item: DeliverableItem }) {
           </Col>
           <Col>
             <Space vertical align="end" size={4}>
-              <Tag color={item.source === "chat" ? "geekblue" : "purple"} style={{ fontSize: 10, margin: 0 }}>
-                {item.source}
+              <Tag color={item.source === "chat" ? "geekblue" : item.source === "deep_research" ? "volcano" : "purple"} style={{ fontSize: 10, margin: 0 }}>
+                {item.source === "deep_research" ? "deep" : item.source}
               </Tag>
               <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>
                 {dayjs(item.createdAt).format("DD MMM YY")}

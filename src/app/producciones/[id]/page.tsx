@@ -17,7 +17,10 @@ import {
   Drawer,
   Row,
   Col,
+  Popover,
+  Divider,
 } from "antd";
+import remarkGfm from "remark-gfm";
 import {
   ArrowLeftOutlined,
   DownloadOutlined,
@@ -200,26 +203,75 @@ export default function ProduccionDetailPage({ params }: { params: Promise<{ id:
             ) : (
               <div className="prose-academic">
                 <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
                   components={{
                     code({ children, ...props }) {
                       const txt = String(children).replace(/`/g, "");
                       const m = /^#(\d+)$/.exec(txt);
                       if (m) {
+                        const idx = parseInt(m[1], 10) - 1;
+                        const chunk = data.chunksUsed?.[idx];
+                        if (!chunk) {
+                          return (
+                            <span
+                              className="citation"
+                              onClick={() => setShowSources(true)}
+                              style={{ cursor: "pointer" }}
+                            >
+                              #{m[1]}
+                            </span>
+                          );
+                        }
+                        const popoverContent = (
+                          <div style={{ maxWidth: 360 }}>
+                            <Text strong style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
+                              {chunk.documentFilename ?? "Documento sin nombre"}
+                            </Text>
+                            <Text type="secondary" style={{ fontSize: 11 }}>
+                              p. {chunk.pageNumber}
+                              {chunk.similarity !== undefined &&
+                                ` · sim ${(chunk.similarity * 100).toFixed(0)}%`}
+                            </Text>
+                            {chunk.content && (
+                              <>
+                                <Divider style={{ margin: "8px 0" }} />
+                                <Paragraph
+                                  style={{
+                                    fontFamily: "var(--font-serif)",
+                                    fontSize: 12.5,
+                                    lineHeight: 1.5,
+                                    margin: 0,
+                                    color: token.colorTextSecondary,
+                                  }}
+                                >
+                                  {chunk.content}
+                                </Paragraph>
+                              </>
+                            )}
+                          </div>
+                        );
                         return (
-                          <span
-                            className="citation"
-                            onClick={() => setShowSources(true)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            #{m[1]}
-                          </span>
+                          <Popover content={popoverContent} mouseEnterDelay={0.15} placement="top">
+                            <span
+                              className="citation"
+                              onClick={() => setShowSources(true)}
+                              style={{ cursor: "help" }}
+                            >
+                              #{m[1]}
+                            </span>
+                          </Popover>
                         );
                       }
                       return <code {...props}>{children}</code>;
                     },
                   }}
                 >
-                  {data.answer.replace(/\[#(\d+)\]/g, (_match, n) => `\`#${n}\``)}
+                  {data.answer.replace(/\[#(\d+(?:\s*,\s*\d+)*)\]/g, (_match, nums) =>
+                    String(nums)
+                      .split(",")
+                      .map((n) => `\`#${n.trim()}\``)
+                      .join(" ")
+                  )}
                 </ReactMarkdown>
               </div>
             )}

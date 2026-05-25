@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateEmbedding } from "@/lib/bedrock";
-import { searchSimilarChunks } from "@/lib/vector-search";
+import { runRagPipeline } from "@/lib/rag-pipeline";
 import { askClaude } from "@/lib/claude";
 import { getTemplateById } from "@/lib/chat-templates";
 import { syncQuestionStats } from "@/lib/question-stats-sync";
@@ -105,8 +104,17 @@ async function generateOne(
   });
 
   try {
-    const queryEmbedding = await generateEmbedding(question.pregunta, "search_query");
-    const chunks = await searchSimilarChunks(queryEmbedding, 30, 0.35);
+    // Pipeline RAG completo (mismo que /api/chat): expansion + BM25 + RRF + rerank.
+    const v2Available = await prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
+      `SELECT COUNT(*) as c FROM chunks_v2 WHERE embedding IS NOT NULL LIMIT 1`
+    ).then((r) => Number(r[0]?.c || 0) > 0).catch(() => false);
+    const effectiveTable: "chunks" | "chunks_v2" = v2Available ? "chunks_v2" : "chunks";
+
+    const ragResult = await runRagPipeline(question.pregunta, {
+      tableName: effectiveTable,
+      useParentExpansion: v2Available,
+    });
+    const chunks = ragResult.chunks;
     if (chunks.length === 0) {
       await prisma.deliverable.update({
         where: { id: deliverable.id },
@@ -121,6 +129,7 @@ async function generateOne(
       similarity: c.similarity,
       documentFilename: c.documentFilename,
       pageNumber: c.pageNumber,
+      content: c.content.slice(0, 400) + (c.content.length > 400 ? "…" : ""),
     }));
 
     const claudeStream = await askClaude(
@@ -130,12 +139,14 @@ async function generateOne(
       { templateId }
     );
     const result = await consumeClaudeStream(claudeStream);
+    const { stripDuplicateBibliography } = await import("@/lib/apa-citations");
+    const cleanText = stripDuplicateBibliography(result.text);
 
     await prisma.deliverable.update({
       where: { id: deliverable.id },
       data: {
         status: "COMPLETE",
-        answer: result.text,
+        answer: cleanText,
         modelUsed: result.modelUsed,
         chunksUsed: chunksMetadata,
       },

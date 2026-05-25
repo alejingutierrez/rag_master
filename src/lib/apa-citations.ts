@@ -300,3 +300,35 @@ export function buildReferencesSection(
 
   return lines.join("\n");
 }
+
+/**
+ * Deja una sola sección de bibliografía al final del texto.
+ *
+ * Síntoma original: el modelo escribe su propia "## Bibliografía"/"## Referencias"
+ * a pesar de que el prompt lo prohíbe, y el sistema añade además su sección APA
+ * generada de los chunks → aparecen dos secciones consecutivas.
+ *
+ * Estrategia: si hay >1 ocurrencias de encabezados bibliográficos, conservar
+ * solo la última (la del sistema, que es la confiable) y purgar las anteriores
+ * junto con el contenido que les sigue.
+ */
+export function stripDuplicateBibliography(text: string): string {
+  const headerRegex = /^##\s+(Referencias|Bibliograf[íi]a|Fuentes|Bibliography|References)\s*$/gim;
+  const positions: number[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = headerRegex.exec(text)) !== null) positions.push(m.index);
+  if (positions.length <= 1) return text;
+
+  const lastPos = positions[positions.length - 1];
+  const firstPos = positions[0];
+
+  // Texto antes de la primera bibliografía (ensayo limpio) +
+  // separador estándar +
+  // texto desde la última bibliografía (la del sistema).
+  let before = text.slice(0, firstPos).trimEnd();
+  // Si lo último antes de la bibliografía es un separador "---", quitarlo
+  // (la APA del sistema trae su propio "---" delante).
+  before = before.replace(/\n*-{3,}\s*$/g, "").trimEnd();
+  const after = text.slice(lastPos).trim();
+  return `${before}\n\n---\n\n${after}\n`;
+}

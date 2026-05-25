@@ -145,7 +145,7 @@ async function handleChat(body: Record<string, unknown>) {
     pageNumber: c.pageNumber,
     chunkIndex: c.chunkIndex,
     similarity: c.similarity,
-    content: c.content.substring(0, 150) + (c.content.length > 150 ? "..." : ""),
+    content: c.content.slice(0, 400) + (c.content.length > 400 ? "…" : ""),
   }));
 
   const modelUsed =
@@ -213,10 +213,12 @@ async function handleChat(body: Record<string, unknown>) {
       }
 
       // Validación post-hoc de citas inline [#N].
-      // Solo aplica si el template usa citas inline. Si el template usa APA al final
-      // (appendApaReferences=true), saltamos porque la respuesta no tiene [#N].
+      // Aplica si el template marca explícitamente usesInlineCitations,
+      // o si NO añade APA al final (en cuyo caso el modelo usa [#N] inline por default).
       const tpl = getTemplateById((templateId as string) || DEFAULT_TEMPLATE_ID);
-      const usesInlineCitations = tpl?.appendApaReferences !== true;
+      const usesInlineCitations =
+        tpl?.usesInlineCitations === true ||
+        (tpl?.appendApaReferences !== true && tpl?.usesInlineCitations !== false);
 
       let finalAnswer = fullAnswer;
       if (ENABLE_CITATION_VALIDATION && usesInlineCitations && fullAnswer.length > 100) {
@@ -233,9 +235,13 @@ async function handleChat(body: Record<string, unknown>) {
         }
       }
 
-      // Si el template tiene APA, anexar la sección al final de la respuesta guardada
-      const apaSection = tpl?.appendApaReferences ? (await import("@/lib/chat-templates")).buildReferencesSection(chunks) : "";
-      const fullWithRefs = finalAnswer + apaSection;
+      // La APA del sistema ya viene incrustada al final del stream de askClaude
+      // (cuando template.appendApaReferences=true). No la añadimos aquí otra vez
+      // — eso era el bug histórico de bibliografía duplicada.
+      // Pero el modelo a veces escribe su propia "## Bibliografía" en contra del
+      // prompt; el cleanup deja solo la última (la del sistema).
+      const { stripDuplicateBibliography } = await import("@/lib/apa-citations");
+      const fullWithRefs = stripDuplicateBibliography(finalAnswer);
 
       await Promise.all([
         prisma.conversation.update({

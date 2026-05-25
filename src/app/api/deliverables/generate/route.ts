@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateEmbedding } from "@/lib/bedrock";
-import { searchSimilarChunks } from "@/lib/vector-search";
+import { runRagPipeline } from "@/lib/rag-pipeline";
 import { askClaude } from "@/lib/claude";
 import { getTemplateById } from "@/lib/chat-templates";
 import { syncQuestionStats } from "@/lib/question-stats-sync";
@@ -155,18 +154,18 @@ export async function POST(request: NextRequest) {
         let generatedCount = 0;
         let failedCount = 0;
 
-        // Generar embedding una sola vez (la pregunta es la misma para todos los templates)
-        const queryEmbedding = await generateEmbedding(
-          question.pregunta,
-          "search_query"
-        );
+        // Pipeline RAG completo (mismo que /api/chat): query expansion + HyDE +
+        // BM25 + RRF + Cohere Rerank + parent expansion si chunks_v2 disponible.
+        const v2Available = await prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
+          `SELECT COUNT(*) as c FROM chunks_v2 WHERE embedding IS NOT NULL LIMIT 1`
+        ).then((r) => Number(r[0]?.c || 0) > 0).catch(() => false);
+        const effectiveTable: "chunks" | "chunks_v2" = v2Available ? "chunks_v2" : "chunks";
 
-        // Buscar chunks similares una sola vez
-        const chunks = await searchSimilarChunks(
-          queryEmbedding,
-          30,
-          0.35
-        );
+        const ragResult = await runRagPipeline(question.pregunta, {
+          tableName: effectiveTable,
+          useParentExpansion: v2Available,
+        });
+        const chunks = ragResult.chunks;
 
         if (chunks.length === 0) {
           send({
@@ -178,11 +177,13 @@ export async function POST(request: NextRequest) {
           return;
         }
 
+        // Guardamos también `content` truncado (para tooltip hover en el detalle).
         const chunksMetadata = chunks.slice(0, 50).map((c) => ({
           id: c.id,
           similarity: c.similarity,
           documentFilename: c.documentFilename,
           pageNumber: c.pageNumber,
+          content: c.content.slice(0, 400) + (c.content.length > 400 ? "…" : ""),
         }));
 
         for (let i = 0; i < templateIds.length; i++) {
@@ -251,12 +252,14 @@ export async function POST(request: NextRequest) {
             );
 
             const result = await consumeClaudeStream(claudeStream);
+            const { stripDuplicateBibliography } = await import("@/lib/apa-citations");
+            const cleanText = stripDuplicateBibliography(result.text);
 
             await prisma.deliverable.update({
               where: { id: deliverable.id },
               data: {
                 status: "COMPLETE",
-                answer: result.text,
+                answer: cleanText,
                 modelUsed: result.modelUsed,
                 chunksUsed: chunksMetadata,
               },
