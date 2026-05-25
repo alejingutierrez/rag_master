@@ -1,148 +1,96 @@
 import type { ParsedPage } from "./pdf-parser";
 
 export interface ChunkConfig {
-  chunkSize: number;     // caracteres por chunk
-  chunkOverlap: number;  // caracteres de solapamiento
+  /** Tamaño del chunk en PALABRAS (no caracteres) */
+  chunkSize: number;
+  /** Solapamiento en PALABRAS entre chunks consecutivos */
+  chunkOverlap: number;
+  /** Mantenido por compat. La implementación actual es siempre FIXED cross-page */
   strategy: "FIXED" | "PARAGRAPH" | "SENTENCE";
 }
 
 export interface TextChunk {
   content: string;
+  /** Página donde INICIA el chunk (la primera palabra del chunk pertenece a esa página) */
   pageNumber: number;
   chunkIndex: number;
 }
 
 /**
- * Estrategia FIXED: divide el texto en chunks de tamaño fijo con overlap
+ * Filtro de calidad para descartar basura:
+ *  - chunks con menos de `minWords` palabras "reales" (con al menos 2 chars alfabéticos)
+ *  - chunks con alta proporción de símbolos no alfanuméricos (OCR roto de imágenes/tablas)
  */
-function chunkFixed(text: string, pageNumber: number, config: ChunkConfig, startIndex: number): TextChunk[] {
-  const chunks: TextChunk[] = [];
-  const { chunkSize, chunkOverlap } = config;
-  let pos = 0;
-  let idx = startIndex;
+function isQualityContent(content: string, minWords = 50): boolean {
+  const trimmed = content.trim();
+  if (!trimmed) return false;
 
-  while (pos < text.length) {
-    const end = Math.min(pos + chunkSize, text.length);
-    const content = text.slice(pos, end).trim();
-    if (content) {
-      chunks.push({ content, pageNumber, chunkIndex: idx++ });
-    }
-    pos += chunkSize - chunkOverlap;
-    if (pos >= text.length) break;
-  }
+  const realWords = trimmed
+    .split(/\s+/)
+    .filter((w) => /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]{2,}/.test(w));
+  if (realWords.length < minWords) return false;
 
-  return chunks;
+  // Densidad de caracteres alfanuméricos vs no-espacio
+  const nonSpace = trimmed.replace(/\s/g, "");
+  if (nonSpace.length === 0) return false;
+  const alpha = (nonSpace.match(/[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]/g) || []).length;
+  const alphaRatio = alpha / nonSpace.length;
+  // Si menos del 60% son alfanuméricos, casi seguro es OCR roto / decoración
+  if (alphaRatio < 0.6) return false;
+
+  return true;
 }
 
 /**
- * Estrategia PARAGRAPH: divide por párrafos, fusiona párrafos pequeños
+ * Tokeniza todas las páginas en un único stream de palabras, manteniendo el mapeo
+ * palabra → página de origen. Permite chunks que cruzan páginas sin perder el
+ * pageNumber del inicio.
  */
-function chunkByParagraph(text: string, pageNumber: number, config: ChunkConfig, startIndex: number): TextChunk[] {
-  const chunks: TextChunk[] = [];
-  const { chunkSize } = config;
-  const paragraphs = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-  let idx = startIndex;
-  let buffer = "";
-
-  for (const para of paragraphs) {
-    if (buffer.length + para.length + 1 > chunkSize && buffer) {
-      chunks.push({ content: buffer.trim(), pageNumber, chunkIndex: idx++ });
-      buffer = "";
-    }
-
-    // Si un solo párrafo excede el tamaño, dividirlo con fixed
-    if (para.length > chunkSize) {
-      if (buffer) {
-        chunks.push({ content: buffer.trim(), pageNumber, chunkIndex: idx++ });
-        buffer = "";
-      }
-      const subChunks = chunkFixed(para, pageNumber, config, idx);
-      for (const sc of subChunks) {
-        sc.chunkIndex = idx++;
-        chunks.push(sc);
-      }
-    } else {
-      buffer += (buffer ? "\n\n" : "") + para;
+function tokenizePages(pages: ParsedPage[]): { tokens: string[]; pageOf: number[] } {
+  const tokens: string[] = [];
+  const pageOf: number[] = [];
+  for (const page of pages) {
+    const words = page.text.split(/\s+/).filter(Boolean);
+    for (const w of words) {
+      tokens.push(w);
+      pageOf.push(page.pageNumber);
     }
   }
-
-  if (buffer.trim()) {
-    chunks.push({ content: buffer.trim(), pageNumber, chunkIndex: idx++ });
-  }
-
-  return chunks;
+  return { tokens, pageOf };
 }
 
 /**
- * Estrategia SENTENCE: divide por oraciones, agrupa hasta alcanzar tamaño objetivo
- */
-function chunkBySentence(text: string, pageNumber: number, config: ChunkConfig, startIndex: number): TextChunk[] {
-  const chunks: TextChunk[] = [];
-  const { chunkSize, chunkOverlap } = config;
-
-  // Dividir por oraciones (punto, signo de interrogación, exclamación seguido de espacio o fin)
-  const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g) || [text];
-  let idx = startIndex;
-  let buffer = "";
-  let overlapBuffer: string[] = [];
-
-  for (const sentence of sentences) {
-    const trimmed = sentence.trim();
-    if (!trimmed) continue;
-
-    if (buffer.length + trimmed.length + 1 > chunkSize && buffer) {
-      chunks.push({ content: buffer.trim(), pageNumber, chunkIndex: idx++ });
-
-      // Calcular overlap: tomar últimas oraciones que quepan en overlap
-      buffer = "";
-      let overlapSize = 0;
-      const overlapParts: string[] = [];
-      for (let i = overlapBuffer.length - 1; i >= 0; i--) {
-        if (overlapSize + overlapBuffer[i].length > chunkOverlap) break;
-        overlapParts.unshift(overlapBuffer[i]);
-        overlapSize += overlapBuffer[i].length;
-      }
-      buffer = overlapParts.join(" ");
-      overlapBuffer = [...overlapParts];
-    }
-
-    buffer += (buffer ? " " : "") + trimmed;
-    overlapBuffer.push(trimmed);
-  }
-
-  if (buffer.trim()) {
-    chunks.push({ content: buffer.trim(), pageNumber, chunkIndex: idx++ });
-  }
-
-  return chunks;
-}
-
-/**
- * Función principal de chunking: procesa páginas del PDF según la estrategia configurada
+ * Chunking principal: por palabras, atravesando páginas.
+ *
+ * - `chunkSize` y `chunkOverlap` se interpretan en PALABRAS.
+ * - Devuelve chunks con `pageNumber` = página donde inicia el chunk.
+ * - Filtra chunks de baja calidad (muy cortos o con ratio OCR-roto).
  */
 export function chunkPages(pages: ParsedPage[], config: ChunkConfig): TextChunk[] {
-  const allChunks: TextChunk[] = [];
-  let globalIndex = 0;
+  const { tokens, pageOf } = tokenizePages(pages);
+  if (tokens.length === 0) return [];
 
-  for (const page of pages) {
-    let pageChunks: TextChunk[];
+  const chunkSize = Math.max(1, config.chunkSize);
+  const overlap = Math.max(0, Math.min(config.chunkOverlap, chunkSize - 1));
+  const stride = chunkSize - overlap;
 
-    switch (config.strategy) {
-      case "PARAGRAPH":
-        pageChunks = chunkByParagraph(page.text, page.pageNumber, config, globalIndex);
-        break;
-      case "SENTENCE":
-        pageChunks = chunkBySentence(page.text, page.pageNumber, config, globalIndex);
-        break;
-      case "FIXED":
-      default:
-        pageChunks = chunkFixed(page.text, page.pageNumber, config, globalIndex);
-        break;
+  const chunks: TextChunk[] = [];
+  let idx = 0;
+  let pos = 0;
+
+  while (pos < tokens.length) {
+    const end = Math.min(pos + chunkSize, tokens.length);
+    const slice = tokens.slice(pos, end);
+    const content = slice.join(" ").trim();
+    const pageNumber = pageOf[pos] ?? 1;
+
+    if (isQualityContent(content)) {
+      chunks.push({ content, pageNumber, chunkIndex: idx++ });
     }
 
-    allChunks.push(...pageChunks);
-    globalIndex = allChunks.length;
+    if (end >= tokens.length) break;
+    pos += stride;
   }
 
-  return allChunks;
+  return chunks;
 }

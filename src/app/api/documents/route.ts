@@ -107,10 +107,12 @@ export async function POST(request: NextRequest) {
         data: { pageCount: parsed.pageCount },
       });
 
-      // 4. Chunkear
+      // 4. Chunkear (unidad: PALABRAS desde 2026-05-25)
+      const effectiveChunkSize = chunkSize || 2000;
+      const effectiveOverlap = chunkOverlap || 500;
       const chunks = chunkPages(parsed.pages, {
-        chunkSize: chunkSize || 3000,
-        chunkOverlap: chunkOverlap || 750,
+        chunkSize: effectiveChunkSize,
+        chunkOverlap: effectiveOverlap,
         strategy: (strategy as "FIXED" | "PARAGRAPH" | "SENTENCE") || "FIXED",
       });
 
@@ -137,10 +139,10 @@ export async function POST(request: NextRequest) {
             content: chunk.content,
             pageNumber: chunk.pageNumber,
             chunkIndex: chunk.chunkIndex,
-            chunkSize: chunkSize || 3000,
-            overlap: chunkOverlap || 750,
+            chunkSize: effectiveChunkSize,
+            overlap: effectiveOverlap,
             strategy: strategy || "FIXED",
-            metadata: { sourceFile: filename },
+            metadata: { sourceFile: filename, unit: "words" },
           },
         });
       }

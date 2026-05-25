@@ -177,7 +177,7 @@ export default function DocumentDetailPage() {
           await fetch(`/api/documents/${id}/reprocess`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chunkSize: 3000, chunkOverlap: 750, strategy: "FIXED" }),
+            body: JSON.stringify({ chunkSize: 2000, chunkOverlap: 500, strategy: "FIXED" }),
           });
           const res = await fetch(`/api/documents/${id}`);
           const data = await res.json();

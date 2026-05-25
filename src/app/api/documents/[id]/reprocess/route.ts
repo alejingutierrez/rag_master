@@ -1,125 +1,113 @@
 import { NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getFromS3 } from "@/lib/s3";
 import { parsePDF } from "@/lib/pdf-parser";
 import { chunkPages } from "@/lib/chunking";
+import { processAllEmbeddings } from "@/lib/embedding-processor";
 
 export const dynamic = "force-dynamic";
-import { generateEmbedding } from "@/lib/bedrock";
-import { saveChunkEmbedding } from "@/lib/vector-search";
-
 export const maxDuration = 300;
 
 // POST /api/documents/[id]/reprocess - Re-chunkear y re-embedder
+// Borra chunks viejos, re-parse + re-chunk (síncrono, rápido), responde inmediato.
+// Los embeddings se generan en background vía after() — el cliente debe pollear
+// GET /api/documents/[id]/process para conocer el progreso.
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const body = await request.json();
+  const body = await request.json().catch(() => ({}));
   const {
-    chunkSize = 1024,
-    chunkOverlap = 128,
+    chunkSize = 2000,
+    chunkOverlap = 500,
     strategy = "FIXED",
-  } = body;
+  }: { chunkSize?: number; chunkOverlap?: number; strategy?: "FIXED" | "PARAGRAPH" | "SENTENCE" } = body;
 
   const document = await prisma.document.findUnique({ where: { id } });
   if (!document) {
-    return NextResponse.json(
-      { error: "Documento no encontrado" },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: "Documento no encontrado" }, { status: 404 });
   }
 
-  // Marcar como procesando
-  await prisma.document.update({
-    where: { id },
-    data: { status: "PROCESSING" },
-  });
-
-  // Procesar síncronamente (en Lambda el background work se congela)
-  await reprocessDocument(id, document.s3Key, document.filename, {
-    chunkSize,
-    chunkOverlap,
-    strategy,
-  });
-
-  const updated = await prisma.document.findUnique({
-    where: { id },
-    include: { _count: { select: { chunks: true } } },
-  });
-
-  return NextResponse.json({ document: updated });
-}
-
-async function reprocessDocument(
-  documentId: string,
-  s3Key: string,
-  filename: string,
-  config: { chunkSize: number; chunkOverlap: number; strategy: "FIXED" | "PARAGRAPH" | "SENTENCE" }
-) {
   try {
-    // 1. Eliminar chunks anteriores
-    await prisma.chunk.deleteMany({ where: { documentId } });
-
-    // 2. Descargar PDF de S3
-    const buffer = await getFromS3(s3Key);
-
-    // 3. Parsear
-    const parsed = await parsePDF(buffer);
-
-    // 4. Chunkear con nuevos parámetros
-    const chunks = chunkPages(parsed.pages, {
-      chunkSize: config.chunkSize,
-      chunkOverlap: config.chunkOverlap,
-      strategy: config.strategy,
+    await prisma.document.update({
+      where: { id },
+      data: { status: "PROCESSING", error: null },
     });
 
-    // 5. Guardar todos los chunks primero
-    const dbChunks = [];
-    for (const chunk of chunks) {
-      const dbChunk = await prisma.chunk.create({
+    // 1. Borrar chunks anteriores
+    await prisma.chunk.deleteMany({ where: { documentId: id } });
+
+    // 2. Descargar PDF de S3
+    const buffer = await getFromS3(document.s3Key);
+
+    // 3. Parsear + re-chunkear (palabras, cross-page)
+    const parsed = await parsePDF(buffer);
+    const chunks = chunkPages(parsed.pages, { chunkSize, chunkOverlap, strategy });
+
+    if (chunks.length === 0) {
+      await prisma.document.update({
+        where: { id },
         data: {
-          documentId,
-          content: chunk.content,
-          pageNumber: chunk.pageNumber,
-          chunkIndex: chunk.chunkIndex,
-          chunkSize: config.chunkSize,
-          overlap: config.chunkOverlap,
-          strategy: config.strategy,
-          metadata: { sourceFile: filename },
+          status: "ERROR",
+          error: "No se pudo extraer texto del PDF (escaneado/imágenes o sin contenido de calidad)",
         },
       });
-      dbChunks.push(dbChunk);
-    }
-
-    // 6. Generar embeddings en lotes paralelos (5 concurrentes)
-    const BATCH_SIZE = 5;
-    for (let i = 0; i < dbChunks.length; i += BATCH_SIZE) {
-      const batch = dbChunks.slice(i, i + BATCH_SIZE);
-      await Promise.all(
-        batch.map(async (dbChunk) => {
-          const chunk = chunks.find((c) => c.chunkIndex === dbChunk.chunkIndex);
-          if (!chunk) return;
-          const embedding = await generateEmbedding(chunk.content);
-          await saveChunkEmbedding(dbChunk.id, embedding);
-        })
+      return NextResponse.json(
+        { error: "No se extrajeron chunks de calidad del PDF" },
+        { status: 422 }
       );
     }
 
-    // 7. Marcar como listo
+    // 4. Insertar nuevos chunks (sin embeddings — se generan en background)
+    for (const chunk of chunks) {
+      await prisma.chunk.create({
+        data: {
+          documentId: id,
+          content: chunk.content,
+          pageNumber: chunk.pageNumber,
+          chunkIndex: chunk.chunkIndex,
+          chunkSize,
+          overlap: chunkOverlap,
+          strategy,
+          metadata: { sourceFile: document.filename, unit: "words" },
+        },
+      });
+    }
+
     await prisma.document.update({
-      where: { id: documentId },
-      data: { status: "READY" },
+      where: { id },
+      data: { pageCount: parsed.pageCount },
+    });
+
+    // 5. Disparar embeddings en background — la respuesta NO espera
+    after(async () => {
+      await processAllEmbeddings(id);
+    });
+
+    const updated = await prisma.document.findUnique({
+      where: { id },
+      include: { _count: { select: { chunks: true } } },
+    });
+
+    return NextResponse.json({
+      document: updated,
+      chunks: chunks.length,
+      message: "Re-chunkeo completado, embeddings en background",
     });
   } catch (error) {
-    console.error(`Error reprocessing document ${documentId}:`, error);
+    console.error(`Error reprocessing document ${id}:`, error);
     await prisma.document.update({
-      where: { id: documentId },
+      where: { id },
       data: {
         status: "ERROR",
         error: error instanceof Error ? error.message : "Error al reprocesar",
       },
     });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Error al reprocesar" },
+      { status: 500 }
+    );
   }
 }

@@ -61,9 +61,10 @@ interface FileUploadState {
 
 const LARGE_FILE_MB = 50;
 
+// Unidad: PALABRAS (chunking cross-page por palabras desde 2026-05-25)
 const CHUNK_CONFIG = {
-  chunkSize: 3000,
-  chunkOverlap: 750,
+  chunkSize: 2000,
+  chunkOverlap: 500,
   strategy: "FIXED" as const,
 };
 

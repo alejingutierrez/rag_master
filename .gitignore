@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local working dirs (bulk upload PDFs, progress files, etc.)
+/tmp/
