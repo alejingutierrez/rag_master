@@ -64,8 +64,20 @@ async function generateCohereEmbedding(
   text: string,
   inputType: "search_document" | "search_query"
 ): Promise<number[]> {
+  const result = await generateCohereEmbeddingsBatch([text], inputType);
+  return result[0];
+}
+
+/**
+ * Cohere Embed v4 BATCH — acepta hasta 96 texts por request.
+ * Drásticamente reduce el número de llamadas a Bedrock y el throttling.
+ */
+async function generateCohereEmbeddingsBatch(
+  texts: string[],
+  inputType: "search_document" | "search_query"
+): Promise<number[][]> {
   const payload = {
-    texts: [text],
+    texts,
     input_type: inputType,
     truncate: "END",
   };
@@ -80,11 +92,11 @@ async function generateCohereEmbedding(
   const response = await bedrock.send(command);
   const responseBody = JSON.parse(new TextDecoder().decode(response.body));
 
-  // Cohere v4 retorna embeddings.float[0], v3 retorna embeddings[0]
+  // Cohere v4 retorna embeddings.float[], v3 retorna embeddings[]
   if (responseBody.embeddings?.float) {
-    return responseBody.embeddings.float[0];
+    return responseBody.embeddings.float as number[][];
   }
-  return responseBody.embeddings[0];
+  return responseBody.embeddings as number[][];
 }
 
 /**
@@ -110,21 +122,59 @@ async function generateTitanEmbedding(text: string): Promise<number[]> {
 }
 
 /**
- * Genera embeddings en lote — concurrencia reducida a 3 para evitar throttling
+ * Genera embeddings en lote — usa el batching NATIVO de Cohere v4 (96 texts/request).
+ * Una sola llamada a Bedrock por batch, retornando todos los embeddings juntos.
+ * Reduce ~10x el número de llamadas a Bedrock vs llamadas individuales.
  */
 export async function generateEmbeddings(
   texts: string[],
   inputType: "search_document" | "search_query" = "search_document"
 ): Promise<number[][]> {
-  const embeddings: number[][] = [];
-  const batchSize = 3; // Reducido de 10 a 3 para evitar throttling
+  if (texts.length === 0) return [];
 
-  for (let i = 0; i < texts.length; i += batchSize) {
-    const batch = texts.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map((text) => generateEmbedding(text, inputType))
-    );
-    embeddings.push(...batchResults);
+  // Cohere v4 acepta hasta 96 texts/request. Usamos 24 como buen balance
+  // entre throughput y tamaño de payload (24 * ~2500 tokens = ~60k tokens).
+  const BATCH_SIZE = 24;
+  const MAX_RETRIES = 5;
+
+  const embeddings: number[][] = [];
+  for (let i = 0; i < texts.length; i += BATCH_SIZE) {
+    const batch = texts.slice(i, i + BATCH_SIZE);
+
+    let lastError: unknown;
+    let success = false;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const isCohere = EMBEDDING_MODEL.includes("cohere");
+        if (isCohere) {
+          const batchResults = await generateCohereEmbeddingsBatch(batch, inputType);
+          embeddings.push(...batchResults);
+        } else {
+          // Titan no soporta batch — caer a llamadas individuales
+          const batchResults = await Promise.all(batch.map((t) => generateTitanEmbedding(t)));
+          embeddings.push(...batchResults);
+        }
+        success = true;
+        break;
+      } catch (error: unknown) {
+        lastError = error;
+        const isThrottled =
+          error instanceof Error &&
+          (error.name === "ThrottlingException" ||
+            error.message.includes("Too many tokens") ||
+            error.message.includes("throttl"));
+        if (isThrottled && attempt < MAX_RETRIES - 1) {
+          const delay = Math.pow(2, attempt) * 4000 + Math.random() * 2000;
+          console.log(
+            `Embedding batch throttled (size=${batch.length}), retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})`
+          );
+          await sleep(delay);
+          continue;
+        }
+        throw error;
+      }
+    }
+    if (!success) throw lastError ?? new Error("Embedding batch failed");
   }
 
   return embeddings;

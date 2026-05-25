@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { generateEmbedding } from "./bedrock";
+import { generateEmbeddings } from "./bedrock";
 import { saveChunkEmbedding } from "./vector-search";
 
 /**
@@ -12,8 +12,10 @@ import { saveChunkEmbedding } from "./vector-search";
  * - Actualiza el estado del documento a READY al completar o ERROR al fallar
  */
 
-const BATCH_SIZE = 10;
-const CONCURRENCY = 3;
+// Cohere v4 acepta hasta 96 texts por request. generateEmbeddings hace
+// el batching interno (24 textos por llamada). Aquí BATCH_SIZE = chunks que
+// pedimos a la BD por iteración del while loop.
+const BATCH_SIZE = 48;
 const MAX_RETRIES = 5;
 
 function sleep(ms: number): Promise<void> {
@@ -74,18 +76,17 @@ export async function processAllEmbeddings(documentId: string): Promise<void> {
         return;
       }
 
-      // Procesar el lote en sub-grupos de CONCURRENCY
+      // Procesar TODO el lote en una sola llamada batched a Cohere v4
       try {
-        for (let i = 0; i < chunksToProcess.length; i += CONCURRENCY) {
-          const batch = chunksToProcess.slice(i, i + CONCURRENCY);
-          await Promise.all(
-            batch.map(async (chunk) => {
-              const embedding = await generateEmbedding(chunk.content);
-              await saveChunkEmbedding(chunk.id, embedding);
-            })
-          );
-          totalProcessed += batch.length;
-        }
+        const texts = chunksToProcess.map((c) => c.content);
+        const embeddings = await generateEmbeddings(texts, "search_document");
+        // Persistir cada embedding al chunk correspondiente
+        await Promise.all(
+          chunksToProcess.map((chunk, i) =>
+            saveChunkEmbedding(chunk.id, embeddings[i])
+          )
+        );
+        totalProcessed += chunksToProcess.length;
         consecutiveThrottles = 0; // reset on success
       } catch (error: unknown) {
         const isThrottled =
