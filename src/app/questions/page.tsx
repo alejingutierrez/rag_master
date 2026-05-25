@@ -102,6 +102,9 @@ function QuestionsContent() {
     periodo: params.get("periodo") ?? "",
     categoria: "",
     search: "",
+    entity: params.get("entity") ?? "",
+    yearMin: "",
+    yearMax: "",
     sortBy: "cronologico",
     state: "all",
     view: "list",
@@ -113,10 +116,27 @@ function QuestionsContent() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [docs, setDocs] = useState<Array<{ id: string; filename: string }>>([]);
+  const [entityOptions, setEntityOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const LIMIT = 30;
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch("/api/entities?limit=400&minMentions=1", { signal: ctrl.signal })
+      .then((r) => r.json())
+      .then((data) => {
+        type EntityRow = { name: string; type: string; mentions: number };
+        const opts = (data.entities as EntityRow[] | undefined ?? []).map((e) => ({
+          value: e.name,
+          label: `${e.name} · ${e.type === "person" ? "👤" : e.type === "place" ? "📍" : "💡"} ${e.mentions}`,
+        }));
+        setEntityOptions(opts);
+      })
+      .catch((e) => { if ((e as Error).name !== "AbortError") console.error(e); });
+    return () => ctrl.abort();
+  }, []);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -155,6 +175,9 @@ function QuestionsContent() {
         if (filters.periodo) p.set("periodo", filters.periodo);
         if (filters.categoria) p.set("categoria", filters.categoria);
         if (filters.search) p.set("search", filters.search);
+        if (filters.entity) p.set("entity", filters.entity);
+        if (filters.yearMin) p.set("yearMin", filters.yearMin);
+        if (filters.yearMax) p.set("yearMax", filters.yearMax);
         if (filters.sortBy) p.set("sortBy", filters.sortBy);
         if (stateFilter !== "all") p.set("state", stateFilter);
         p.set("includeDeliverables", "true");
@@ -173,7 +196,7 @@ function QuestionsContent() {
       }
     })();
     return () => ctrl.abort();
-  }, [filters.documentId, filters.periodo, filters.categoria, filters.search, filters.sortBy, stateFilter, page]);
+  }, [filters.documentId, filters.periodo, filters.categoria, filters.search, filters.entity, filters.yearMin, filters.yearMax, filters.sortBy, stateFilter, page]);
 
   const grouped = (() => {
     if (filters.sortBy === "periodo" || filters.sortBy === "cronologico") {
@@ -291,6 +314,41 @@ function QuestionsContent() {
             showSearch
             optionFilterProp="label"
             options={CATEGORY_OPTIONS.map((c) => ({ value: c.code, label: c.nombre }))}
+          />
+          <Select
+            allowClear
+            placeholder="Entidad (persona/lugar/concepto)"
+            style={{ width: 260 }}
+            value={filters.entity || undefined}
+            onChange={(v) => updateFilters({ entity: v ?? "", page: "1" })}
+            showSearch
+            optionFilterProp="label"
+            notFoundContent={null}
+            options={entityOptions}
+          />
+          <Input
+            placeholder="Año desde"
+            style={{ width: 100, fontFamily: "var(--font-mono)" }}
+            value={filters.yearMin}
+            onChange={(e) =>
+              updateFilters({
+                yearMin: e.target.value.replace(/[^0-9-]/g, ""),
+                page: "1",
+              })
+            }
+            allowClear
+          />
+          <Input
+            placeholder="Año hasta"
+            style={{ width: 100, fontFamily: "var(--font-mono)" }}
+            value={filters.yearMax}
+            onChange={(e) =>
+              updateFilters({
+                yearMax: e.target.value.replace(/[^0-9-]/g, ""),
+                page: "1",
+              })
+            }
+            allowClear
           />
           <Select
             style={{ width: 160 }}

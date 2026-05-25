@@ -32,7 +32,8 @@ interface Entity {
   name: string;
   mentions: number;
   docCount: number;
-  pageCount: number;
+  questionCount?: number; // nuevo: desde /api/entities con source=questions
+  pageCount?: number;     // legacy: desde NER por chunks
   type: "person" | "place" | "concept";
 }
 
@@ -92,8 +93,8 @@ export default function EntitiesPage() {
             <UserOutlined /> Entidades del corpus
           </Title>
           <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0", maxWidth: 720 }}>
-            Personas, lugares y conceptos extraídos automáticamente de los chunks (heurística, no NER profesional).
-            Tamaño = frecuencia de aparición.
+            Personas, lugares y conceptos extraídos de las preguntas generadas (clasificadas por Claude Opus 4.7 — no heurística).
+            Tamaño = nº de preguntas que la mencionan.
           </Paragraph>
         </div>
         <Button icon={<ReloadOutlined />} onClick={load} loading={loading}>Recargar</Button>
@@ -160,14 +161,27 @@ export default function EntitiesPage() {
                   </Space>
                   <Space size={6} style={{ marginTop: 8, fontSize: 11, color: token.colorTextTertiary }}>
                     <span>{e.docCount} docs</span>
-                    <span>·</span>
-                    <span>{e.pageCount} pp</span>
+                    {(e.questionCount ?? e.pageCount) != null && (
+                      <>
+                        <span>·</span>
+                        <span>
+                          {e.questionCount != null ? `${e.questionCount} preguntas` : `${e.pageCount} pp`}
+                        </span>
+                      </>
+                    )}
                   </Space>
-                  <Link href={`/chat?q=${encodeURIComponent(e.name)}`}>
-                    <Button type="link" size="small" style={{ padding: 0, marginTop: 6, fontSize: 11 }}>
-                      Consultar →
-                    </Button>
-                  </Link>
+                  <Space size={6} style={{ marginTop: 6 }}>
+                    <Link href={`/questions?search=${encodeURIComponent(e.name)}`}>
+                      <Button type="link" size="small" style={{ padding: 0, fontSize: 11 }}>
+                        Preguntas →
+                      </Button>
+                    </Link>
+                    <Link href={`/chat?q=${encodeURIComponent(e.name)}`}>
+                      <Button type="link" size="small" style={{ padding: 0, fontSize: 11 }}>
+                        Chat →
+                      </Button>
+                    </Link>
+                  </Space>
                 </Card>
               </Col>
             );

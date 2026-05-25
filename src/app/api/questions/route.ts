@@ -13,6 +13,12 @@ export async function GET(request: NextRequest) {
   const categoriaCode = searchParams.get("categoria") || undefined;
   const subcategoriaCode = searchParams.get("subcategoria") || undefined;
   const search = searchParams.get("search") || undefined;
+  // Filtros nuevos
+  const entity = searchParams.get("entity") || undefined; // texto contra cualquiera de las 3 listas
+  const yearMinRaw = searchParams.get("yearMin");
+  const yearMaxRaw = searchParams.get("yearMax");
+  const yearMin = yearMinRaw ? parseInt(yearMinRaw, 10) : undefined;
+  const yearMax = yearMaxRaw ? parseInt(yearMaxRaw, 10) : undefined;
   // state: pending | partial | complete — filtro de trazabilidad
   const stateParam = searchParams.get("state");
   const state = stateParam && ["pending", "partial", "complete"].includes(stateParam)
@@ -36,18 +42,48 @@ export async function GET(request: NextRequest) {
         ? { deliverableCount: { gte: totalTemplates } }
         : {};
 
+    // search y entity son ambos cláusulas OR. Si vienen los dos hay que usar AND
+    // para combinarlas (objeto plano se sobrescribe el segundo OR).
+    const andClauses: Array<Record<string, unknown>> = [];
+    if (search) {
+      andClauses.push({
+        OR: [
+          { pregunta: { contains: search, mode: "insensitive" as const } },
+          { justificacion: { contains: search, mode: "insensitive" as const } },
+        ],
+      });
+    }
+    if (entity) {
+      // pg arrays — `has` requiere coincidencia exacta del nombre canónico.
+      andClauses.push({
+        OR: [
+          { entidadesPersonas: { has: entity } },
+          { entidadesLugares: { has: entity } },
+          { entidadesConceptos: { has: entity } },
+        ],
+      });
+    }
+
+    // Filtro de años: ventana [yearMin, yearMax] sobre yearPrincipal.
+    // null en yearPrincipal queda excluido por diseño (no tiene anclaje).
+    const yearFilter =
+      yearMin != null || yearMax != null
+        ? {
+            yearPrincipal: {
+              ...(yearMin != null && { gte: yearMin }),
+              ...(yearMax != null && { lte: yearMax }),
+            },
+          }
+        : {};
+
     const where = {
       ...stateFilter,
       ...(documentId && { documentId }),
       ...(periodoCode && { periodoCode }),
       ...(categoriaCode && { categoriaCode }),
       ...(subcategoriaCode && { subcategoriaCode: { contains: subcategoriaCode } }),
-      ...(search && {
-        OR: [
-          { pregunta: { contains: search, mode: "insensitive" as const } },
-          { justificacion: { contains: search, mode: "insensitive" as const } },
-        ],
-      }),
+      ...(andClauses.length > 0 && { AND: andClauses }),
+      ...yearFilter,
     };
 
     const [questions, total] = await Promise.all([
