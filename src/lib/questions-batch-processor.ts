@@ -17,7 +17,10 @@ import { periodOrderOf } from "./taxonomy";
 
 const INTER_DOC_PAUSE_MS = 500; // 500ms entre ráfagas concurrentes
 const MAX_DOCS_PER_RUN = 60; // Procesar hasta 60 docs por invocación after()
-const CONCURRENCY = 3; // Cuántos docs procesar a la vez (Sonnet aguanta 3-5 sin throttling)
+// Configurable por env. Subido de 3 → 6 porque con Opus 4.7 + thinking adaptativo,
+// algunos docs grandes (250+ chunks) se quedan pegados 30-60min tras throttling.
+// Con concurrency=6 mantenemos 6 docs en vuelo, así un doc lento no bloquea todo.
+const CONCURRENCY = parseInt(process.env.QUESTIONS_BATCH_CONCURRENCY || "6", 10);
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
