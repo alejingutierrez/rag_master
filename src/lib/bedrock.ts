@@ -19,7 +19,7 @@ const EMBEDDING_MODEL =
 // llamadas en vuelo GLOBALMENTE, sin importar cuántos docs estén procesando.
 // ────────────────────────────────────────────────────────────────────────
 const MAX_CONCURRENT_EMBEDDINGS = Number(
-  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "4"
+  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "2"
 );
 
 let activeEmbeddingCalls = 0;
@@ -168,10 +168,9 @@ export async function generateEmbeddings(
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
 
-  // Cohere v4 acepta hasta 96 texts/request. Reducimos a 12 para que con
-  // 4 calls concurrent (semáforo) sean ~48 textos en flight total → menor
-  // probabilidad de hit el rate limit de tokens/sec de Cohere v4 en Bedrock.
-  const BATCH_SIZE = 12;
+  // Cohere v4 throttle pesado: 2 calls concurrent x 8 texts = 16 en flight TOTAL.
+  // Empíricamente con 48 in flight el throttle era catastrófico (>200/min).
+  const BATCH_SIZE = 8;
   const MAX_RETRIES = 5;
 
   const embeddings: number[][] = [];
