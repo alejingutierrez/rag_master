@@ -39,8 +39,12 @@ COPY --from=deps /app/node_modules/pdf-parse ./node_modules/pdf-parse
 # Uses @prisma/client (already present) so no Prisma CLI needed.
 # All statements use IF NOT EXISTS → idempotent and safe to re-run.
 COPY scripts/apply-migrations.js ./scripts/apply-migrations.js
+COPY scripts/start.sh ./scripts/start.sh
+RUN chmod +x ./scripts/start.sh
 
 EXPOSE 3000
 
 # Apply schema migrations first, then start the Next.js server.
-CMD ["sh", "-c", "node scripts/apply-migrations.js && node server.js"]
+# start.sh handles the chain because App Runner doesn't interpret `&&`
+# when it executes StartCommand as exec form.
+CMD ["sh", "scripts/start.sh"]
