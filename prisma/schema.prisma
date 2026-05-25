@@ -204,8 +204,11 @@ model Deliverable {
   answer       String            @db.Text @default("")
   modelUsed    String            @default("")
   chunksUsed   Json              @default("[]")
-  // source: "batch" (viene de Question del batch) | "chat" (pregunta libre).
-  // Permite filtrar en /producciones.
+  // metadata libre. Usado por deep_research para guardar plan/subqueries/progress
+  // mientras el procesamiento en after() corre en background.
+  metadata     Json              @default("{}")
+  // source: "batch" (viene de Question del batch) | "chat" (pregunta libre) |
+  // "deep_research" (pipeline agéntico multi-step).
   source       String            @default("batch")
   batchId      String
   createdAt    DateTime          @default(now())

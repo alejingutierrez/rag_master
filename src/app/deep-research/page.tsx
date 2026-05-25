@@ -21,6 +21,7 @@ import {
   Row,
   Col,
   Divider,
+  Progress,
 } from "antd";
 import {
   BookOutlined,
@@ -45,6 +46,7 @@ interface Subquery {
   query: string;
   status: "pending" | "running" | "done" | "error";
   foundChunks?: number;
+  error?: string;
 }
 
 interface ChunkMeta {
@@ -68,6 +70,36 @@ interface ResearchPlan {
   subqueries: string[];
 }
 
+interface DeepResearchMetadata {
+  stage:
+    | "planning"
+    | "executing"
+    | "fusing"
+    | "synthesizing"
+    | "annexes"
+    | "persisting"
+    | "complete"
+    | "error";
+  message?: string;
+  plan?: ResearchPlan;
+  subqueriesProgress?: Subquery[];
+  paperWords?: number;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
+interface DeepResearchData {
+  id: string;
+  status: "PENDING" | "GENERATING" | "COMPLETE" | "ERROR";
+  userQuestion: string;
+  answer: string;
+  chunksUsed: ChunkMeta[];
+  metadata: DeepResearchMetadata;
+  createdAt: string;
+  updatedAt: string;
+  modelUsed: string;
+}
+
 export default function DeepResearchPage() {
   return (
     <Suspense fallback={<div className="app-page-wide"><Skeleton active /></div>}>
@@ -84,157 +116,102 @@ function DeepResearchContent() {
   const idFromUrl = params.get("id");
 
   const [question, setQuestion] = useState("");
-  const [running, setRunning] = useState(false);
-  const [stage, setStage] = useState<
-    "idle" | "planning" | "executing" | "fusing" | "synthesizing" | "annexes" | "persisting" | "done" | "error"
-  >("idle");
-  const [plan, setPlan] = useState<ResearchPlan | null>(null);
-  const [subqueries, setSubqueries] = useState<Subquery[]>([]);
-  const [answer, setAnswer] = useState("");
-  const [chunks, setChunks] = useState<ChunkMeta[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [deliverableId, setDeliverableId] = useState<string | null>(null);
+  const [data, setData] = useState<DeepResearchData | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("paper");
+  const pollerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const abortRef = useRef<AbortController | null>(null);
+  const stage = data?.metadata?.stage ?? "planning";
+  const isRunning = data?.status === "GENERATING" || data?.status === "PENDING";
+  const isComplete = data?.status === "COMPLETE";
+  const isError = data?.status === "ERROR";
 
-  // ─── Carga deep-research previo si viene ?id= ─────────────────────────
-  const loadFromUrl = useCallback(async (id: string) => {
-    setRunning(false);
-    setStage("done");
-    setError(null);
-    setSubqueries([]);
+  // ─── Fetch + polling de un deliverable ────────────────────────────────
+  const fetchData = useCallback(async (id: string): Promise<DeepResearchData | null> => {
     try {
       const res = await fetch(`/api/deep-research?id=${id}`);
-      if (!res.ok) throw new Error("No se encontró el deep research");
-      const data = await res.json();
-      setQuestion(data.userQuestion ?? "");
-      setAnswer(data.answer ?? "");
-      setChunks(data.chunksUsed ?? []);
-      setDeliverableId(data.id);
+      if (!res.ok) throw new Error("Deep research no encontrado");
+      const d = (await res.json()) as DeepResearchData;
+      setData(d);
+      setLoadError(null);
+      return d;
     } catch (e) {
-      setError((e as Error).message);
+      setLoadError((e as Error).message);
+      return null;
     }
   }, []);
 
+  const startPolling = useCallback(
+    (id: string) => {
+      if (pollerRef.current) clearInterval(pollerRef.current);
+      const tick = async () => {
+        const d = await fetchData(id);
+        if (!d || d.status === "COMPLETE" || d.status === "ERROR") {
+          if (pollerRef.current) {
+            clearInterval(pollerRef.current);
+            pollerRef.current = null;
+          }
+        }
+      };
+      tick(); // immediate
+      pollerRef.current = setInterval(tick, 3000);
+    },
+    [fetchData]
+  );
+
+  // ─── Cargar desde ?id= al montar ─────────────────────────────────────
   useEffect(() => {
-    if (idFromUrl) loadFromUrl(idFromUrl);
-  }, [idFromUrl, loadFromUrl]);
+    if (idFromUrl) startPolling(idFromUrl);
+    return () => {
+      if (pollerRef.current) clearInterval(pollerRef.current);
+    };
+  }, [idFromUrl, startPolling]);
 
-  // ─── Cancelar ─────────────────────────────────────────────────────────
-  const cancel = () => {
-    abortRef.current?.abort();
-    setRunning(false);
-    setStage("idle");
-    message.info("Investigación cancelada");
-  };
+  // ─── Cuando se carga el deliverable, llenar el textarea con la pregunta ───
+  useEffect(() => {
+    if (data?.userQuestion && !question) setQuestion(data.userQuestion);
+  }, [data?.userQuestion]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Ejecutar ─────────────────────────────────────────────────────────
-  const run = async () => {
+  // ─── Submit ───────────────────────────────────────────────────────────
+  const submit = async () => {
     const q = question.trim();
     if (q.length < 12) {
       message.warning("Necesitas al menos 12 caracteres.");
       return;
     }
-    setRunning(true);
-    setStage("planning");
-    setPlan(null);
-    setSubqueries([]);
-    setAnswer("");
-    setChunks([]);
-    setError(null);
-    setDeliverableId(null);
+    setSubmitting(true);
+    setData(null);
+    setLoadError(null);
     setActiveTab("paper");
-
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
 
     try {
       const res = await fetch("/api/deep-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: q }),
-        signal: ctrl.signal,
       });
-      if (!res.body) throw new Error("Sin stream");
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let buf = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-        const lines = buf.split("\n");
-        buf = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const ev = JSON.parse(line.slice(6));
-            if (ev.type === "step") {
-              if (
-                ev.step === "planning" ||
-                ev.step === "executing" ||
-                ev.step === "fusing" ||
-                ev.step === "synthesizing" ||
-                ev.step === "annexes" ||
-                ev.step === "persisting"
-              ) {
-                setStage(ev.step);
-              }
-            }
-            if (ev.type === "plan") {
-              setPlan(ev.plan);
-              setSubqueries(
-                ev.plan.subqueries.map((q: string) => ({ query: q, status: "pending" as const }))
-              );
-            }
-            if (ev.type === "subquery_start") {
-              setSubqueries((sq) =>
-                sq.map((s, i) => (i === ev.index ? { ...s, status: "running" } : s))
-              );
-            }
-            if (ev.type === "subquery_done") {
-              setSubqueries((sq) =>
-                sq.map((s, i) =>
-                  i === ev.index
-                    ? { ...s, status: ev.error ? "error" : "done", foundChunks: ev.foundChunks }
-                    : s
-                )
-              );
-            }
-            if (ev.type === "answer_delta") {
-              setAnswer((a) => a + ev.chunk);
-            }
-            if (ev.type === "complete") {
-              setStage("done");
-              setAnswer(ev.finalAnswer || "");
-              setDeliverableId(ev.deliverableId);
-              // Reflejar en URL para que sea compartible y recargable
-              if (ev.deliverableId) {
-                router.replace(`/deep-research?id=${ev.deliverableId}`);
-              }
-            }
-            if (ev.type === "error") {
-              setStage("error");
-              setError(ev.message);
-            }
-          } catch {
-            /* skip parse errors */
-          }
-        }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Error" }));
+        throw new Error(err.error || `HTTP ${res.status}`);
       }
-    } catch (err) {
-      if ((err as Error).name === "AbortError") return;
-      setError(err instanceof Error ? err.message : "Error");
-      setStage("error");
+      const { deliverableId } = (await res.json()) as { deliverableId: string };
+      router.replace(`/deep-research?id=${deliverableId}`);
+      startPolling(deliverableId);
+      message.success("Investigación iniciada — procesará en background");
+    } catch (e) {
+      message.error((e as Error).message);
     } finally {
-      setRunning(false);
-      abortRef.current = null;
+      setSubmitting(false);
     }
   };
 
-  // ─── Parsear secciones del answer ─────────────────────────────────────
-  const sections = parseSections(answer);
+  // ─── Sub-derivados ────────────────────────────────────────────────────
+  const sections = parseSections(data?.answer ?? "");
+  const plan = data?.metadata?.plan ?? null;
+  const subqueries = data?.metadata?.subqueriesProgress ?? [];
+  const totalSubqueries = subqueries.length || plan?.subqueries.length || 0;
+  const doneSubqueries = subqueries.filter((s) => s.status === "done").length;
 
   const stepIndex =
     stage === "planning" ? 0 :
@@ -243,7 +220,7 @@ function DeepResearchContent() {
     stage === "synthesizing" ? 3 :
     stage === "annexes" ? 4 :
     stage === "persisting" ? 5 :
-    stage === "done" ? 6 : 0;
+    stage === "complete" ? 6 : 0;
 
   return (
     <div className="app-page-wide">
@@ -256,7 +233,8 @@ function DeepResearchContent() {
           Investigación agéntica para preguntas amplias. Un planificador descompone tu pregunta
           en 6-8 sub-investigaciones, ejecuta RAG completo (expansion + BM25 + RRF + rerank)
           en cada una, fusiona la evidencia y sintetiza un <em>paper académico</em> con
-          cronología, tabla de actores y vacíos del corpus. Tarda 3-7 min y se guarda como producción.
+          cronología, tabla de actores y vacíos del corpus. Tarda 5-10 min — corre en
+          background, no necesitas mantener la pestaña abierta.
         </Paragraph>
       </div>
 
@@ -265,38 +243,31 @@ function DeepResearchContent() {
           <TextArea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder={
-              '"¿Cómo se construyó el imaginario nacional en Colombia entre 1850 y 1900, y qué papel jugó la prensa liberal en la disputa con la Iglesia?"'
-            }
+            placeholder='"¿Cómo se construyó el imaginario nacional en Colombia entre 1850 y 1900, y qué papel jugó la prensa liberal en la disputa con la Iglesia?"'
             autoSize={{ minRows: 4, maxRows: 8 }}
-            disabled={running}
+            disabled={submitting || isRunning}
           />
           <Space wrap>
-            {!running ? (
-              <Button
-                type="primary"
-                icon={<ExperimentOutlined />}
-                size="large"
-                disabled={question.trim().length < 12}
-                onClick={run}
-              >
-                Iniciar investigación
-              </Button>
-            ) : (
-              <Button danger icon={<StopOutlined />} size="large" onClick={cancel}>
-                Cancelar
-              </Button>
-            )}
+            <Button
+              type="primary"
+              icon={<ExperimentOutlined />}
+              size="large"
+              loading={submitting}
+              disabled={isRunning || question.trim().length < 12}
+              onClick={submit}
+            >
+              {data ? "Nueva investigación" : "Iniciar investigación"}
+            </Button>
             <Tooltip title="Opus 4.7 planifica y sintetiza; Sonnet 4.6 genera los anexos">
               <Text type="secondary" style={{ fontSize: 12 }}>
                 <BulbOutlined /> Largo y costoso, pero riguroso
               </Text>
             </Tooltip>
-            {deliverableId && (
+            {data?.id && isComplete && (
               <Button
                 type="link"
                 icon={<BookOutlined />}
-                onClick={() => router.push(`/producciones/${deliverableId}`)}
+                onClick={() => router.push(`/producciones/${data.id}`)}
               >
                 Abrir en producciones
               </Button>
@@ -305,235 +276,260 @@ function DeepResearchContent() {
         </Space>
       </Card>
 
-      {stage !== "idle" && stage !== "done" && (
-        <Card style={{ marginBottom: 16 }}>
-          <Steps
-            size="small"
-            current={stepIndex}
-            status={stage === "error" ? "error" : "process"}
-            items={[
-              { title: "Planificar", icon: <BulbOutlined /> },
-              { title: "Recuperar evidencia", icon: <SearchOutlined /> },
-              { title: "Fusionar", icon: <ThunderboltOutlined /> },
-              { title: "Sintetizar paper", icon: <BookOutlined /> },
-              { title: "Anexos", icon: <FileSearchOutlined /> },
-              { title: "Guardar" },
-            ]}
-          />
-        </Card>
-      )}
-
-      {plan && (
-        <Card
-          size="small"
-          style={{ marginBottom: 16, background: token.colorFillQuaternary, border: "none" }}
-          styles={{ body: { padding: 16 } }}
-        >
-          <Text type="secondary" style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            Plan del investigador
-          </Text>
-          {plan.thinking && (
-            <Paragraph style={{ marginTop: 8, marginBottom: 8, fontSize: 13, fontStyle: "italic", color: token.colorText }}>
-              {plan.thinking}
-            </Paragraph>
-          )}
-          {plan.scope && (
-            <Paragraph style={{ marginBottom: 8, fontSize: 13 }}>
-              <Text strong>Alcance: </Text>
-              {plan.scope}
-            </Paragraph>
-          )}
-          {plan.entities && (
-            <Row gutter={[8, 4]} style={{ marginTop: 8 }}>
-              {plan.entities.temporalidad && (
-                <Col><Tag color="geekblue" icon={<CalendarOutlined />}>{plan.entities.temporalidad}</Tag></Col>
+      {data && (
+        <>
+          {isRunning && (
+            <Card style={{ marginBottom: 16 }}>
+              <Steps
+                size="small"
+                current={stepIndex}
+                status={isError ? "error" : "process"}
+                items={[
+                  { title: "Planificar", icon: <BulbOutlined /> },
+                  { title: "Recuperar evidencia", icon: <SearchOutlined /> },
+                  { title: "Fusionar", icon: <ThunderboltOutlined /> },
+                  { title: "Sintetizar paper", icon: <BookOutlined /> },
+                  { title: "Anexos", icon: <FileSearchOutlined /> },
+                  { title: "Guardar" },
+                ]}
+              />
+              {data.metadata?.message && (
+                <Paragraph
+                  style={{ marginTop: 12, marginBottom: 0, fontSize: 12, fontStyle: "italic", color: token.colorTextSecondary }}
+                >
+                  {data.metadata.message}
+                </Paragraph>
               )}
-              {plan.entities.personas?.slice(0, 8).map((p) => (
-                <Col key={p}><Tag color="magenta">{p}</Tag></Col>
-              ))}
-              {plan.entities.instituciones?.slice(0, 6).map((p) => (
-                <Col key={p}><Tag color="orange">{p}</Tag></Col>
-              ))}
-              {plan.entities.lugares?.slice(0, 6).map((p) => (
-                <Col key={p}><Tag color="green">{p}</Tag></Col>
-              ))}
-              {plan.entities.conceptos?.slice(0, 6).map((p) => (
-                <Col key={p}><Tag color="purple">{p}</Tag></Col>
-              ))}
-            </Row>
+              {totalSubqueries > 0 && stage === "executing" && (
+                <Progress
+                  percent={Math.round((doneSubqueries / totalSubqueries) * 100)}
+                  size="small"
+                  style={{ marginTop: 8 }}
+                />
+              )}
+              {data.metadata?.paperWords !== undefined && stage === "synthesizing" && (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Paper en curso: {data.metadata.paperWords} palabras
+                </Text>
+              )}
+            </Card>
           )}
-        </Card>
-      )}
 
-      {subqueries.length > 0 && (
-        <Card
-          title={`Sub-investigaciones (${subqueries.length})`}
-          size="small"
-          style={{ marginBottom: 16 }}
-        >
-          <Space vertical size={6} style={{ width: "100%" }}>
-            {subqueries.map((sq, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "8px 10px",
-                  background: token.colorFillQuaternary,
-                  borderRadius: 6,
-                }}
-              >
-                <Tag style={{ fontFamily: "var(--font-mono)", fontSize: 10, margin: 0 }}>#{i + 1}</Tag>
-                <Text style={{ fontSize: 13, flex: 1 }}>{sq.query}</Text>
-                {sq.foundChunks !== undefined && (
-                  <Tag color="blue" style={{ fontSize: 10, margin: 0 }}>
-                    {sq.foundChunks} frags
-                  </Tag>
-                )}
-                {sq.status === "pending" && <Tag style={{ fontSize: 10, margin: 0 }}>pendiente</Tag>}
-                {sq.status === "running" && <Tag color="processing" style={{ fontSize: 10, margin: 0 }}>buscando…</Tag>}
-                {sq.status === "done" && <Tag color="success" style={{ fontSize: 10, margin: 0 }}>✓</Tag>}
-                {sq.status === "error" && <Tag color="error" style={{ fontSize: 10, margin: 0 }}>error</Tag>}
-              </div>
-            ))}
-          </Space>
-        </Card>
-      )}
+          {plan && (
+            <Card
+              size="small"
+              style={{ marginBottom: 16, background: token.colorFillQuaternary, border: "none" }}
+              styles={{ body: { padding: 16 } }}
+            >
+              <Text type="secondary" style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                Plan del investigador
+              </Text>
+              {plan.thinking && (
+                <Paragraph style={{ marginTop: 8, marginBottom: 8, fontSize: 13, fontStyle: "italic", color: token.colorText }}>
+                  {plan.thinking}
+                </Paragraph>
+              )}
+              {plan.scope && (
+                <Paragraph style={{ marginBottom: 8, fontSize: 13 }}>
+                  <Text strong>Alcance: </Text>
+                  {plan.scope}
+                </Paragraph>
+              )}
+              {plan.entities && (
+                <Row gutter={[8, 4]} style={{ marginTop: 8 }}>
+                  {plan.entities.temporalidad && (
+                    <Col><Tag color="geekblue" icon={<CalendarOutlined />}>{plan.entities.temporalidad}</Tag></Col>
+                  )}
+                  {plan.entities.personas?.slice(0, 8).map((p) => (
+                    <Col key={p}><Tag color="magenta">{p}</Tag></Col>
+                  ))}
+                  {plan.entities.instituciones?.slice(0, 6).map((p) => (
+                    <Col key={p}><Tag color="orange">{p}</Tag></Col>
+                  ))}
+                  {plan.entities.lugares?.slice(0, 6).map((p) => (
+                    <Col key={p}><Tag color="green">{p}</Tag></Col>
+                  ))}
+                  {plan.entities.conceptos?.slice(0, 6).map((p) => (
+                    <Col key={p}><Tag color="purple">{p}</Tag></Col>
+                  ))}
+                </Row>
+              )}
+            </Card>
+          )}
 
-      {error && (
-        <Alert
-          type="error"
-          showIcon
-          message={error}
-          closable
-          style={{ marginBottom: 16 }}
-          onClose={() => setError(null)}
-        />
-      )}
+          {subqueries.length > 0 && (
+            <Card
+              title={`Sub-investigaciones (${subqueries.length})`}
+              size="small"
+              style={{ marginBottom: 16 }}
+            >
+              <Space vertical size={6} style={{ width: "100%" }}>
+                {subqueries.map((sq, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "8px 10px",
+                      background: token.colorFillQuaternary,
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Tag style={{ fontFamily: "var(--font-mono)", fontSize: 10, margin: 0 }}>#{i + 1}</Tag>
+                    <Text style={{ fontSize: 13, flex: 1 }}>{sq.query}</Text>
+                    {sq.foundChunks !== undefined && (
+                      <Tag color="blue" style={{ fontSize: 10, margin: 0 }}>
+                        {sq.foundChunks} frags
+                      </Tag>
+                    )}
+                    {sq.status === "pending" && <Tag style={{ fontSize: 10, margin: 0 }}>pendiente</Tag>}
+                    {sq.status === "running" && <Tag color="processing" style={{ fontSize: 10, margin: 0 }}>buscando…</Tag>}
+                    {sq.status === "done" && <Tag color="success" style={{ fontSize: 10, margin: 0 }}>✓</Tag>}
+                    {sq.status === "error" && <Tag color="error" style={{ fontSize: 10, margin: 0 }}>error</Tag>}
+                  </div>
+                ))}
+              </Space>
+            </Card>
+          )}
 
-      {(answer || stage === "synthesizing" || stage === "annexes" || stage === "persisting") && (
-        <Card styles={{ body: { padding: 0 } }}>
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            type="card"
-            size="middle"
-            style={{ padding: "8px 16px 0" }}
-            items={[
-              {
-                key: "paper",
-                label: <span><BookOutlined /> Paper</span>,
-                children: (
-                  <div style={{ padding: "20px 32px 40px" }}>
-                    <MarkdownWithCitations text={sections.paper} chunks={chunks} />
-                  </div>
-                ),
-              },
-              {
-                key: "cronologia",
-                label: <span><CalendarOutlined /> Cronología</span>,
-                disabled: !sections.cronologia,
-                children: (
-                  <div style={{ padding: "20px 32px 40px" }}>
-                    {sections.cronologia ? (
-                      <MarkdownWithCitations text={sections.cronologia} chunks={chunks} />
-                    ) : (
-                      <Empty description="Aún no generada" />
-                    )}
-                  </div>
-                ),
-              },
-              {
-                key: "actores",
-                label: <span><TeamOutlined /> Actores</span>,
-                disabled: !sections.actores,
-                children: (
-                  <div style={{ padding: "20px 32px 40px" }}>
-                    {sections.actores ? (
-                      <MarkdownWithCitations text={sections.actores} chunks={chunks} />
-                    ) : (
-                      <Empty description="Aún no generada" />
-                    )}
-                  </div>
-                ),
-              },
-              {
-                key: "vacios",
-                label: <span><FileSearchOutlined /> Vacíos</span>,
-                disabled: !sections.vacios,
-                children: (
-                  <div style={{ padding: "20px 32px 40px" }}>
-                    {sections.vacios ? (
-                      <MarkdownWithCitations text={sections.vacios} chunks={chunks} />
-                    ) : (
-                      <Empty description="Aún no generada" />
-                    )}
-                  </div>
-                ),
-              },
-              {
-                key: "fuentes",
-                label: <span><HistoryOutlined /> Fuentes ({chunks.length})</span>,
-                disabled: chunks.length === 0,
-                children: (
-                  <div style={{ padding: "16px 24px 40px" }}>
-                    {chunks.length > 0 ? (
-                      <Space vertical size={8} style={{ width: "100%" }}>
-                        {chunks.map((c, i) => (
-                          <Card key={c.id ?? i} size="small" styles={{ body: { padding: 12 } }}>
-                            <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 6 }}>
-                              <Space size={6}>
-                                <Tag
-                                  style={{
-                                    fontFamily: "var(--font-mono)",
-                                    background: `${token.colorWarning}22`,
-                                    color: token.colorWarning,
-                                    border: "none",
-                                    fontSize: 11,
-                                    margin: 0,
-                                  }}
-                                >
-                                  #{i + 1}
-                                </Tag>
-                                <Text type="secondary" style={{ fontSize: 11 }}>
-                                  p. {c.pageNumber}
-                                  {c.similarity !== undefined && ` · sim ${(c.similarity * 100).toFixed(0)}%`}
+          {(loadError || isError) && (
+            <Alert
+              type="error"
+              showIcon
+              message={loadError ?? data.metadata?.message ?? "Falló el procesamiento"}
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
+          {(data.answer || isComplete) && (
+            <Card styles={{ body: { padding: 0 } }}>
+              <Tabs
+                activeKey={activeTab}
+                onChange={setActiveTab}
+                type="card"
+                size="middle"
+                style={{ padding: "8px 16px 0" }}
+                items={[
+                  {
+                    key: "paper",
+                    label: <span><BookOutlined /> Paper</span>,
+                    children: (
+                      <div style={{ padding: "20px 32px 40px" }}>
+                        {sections.paper ? (
+                          <MarkdownWithCitations text={sections.paper} chunks={data.chunksUsed ?? []} />
+                        ) : (
+                          <Empty description="Aún no generado" />
+                        )}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "cronologia",
+                    label: <span><CalendarOutlined /> Cronología</span>,
+                    disabled: !sections.cronologia,
+                    children: (
+                      <div style={{ padding: "20px 32px 40px" }}>
+                        {sections.cronologia ? (
+                          <MarkdownWithCitations text={sections.cronologia} chunks={data.chunksUsed ?? []} />
+                        ) : (
+                          <Empty description="Aún no generada" />
+                        )}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "actores",
+                    label: <span><TeamOutlined /> Actores</span>,
+                    disabled: !sections.actores,
+                    children: (
+                      <div style={{ padding: "20px 32px 40px" }}>
+                        {sections.actores ? (
+                          <MarkdownWithCitations text={sections.actores} chunks={data.chunksUsed ?? []} />
+                        ) : (
+                          <Empty description="Aún no generada" />
+                        )}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "vacios",
+                    label: <span><FileSearchOutlined /> Vacíos</span>,
+                    disabled: !sections.vacios,
+                    children: (
+                      <div style={{ padding: "20px 32px 40px" }}>
+                        {sections.vacios ? (
+                          <MarkdownWithCitations text={sections.vacios} chunks={data.chunksUsed ?? []} />
+                        ) : (
+                          <Empty description="Aún no generada" />
+                        )}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: "fuentes",
+                    label: <span><HistoryOutlined /> Fuentes ({data.chunksUsed?.length ?? 0})</span>,
+                    disabled: (data.chunksUsed?.length ?? 0) === 0,
+                    children: (
+                      <div style={{ padding: "16px 24px 40px" }}>
+                        {(data.chunksUsed?.length ?? 0) > 0 ? (
+                          <Space vertical size={8} style={{ width: "100%" }}>
+                            {data.chunksUsed.map((c, i) => (
+                              <Card key={c.id ?? i} size="small" styles={{ body: { padding: 12 } }}>
+                                <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 6 }}>
+                                  <Space size={6}>
+                                    <Tag
+                                      style={{
+                                        fontFamily: "var(--font-mono)",
+                                        background: `${token.colorWarning}22`,
+                                        color: token.colorWarning,
+                                        border: "none",
+                                        fontSize: 11,
+                                        margin: 0,
+                                      }}
+                                    >
+                                      #{i + 1}
+                                    </Tag>
+                                    <Text type="secondary" style={{ fontSize: 11 }}>
+                                      p. {c.pageNumber}
+                                      {c.similarity !== undefined && ` · sim ${(c.similarity * 100).toFixed(0)}%`}
+                                    </Text>
+                                  </Space>
+                                </Space>
+                                <Text strong style={{ display: "block", fontSize: 12, marginBottom: 6 }}>
+                                  {c.documentFilename}
                                 </Text>
-                              </Space>
-                            </Space>
-                            <Text strong style={{ display: "block", fontSize: 12, marginBottom: 6 }}>
-                              {c.documentFilename}
-                            </Text>
-                            {c.content && (
-                              <Paragraph
-                                ellipsis={{ rows: 4, expandable: true, symbol: "más" }}
-                                style={{
-                                  fontFamily: "var(--font-serif)",
-                                  fontSize: 13,
-                                  lineHeight: 1.6,
-                                  margin: 0,
-                                  color: token.colorTextSecondary,
-                                }}
-                              >
-                                {c.content}
-                              </Paragraph>
-                            )}
-                          </Card>
-                        ))}
-                      </Space>
-                    ) : (
-                      <Empty description="Sin fuentes registradas" />
-                    )}
-                  </div>
-                ),
-              },
-            ]}
-          />
-        </Card>
+                                {c.content && (
+                                  <Paragraph
+                                    ellipsis={{ rows: 4, expandable: true, symbol: "más" }}
+                                    style={{
+                                      fontFamily: "var(--font-serif)",
+                                      fontSize: 13,
+                                      lineHeight: 1.6,
+                                      margin: 0,
+                                      color: token.colorTextSecondary,
+                                    }}
+                                  >
+                                    {c.content}
+                                  </Paragraph>
+                                )}
+                              </Card>
+                            ))}
+                          </Space>
+                        ) : (
+                          <Empty description="Sin fuentes registradas" />
+                        )}
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            </Card>
+          )}
+        </>
       )}
 
-      {stage === "idle" && !answer && (
+      {!data && !submitting && (
         <Card>
           <Empty description="Plantea una pregunta amplia de investigación para empezar" />
         </Card>
@@ -611,10 +607,7 @@ function MarkdownWithCitations({
   chunks: ChunkMeta[];
 }) {
   const { token } = theme.useToken();
-  // Sustituimos [#N] por una sintaxis inline `#N` que ReactMarkdown rendea
-  // como <code> y nosotros interceptamos en el componente custom.
   const prepared = text.replace(/\[#(\d+(?:\s*,\s*\d+)*)\]/g, (_m, nums) => {
-    // Soporta [#3, #7, #12] con múltiples números
     const list = String(nums)
       .split(",")
       .map((n) => n.trim())

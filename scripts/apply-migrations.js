@@ -84,6 +84,11 @@ const MIGRATIONS = [
   `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "source" TEXT NOT NULL DEFAULT 'batch'`,
   `CREATE INDEX IF NOT EXISTS deliverables_source_idx ON deliverables("source")`,
   `CREATE INDEX IF NOT EXISTS deliverables_createdAt_idx ON deliverables("createdAt" DESC)`,
+  // 2026-05-25: metadata libre para Deliverable.
+  // Caso de uso primario: deep_research guarda aquí el plan (subqueries, scope, entities)
+  // y el progreso parcial mientras after() corre en background.
+  // Estructura sugerida: { deepResearch: { plan, subqueriesProgress, stage } }
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "metadata" JSONB NOT NULL DEFAULT '{}'::jsonb`,
 
   // 2026-05-21: Question.targetCount + denormalizado de trazabilidad de respuestas.
   // - targetCount: N de preguntas pedido a Claude en este batch (40 por default, configurable).
