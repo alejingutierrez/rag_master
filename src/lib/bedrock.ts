@@ -9,6 +9,37 @@ const bedrock = new BedrockRuntimeClient(awsConfig);
 const EMBEDDING_MODEL =
   process.env.BEDROCK_EMBEDDING_MODEL_ID || "cohere.embed-v4:0";
 
+// ────────────────────────────────────────────────────────────────────────
+// Semáforo GLOBAL para llamadas a Bedrock embeddings.
+//
+// Cohere v4 en Bedrock tiene un rate limit estricto (tokens/sec). Cuando
+// hay múltiples docs procesando en paralelo en el mismo servidor, cada uno
+// con su propio embedding-processor, todos llaman a Bedrock simultáneamente
+// y saturan la cuota. Este semáforo limita a MAX_CONCURRENT_EMBEDDINGS
+// llamadas en vuelo GLOBALMENTE, sin importar cuántos docs estén procesando.
+// ────────────────────────────────────────────────────────────────────────
+const MAX_CONCURRENT_EMBEDDINGS = Number(
+  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "2"
+);
+
+let activeEmbeddingCalls = 0;
+const embeddingWaitQueue: Array<() => void> = [];
+
+async function acquireEmbeddingSlot(): Promise<void> {
+  if (activeEmbeddingCalls < MAX_CONCURRENT_EMBEDDINGS) {
+    activeEmbeddingCalls++;
+    return;
+  }
+  await new Promise<void>((resolve) => embeddingWaitQueue.push(resolve));
+  activeEmbeddingCalls++;
+}
+
+function releaseEmbeddingSlot(): void {
+  activeEmbeddingCalls--;
+  const next = embeddingWaitQueue.shift();
+  if (next) next();
+}
+
 // Cohere v4 usa 1536 dimensiones, Titan v2 usa 1024
 const EMBEDDING_DIMENSIONS = EMBEDDING_MODEL.includes("cohere") ? 1536 : 1024;
 
@@ -71,32 +102,37 @@ async function generateCohereEmbedding(
 /**
  * Cohere Embed v4 BATCH — acepta hasta 96 texts por request.
  * Drásticamente reduce el número de llamadas a Bedrock y el throttling.
+ * Usa semáforo global para evitar saturar la cuota de Bedrock.
  */
 async function generateCohereEmbeddingsBatch(
   texts: string[],
   inputType: "search_document" | "search_query"
 ): Promise<number[][]> {
-  const payload = {
-    texts,
-    input_type: inputType,
-    truncate: "END",
-  };
+  await acquireEmbeddingSlot();
+  try {
+    const payload = {
+      texts,
+      input_type: inputType,
+      truncate: "END",
+    };
 
-  const command = new InvokeModelCommand({
-    modelId: EMBEDDING_MODEL,
-    contentType: "application/json",
-    accept: "application/json",
-    body: JSON.stringify(payload),
-  });
+    const command = new InvokeModelCommand({
+      modelId: EMBEDDING_MODEL,
+      contentType: "application/json",
+      accept: "application/json",
+      body: JSON.stringify(payload),
+    });
 
-  const response = await bedrock.send(command);
-  const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+    const response = await bedrock.send(command);
+    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
 
-  // Cohere v4 retorna embeddings.float[], v3 retorna embeddings[]
-  if (responseBody.embeddings?.float) {
-    return responseBody.embeddings.float as number[][];
+    if (responseBody.embeddings?.float) {
+      return responseBody.embeddings.float as number[][];
+    }
+    return responseBody.embeddings as number[][];
+  } finally {
+    releaseEmbeddingSlot();
   }
-  return responseBody.embeddings as number[][];
 }
 
 /**

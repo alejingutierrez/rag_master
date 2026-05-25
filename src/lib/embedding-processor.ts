@@ -13,10 +13,10 @@ import { saveChunkEmbedding } from "./vector-search";
  */
 
 // Cohere v4 acepta hasta 96 texts por request. generateEmbeddings hace
-// el batching interno (24 textos por llamada). Aquí BATCH_SIZE = chunks que
-// pedimos a la BD por iteración del while loop.
+// el batching interno (24 textos por llamada) + semáforo global. Aquí
+// BATCH_SIZE = chunks que pedimos a la BD por iteración del while loop.
 const BATCH_SIZE = 48;
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 10; // más generoso, el semáforo global ya limita carga
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
