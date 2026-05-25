@@ -79,7 +79,7 @@ jobs:
                 \"ImageIdentifier\": \"$IMAGE_URI\",
                 \"ImageConfiguration\": {
                   \"Port\": \"3000\",
-                  \"StartCommand\": \"node server.js\",
+                  \"StartCommand\": \"sh -c 'node scripts/apply-migrations.js && node server.js'\",
                   \"RuntimeEnvironmentVariables\": {
                     \"DATABASE_URL\": \"${{ secrets.DATABASE_URL }}\",
                     \"S3_BUCKET_NAME\": \"${{ secrets.S3_BUCKET_NAME }}\",
