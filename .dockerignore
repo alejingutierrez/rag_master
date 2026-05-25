@@ -8,3 +8,4 @@ node_modules
 .DS_Store
 scripts/
 !scripts/apply-migrations.js
+!scripts/start.sh
