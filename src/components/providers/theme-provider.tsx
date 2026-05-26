@@ -1,87 +1,76 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import {
+  ThemeProvider as NextThemesProvider,
+  useTheme as useNextTheme,
+} from "next-themes";
 import { ConfigProvider, theme as antdTheme, App as AntdApp } from "antd";
 import { lightTheme, darkTheme } from "@/lib/theme";
 
-type ThemeMode = "light" | "dark" | "auto";
-type ResolvedTheme = "light" | "dark";
+/**
+ * AntBridge — durante la migración, los componentes Ant todavía existen.
+ * Este componente lee el tema resuelto de next-themes y lo aplica al
+ * ConfigProvider de Ant. Se elimina cuando completemos F6 (cleanup Ant).
+ */
+function AntBridge({ children }: { children: React.ReactNode }) {
+  const { resolvedTheme } = useNextTheme();
+  const [mounted, setMounted] = useState(false);
 
-interface ThemeContextValue {
-  mode: ThemeMode;
-  resolved: ResolvedTheme;
-  setMode: (mode: ThemeMode) => void;
-}
-
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-
-const STORAGE_KEY = "rag-master-theme-mode";
-
-function resolveTheme(mode: ThemeMode): ResolvedTheme {
-  if (mode === "auto") {
-    if (typeof window === "undefined") return "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-  return mode;
-}
-
-function readStoredMode(): ThemeMode {
-  if (typeof window === "undefined") return "auto";
-  try {
-    const v = window.localStorage.getItem(STORAGE_KEY);
-    if (v === "light" || v === "dark" || v === "auto") return v;
-  } catch {
-    /* ignore */
-  }
-  return "auto";
-}
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Inicializa síncrono desde localStorage para minimizar flash post-hydration.
-  const [mode, setModeState] = useState<ThemeMode>(() => readStoredMode());
-  const [resolved, setResolved] = useState<ResolvedTheme>(() => resolveTheme(readStoredMode()));
-
-  // Reaccionar a cambios del sistema cuando mode === auto
   useEffect(() => {
-    if (mode !== "auto" || typeof window === "undefined") return;
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = () => setResolved(mql.matches ? "dark" : "light");
-    handler();
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, [mode]);
-
-  // Mantener el atributo data-theme y color-scheme sincronizados
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    document.documentElement.setAttribute("data-theme", resolved);
-    document.documentElement.style.colorScheme = resolved;
-  }, [resolved]);
-
-  const setMode = useCallback((next: ThemeMode) => {
-    setModeState(next);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      /* ignore */
-    }
-    setResolved(resolveTheme(next));
+    setMounted(true);
   }, []);
 
-  const activeTheme = resolved === "dark" ? darkTheme : lightTheme;
-  const algorithm = resolved === "dark" ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm;
+  // Antes del mount, asumir light para evitar mismatch SSR.
+  const isDark = mounted && resolvedTheme === "dark";
+  const activeTheme = isDark ? darkTheme : lightTheme;
+  const algorithm = isDark
+    ? antdTheme.darkAlgorithm
+    : antdTheme.defaultAlgorithm;
 
   return (
-    <ThemeContext.Provider value={{ mode, resolved, setMode }}>
-      <ConfigProvider theme={{ ...activeTheme, algorithm }}>
-        <AntdApp notification={{ placement: "bottomRight" }}>{children}</AntdApp>
-      </ConfigProvider>
-    </ThemeContext.Provider>
+    <ConfigProvider theme={{ ...activeTheme, algorithm }}>
+      <AntdApp notification={{ placement: "bottomRight" }}>{children}</AntdApp>
+    </ConfigProvider>
   );
 }
 
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <NextThemesProvider
+      attribute={["class", "data-theme"]}
+      defaultTheme="system"
+      enableSystem
+      storageKey="rag-master-theme-mode"
+      disableTransitionOnChange={false}
+    >
+      <AntBridge>{children}</AntBridge>
+    </NextThemesProvider>
+  );
+}
+
+/**
+ * Hook de tema con la API histórica del proyecto: { mode, resolved, setMode }.
+ * Internamente delega a next-themes. Mantenemos el alias "auto" → "system"
+ * para no romper callers existentes.
+ */
+type ThemeMode = "light" | "dark" | "auto";
+type ResolvedTheme = "light" | "dark";
+
 export function useTheme() {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
-  return ctx;
+  const { theme, setTheme, resolvedTheme } = useNextTheme();
+
+  const mode: ThemeMode =
+    theme === "system" || theme === undefined
+      ? "auto"
+      : (theme as "light" | "dark");
+
+  const resolved: ResolvedTheme =
+    resolvedTheme === "dark" ? "dark" : "light";
+
+  const setMode = (next: ThemeMode) => {
+    setTheme(next === "auto" ? "system" : next);
+  };
+
+  return { mode, resolved, setMode };
 }

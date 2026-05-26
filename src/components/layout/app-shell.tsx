@@ -137,6 +137,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { mode, resolved, setMode } = useTheme();
   const { token } = theme.useToken();
 
+  // Bypass para páginas de desarrollo del nuevo design system.
+  // Estas páginas usan tokens propios y no se envuelven con el shell viejo.
+  const isDevPath = pathname.startsWith("/dev");
+
   // Detectar mobile y colapsar automáticamente
   useEffect(() => {
     const check = () => {
@@ -446,6 +450,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Space>
         </div>
   ) : null;
+
+  // Páginas de desarrollo del DS — renderizar sin envolver con el shell viejo.
+  if (isDevPath) {
+    return <>{children}</>;
+  }
 
   return (
     <Layout style={{ minHeight: "100vh" }}>

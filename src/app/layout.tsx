@@ -1,26 +1,29 @@
 import type { Metadata } from "next";
-import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
+import { Newsreader, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import "@/lib/dayjs-config";
 import "./globals.css";
 
-const sans = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
+const serif = Newsreader({
+  variable: "--font-newsreader",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  axes: ["opsz"],
+});
+
+const sans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const serif = Source_Serif_4({
-  variable: "--font-serif",
+const mono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
-  display: "swap",
-});
-
-const mono = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
@@ -30,29 +33,12 @@ export const metadata: Metadata = {
     "Plataforma de investigación con RAG, agentes y búsqueda semántica sobre la historia de Colombia.",
 };
 
-// Script bloqueante para fijar tema antes del primer paint y evitar flash
-const themeBootstrap = `
-(function(){
-  try {
-    var m = localStorage.getItem('rag-master-theme-mode');
-    var r = m === 'light' || m === 'dark'
-      ? m
-      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', r);
-    document.documentElement.style.colorScheme = r;
-  } catch(e) {}
-})();
-`;
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
-      </head>
-      <body className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
+      <body className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
         <AntdRegistry>
           <ThemeProvider>
             <AppShell>{children}</AppShell>
