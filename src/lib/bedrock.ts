@@ -25,11 +25,11 @@ const EMBEDDING_MODEL = (() => {
 // y saturan la cuota. Este semáforo limita a MAX_CONCURRENT_EMBEDDINGS
 // llamadas en vuelo GLOBALMENTE, sin importar cuántos docs estén procesando.
 // ────────────────────────────────────────────────────────────────────────
-// Cuota Cohere v4 cross-region: 300k tokens/min. Con batch=8 (~20k tokens)
-// y semaforo=4 (4 concurrent calls) tenemos ~80k tokens en flight,
-// quedando margen para que las requests anteriores drenen del bucket.
+// Empíricamente con semaforo=4 vimos throttle catastrófico (372/min, backoffs
+// 40-321s). Bajamos a 2 para dar tiempo al bucket de tokens de Bedrock.
+// 2 calls x 8 texts x 2500 tokens = 40k tokens in flight, 300k/min cuota.
 const MAX_CONCURRENT_EMBEDDINGS = Number(
-  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "4"
+  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "2"
 );
 
 let activeEmbeddingCalls = 0;
