@@ -55,8 +55,10 @@ interface DashboardData {
     question?: { pregunta: string; periodoCode: string } | null;
   }>;
   distribution: {
-    periodos: Array<{ code: string; count: number }>;
-    periodos30d: Array<{ code: string; count: number }>;
+    documentsByPeriod: Array<{ code: string; count: number }>;
+    chunksByPeriod: Array<{ code: string; count: number }>;
+    questionsByPeriod: Array<{ code: string; count: number }>;
+    questionsByPeriod30d: Array<{ code: string; count: number }>;
     categorias: Array<{ code: string; name: string; count: number }>;
   };
   activity: Array<{ day: string; docs: number; questions: number; deliverables: number }>;
@@ -249,7 +251,7 @@ export default function DashboardPage() {
             }
           />
           <PeriodCoverageList
-            data={data?.distribution.periodos ?? []}
+            data={data?.distribution.documentsByPeriod ?? []}
             onPeriod={(code) => {
               // Navegar al timeline con período preseleccionado.
               window.location.href = `/timeline?p=${code}`;

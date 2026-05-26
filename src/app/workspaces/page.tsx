@@ -9,14 +9,21 @@ import {
 } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 
-// TODO: crear /api/workspaces para colecciones persistentes.
-// Por ahora derivamos workspaces sintéticos por período usando el dashboard.
+// Vista derivada: workspaces sintéticos = un workspace por período con cobertura.
+// Counts vienen del dashboard (docs por metadata.primaryPeriod, questions por periodoCode)
+// y deliverables resueltos por taxonomía. Sin multiplicadores fabricados.
+// TODO: cuando exista /api/workspaces persistente, reemplazar esta vista derivada.
 
 interface DashboardData {
   stats: { documents: number; questions: number; deliverables: number };
   distribution: {
-    periodos: Array<{ code: string; count: number }>;
+    documentsByPeriod: Array<{ code: string; count: number }>;
+    questionsByPeriod: Array<{ code: string; count: number }>;
   };
+}
+
+interface TimelineData {
+  deliverablesByPeriod: Array<{ code: string; count: number }>;
 }
 
 interface Workspace {
@@ -29,15 +36,6 @@ interface Workspace {
   updated: string;
 }
 
-const TOP_PERIODS: PeriodCode[] = [
-  "REG",
-  "VIO",
-  "FN",
-  "REP_LIB",
-  "CNA",
-  "C91",
-];
-
 export default function WorkspacesPage() {
   const router = useRouter();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -49,33 +47,66 @@ export default function WorkspacesPage() {
       fetch("/api/dashboard", { signal: ctrl.signal }).then((r) =>
         r.ok ? (r.json() as Promise<DashboardData>) : null,
       ),
-      fetch("/api/deliverables?limit=200", { signal: ctrl.signal }).then((r) =>
+      fetch("/api/timeline", { signal: ctrl.signal }).then((r) =>
+        r.ok ? (r.json() as Promise<TimelineData>) : null,
+      ),
+      fetch("/api/deliverables?limit=500", { signal: ctrl.signal }).then((r) =>
         r.ok ? r.json() : { deliverables: [] },
       ),
     ])
-      .then(([dash, dlv]) => {
+      .then(([dash, tl, dlv]) => {
         if (!dash) return;
-        const docsByP = new Map(dash.distribution.periodos.map((p) => [p.code, p.count]));
-        const prodsByP = new Map<string, number>();
+        const docsByP = new Map(
+          dash.distribution.documentsByPeriod.map((p) => [p.code, p.count]),
+        );
+        const qsByP = new Map(
+          dash.distribution.questionsByPeriod.map((p) => [p.code, p.count]),
+        );
+        // Deliverables resueltos por taxonomía (incluye los user-questions sin question linked).
+        const prodsByP = new Map<string, number>(
+          (tl?.deliverablesByPeriod ?? []).map((p) => [p.code, p.count]),
+        );
+        // Last updatedAt por período usando los deliverables paginados (best-effort).
+        const lastUpdByP = new Map<string, string>();
         for (const d of (dlv.deliverables ?? []) as Array<{
+          updatedAt: string;
           question?: { periodoCode?: string } | null;
+          resolvedPeriodoCode?: string | null;
         }>) {
-          const code = d.question?.periodoCode ?? "TRANS";
-          prodsByP.set(code, (prodsByP.get(code) ?? 0) + 1);
+          const code = d.question?.periodoCode ?? d.resolvedPeriodoCode;
+          if (!code) continue;
+          const cur = lastUpdByP.get(code);
+          if (!cur || d.updatedAt > cur) lastUpdByP.set(code, d.updatedAt);
         }
 
-        const list: Workspace[] = TOP_PERIODS.map((code) => {
-          const p = PERIODS[code];
-          return {
-            id: code,
-            name: `Tesis: ${p.label.toLowerCase()}`,
-            period: code,
-            docs: docsByP.get(code) ?? 0,
-            qs: Math.round((docsByP.get(code) ?? 0) * 4.5),
-            prods: prodsByP.get(code) ?? 0,
-            updated: "—",
-          };
-        }).filter((w) => w.docs > 0 || w.prods > 0);
+        // Construir todos los períodos con actividad real (docs o producciones).
+        const allCodes = new Set<string>([
+          ...docsByP.keys(),
+          ...qsByP.keys(),
+          ...prodsByP.keys(),
+        ]);
+        const list: Workspace[] = Array.from(allCodes)
+          .filter((code): code is PeriodCode => code in PERIODS && code !== "TRANS")
+          .map((code) => {
+            const p = PERIODS[code];
+            const lastUpd = lastUpdByP.get(code);
+            return {
+              id: code,
+              name: `Tesis: ${p.label.toLowerCase()}`,
+              period: code,
+              docs: docsByP.get(code) ?? 0,
+              qs: qsByP.get(code) ?? 0,
+              prods: prodsByP.get(code) ?? 0,
+              updated: lastUpd
+                ? new Date(lastUpd).toLocaleDateString("es-CO", {
+                    day: "2-digit",
+                    month: "short",
+                  })
+                : "—",
+            };
+          })
+          .filter((w) => w.docs > 0 || w.qs > 0 || w.prods > 0)
+          .sort((a, b) => b.docs + b.qs + b.prods - (a.docs + a.qs + a.prods));
 
         setWorkspaces(list);
       })

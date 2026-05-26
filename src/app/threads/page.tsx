@@ -10,8 +10,10 @@ import {
 } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 
-// TODO: crear /api/threads para hilos persistentes (questions + deliverables agrupados por tesis).
-// Por ahora derivamos "hilos" sintéticos agrupando deliverables por período + categoría.
+// Vista derivada: agrupa deliverables por período + categoría usando la taxonomía
+// resuelta por el backend (resolvedPeriodoCode), que funciona también para
+// deliverables sin question vinculada (chat libre, deep research).
+// TODO: cuando exista /api/threads persistente, reemplazar esta vista derivada.
 
 interface DeliverableLite {
   id: string;
@@ -20,6 +22,9 @@ interface DeliverableLite {
   createdAt: string;
   updatedAt: string;
   userQuestion?: string | null;
+  source?: string | null;
+  resolvedPeriodoCode?: string | null;
+  resolvedCategoriaCode?: string | null;
   question?: {
     id: string;
     pregunta: string;
@@ -43,8 +48,9 @@ interface Thread {
 function buildThreads(items: DeliverableLite[]): Thread[] {
   const byKey = new Map<string, DeliverableLite[]>();
   for (const d of items) {
-    const period = (d.question?.periodoCode ?? "TRANS") as string;
-    const cat = d.question?.categoriaCode ?? "GEN";
+    const period = d.question?.periodoCode ?? d.resolvedPeriodoCode ?? null;
+    if (!period) continue;
+    const cat = d.question?.categoriaCode ?? d.resolvedCategoriaCode ?? "GEN";
     const key = `${period}-${cat}`;
     const arr = byKey.get(key) ?? [];
     arr.push(d);
@@ -52,27 +58,30 @@ function buildThreads(items: DeliverableLite[]): Thread[] {
   }
   return Array.from(byKey.entries())
     .filter(([, arr]) => arr.length >= 1)
-    .slice(0, 8)
+    .slice(0, 12)
     .map(([key, arr]) => {
       const [period] = key.split("-");
+      const periodLabel = period in PERIODS ? PERIODS[period as PeriodCode].label : period;
+      // Ordenar por updatedAt desc para que first sea el más reciente.
+      arr.sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1));
       const first = arr[0];
-      const latest = arr.reduce(
-        (acc, d) => (d.updatedAt > acc ? d.updatedAt : acc),
-        arr[0].updatedAt,
-      );
+      const latest = first.updatedAt;
+      const title =
+        first.question?.pregunta ??
+        first.userQuestion ??
+        `Hilo · ${periodLabel}`;
+      const catLabel =
+        first.question?.categoriaNombre ??
+        (first.resolvedCategoriaCode ? null : null);
       return {
         id: key,
-        title:
-          first.question?.pregunta ??
-          first.userQuestion ??
-          `Hilo · ${first.question?.periodoNombre ?? period}`,
-        desc:
-          first.question?.categoriaNombre
-            ? `Línea sobre ${first.question.categoriaNombre.toLowerCase()} en ${first.question.periodoNombre}.`
-            : "Hilo de investigación derivado del corpus.",
+        title,
+        desc: catLabel
+          ? `Línea sobre ${catLabel.toLowerCase()} en ${periodLabel}.`
+          : `Hilo de investigación en ${periodLabel} (${arr.length} producción${arr.length === 1 ? "" : "es"}).`,
         steps: arr.length,
         prods: arr.length,
-        period: ((period in PERIODS ? period : "TRANS") as PeriodCode),
+        period: (period in PERIODS ? period : "TRANS") as PeriodCode,
         updated: new Date(latest).toLocaleDateString("es-CO", {
           day: "2-digit",
           month: "short",
@@ -88,7 +97,7 @@ export default function ThreadsPage() {
 
   useEffect(() => {
     const ctrl = new AbortController();
-    fetch("/api/deliverables?limit=100", { signal: ctrl.signal })
+    fetch("/api/deliverables?limit=200", { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : { deliverables: [] }))
       .then((d) => setThreads(buildThreads(d.deliverables ?? [])))
       .catch(() => {})

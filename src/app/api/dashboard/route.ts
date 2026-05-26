@@ -21,8 +21,9 @@ export async function GET() {
       recentDocuments,
       recentQuestions,
       recentDeliverables,
-      documentsByPeriodRaw,
+      documentsWithMeta,
       questionsByPeriodRaw,
+      questionsByPeriod30dRaw,
       questionsByCategoryRaw,
       activityRaw,
     ] = await Promise.all([
@@ -74,6 +75,10 @@ export async function GET() {
           question: { select: { pregunta: true, periodoCode: true } },
         },
       }),
+      prisma.document.findMany({
+        where: { status: "READY" },
+        select: { metadata: true, _count: { select: { chunks: true } } },
+      }),
       prisma.question.groupBy({
         by: ["periodoCode"],
         _count: true,
@@ -115,6 +120,17 @@ export async function GET() {
       where: { createdAt: { gte: sevenDaysAgo } },
     });
 
+    // Reducir docs por primaryPeriod (metadata) + chunks reales por período.
+    const docsByPeriodMap = new Map<string, number>();
+    const chunksByPeriodMap = new Map<string, number>();
+    for (const d of documentsWithMeta) {
+      const meta = (d.metadata ?? {}) as Record<string, unknown>;
+      const code = typeof meta.primaryPeriod === "string" ? meta.primaryPeriod : null;
+      if (!code) continue;
+      docsByPeriodMap.set(code, (docsByPeriodMap.get(code) ?? 0) + 1);
+      chunksByPeriodMap.set(code, (chunksByPeriodMap.get(code) ?? 0) + d._count.chunks);
+    }
+
     return NextResponse.json({
       stats: {
         documents: documentCount,
@@ -136,8 +152,13 @@ export async function GET() {
       recentQuestions,
       recentDeliverables,
       distribution: {
-        periodos: documentsByPeriodRaw.map((p) => ({ code: p.periodoCode, count: p._count })),
-        periodos30d: questionsByPeriodRaw.map((p) => ({ code: p.periodoCode, count: p._count })),
+        // Documentos READY agrupados por metadata.primaryPeriod (cobertura real del corpus).
+        documentsByPeriod: Array.from(docsByPeriodMap.entries()).map(([code, count]) => ({ code, count })),
+        // Chunks agregados por período — sustituye al multiplicador inventado del timeline.
+        chunksByPeriod: Array.from(chunksByPeriodMap.entries()).map(([code, count]) => ({ code, count })),
+        // Preguntas agrupadas por períodoCode (carga de trabajo investigativa).
+        questionsByPeriod: questionsByPeriodRaw.map((p) => ({ code: p.periodoCode, count: p._count })),
+        questionsByPeriod30d: questionsByPeriod30dRaw.map((p) => ({ code: p.periodoCode, count: p._count })),
         categorias: questionsByCategoryRaw.map((c) => ({
           code: c.categoriaCode,
           name: c.categoriaNombre,
