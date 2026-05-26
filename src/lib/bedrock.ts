@@ -25,10 +25,11 @@ const EMBEDDING_MODEL = (() => {
 // y saturan la cuota. Este semáforo limita a MAX_CONCURRENT_EMBEDDINGS
 // llamadas en vuelo GLOBALMENTE, sin importar cuántos docs estén procesando.
 // ────────────────────────────────────────────────────────────────────────
-// Con inference profile us.cohere.embed-v4:0 la cuota es 2000 RPM,
-// ya no necesitamos limitar tan agresivamente.
+// Cuota Cohere v4 cross-region: 300k tokens/min. Con batch=8 (~20k tokens)
+// y semaforo=4 (4 concurrent calls) tenemos ~80k tokens en flight,
+// quedando margen para que las requests anteriores drenen del bucket.
 const MAX_CONCURRENT_EMBEDDINGS = Number(
-  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "8"
+  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "4"
 );
 
 let activeEmbeddingCalls = 0;
@@ -177,8 +178,9 @@ export async function generateEmbeddings(
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
 
-  // Con inference profile, podemos volver a batch tamaño razonable.
-  const BATCH_SIZE = 24;
+  // Batch=8: ~20k tokens/request. Con semaforo=4 = 80k tokens in flight.
+  // Cuota cross-region: 300k tokens/min, dejando margen para sostener.
+  const BATCH_SIZE = 8;
   const MAX_RETRIES = 5;
 
   const embeddings: number[][] = [];
