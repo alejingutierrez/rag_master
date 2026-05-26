@@ -3,36 +3,53 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  Card,
-  Typography,
-  Tag,
-  Space,
-  Button,
-  Input,
-  Select,
-  Drawer,
-  Empty,
-  theme,
-  App,
-  Tooltip,
-  Avatar,
-  Spin,
-} from "antd";
-import {
-  MessageOutlined,
-  SendOutlined,
-  FileTextOutlined,
-  UserOutlined,
-  RobotOutlined,
-  ClusterOutlined,
-  CopyOutlined,
-} from "@ant-design/icons";
+  MessageCircle,
+  Send,
+  FileText,
+  Bot,
+  Network,
+  Copy,
+  ChevronDown,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { CHAT_TEMPLATES, DEFAULT_TEMPLATE_ID, getTemplateById, CATEGORY_LABELS } from "@/lib/chat-templates";
+import {
+  Button,
+  IconButton,
+  Textarea,
+  Card,
+  Badge,
+  Tooltip,
+  Spinner,
+  Kbd,
+  Avatar,
+  AvatarFallback,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerBody,
+} from "@/components/ui";
+import {
+  ConversationBubble,
+  Citation,
+  SourceCard,
+} from "@/components/domain";
+import { toast } from "sonner";
+import {
+  CHAT_TEMPLATES,
+  DEFAULT_TEMPLATE_ID,
+  getTemplateById,
+  CATEGORY_LABELS,
+} from "@/lib/chat-templates";
 import { safeGet, safeSet } from "@/lib/safe-storage";
-
-const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
 
 interface Message {
   role: "user" | "assistant";
@@ -61,8 +78,6 @@ const STARTERS = [
 ];
 
 export default function ChatPage() {
-  const { token } = theme.useToken();
-  const { message } = App.useApp();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -189,77 +204,107 @@ export default function ChatPage() {
 
   const template = getTemplateById(selectedTemplateId);
 
+  // Agrupar templates por categoría para el dropdown
+  const templatesByCategory = Object.entries(
+    CHAT_TEMPLATES.reduce<Record<string, typeof CHAT_TEMPLATES>>((acc, t) => {
+      (acc[t.category] = acc[t.category] || []).push(t);
+      return acc;
+    }, {}),
+  );
+
+  const sourcesLabel =
+    totalChunksUsed > citations.length
+      ? `${citations.length}/${totalChunksUsed}`
+      : `${citations.length}`;
+
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 64px)", overflow: "hidden" }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <div
-          style={{
-            padding: "16px 28px",
-            borderBottom: `1px solid ${token.colorBorderSecondary}`,
-            background: token.colorBgContainer,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
-          <Space size={14}>
-            <MessageOutlined style={{ fontSize: 20, color: token.colorPrimary }} />
+    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+      <div className="flex flex-1 flex-col min-w-0">
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--bg-page)] px-7 py-4">
+          <div className="flex items-center gap-3.5">
+            <MessageCircle className="size-5 text-[var(--accent)]" />
             <div>
-              <Text strong style={{ fontSize: 16 }} className="serif-title">Consultar el corpus</Text>
-              <div style={{ fontSize: 11, color: token.colorTextTertiary }}>
+              <div className="serif-title text-[16px] font-semibold text-[var(--color-ink-1000)]">
+                Consultar el corpus
+              </div>
+              <div className="text-[11px] text-[var(--fg-subtle)]">
                 RAG híbrido con citas · Claude Opus 4.7
               </div>
             </div>
-          </Space>
-          <Space>
-            <Select
-              value={selectedTemplateId}
-              onChange={setSelectedTemplateId}
-              style={{ width: 280 }}
-              disabled={isLoading}
-              options={Object.entries(
-                CHAT_TEMPLATES.reduce<Record<string, typeof CHAT_TEMPLATES>>((acc, t) => {
-                  (acc[t.category] = acc[t.category] || []).push(t);
-                  return acc;
-                }, {}),
-              ).map(([cat, templates]) => ({
-                label: CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS],
-                options: templates.map((t) => ({
-                  value: t.id,
-                  label: (
-                    <Space>
-                      <span>{t.icon}</span>
-                      <span>{t.name}</span>
-                    </Space>
-                  ),
-                })),
-              }))}
-            />
-            <Tooltip title="Ver citas de la última respuesta">
+          </div>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  disabled={isLoading}
+                  trailingIcon={<ChevronDown className="size-3.5" />}
+                  className="min-w-[240px] justify-between"
+                >
+                  <span className="truncate">
+                    {template?.icon ? `${template.icon} ` : ""}
+                    {template?.name ?? "Formato"}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[280px] max-h-[480px] overflow-y-auto">
+                <DropdownMenuRadioGroup
+                  value={selectedTemplateId}
+                  onValueChange={setSelectedTemplateId}
+                >
+                  {templatesByCategory.map(([cat, templates], idx) => (
+                    <div key={cat}>
+                      {idx > 0 && <DropdownMenuSeparator />}
+                      <DropdownMenuLabel>
+                        {CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS]}
+                      </DropdownMenuLabel>
+                      {templates.map((t) => (
+                        <DropdownMenuRadioItem key={t.id} value={t.id}>
+                          <span className="mr-1">{t.icon}</span>
+                          <span>{t.name}</span>
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </div>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Tooltip content="Ver citas de la última respuesta">
               <Button
-                icon={<FileTextOutlined />}
+                variant="secondary"
+                size="md"
+                leadingIcon={<FileText className="size-4" />}
                 onClick={() => setShowCitations(true)}
                 disabled={citations.length === 0}
               >
-                Fuentes ({totalChunksUsed > citations.length ? `${citations.length}/${totalChunksUsed}` : citations.length})
+                Fuentes ({sourcesLabel})
               </Button>
             </Tooltip>
+
             <Link href="/compare">
-              <Button icon={<ClusterOutlined />}>Comparar</Button>
+              <Button
+                variant="secondary"
+                size="md"
+                leadingIcon={<Network className="size-4" />}
+              >
+                Comparar
+              </Button>
             </Link>
-          </Space>
+          </div>
         </div>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
-          <div style={{ maxWidth: 880, margin: "0 auto" }}>
+        {/* Conversation area */}
+        <div className="flex-1 overflow-y-auto px-7 py-6">
+          <div className="mx-auto max-w-[880px]">
             {messages.length === 0 && !isLoading && (
               <EmptyState onPick={(q) => setInput(q)} template={template?.name} />
             )}
 
             {messages.map((m, i) => (
-              <MessageBubble
+              <MessageItem
                 key={i}
                 message={m}
                 onCiteClick={(idx) => {
@@ -269,7 +314,7 @@ export default function ChatPage() {
             ))}
 
             {isLoading && streamingText && (
-              <MessageBubble
+              <MessageItem
                 message={{ role: "assistant", content: streamingText, citations }}
                 streaming
                 onCiteClick={(idx) => citations[idx - 1] && setSelectedCitation(citations[idx - 1])}
@@ -277,14 +322,18 @@ export default function ChatPage() {
             )}
 
             {isLoading && !streamingText && (
-              <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "20px 0" }}>
-                <Avatar style={{ background: `${token.colorPrimary}22`, color: token.colorPrimary }} icon={<RobotOutlined />} />
-                <Card size="small" styles={{ body: { padding: "12px 16px" } }}>
-                  <Space>
-                    <Spin size="small" />
-                    <Text type="secondary">Buscando en el corpus y razonando…</Text>
-                  </Space>
-                </Card>
+              <div className="my-5 flex items-center gap-3">
+                <Avatar size="sm" className="bg-[var(--accent-bg-subtle)] text-[var(--accent)]">
+                  <AvatarFallback>
+                    <Bot className="size-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex items-center gap-2 rounded-md border border-[var(--border-default)] bg-[var(--bg-page)] px-3.5 py-2.5">
+                  <Spinner size={14} className="text-[var(--accent)]" />
+                  <span className="text-sm text-[var(--fg-muted)]">
+                    Buscando en el corpus y razonando…
+                  </span>
+                </div>
               </div>
             )}
 
@@ -292,146 +341,170 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <div
-          style={{
-            borderTop: `1px solid ${token.colorBorderSecondary}`,
-            padding: "16px 28px",
-            background: token.colorBgContainer,
-          }}
-        >
-          <div style={{ maxWidth: 880, margin: "0 auto" }}>
-            <div style={{ display: "flex", gap: 8 }}>
-              <TextArea
+        {/* Composer */}
+        <div className="border-t border-[var(--border-default)] bg-[var(--bg-page)] px-7 py-4">
+          <div className="mx-auto max-w-[880px]">
+            <div className="flex items-end gap-2">
+              <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={`Pregunta usando "${template?.name}"… Mínimo 4 palabras significativas.`}
-                autoSize={{ minRows: 2, maxRows: 6 }}
+                rows={2}
                 disabled={isLoading}
-                onPressEnter={(e) => {
-                  if (!e.shiftKey) {
+                className="min-h-[64px] max-h-[180px]"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     submit();
                   }
                 }}
               />
               <Button
-                type="primary"
-                size="large"
-                icon={<SendOutlined />}
-                loading={isLoading}
-                onClick={submit}
+                aria-label="Enviar pregunta"
+                variant="primary"
+                size="lg"
+                isLoading={isLoading}
                 disabled={!input.trim()}
-                style={{ height: "auto" }}
-              />
+                onClick={submit}
+                className="h-[64px] w-12 px-0"
+              >
+                {!isLoading && <Send className="size-4" />}
+              </Button>
             </div>
-            <Text style={{ fontSize: 11, color: token.colorTextTertiary, marginTop: 6, display: "block" }}>
-              <kbd>⏎</kbd> enviar · <kbd>⇧⏎</kbd> nueva línea · La respuesta puede tardar 30-90s con thinking extendido.
-            </Text>
+            <div className="mt-1.5 text-[11px] text-[var(--fg-subtle)]">
+              <Kbd>⏎</Kbd> enviar · <Kbd>⇧⏎</Kbd> nueva línea · La respuesta puede tardar 30-90s con thinking extendido.
+            </div>
           </div>
         </div>
       </div>
 
-      <Drawer
-        title="Fuentes citadas"
-        open={showCitations}
-        onClose={() => setShowCitations(false)}
-        width={520}
-      >
-        {citations.length === 0 ? (
-          <Empty description="Sin citas" />
-        ) : (
-          <Space vertical size={10} style={{ width: "100%" }}>
-            {citations.map((c, i) => (
-              <CitationCard key={c.id} idx={i + 1} citation={c} onExpand={() => setSelectedCitation(c)} />
-            ))}
-          </Space>
-        )}
+      {/* Drawer: fuentes citadas */}
+      <Drawer open={showCitations} onOpenChange={setShowCitations}>
+        <DrawerContent side="right" size="lg">
+          <DrawerHeader>
+            <DrawerTitle>Fuentes citadas</DrawerTitle>
+            <DrawerDescription>
+              {citations.length === 0
+                ? "Sin citas en la última respuesta."
+                : `${citations.length} fuentes${
+                    totalChunksUsed > citations.length ? ` de ${totalChunksUsed} totales` : ""
+                  }.`}
+            </DrawerDescription>
+          </DrawerHeader>
+          <DrawerBody>
+            {citations.length === 0 ? (
+              <div className="py-12 text-center text-sm text-[var(--fg-subtle)]">
+                Sin citas
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {citations.map((c, i) => (
+                  <CitationListItem
+                    key={c.id}
+                    idx={i + 1}
+                    citation={c}
+                    onExpand={() => setSelectedCitation(c)}
+                  />
+                ))}
+              </div>
+            )}
+          </DrawerBody>
+        </DrawerContent>
       </Drawer>
 
+      {/* Drawer: cita individual */}
       <Drawer
-        title={
-          selectedCitation && (
-            <Space vertical size={0}>
-              <Text strong style={{ fontSize: 14 }}>Cita #{citations.indexOf(selectedCitation) + 1}</Text>
-              <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>
-                {selectedCitation.documentFilename} · p. {selectedCitation.pageNumber}
-              </Text>
-            </Space>
-          )
-        }
         open={!!selectedCitation}
-        onClose={() => setSelectedCitation(null)}
-        width={620}
+        onOpenChange={(open) => !open && setSelectedCitation(null)}
       >
-        {selectedCitation && (
-          <>
-            <Space wrap style={{ marginBottom: 16 }}>
-              <Tag>chunk #{selectedCitation.chunkIndex}</Tag>
-              <Tag color="blue">sim {(selectedCitation.similarity * 100).toFixed(1)}%</Tag>
-              <Link href={`/documents/${selectedCitation.documentId}`}>
-                <Button size="small" icon={<FileTextOutlined />}>Abrir documento</Button>
-              </Link>
-            </Space>
-            <Card styles={{ body: { padding: 16 } }}>
-              <Paragraph
-                style={{ fontFamily: "var(--font-serif)", fontSize: 14.5, lineHeight: 1.7, margin: 0 }}
-              >
-                {selectedCitation.content}
-              </Paragraph>
-            </Card>
-          </>
-        )}
+        <DrawerContent side="right" size="lg">
+          {selectedCitation && (
+            <>
+              <DrawerHeader>
+                <DrawerTitle>
+                  Cita #{citations.indexOf(selectedCitation) + 1}
+                </DrawerTitle>
+                <DrawerDescription>
+                  {selectedCitation.documentFilename} · p. {selectedCitation.pageNumber}
+                </DrawerDescription>
+              </DrawerHeader>
+              <DrawerBody>
+                <SourceCard
+                  type="archive"
+                  title={selectedCitation.documentFilename || "Documento sin título"}
+                  snippet={selectedCitation.content}
+                />
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <Badge variant="subtle" size="sm">
+                    chunk #{selectedCitation.chunkIndex}
+                  </Badge>
+                  <Badge variant="tinta" size="sm">
+                    sim {(selectedCitation.similarity * 100).toFixed(1)}%
+                  </Badge>
+                  <Link href={`/documents/${selectedCitation.documentId}`}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      leadingIcon={<FileText className="size-3.5" />}
+                    >
+                      Abrir documento
+                    </Button>
+                  </Link>
+                </div>
+              </DrawerBody>
+            </>
+          )}
+        </DrawerContent>
       </Drawer>
     </div>
   );
 }
 
-function EmptyState({ onPick, template }: { onPick: (q: string) => void; template?: string }) {
-  const { token } = theme.useToken();
-  return (
-    <div style={{ textAlign: "center", padding: "60px 20px" }}>
-      <div
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: 16,
-          background: `${token.colorPrimary}1A`,
-          color: token.colorPrimary,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 28,
-          marginBottom: 18,
-        }}
-      >
-        <MessageOutlined />
-      </div>
-      <Title level={3} className="serif-title" style={{ margin: 0 }}>
-        ¿Qué quieres investigar?
-      </Title>
-      <Paragraph style={{ color: token.colorTextSecondary, fontSize: 14, marginTop: 8 }}>
-        Formato actual: <Text strong>{template}</Text>. Respuestas con citas trazables al corpus.
-      </Paragraph>
+/* ─── Sub-componentes ────────────────────────────────────────────────────── */
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginTop: 24, maxWidth: 640, marginInline: "auto" }}>
+function EmptyState({
+  onPick,
+  template,
+}: {
+  onPick: (q: string) => void;
+  template?: string;
+}) {
+  return (
+    <div className="px-5 py-16 text-center">
+      <div
+        className="mx-auto mb-5 inline-flex size-16 items-center justify-center rounded-2xl text-[var(--accent)]"
+        style={{ background: "var(--accent-bg-subtle)" }}
+      >
+        <MessageCircle className="size-7" />
+      </div>
+      <h2
+        className="serif-title text-[28px] font-semibold leading-tight text-[var(--color-ink-1000)]"
+      >
+        ¿Qué quieres investigar?
+      </h2>
+      <p className="mt-2 text-sm text-[var(--fg-muted)]">
+        Formato actual:{" "}
+        <span className="font-semibold text-[var(--fg-default)]">{template}</span>.
+        Respuestas con citas trazables al corpus.
+      </p>
+
+      <div className="mx-auto mt-6 grid max-w-[640px] gap-2.5 sm:grid-cols-2">
         {STARTERS.map((q) => (
-          <Card
+          <button
             key={q}
-            hoverable
-            styles={{ body: { padding: 14 } }}
+            type="button"
             onClick={() => onPick(q)}
+            className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-page)] p-3.5 text-left text-[13px] text-[var(--fg-default)] transition-colors duration-[var(--duration-instant)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring-focus)]"
           >
-            <Text style={{ fontSize: 13, textAlign: "left", display: "block", color: token.colorText }}>
-              {q}
-            </Text>
-          </Card>
+            {q}
+          </button>
         ))}
       </div>
     </div>
   );
 }
 
-function MessageBubble({
+function MessageItem({
   message,
   streaming,
   onCiteClick,
@@ -440,77 +513,62 @@ function MessageBubble({
   streaming?: boolean;
   onCiteClick?: (idx: number) => void;
 }) {
-  const { token } = theme.useToken();
   const isUser = message.role === "user";
   const tpl = message.templateId ? getTemplateById(message.templateId) : undefined;
-  const renderedContent = useCitations(message.content, onCiteClick);
+
+  if (isUser) {
+    return (
+      <ConversationBubble from="user">
+        <div className="whitespace-pre-wrap">{message.content}</div>
+      </ConversationBubble>
+    );
+  }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: 12,
-        margin: "18px 0",
-        flexDirection: isUser ? "row-reverse" : "row",
-      }}
-    >
-      <Avatar
-        style={{
-          background: isUser ? `${token.colorPrimary}22` : "#A855F722",
-          color: isUser ? token.colorPrimary : "#A855F7",
-          flexShrink: 0,
-        }}
-        icon={isUser ? <UserOutlined /> : <RobotOutlined />}
-      />
-      <div style={{ maxWidth: "calc(100% - 64px)" }}>
-        <Card
-          styles={{ body: { padding: "12px 16px" } }}
-          style={{
-            background: isUser ? `${token.colorPrimary}10` : token.colorBgContainer,
-            borderColor: isUser ? `${token.colorPrimary}33` : token.colorBorder,
-          }}
-        >
-          {isUser ? (
-            <Text style={{ whiteSpace: "pre-wrap", fontSize: 14 }}>{message.content}</Text>
-          ) : (
-            <div className="prose-academic" style={{ fontSize: 14.5, maxWidth: "100%" }}>
-              {renderedContent}
-              {streaming && (
-                <span
-                  style={{
-                    display: "inline-block",
-                    width: 2,
-                    height: 16,
-                    background: token.colorPrimary,
-                    marginLeft: 2,
-                    verticalAlign: "middle",
-                  }}
-                />
-              )}
-            </div>
+    <ConversationBubble from="assistant" streaming={streaming}>
+      <AssistantContent content={message.content} citations={message.citations} onCiteClick={onCiteClick} />
+      {!streaming && message.content && (
+        <div className="not-prose mt-3 flex items-center gap-2 text-[11px] text-[var(--fg-subtle)]">
+          {tpl && (
+            <Badge variant="subtle" size="xs">
+              {tpl.icon} {tpl.name}
+            </Badge>
           )}
-        </Card>
-        {!isUser && !streaming && message.content && (
-          <Space size={6} style={{ marginTop: 6, fontSize: 11, color: token.colorTextTertiary }}>
-            {tpl && <Tag style={{ margin: 0, fontSize: 10 }}>{tpl.icon} {tpl.name}</Tag>}
-            <Tooltip title="Copiar">
-              <Button
-                type="text"
-                size="small"
-                icon={<CopyOutlined />}
-                onClick={() => navigator.clipboard.writeText(message.content)}
-              />
-            </Tooltip>
-          </Space>
-        )}
-      </div>
-    </div>
+          <Tooltip content="Copiar respuesta">
+            <IconButton
+              aria-label="Copiar"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(message.content);
+                toast.success("Respuesta copiada");
+              }}
+            >
+              <Copy className="size-3.5" />
+            </IconButton>
+          </Tooltip>
+        </div>
+      )}
+    </ConversationBubble>
   );
 }
 
-function useCitations(content: string, onCiteClick?: (idx: number) => void) {
-  const { token } = theme.useToken();
+/**
+ * Renderiza markdown con citas [#N] reemplazadas por <Citation/> inline.
+ */
+function AssistantContent({
+  content,
+  citations,
+  onCiteClick,
+}: {
+  content: string;
+  citations?: ChunkCitation[];
+  onCiteClick?: (idx: number) => void;
+}) {
+  // Sustituimos [#N] por `#N` para que Markdown lo emita como <code>, y luego
+  // detectamos esos códigos para reemplazarlos por <Citation/>.
   const enhanced = content.replace(/\[#(\d+)\]/g, (_match, n) => `\`#${n}\``);
+
   return (
     <ReactMarkdown
       components={{
@@ -519,18 +577,19 @@ function useCitations(content: string, onCiteClick?: (idx: number) => void) {
           const m = /^#(\d+)$/.exec(txt);
           if (m) {
             const idx = Number(m[1]);
+            const cite = citations?.[idx - 1];
             return (
-              <span
-                className="citation"
-                onClick={() => onCiteClick?.(idx)}
-                style={{
-                  background: `${token.colorWarning}22`,
-                  color: token.colorWarning,
-                  cursor: onCiteClick ? "pointer" : "default",
-                }}
-              >
-                #{idx}
-              </span>
+              <Citation
+                number={idx}
+                sourceTitle={cite?.documentFilename}
+                snippet={cite?.content}
+                meta={
+                  cite
+                    ? `p. ${cite.pageNumber} · sim ${(cite.similarity * 100).toFixed(0)}%`
+                    : undefined
+                }
+                onOpenSource={() => onCiteClick?.(idx)}
+              />
             );
           }
           return <code {...props}>{children}</code>;
@@ -542,7 +601,7 @@ function useCitations(content: string, onCiteClick?: (idx: number) => void) {
   );
 }
 
-function CitationCard({
+function CitationListItem({
   idx,
   citation,
   onExpand,
@@ -551,37 +610,33 @@ function CitationCard({
   citation: ChunkCitation;
   onExpand: () => void;
 }) {
-  const { token } = theme.useToken();
   return (
-    <Card size="small" hoverable onClick={onExpand} styles={{ body: { padding: 12 } }}>
-      <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 6 }}>
-        <Space size={6}>
-          <Tag
-            style={{
-              fontFamily: "var(--font-mono)",
-              background: `${token.colorWarning}22`,
-              color: token.colorWarning,
-              border: "none",
-              fontSize: 11,
-              margin: 0,
-            }}
-          >
+    <Card
+      variant="default"
+      size="sm"
+      interactive
+      onClick={onExpand}
+      className="p-3"
+    >
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Badge variant="tinta" size="xs" className="font-mono">
             #{idx}
-          </Tag>
-          <Text type="secondary" style={{ fontSize: 11 }}>
+          </Badge>
+          <span className="text-[11px] text-[var(--fg-subtle)]">
             p. {citation.pageNumber} · sim {(citation.similarity * 100).toFixed(0)}%
-          </Text>
-        </Space>
-      </Space>
-      <Text strong ellipsis style={{ display: "block", fontSize: 12, marginBottom: 6 }}>
+          </span>
+        </div>
+      </div>
+      <div className="mb-1.5 truncate text-[12.5px] font-medium text-[var(--fg-default)]">
         {citation.documentFilename}
-      </Text>
-      <Paragraph
-        ellipsis={{ rows: 3 }}
-        style={{ fontFamily: "var(--font-serif)", fontSize: 13, lineHeight: 1.6, margin: 0, color: token.colorTextSecondary }}
+      </div>
+      <p
+        className="line-clamp-3 text-[13px] leading-relaxed text-[var(--fg-muted)]"
+        style={{ fontFamily: "var(--font-serif)" }}
       >
         {citation.content}
-      </Paragraph>
+      </p>
     </Card>
   );
 }
