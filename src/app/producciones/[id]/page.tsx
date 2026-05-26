@@ -3,39 +3,43 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Card,
-  Typography,
-  Tag,
-  Space,
-  Button,
-  theme,
-  App,
-  Skeleton,
-  Empty,
-  Dropdown,
-  Drawer,
-  Row,
-  Col,
-  Popover,
-  Divider,
-} from "antd";
 import remarkGfm from "remark-gfm";
 import {
-  ArrowLeftOutlined,
-  DownloadOutlined,
-  CopyOutlined,
-  CheckCircleOutlined,
-  FileTextOutlined,
-  SyncOutlined,
-  BookOutlined,
-} from "@ant-design/icons";
+  ArrowLeft,
+  Download,
+  Copy,
+  CheckCircle2,
+  FileText,
+  RotateCw,
+  BookOpen,
+  ChevronDown,
+} from "lucide-react";
+import { toast } from "sonner";
 import dayjs from "@/lib/dayjs-config";
 import ReactMarkdown from "react-markdown";
+import {
+  Button,
+  Card,
+  Skeleton,
+  Spinner,
+  Badge,
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerBody,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  Separator,
+} from "@/components/ui";
+import { ResearchHeader } from "@/components/domain/research-header";
+import { ProseBlock } from "@/components/domain/prose-block";
 import { getTemplateById } from "@/lib/chat-templates";
-import { getPeriodColor, getCategoryColor } from "@/lib/theme";
-
-const { Title, Text, Paragraph } = Typography;
 
 interface DeliverableDetail {
   id: string;
@@ -47,7 +51,12 @@ interface DeliverableDetail {
   userQuestion: string | null;
   createdAt: string;
   updatedAt: string;
-  chunksUsed: Array<{ documentFilename?: string; pageNumber?: number; similarity?: number; content?: string }>;
+  chunksUsed: Array<{
+    documentFilename?: string;
+    pageNumber?: number;
+    similarity?: number;
+    content?: string;
+  }>;
   question: null | {
     id?: string;
     pregunta: string;
@@ -59,11 +68,13 @@ interface DeliverableDetail {
   };
 }
 
-export default function ProduccionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ProduccionDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
-  const { token } = theme.useToken();
-  const { message } = App.useApp();
   const [data, setData] = useState<DeliverableDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +115,7 @@ export default function ProduccionDetailPage({ params }: { params: Promise<{ id:
     if (!data) return;
     navigator.clipboard.writeText(data.answer);
     setCopied(true);
-    message.success("Copiado al portapapeles");
+    toast.success("Copiado al portapapeles");
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -118,140 +129,158 @@ export default function ProduccionDetailPage({ params }: { params: Promise<{ id:
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const name = (data.question?.pregunta ?? "produccion").slice(0, 50).replace(/[^\w\s]/g, "");
+      const name = (data.question?.pregunta ?? "produccion")
+        .slice(0, 50)
+        .replace(/[^\w\s]/g, "");
       a.download = `${name}.${format}`;
       a.click();
       URL.revokeObjectURL(url);
-      message.success(`Descargado .${format}`);
+      toast.success(`Descargado .${format}`);
     } catch {
-      message.error("Error al exportar");
+      toast.error("Error al exportar");
     } finally {
       setDownloading(null);
     }
   };
 
   if (loading) {
-    return <div className="app-page"><Skeleton active /></div>;
+    return (
+      <div className="app-page">
+        <Skeleton variant="line" className="h-8 w-48 mb-4" />
+        <Skeleton variant="line" className="h-12 w-full mb-3" />
+        <Skeleton variant="line" className="h-4 w-3/4 mb-6" />
+        <Skeleton variant="line" className="h-4 w-full mb-2" />
+        <Skeleton variant="line" className="h-4 w-full mb-2" />
+        <Skeleton variant="line" className="h-4 w-11/12 mb-2" />
+        <Skeleton variant="line" className="h-4 w-10/12" />
+      </div>
+    );
   }
 
   if (error || !data) {
     return (
       <div className="app-page">
-        <Empty description={error || "Sin datos"} />
+        <Card variant="default" size="lg">
+          <div className="py-10 flex flex-col items-center text-center gap-3">
+            <div
+              aria-hidden
+              className="size-16 rounded-2xl border border-dashed border-[var(--border-default)] bg-[var(--bg-muted)] flex items-center justify-center text-[var(--fg-subtle)]"
+            >
+              <FileText className="size-7" />
+            </div>
+            <div className="text-[14px] text-[var(--fg-muted)]">
+              {error || "Sin datos"}
+            </div>
+          </div>
+        </Card>
       </div>
     );
   }
 
   const tpl = getTemplateById(data.templateId);
-  const periodColor = data.question?.periodoCode
-    ? getPeriodColor(data.question.periodoCode)
-    : token.colorPrimary;
-  const categoryColor = data.question?.categoriaCode
-    ? getCategoryColor(data.question.categoriaCode)
-    : undefined;
   const title = data.question?.pregunta ?? data.userQuestion ?? "(producción libre)";
+  const subtitle = tpl?.name
+    ? `${tpl.icon ?? ""} ${tpl.name}`.trim()
+    : data.templateId;
+
+  const headerMeta: Array<{ label: string; value: React.ReactNode }> = [];
+  if (wordCount > 0) {
+    headerMeta.push({
+      label: "palabras",
+      value: wordCount.toLocaleString("es-CO"),
+    });
+  }
+  headerMeta.push({
+    label: "fuentes",
+    value: String(data.chunksUsed?.length ?? 0),
+  });
+  headerMeta.push({
+    label: "actualizado",
+    value: dayjs(data.updatedAt).format("DD MMM YYYY HH:mm"),
+  });
+  headerMeta.push({
+    label: "modelo",
+    value: (
+      <span className="font-mono text-[11px]">
+        {data.modelUsed.replace("us.anthropic.", "")}
+      </span>
+    ),
+  });
 
   return (
     <div className="app-page">
-      <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => router.back()} style={{ marginBottom: 16 }}>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.back()}
+        className="mb-4 -ml-2"
+      >
+        <ArrowLeft className="size-4" />
         Volver
       </Button>
 
-      <Row gutter={[24, 16]}>
-        <Col xs={24} lg={17}>
-          <Card style={{ borderTop: `3px solid ${periodColor}`, marginBottom: 16 }}>
-            <Space vertical size={12} style={{ width: "100%" }}>
-              <Space wrap>
-                <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor }}>
-                  <span style={{ fontSize: 16, marginRight: 4 }}>{tpl?.icon}</span>
-                  {tpl?.name}
-                </Tag>
-                {data.question?.periodoNombre && (
-                  <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor }}>
-                    {data.question.periodoNombre}
-                  </Tag>
-                )}
-                {data.question?.categoriaNombre && categoryColor && (
-                  <Tag style={{ background: `${categoryColor}1A`, border: "none", color: categoryColor }}>
-                    {data.question.categoriaNombre}
-                  </Tag>
-                )}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+        <div className="min-w-0">
+          <ResearchHeader
+            title={title}
+            subtitle={subtitle}
+            periodCode={data.question?.periodoCode}
+            categoryCodes={
+              data.question?.categoriaCode ? [data.question.categoriaCode] : undefined
+            }
+            meta={headerMeta}
+            breadcrumb={
+              <span className="flex items-center gap-1.5">
+                <Link href="/producciones" className="hover:underline">
+                  Producciones
+                </Link>
+                <span aria-hidden>›</span>
+                <span className="text-[var(--fg-muted)]">Detalle</span>
                 {data.status === "GENERATING" && (
-                  <Tag color="processing" icon={<SyncOutlined spin />}>
+                  <Badge variant="info" size="xs" className="ml-2">
+                    <Spinner size={10} />
                     Generando
-                  </Tag>
+                  </Badge>
                 )}
-              </Space>
-              <Title level={2} className="serif-title" style={{ margin: 0 }}>
-                {title}
-              </Title>
-              <Text type="secondary" style={{ fontSize: 13 }}>
-                {wordCount > 0 && `${wordCount} palabras · `}
-                {data.chunksUsed?.length ?? 0} fuentes ·{" "}
-                {dayjs(data.updatedAt).format("DD MMM YYYY HH:mm")} ·{" "}
-                {data.modelUsed}
-              </Text>
-            </Space>
-          </Card>
+              </span>
+            }
+            className="mb-6 max-w-none"
+          />
 
-          <Card styles={{ body: { padding: "32px 36px" } }}>
-            {data.status === "GENERATING" && !data.answer ? (
-              <div style={{ textAlign: "center", padding: 60 }}>
-                <SyncOutlined spin style={{ fontSize: 28, color: token.colorPrimary }} />
-                <Paragraph style={{ marginTop: 16 }}>Generando contenido…</Paragraph>
+          {data.status === "GENERATING" && !data.answer ? (
+            <Card variant="default" size="lg">
+              <div className="py-16 flex flex-col items-center gap-3 text-center">
+                <Spinner size={28} />
+                <p className="text-[14px] text-[var(--fg-muted)] m-0">
+                  Generando contenido…
+                </p>
               </div>
-            ) : (
-              <div className="prose-academic">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    code({ children, ...props }) {
-                      const txt = String(children).replace(/`/g, "");
-                      const m = /^#(\d+)$/.exec(txt);
-                      if (m) {
-                        const idx = parseInt(m[1], 10) - 1;
-                        const chunk = data.chunksUsed?.[idx];
-                        if (!chunk) {
-                          return (
-                            <span
-                              className="citation"
-                              onClick={() => setShowSources(true)}
-                              style={{ cursor: "pointer" }}
-                            >
-                              #{m[1]}
-                            </span>
-                          );
-                        }
-                        const popoverContent = (
-                          <div style={{ maxWidth: 360 }}>
-                            <Text strong style={{ fontSize: 12, display: "block", marginBottom: 4 }}>
-                              {chunk.documentFilename ?? "Documento sin nombre"}
-                            </Text>
-                            <Text type="secondary" style={{ fontSize: 11 }}>
-                              p. {chunk.pageNumber}
-                              {chunk.similarity !== undefined &&
-                                ` · sim ${(chunk.similarity * 100).toFixed(0)}%`}
-                            </Text>
-                            {chunk.content && (
-                              <>
-                                <Divider style={{ margin: "8px 0" }} />
-                                <Paragraph
-                                  style={{
-                                    fontFamily: "var(--font-serif)",
-                                    fontSize: 12.5,
-                                    lineHeight: 1.5,
-                                    margin: 0,
-                                    color: token.colorTextSecondary,
-                                  }}
-                                >
-                                  {chunk.content}
-                                </Paragraph>
-                              </>
-                            )}
-                          </div>
-                        );
+            </Card>
+          ) : (
+            <ProseBlock width="reading" className="max-w-none">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ children, ...props }) {
+                    const txt = String(children).replace(/`/g, "");
+                    const m = /^#(\d+)$/.exec(txt);
+                    if (m) {
+                      const idx = parseInt(m[1], 10) - 1;
+                      const chunk = data.chunksUsed?.[idx];
+                      if (!chunk) {
                         return (
-                          <Popover content={popoverContent} mouseEnterDelay={0.15} placement="top">
+                          <span
+                            className="citation"
+                            onClick={() => setShowSources(true)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            #{m[1]}
+                          </span>
+                        );
+                      }
+                      return (
+                        <Popover>
+                          <PopoverTrigger asChild>
                             <span
                               className="citation"
                               onClick={() => setShowSources(true)}
@@ -259,147 +288,216 @@ export default function ProduccionDetailPage({ params }: { params: Promise<{ id:
                             >
                               #{m[1]}
                             </span>
-                          </Popover>
-                        );
-                      }
-                      return <code {...props}>{children}</code>;
-                    },
-                  }}
-                >
-                  {data.answer.replace(/\[#(\d+(?:\s*,\s*\d+)*)\]/g, (_match, nums) =>
-                    String(nums)
-                      .split(",")
-                      .map((n) => `\`#${n.trim()}\``)
-                      .join(" ")
-                  )}
-                </ReactMarkdown>
-              </div>
-            )}
-          </Card>
-        </Col>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            align="center"
+                            className="max-w-[360px]"
+                          >
+                            <div className="text-xs font-semibold text-[var(--fg-default)] mb-1">
+                              {chunk.documentFilename ?? "Documento sin nombre"}
+                            </div>
+                            <div className="text-[11px] text-[var(--fg-muted)]">
+                              p. {chunk.pageNumber}
+                              {chunk.similarity !== undefined &&
+                                ` · sim ${(chunk.similarity * 100).toFixed(0)}%`}
+                            </div>
+                            {chunk.content && (
+                              <>
+                                <Separator className="my-2" />
+                                <p
+                                  className="text-[12.5px] leading-snug m-0 text-[var(--fg-muted)]"
+                                  style={{ fontFamily: "var(--font-serif)" }}
+                                >
+                                  {chunk.content}
+                                </p>
+                              </>
+                            )}
+                          </PopoverContent>
+                        </Popover>
+                      );
+                    }
+                    return <code {...props}>{children}</code>;
+                  },
+                }}
+              >
+                {data.answer.replace(/\[#(\d+(?:\s*,\s*\d+)*)\]/g, (_match, nums) =>
+                  String(nums)
+                    .split(",")
+                    .map((n) => `\`#${n.trim()}\``)
+                    .join(" "),
+                )}
+              </ReactMarkdown>
+            </ProseBlock>
+          )}
+        </div>
 
-        <Col xs={24} lg={7}>
-          <Card title="Acciones" style={{ marginBottom: 16 }}>
-            <Space vertical size={8} style={{ width: "100%" }}>
+        {/* Sidebar */}
+        <aside className="space-y-4">
+          <Card variant="default" size="sm">
+            <h3 className="text-[13px] font-semibold text-[var(--fg-default)] mb-3">
+              Acciones
+            </h3>
+            <div className="flex flex-col gap-2">
               <Button
-                block
-                icon={copied ? <CheckCircleOutlined /> : <CopyOutlined />}
+                variant="secondary"
+                fullWidth
                 onClick={handleCopy}
                 disabled={!data.answer}
               >
+                {copied ? (
+                  <CheckCircle2 className="size-4" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
                 {copied ? "Copiado" : "Copiar Markdown"}
               </Button>
-              <Dropdown
-                menu={{
-                  items: [
-                    { key: "md", label: ".md", onClick: () => handleDownload("md") },
-                    { key: "docx", label: ".docx", onClick: () => handleDownload("docx") },
-                    { key: "pdf", label: ".pdf", onClick: () => handleDownload("pdf") },
-                  ],
-                }}
-              >
-                <Button block icon={<DownloadOutlined />} loading={!!downloading} disabled={!data.answer}>
-                  Exportar como…
-                </Button>
-              </Dropdown>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    isLoading={!!downloading}
+                    disabled={!data.answer}
+                  >
+                    <Download className="size-4" />
+                    Exportar como…
+                    <ChevronDown className="size-3.5 ml-auto" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[160px]">
+                  <DropdownMenuItem onSelect={() => handleDownload("md")}>
+                    .md
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleDownload("docx")}>
+                    .docx
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleDownload("pdf")}>
+                    .pdf
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
-                block
-                icon={<FileTextOutlined />}
+                variant="secondary"
+                fullWidth
                 onClick={() => setShowSources(true)}
                 disabled={(data.chunksUsed?.length ?? 0) === 0}
               >
+                <FileText className="size-4" />
                 Ver fuentes ({data.chunksUsed?.length ?? 0})
               </Button>
-              <Link href={`/bibliography?deliverable=${data.id}`}>
-                <Button block icon={<BookOutlined />}>
+
+              <Button variant="secondary" fullWidth asChild>
+                <Link href={`/bibliography?deliverable=${data.id}`}>
+                  <BookOpen className="size-4" />
                   Generar bibliografía
-                </Button>
-              </Link>
-            </Space>
+                </Link>
+              </Button>
+            </div>
           </Card>
 
-          <Card title="Contexto" size="small">
-            <Space vertical size={10} style={{ width: "100%" }}>
+          <Card variant="default" size="sm">
+            <h3 className="text-[13px] font-semibold text-[var(--fg-default)] mb-3">
+              Contexto
+            </h3>
+            <div className="flex flex-col gap-3">
               {data.question?.document && (
                 <div>
-                  <Text type="secondary" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
                     Documento fuente
-                  </Text>
-                  <div style={{ marginTop: 4 }}>
+                  </div>
+                  <div className="mt-1 text-[13px]">
                     {data.question.document.id ? (
-                      <Link href={`/documents/${data.question.document.id}`}>
-                        <Text style={{ fontSize: 13 }}>{data.question.document.filename}</Text>
+                      <Link
+                        href={`/documents/${data.question.document.id}`}
+                        className="text-[var(--accent)] hover:underline"
+                      >
+                        {data.question.document.filename}
                       </Link>
                     ) : (
-                      <Text style={{ fontSize: 13 }}>{data.question.document.filename}</Text>
+                      <span>{data.question.document.filename}</span>
                     )}
                   </div>
                 </div>
               )}
               <div>
-                <Text type="secondary" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
                   Origen
-                </Text>
-                <div style={{ marginTop: 4 }}>
-                  <Tag color={data.source === "chat" ? "geekblue" : "purple"}>{data.source}</Tag>
+                </div>
+                <div className="mt-1.5">
+                  <Badge
+                    variant={
+                      data.source === "chat"
+                        ? "info"
+                        : data.source === "deep_research"
+                          ? "warning"
+                          : "tinta"
+                    }
+                    size="xs"
+                  >
+                    {data.source}
+                  </Badge>
                 </div>
               </div>
               <div>
-                <Text type="secondary" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
                   Modelo
-                </Text>
-                <div style={{ marginTop: 4, fontFamily: "var(--font-mono)", fontSize: 11 }}>
+                </div>
+                <div className="mt-1 text-[11px] font-mono text-[var(--fg-default)]">
                   {data.modelUsed.replace("us.anthropic.", "")}
                 </div>
               </div>
-            </Space>
-          </Card>
-        </Col>
-      </Row>
-
-      <Drawer
-        title={`Fuentes citadas (${data.chunksUsed?.length ?? 0})`}
-        open={showSources}
-        onClose={() => setShowSources(false)}
-        width={560}
-      >
-        <Space vertical size={10} style={{ width: "100%" }}>
-          {(data.chunksUsed ?? []).map((c, i) => (
-            <Card key={i} size="small" styles={{ body: { padding: 12 } }}>
-              <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 6 }}>
-                <Space size={6}>
-                  <Tag
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      background: `${token.colorWarning}22`,
-                      color: token.colorWarning,
-                      border: "none",
-                      fontSize: 11,
-                      margin: 0,
-                    }}
-                  >
-                    #{i + 1}
-                  </Tag>
-                  <Text type="secondary" style={{ fontSize: 11 }}>
-                    p. {c.pageNumber}
-                    {c.similarity !== undefined && ` · sim ${(c.similarity * 100).toFixed(0)}%`}
-                  </Text>
-                </Space>
-              </Space>
-              <Text strong style={{ display: "block", fontSize: 12, marginBottom: 6 }}>
-                {c.documentFilename}
-              </Text>
-              {c.content && (
-                <Paragraph
-                  ellipsis={{ rows: 4, expandable: true, symbol: "más" }}
-                  style={{ fontFamily: "var(--font-serif)", fontSize: 13, lineHeight: 1.6, margin: 0, color: token.colorTextSecondary }}
-                >
-                  {c.content}
-                </Paragraph>
+              {data.status === "GENERATING" && (
+                <div className="flex items-center gap-2 text-[12px] text-[var(--color-info-fg)]">
+                  <RotateCw className="size-3.5 animate-spin" />
+                  Actualizando…
+                </div>
               )}
-            </Card>
-          ))}
-        </Space>
+            </div>
+          </Card>
+        </aside>
+      </div>
+
+      <Drawer open={showSources} onOpenChange={setShowSources}>
+        <DrawerContent side="right" size="lg">
+          <DrawerHeader>
+            <DrawerTitle>
+              Fuentes citadas ({data.chunksUsed?.length ?? 0})
+            </DrawerTitle>
+          </DrawerHeader>
+          <DrawerBody>
+            <div className="flex flex-col gap-2.5">
+              {(data.chunksUsed ?? []).map((c, i) => (
+                <Card key={i} variant="default" size="sm">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="warning" size="xs" className="font-mono">
+                        #{i + 1}
+                      </Badge>
+                      <span className="text-[11px] text-[var(--fg-muted)]">
+                        p. {c.pageNumber}
+                        {c.similarity !== undefined &&
+                          ` · sim ${(c.similarity * 100).toFixed(0)}%`}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-[12px] font-semibold text-[var(--fg-default)] mb-1.5">
+                    {c.documentFilename}
+                  </div>
+                  {c.content && (
+                    <p
+                      className="text-[13px] leading-relaxed text-[var(--fg-muted)] m-0 line-clamp-6"
+                      style={{ fontFamily: "var(--font-serif)" }}
+                    >
+                      {c.content}
+                    </p>
+                  )}
+                </Card>
+              ))}
+            </div>
+          </DrawerBody>
+        </DrawerContent>
       </Drawer>
     </div>
   );

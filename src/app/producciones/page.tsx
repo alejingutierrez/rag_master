@@ -3,39 +3,45 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useUrlFilters } from "@/lib/use-url-state";
+import { Pagination } from "antd";
 import {
-  Card,
-  Typography,
-  Tag,
-  Space,
+  LayoutGrid,
+  List as ListIcon,
+  Search,
+  Plus,
+  MessageCircle,
+  Database,
+  Compass,
+  FileText,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
   Button,
-  Select,
+  Card,
   Input,
-  Pagination,
-  theme,
-  Row,
-  Col,
   Skeleton,
-  Modal,
-  App,
-  Segmented,
-  Form,
-} from "antd";
-import { EmptyAcademic } from "@/components/layout/empty-academic";
-import {
-  AppstoreOutlined,
-  SearchOutlined,
-  PlusOutlined,
-  MessageOutlined,
-  DatabaseOutlined,
-  UnorderedListOutlined,
-  CompassOutlined,
-} from "@ant-design/icons";
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogFooter,
+  DialogClose,
+  Textarea,
+  FieldLabel,
+  FieldHelp,
+  Badge,
+} from "@/components/ui";
+import { PeriodBadge } from "@/components/domain/period-badge";
+import { CategoryChip } from "@/components/domain/category-chip";
 import dayjs from "@/lib/dayjs-config";
 import { CHAT_TEMPLATES, CATEGORY_LABELS, getTemplateById } from "@/lib/chat-templates";
-import { getPeriodColor, getCategoryColor } from "@/lib/theme";
-
-const { Title, Text, Paragraph } = Typography;
+import { cn } from "@/lib/cn";
 
 interface DeliverableItem {
   id: string;
@@ -59,15 +65,21 @@ interface DeliverableItem {
 
 export default function ProduccionesPage() {
   return (
-    <Suspense fallback={<div className="app-page-wide"><Skeleton active /></div>}>
+    <Suspense
+      fallback={
+        <div className="app-page-wide">
+          <Skeleton variant="line" className="h-8 w-64 mb-4" />
+          <Skeleton variant="line" className="h-4 w-full mb-2" />
+          <Skeleton variant="line" className="h-4 w-3/4" />
+        </div>
+      }
+    >
       <ProduccionesContent />
     </Suspense>
   );
 }
 
 function ProduccionesContent() {
-  const { token } = theme.useToken();
-  const { message } = App.useApp();
   const [items, setItems] = useState<DeliverableItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -105,7 +117,10 @@ function ProduccionesContent() {
         if (ctrl.signal.aborted) return;
         let list = data.deliverables ?? [];
         if (filters.category) {
-          list = list.filter((d: DeliverableItem) => getTemplateById(d.templateId)?.category === filters.category);
+          list = list.filter(
+            (d: DeliverableItem) =>
+              getTemplateById(d.templateId)?.category === filters.category,
+          );
         }
         if (filters.search.trim()) {
           const q = filters.search.trim().toLowerCase();
@@ -134,105 +149,159 @@ function ProduccionesContent() {
     return () => clearInterval(t);
   }, [items]);
 
+  const selectClass = cn(
+    "h-9 px-3 text-sm rounded-md",
+    "bg-[var(--bg-page)] text-[var(--fg-default)]",
+    "border border-[var(--border-default)]",
+    "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
+  );
+
   return (
     <div className="app-page-wide">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
+      <header className="flex justify-between items-end flex-wrap gap-4 mb-6">
         <div>
-          <Title level={2} className="serif-title" style={{ margin: 0 }}>
+          <h1
+            className="serif-title text-[32px] leading-tight m-0 text-[var(--color-ink-1000)]"
+            style={{ fontWeight: 700 }}
+          >
             Producciones
-          </Title>
-          <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0" }}>
+          </h1>
+          <p className="text-[14px] text-[var(--fg-muted)] mt-1.5 mb-0">
             Respuestas generadas. {total} producciones en total.
-          </Paragraph>
+          </p>
         </div>
-        <Space>
-          <Link href="/bibliography">
-            <Button>Bibliografía</Button>
-          </Link>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowNew(true)}>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" asChild>
+            <Link href="/bibliography">Bibliografía</Link>
+          </Button>
+          <Button variant="primary" onClick={() => setShowNew(true)}>
+            <Plus className="size-4" />
             Nueva producción
           </Button>
-        </Space>
-      </div>
+        </div>
+      </header>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap size={10}>
+      {/* Filters */}
+      <Card variant="default" size="sm" className="mb-4">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Input
-            allowClear
-            prefix={<SearchOutlined />}
             placeholder="Buscar en preguntas y respuestas…"
+            leadingIcon={<Search className="size-4" />}
+            wrapperClassName="w-[300px]"
             value={filters.search}
             onChange={(e) => updateFilters({ search: e.target.value, page: "1" })}
-            style={{ width: 300 }}
           />
-          <Select
-            allowClear
-            placeholder="Categoría"
+
+          <select
+            className={selectClass}
             style={{ width: 160 }}
-            value={filters.category || undefined}
-            onChange={(v) => updateFilters({ category: (v as string) ?? "", page: "1" })}
-            options={Object.entries(CATEGORY_LABELS).map(([k, v]) => ({ value: k, label: v }))}
-          />
-          <Select
-            allowClear
-            placeholder="Template"
+            value={filters.category}
+            onChange={(e) => updateFilters({ category: e.target.value, page: "1" })}
+          >
+            <option value="">— Categoría —</option>
+            {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className={selectClass}
             style={{ width: 240 }}
-            value={filters.templateId || undefined}
-            onChange={(v) => updateFilters({ templateId: v ?? "", page: "1" })}
-            showSearch
-            optionFilterProp="label"
-            options={CHAT_TEMPLATES.map((t) => ({ value: t.id, label: `${t.icon} ${t.name}` }))}
-          />
-          <Select
-            allowClear
-            placeholder="Origen"
+            value={filters.templateId}
+            onChange={(e) => updateFilters({ templateId: e.target.value, page: "1" })}
+          >
+            <option value="">— Template —</option>
+            {CHAT_TEMPLATES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.icon} {t.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className={selectClass}
             style={{ width: 170 }}
-            value={filters.source || undefined}
-            onChange={(v) => updateFilters({ source: v ?? "", page: "1" })}
-            options={[
-              { value: "chat", label: <><MessageOutlined /> Chat</> },
-              { value: "batch", label: <><DatabaseOutlined /> Batch</> },
-              { value: "deep_research", label: <><CompassOutlined /> Deep research</> },
-            ]}
-          />
-          <Segmented
-            value={filters.view}
-            onChange={(v) => updateFilters({ view: String(v) })}
-            options={[
-              { value: "grid", icon: <AppstoreOutlined /> },
-              { value: "list", icon: <UnorderedListOutlined /> },
-            ]}
-          />
-        </Space>
+            value={filters.source}
+            onChange={(e) => updateFilters({ source: e.target.value, page: "1" })}
+          >
+            <option value="">— Origen —</option>
+            <option value="chat">Chat</option>
+            <option value="batch">Batch</option>
+            <option value="deep_research">Deep research</option>
+          </select>
+
+          <div className="ml-auto">
+            <Tabs
+              value={filters.view}
+              onValueChange={(v) => updateFilters({ view: v })}
+            >
+              <TabsList variant="segmented">
+                <TabsTrigger value="grid" variant="segmented" aria-label="Grid">
+                  <LayoutGrid className="size-4" />
+                </TabsTrigger>
+                <TabsTrigger value="list" variant="segmented" aria-label="Lista">
+                  <ListIcon className="size-4" />
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
       </Card>
 
       {loading ? (
-        <Card><Skeleton active paragraph={{ rows: 8 }} /></Card>
+        <Card variant="default" size="md">
+          <div className="space-y-2">
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-9/12" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+          </div>
+        </Card>
       ) : items.length === 0 ? (
-        <Card>
-          <EmptyAcademic
-            title="Sin producciones con estos filtros"
-            description="Ajusta los filtros o crea una producción nueva."
-            action={<Button type="primary" icon={<PlusOutlined />} onClick={() => setShowNew(true)}>Nueva producción</Button>}
-          />
+        <Card variant="default" size="md">
+          <div className="py-10 flex flex-col items-center text-center gap-3">
+            <div
+              aria-hidden
+              className="size-16 rounded-2xl border border-dashed border-[var(--border-default)] bg-[var(--bg-muted)] flex items-center justify-center text-[var(--fg-subtle)]"
+            >
+              <FileText className="size-7" />
+            </div>
+            <div
+              className="text-[15px] font-medium text-[var(--fg-default)]"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              Sin producciones con estos filtros
+            </div>
+            <div className="text-[13px] text-[var(--fg-muted)] max-w-[360px] leading-relaxed">
+              Ajusta los filtros o crea una producción nueva.
+            </div>
+            <Button variant="primary" onClick={() => setShowNew(true)} className="mt-1">
+              <Plus className="size-4" />
+              Nueva producción
+            </Button>
+          </div>
         </Card>
       ) : filters.view === "grid" ? (
-        <Row gutter={[12, 12]}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {items.map((d) => (
-            <Col key={d.id} xs={24} md={12} lg={8} xl={6}>
-              <ProductionCard item={d} />
-            </Col>
+            <ProductionCard key={d.id} item={d} />
           ))}
-        </Row>
+        </div>
       ) : (
-        <Space vertical size={8} style={{ width: "100%" }}>
+        <div className="flex flex-col gap-2 w-full">
           {items.map((d) => (
             <ProductionRow key={d.id} item={d} />
           ))}
-        </Space>
+        </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
+      <div className="flex justify-center mt-6">
         <Pagination
           current={page}
           pageSize={LIMIT}
@@ -246,185 +315,265 @@ function ProduccionesContent() {
         />
       </div>
 
-      <NewProductionModal
+      <NewProductionDialog
         open={showNew}
-        onClose={() => setShowNew(false)}
+        onOpenChange={setShowNew}
         onSuccess={() => {
           fetchItems();
-          message.success("Producción encolada");
+          toast.success("Producción encolada");
         }}
       />
     </div>
   );
 }
 
+function SourceBadge({ source }: { source: DeliverableItem["source"] }) {
+  if (source === "chat") {
+    return (
+      <Badge variant="info" size="xs">
+        <MessageCircle className="size-3" />
+        chat
+      </Badge>
+    );
+  }
+  if (source === "deep_research") {
+    return (
+      <Badge variant="warning" size="xs">
+        <Compass className="size-3" />
+        deep
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="tinta" size="xs">
+      <Database className="size-3" />
+      batch
+    </Badge>
+  );
+}
+
 function ProductionCard({ item }: { item: DeliverableItem }) {
-  const { token } = theme.useToken();
   const tpl = getTemplateById(item.templateId);
-  const periodColor = item.question?.periodoCode ? getPeriodColor(item.question.periodoCode) : token.colorTextTertiary;
-  const categoryColor = item.question?.categoriaCode ? getCategoryColor(item.question.categoriaCode) : undefined;
+  const periodCode = item.question?.periodoCode;
+  const periodVar = periodCode
+    ? `var(--color-period-${periodCode.toLowerCase().replace(/_/g, "-")})`
+    : "var(--border-default)";
   const title = item.question?.pregunta ?? item.userQuestion ?? "(producción libre)";
 
   return (
-    <Link href={`/producciones/${item.id}`}>
+    <Link href={`/producciones/${item.id}`} className="block h-full group">
       <Card
-        hoverable
-        style={{ borderTop: `3px solid ${periodColor}`, height: "100%" }}
-        styles={{ body: { padding: 14 } }}
+        variant="default"
+        size="sm"
+        className="h-full transition-shadow group-hover:shadow-[var(--elev-2)]"
+        style={{ borderTop: `3px solid ${periodVar}` }}
       >
-        <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 8 }}>
-          <Space size={6}>
-            <span style={{ fontSize: 18 }}>{tpl?.icon ?? "📝"}</span>
-            <Text strong style={{ fontSize: 12 }}>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[18px] leading-none shrink-0">{tpl?.icon ?? "📝"}</span>
+            <span className="text-[12px] font-semibold text-[var(--fg-default)] truncate">
               {tpl?.name ?? item.templateId}
-            </Text>
-          </Space>
-          <Tag color={item.source === "chat" ? "geekblue" : item.source === "deep_research" ? "volcano" : "purple"} style={{ fontSize: 10, margin: 0 }}>
-            {item.source === "chat" ? "chat" : item.source === "deep_research" ? "deep" : "batch"}
-          </Tag>
-        </Space>
-        <Paragraph
-          ellipsis={{ rows: 3 }}
-          style={{ fontFamily: "var(--font-serif)", fontSize: 13.5, lineHeight: 1.55, color: token.colorText, margin: 0, marginBottom: 10 }}
+            </span>
+          </div>
+          <SourceBadge source={item.source} />
+        </div>
+        <p
+          className="text-[13.5px] leading-snug text-[var(--fg-default)] line-clamp-3 mb-2.5"
+          style={{ fontFamily: "var(--font-serif)" }}
         >
           {title}
-        </Paragraph>
-        <Paragraph
-          ellipsis={{ rows: 3 }}
-          style={{ fontSize: 12, lineHeight: 1.5, color: token.colorTextSecondary, margin: 0, marginBottom: 10 }}
-        >
+        </p>
+        <p className="text-[12px] leading-relaxed text-[var(--fg-muted)] line-clamp-3 mb-2.5">
           {item.answerPreview}
-        </Paragraph>
-        <Space size={4} wrap>
-          {item.question?.periodoNombre && (
-            <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10, margin: 0 }}>
-              {item.question.periodoNombre}
-            </Tag>
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {item.question?.periodoCode && (
+            <PeriodBadge code={item.question.periodoCode} size="xs" />
           )}
-          {item.question?.categoriaNombre && categoryColor && (
-            <Tag style={{ background: `${categoryColor}1A`, border: "none", color: categoryColor, fontSize: 10, margin: 0 }}>
-              {item.question.categoriaNombre}
-            </Tag>
+          {item.question?.categoriaCode && (
+            <CategoryChip code={item.question.categoriaCode} size="xs" />
           )}
-          {item.status === "GENERATING" && <Tag color="processing" style={{ margin: 0, fontSize: 10 }}>generando</Tag>}
-        </Space>
-        <Text style={{ fontSize: 11, color: token.colorTextTertiary, display: "block", marginTop: 8 }}>
+          {item.status === "GENERATING" && (
+            <Badge variant="info" size="xs">
+              generando
+            </Badge>
+          )}
+        </div>
+        <div className="text-[11px] text-[var(--fg-subtle)] mt-2">
           {dayjs(item.createdAt).format("DD MMM YY · HH:mm")}
-        </Text>
+        </div>
       </Card>
     </Link>
   );
 }
 
 function ProductionRow({ item }: { item: DeliverableItem }) {
-  const { token } = theme.useToken();
   const tpl = getTemplateById(item.templateId);
-  const periodColor = item.question?.periodoCode ? getPeriodColor(item.question.periodoCode) : token.colorTextTertiary;
+  const periodCode = item.question?.periodoCode;
+  const periodVar = periodCode
+    ? `var(--color-period-${periodCode.toLowerCase().replace(/_/g, "-")})`
+    : "var(--border-default)";
   const title = item.question?.pregunta ?? item.userQuestion ?? "(producción libre)";
 
   return (
-    <Link href={`/producciones/${item.id}`}>
-      <Card hoverable styles={{ body: { padding: 12 } }} style={{ borderLeft: `3px solid ${periodColor}` }}>
-        <Row gutter={12} align="middle">
-          <Col flex="auto">
-            <Space vertical size={4} style={{ width: "100%" }}>
-              <Space>
-                <span style={{ fontSize: 16 }}>{tpl?.icon}</span>
-                <Text strong style={{ fontSize: 13 }}>{tpl?.name}</Text>
-                {item.question?.periodoNombre && (
-                  <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10, margin: 0 }}>
-                    {item.question.periodoNombre}
-                  </Tag>
-                )}
-              </Space>
-              <Text style={{ fontSize: 13.5, color: token.colorText, fontFamily: "var(--font-serif)" }}>{title}</Text>
-              <Text type="secondary" style={{ fontSize: 11 }}>{item.answerPreview.slice(0, 180)}…</Text>
-            </Space>
-          </Col>
-          <Col>
-            <Space vertical align="end" size={4}>
-              <Tag color={item.source === "chat" ? "geekblue" : item.source === "deep_research" ? "volcano" : "purple"} style={{ fontSize: 10, margin: 0 }}>
-                {item.source === "deep_research" ? "deep" : item.source}
-              </Tag>
-              <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>
-                {dayjs(item.createdAt).format("DD MMM YY")}
-              </Text>
-            </Space>
-          </Col>
-        </Row>
+    <Link href={`/producciones/${item.id}`} className="block group">
+      <Card
+        variant="default"
+        size="sm"
+        className="transition-shadow group-hover:shadow-[var(--elev-2)]"
+        style={{ borderLeft: `3px solid ${periodVar}` }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[16px] leading-none">{tpl?.icon}</span>
+              <span className="text-[13px] font-semibold text-[var(--fg-default)]">
+                {tpl?.name}
+              </span>
+              {item.question?.periodoCode && (
+                <PeriodBadge code={item.question.periodoCode} size="xs" />
+              )}
+            </div>
+            <div
+              className="text-[13.5px] text-[var(--fg-default)] line-clamp-1"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              {title}
+            </div>
+            <div className="text-[11px] text-[var(--fg-muted)] line-clamp-1">
+              {item.answerPreview.slice(0, 180)}…
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <SourceBadge source={item.source} />
+            <div className="text-[11px] text-[var(--fg-subtle)]">
+              {dayjs(item.createdAt).format("DD MMM YY")}
+            </div>
+          </div>
+        </div>
       </Card>
     </Link>
   );
 }
 
-function NewProductionModal({
+function NewProductionDialog({
   open,
-  onClose,
+  onOpenChange,
   onSuccess,
 }: {
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (v: boolean) => void;
   onSuccess: () => void;
 }) {
-  const { message } = App.useApp();
-  const [form] = Form.useForm();
+  const [question, setQuestion] = useState("");
+  const [templateId, setTemplateId] = useState("mini-ensayo");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Reset al abrir
+  useEffect(() => {
+    if (open) {
+      setQuestion("");
+      setTemplateId("mini-ensayo");
+      setError(null);
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
+    if (!question.trim()) {
+      setError("Pregunta requerida");
+      return;
+    }
+    if (!templateId) {
+      setError("Selecciona un template");
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
     try {
-      const values = await form.validateFields();
-      setSubmitting(true);
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question: values.question,
-          templateId: values.templateId,
+          question,
+          templateId,
           topK: 100,
           similarityThreshold: 0.25,
         }),
       });
       if (!res.ok) throw new Error("HTTP error");
-      message.success("Producción iniciada");
-      form.resetFields();
+      toast.success("Producción iniciada");
       onSuccess();
-      onClose();
+      onOpenChange(false);
     } catch {
-      message.error("Error al crear producción");
+      toast.error("Error al crear producción");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const selectClass = cn(
+    "w-full h-9 px-3 text-sm rounded-md",
+    "bg-[var(--bg-page)] text-[var(--fg-default)]",
+    "border border-[var(--border-default)]",
+    "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
+  );
+
   return (
-    <Modal
-      open={open}
-      onCancel={onClose}
-      title="Nueva producción"
-      okText="Generar"
-      onOk={handleSubmit}
-      confirmLoading={submitting}
-      width={580}
-    >
-      <Form form={form} layout="vertical">
-        <Form.Item
-          name="question"
-          label="Pregunta"
-          rules={[{ required: true, message: "Pregunta requerida" }]}
-        >
-          <Input.TextArea rows={4} placeholder="¿Qué quieres investigar?" />
-        </Form.Item>
-        <Form.Item
-          name="templateId"
-          label="Template"
-          rules={[{ required: true, message: "Selecciona un template" }]}
-          initialValue="mini-ensayo"
-        >
-          <Select
-            options={CHAT_TEMPLATES.map((t) => ({ value: t.id, label: `${t.icon} ${t.name}` }))}
-          />
-        </Form.Item>
-      </Form>
-    </Modal>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Nueva producción</DialogTitle>
+          <DialogDescription>
+            Genera una respuesta nueva a partir del corpus.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <div className="space-y-4">
+            <div>
+              <FieldLabel htmlFor="newprod-q" required>
+                Pregunta
+              </FieldLabel>
+              <Textarea
+                id="newprod-q"
+                rows={4}
+                placeholder="¿Qué quieres investigar?"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                error={!!error && !question.trim()}
+              />
+              {error && !question.trim() && (
+                <FieldHelp error>{error}</FieldHelp>
+              )}
+            </div>
+            <div>
+              <FieldLabel htmlFor="newprod-tpl" required>
+                Template
+              </FieldLabel>
+              <select
+                id="newprod-tpl"
+                className={selectClass}
+                value={templateId}
+                onChange={(e) => setTemplateId(e.target.value)}
+              >
+                {CHAT_TEMPLATES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.icon} {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="ghost">Cancelar</Button>
+          </DialogClose>
+          <Button variant="primary" onClick={handleSubmit} isLoading={submitting}>
+            Generar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
