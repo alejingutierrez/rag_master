@@ -54,7 +54,7 @@ export default function CoveragePage() {
       <div className="app-page-wide">
         <Skeleton variant="line" className="h-8 w-72 mb-3" />
         <Skeleton variant="line" className="h-4 w-[480px] mb-6" />
-        <Skeleton variant="rect" className="h-[420px] w-full" />
+        <Skeleton variant="block" className="h-[420px] w-full" />
       </div>
     );
   }
