@@ -2,26 +2,17 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { BookOpen, Copy, Download, RotateCw, FileText } from "lucide-react";
+import { toast } from "sonner";
 import {
-  Card,
-  Typography,
-  Space,
   Button,
-  Segmented,
-  theme,
+  IconButton,
+  Card,
   Skeleton,
-  Empty,
-  Tag,
-  App,
-} from "antd";
-import {
-  BookOutlined,
-  CopyOutlined,
-  DownloadOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
-
-const { Title, Text, Paragraph } = Typography;
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui";
 
 interface BibData {
   citations: Array<{ author: string; year: string; title: string; publisher?: string; raw: string }>;
@@ -31,7 +22,15 @@ interface BibData {
 
 export default function BibliographyPage() {
   return (
-    <Suspense fallback={<div className="app-page"><Skeleton active /></div>}>
+    <Suspense
+      fallback={
+        <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
+          <Skeleton variant="line" className="h-8 w-64 mb-4" />
+          <Skeleton variant="line" className="h-4 w-full mb-2" />
+          <Skeleton variant="line" className="h-4 w-3/4" />
+        </div>
+      }
+    >
       <BibContent />
     </Suspense>
   );
@@ -39,8 +38,6 @@ export default function BibliographyPage() {
 
 function BibContent() {
   const params = useSearchParams();
-  const { token } = theme.useToken();
-  const { message } = App.useApp();
   const deliverableId = params.get("deliverable");
 
   const [style, setStyle] = useState<"apa" | "chicago">("apa");
@@ -64,7 +61,7 @@ function BibContent() {
   const copyAll = () => {
     if (!data) return;
     navigator.clipboard.writeText(data.formatted.join("\n\n"));
-    message.success(`${data.formatted.length} referencias copiadas`);
+    toast.success(`${data.formatted.length} referencias copiadas`);
   };
 
   const downloadTxt = () => {
@@ -100,52 +97,86 @@ function BibContent() {
   };
 
   return (
-    <div className="app-page">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+    <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
+      <header className="flex justify-between items-end mb-6 flex-wrap gap-3">
         <div>
-          <Title level={2} className="serif-title" style={{ margin: 0 }}>
-            <BookOutlined /> Bibliografía
-          </Title>
-          <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0", maxWidth: 720 }}>
+          <h1
+            className="serif-title text-[28px] leading-tight m-0 text-[var(--color-ink-1000)] inline-flex items-center gap-2"
+            style={{ fontWeight: 700 }}
+          >
+            <BookOpen className="size-6 text-[var(--fg-muted)]" />
+            Bibliografía
+          </h1>
+          <p className="text-[14px] text-[var(--fg-muted)] mt-1.5 mb-0 max-w-[720px]">
             {deliverableId
               ? "Referencias de la producción seleccionada, formateadas según el estilo elegido."
               : "Referencias bibliográficas de todo el corpus. Útil para citar en textos académicos."}
-          </Paragraph>
+          </p>
         </div>
-        <Space>
-          <Segmented
+        <div className="flex items-center gap-2">
+          <Tabs
             value={style}
-            onChange={(v) => setStyle(v as "apa" | "chicago")}
-            options={[
-              { value: "apa", label: "APA 7" },
-              { value: "chicago", label: "Chicago" },
-            ]}
-          />
-          <Button icon={<ReloadOutlined />} onClick={load} />
-        </Space>
-      </div>
+            onValueChange={(v) => setStyle(v as "apa" | "chicago")}
+          >
+            <TabsList variant="segmented">
+              <TabsTrigger variant="segmented" value="apa">
+                APA 7
+              </TabsTrigger>
+              <TabsTrigger variant="segmented" value="chicago">
+                Chicago
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <IconButton aria-label="Recargar" onClick={load}>
+            <RotateCw />
+          </IconButton>
+        </div>
+      </header>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap>
-          <Button icon={<CopyOutlined />} onClick={copyAll} disabled={!data || data.formatted.length === 0}>
+      <Card variant="default" size="md" className="mb-4">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            onClick={copyAll}
+            disabled={!data || data.formatted.length === 0}
+          >
+            <Copy className="size-4" />
             Copiar todo ({data?.formatted.length ?? 0})
           </Button>
-          <Button icon={<DownloadOutlined />} onClick={downloadTxt} disabled={!data}>
+          <Button variant="secondary" onClick={downloadTxt} disabled={!data}>
+            <Download className="size-4" />
             Descargar .txt
           </Button>
-          <Button icon={<DownloadOutlined />} onClick={downloadBib} disabled={!data}>
+          <Button variant="secondary" onClick={downloadBib} disabled={!data}>
+            <Download className="size-4" />
             Descargar .bib
           </Button>
-        </Space>
+        </div>
       </Card>
 
-      <Card>
+      <Card variant="default" size="md">
         {loading ? (
-          <Skeleton active paragraph={{ rows: 12 }} />
+          <div className="space-y-2">
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-9/12" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-9/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+          </div>
         ) : !data || data.formatted.length === 0 ? (
-          <Empty description="Sin referencias" />
+          <div className="py-12 text-center">
+            <FileText className="size-10 text-[var(--fg-subtle)] mx-auto mb-3" />
+            <div className="text-[13px] text-[var(--fg-muted)]">Sin referencias</div>
+          </div>
         ) : (
-          <Space vertical size={12} style={{ width: "100%" }}>
+          <div className="flex flex-col gap-3 w-full">
             {data.formatted.map((entry, i) => (
               <div
                 key={i}
@@ -155,13 +186,13 @@ function BibContent() {
                   fontFamily: "var(--font-serif)",
                   fontSize: 14,
                   lineHeight: 1.7,
-                  color: token.colorText,
+                  color: "var(--fg-default)",
                 }}
               >
                 {entry}
               </div>
             ))}
-          </Space>
+          </div>
         )}
       </Card>
     </div>
