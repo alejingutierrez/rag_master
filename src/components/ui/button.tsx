@@ -80,14 +80,30 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : "button";
     const isInteractionDisabled = disabled || isLoading;
 
+    // Cuando asChild=true, el child (ej. <Link>) es responsable de su propio
+    // contenido. Radix Slot exige UN único hijo, así que NO podemos inyectar
+    // leadingIcon/trailingIcon/Spinner desde acá. Si el caller los pasó,
+    // tiene que ponerlos dentro del child manualmente.
+    if (asChild) {
+      return (
+        <Comp
+          ref={ref}
+          className={cn(buttonStyles({ variant, size, fullWidth }), className)}
+          {...props}
+        >
+          {children}
+        </Comp>
+      );
+    }
+
     return (
-      <Comp
+      <button
         ref={ref}
         className={cn(buttonStyles({ variant, size, fullWidth }), className)}
         disabled={isInteractionDisabled}
         aria-busy={isLoading || undefined}
         data-loading={isLoading || undefined}
-        {...props}
+        {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
       >
         {isLoading ? (
           <Spinner size={size === "lg" ? 18 : size === "sm" ? 14 : 16} />
@@ -96,7 +112,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {children}
         {!isLoading && trailingIcon}
-      </Comp>
+      </button>
     );
   },
 );

@@ -556,11 +556,17 @@ function EnrichmentEditor({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="secondary" size="sm" asChild leadingIcon={<FileText className="size-3.5" />}>
-            <Link href={`/documents/${doc.id}`}>Ver documento</Link>
+          <Button variant="secondary" size="sm" asChild>
+            <Link href={`/documents/${doc.id}`}>
+              <FileText className="size-3.5" />
+              Ver documento
+            </Link>
           </Button>
-          <Button variant="secondary" size="sm" asChild leadingIcon={<BookOpen className="size-3.5" />}>
-            <Link href={`/questions/generate?documentId=${doc.id}`}>Generar preguntas</Link>
+          <Button variant="secondary" size="sm" asChild>
+            <Link href={`/questions/generate?documentId=${doc.id}`}>
+              <BookOpen className="size-3.5" />
+              Generar preguntas
+            </Link>
           </Button>
         </div>
       </div>
