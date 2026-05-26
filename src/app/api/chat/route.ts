@@ -32,6 +32,31 @@ export async function POST(request: NextRequest) {
     return await handleChat(body);
   } catch (error) {
     console.error("POST /api/chat error:", error);
+
+    // Throttle de Bedrock (cuota de embeddings o Claude saturada). Devolvemos
+    // 503 con Retry-After para que el frontend muestre un mensaje claro al
+    // usuario y pueda reintentar — no es un bug del servidor, es contención.
+    const isThrottled =
+      error instanceof Error &&
+      (error.name === "ThrottlingException" ||
+        error.message.includes("Too many tokens") ||
+        error.message.includes("throttl") ||
+        error.message.includes("Too many requests"));
+
+    if (isThrottled) {
+      return Response.json(
+        {
+          error:
+            "El sistema está procesando muchas solicitudes en este momento (indexación o carga alta). Por favor reintenta en unos segundos.",
+          retryable: true,
+        },
+        {
+          status: 503,
+          headers: { "Retry-After": "30" },
+        }
+      );
+    }
+
     return Response.json(
       { error: error instanceof Error ? error.message : "Error interno del servidor" },
       { status: 500 }

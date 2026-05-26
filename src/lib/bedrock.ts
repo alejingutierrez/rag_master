@@ -17,36 +17,60 @@ const EMBEDDING_MODEL = (() => {
 })();
 
 // ────────────────────────────────────────────────────────────────────────
-// Semáforo GLOBAL para llamadas a Bedrock embeddings.
+// Semáforo GLOBAL para llamadas a Bedrock embeddings — con PRIORIDAD.
 //
-// Cohere v4 en Bedrock tiene un rate limit estricto (tokens/sec). Cuando
-// hay múltiples docs procesando en paralelo en el mismo servidor, cada uno
-// con su propio embedding-processor, todos llaman a Bedrock simultáneamente
-// y saturan la cuota. Este semáforo limita a MAX_CONCURRENT_EMBEDDINGS
-// llamadas en vuelo GLOBALMENTE, sin importar cuántos docs estén procesando.
+// Cohere v4 en Bedrock tiene rate limit estricto (tokens/min). La
+// indexación de documentos (search_document) puede saturar la cuota durante
+// minutos. Las queries de usuario (search_query) son interactivas y deben
+// servirse ANTES que la indexación cuando hay contención. Implementamos
+// cola con prioridad: search_query > search_document, FIFO dentro de
+// cada nivel.
 // ────────────────────────────────────────────────────────────────────────
-// Mínimo absoluto: 1 call concurrent. Throughput máximo determinado por
-// quota Bedrock, pero al menos NO hay throttle por burst.
 const MAX_CONCURRENT_EMBEDDINGS = Number(
   process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "1"
 );
 
-let activeEmbeddingCalls = 0;
-const embeddingWaitQueue: Array<() => void> = [];
+type EmbeddingPriority = "query" | "document";
 
-async function acquireEmbeddingSlot(): Promise<void> {
+interface QueueEntry {
+  resolve: () => void;
+  priority: EmbeddingPriority;
+}
+
+let activeEmbeddingCalls = 0;
+const embeddingWaitQueue: QueueEntry[] = [];
+
+async function acquireEmbeddingSlot(
+  priority: EmbeddingPriority = "document"
+): Promise<void> {
   if (activeEmbeddingCalls < MAX_CONCURRENT_EMBEDDINGS) {
     activeEmbeddingCalls++;
     return;
   }
-  await new Promise<void>((resolve) => embeddingWaitQueue.push(resolve));
+  await new Promise<void>((resolve) => {
+    const entry: QueueEntry = { resolve, priority };
+    if (priority === "query") {
+      // Insertar antes del primer "document" (delante de toda la indexación
+      // encolada), pero después de otras "query" pendientes (FIFO entre queries).
+      const firstDocIdx = embeddingWaitQueue.findIndex(
+        (e) => e.priority === "document"
+      );
+      if (firstDocIdx === -1) {
+        embeddingWaitQueue.push(entry);
+      } else {
+        embeddingWaitQueue.splice(firstDocIdx, 0, entry);
+      }
+    } else {
+      embeddingWaitQueue.push(entry);
+    }
+  });
   activeEmbeddingCalls++;
 }
 
 function releaseEmbeddingSlot(): void {
   activeEmbeddingCalls--;
   const next = embeddingWaitQueue.shift();
-  if (next) next();
+  if (next) next.resolve();
 }
 
 // Cohere v4 usa 1536 dimensiones, Titan v2 usa 1024
@@ -60,16 +84,20 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Genera un embedding con retry automático ante throttling
+ * Genera un embedding con retry automático ante throttling.
+ * Queries de usuario (search_query) tienen prioridad sobre indexación
+ * (search_document) en el semáforo, y obtienen más retries — la query
+ * de usuario es interactiva y vale la pena esperar.
  */
 export async function generateEmbedding(
   text: string,
   inputType: "search_document" | "search_query" = "search_document"
 ): Promise<number[]> {
-  // NOTE: Embeddings (Cohere) have separate rate limits from Claude Opus
-  // in Bedrock, so they do NOT share the Claude semaphore. They use their
-  // own retry with backoff.
-  const MAX_RETRIES = 5;
+  const isQuery = inputType === "search_query";
+  // Queries: 8 retries con cap 60s (≈ 5+10+20+40+60+60+60+60 ≈ 5 min worst case)
+  // Indexación: 5 retries (acepta fallar y reintentar más tarde en background)
+  const MAX_RETRIES = isQuery ? 8 : 5;
+  const BACKOFF_CAP_MS = 60_000;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
@@ -85,9 +113,12 @@ export async function generateEmbedding(
           error.message.includes("throttl"));
 
       if (isThrottled && attempt < MAX_RETRIES - 1) {
-        // Backoff exponencial: 5s, 10s, 20s, 40s + jitter
-        const delay = Math.pow(2, attempt) * 5000 + Math.random() * 3000;
-        console.log(`Embedding throttled, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        // Backoff exponencial con cap: 5s, 10s, 20s, 40s, 60s, 60s… + jitter
+        const base = Math.min(Math.pow(2, attempt) * 5000, BACKOFF_CAP_MS);
+        const delay = base + Math.random() * 3000;
+        console.log(
+          `Embedding throttled [${inputType}], retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${MAX_RETRIES})`
+        );
         await sleep(delay);
         continue;
       }
@@ -117,7 +148,7 @@ async function generateCohereEmbeddingsBatch(
   texts: string[],
   inputType: "search_document" | "search_query"
 ): Promise<number[][]> {
-  await acquireEmbeddingSlot();
+  await acquireEmbeddingSlot(inputType === "search_query" ? "query" : "document");
   try {
     const payload = {
       texts,
