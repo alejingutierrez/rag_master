@@ -6,8 +6,15 @@ import { awsConfig } from "./aws-config";
 
 const bedrock = new BedrockRuntimeClient(awsConfig);
 
-const EMBEDDING_MODEL =
-  process.env.BEDROCK_EMBEDDING_MODEL_ID || "cohere.embed-v4:0";
+// IMPORTANTE: Cohere Embed v4 requiere cross-region inference profile (us.*).
+// Sin el prefijo `us.`, AWS throttles brutalmente (cuota mínima sin perfil).
+// Con inference profile: 2000 RPM, 300k tokens/min (cuota estándar).
+const EMBEDDING_MODEL = (() => {
+  const raw = process.env.BEDROCK_EMBEDDING_MODEL_ID || "us.cohere.embed-v4:0";
+  // Normalizar: si es Cohere v4 sin prefijo, agregar `us.` para evitar throttle
+  if (raw === "cohere.embed-v4:0") return "us.cohere.embed-v4:0";
+  return raw;
+})();
 
 // ────────────────────────────────────────────────────────────────────────
 // Semáforo GLOBAL para llamadas a Bedrock embeddings.
@@ -18,8 +25,10 @@ const EMBEDDING_MODEL =
 // y saturan la cuota. Este semáforo limita a MAX_CONCURRENT_EMBEDDINGS
 // llamadas en vuelo GLOBALMENTE, sin importar cuántos docs estén procesando.
 // ────────────────────────────────────────────────────────────────────────
+// Con inference profile us.cohere.embed-v4:0 la cuota es 2000 RPM,
+// ya no necesitamos limitar tan agresivamente.
 const MAX_CONCURRENT_EMBEDDINGS = Number(
-  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "2"
+  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "8"
 );
 
 let activeEmbeddingCalls = 0;
@@ -168,9 +177,8 @@ export async function generateEmbeddings(
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
 
-  // Cohere v4 throttle pesado: 2 calls concurrent x 8 texts = 16 en flight TOTAL.
-  // Empíricamente con 48 in flight el throttle era catastrófico (>200/min).
-  const BATCH_SIZE = 8;
+  // Con inference profile, podemos volver a batch tamaño razonable.
+  const BATCH_SIZE = 24;
   const MAX_RETRIES = 5;
 
   const embeddings: number[][] = [];
