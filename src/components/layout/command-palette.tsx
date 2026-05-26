@@ -1,53 +1,63 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Modal, Input, theme, Spin, Empty } from "antd";
+import { Command } from "cmdk";
 import {
-  HomeOutlined,
-  FileTextOutlined,
-  BookOutlined,
-  AppstoreOutlined,
-  MessageOutlined,
-  CloudUploadOutlined,
-  ExperimentOutlined,
-  RadarChartOutlined,
-  HeatMapOutlined,
-  NodeIndexOutlined,
-  BulbOutlined,
-  UserOutlined,
-  ClusterOutlined,
-  ReadOutlined,
-  RocketOutlined,
-  SearchOutlined,
-} from "@ant-design/icons";
+  Home,
+  Upload,
+  FileText,
+  FlaskConical,
+  BookOpen,
+  MessageCircle,
+  Lightbulb,
+  Rocket,
+  Workflow,
+  BookMarked,
+  LayoutGrid,
+  GitCompare,
+  Library,
+  Activity,
+  GitBranch,
+  Map as MapIcon,
+  Users,
+  Search,
+} from "lucide-react";
+import { cn } from "@/lib/cn";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Kbd,
+  Spinner,
+} from "@/components/ui";
 
 type Item = {
   id: string;
   label: string;
   hint?: string;
   href: string;
-  icon: React.ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
   group: "Navegar" | "Documentos" | "Preguntas" | "Producciones";
 };
 
 const STATIC_ITEMS: Item[] = [
-  { id: "nav-home", label: "Inicio", href: "/", icon: <HomeOutlined />, group: "Navegar" },
-  { id: "nav-upload", label: "Cargar PDFs", href: "/upload", icon: <CloudUploadOutlined />, group: "Navegar" },
-  { id: "nav-docs", label: "Documentos", href: "/documents", icon: <FileTextOutlined />, group: "Navegar" },
-  { id: "nav-enrich", label: "Enriquecer", href: "/enrich", icon: <ExperimentOutlined />, group: "Navegar" },
-  { id: "nav-chat", label: "Consultar", href: "/chat", icon: <MessageOutlined />, group: "Navegar" },
-  { id: "nav-deep", label: "Deep Research", href: "/deep-research", icon: <RocketOutlined />, group: "Navegar" },
-  { id: "nav-hyp", label: "Hipótesis", href: "/hypothesis", icon: <BulbOutlined />, group: "Navegar" },
-  { id: "nav-q", label: "Preguntas", href: "/questions", icon: <BookOutlined />, group: "Navegar" },
-  { id: "nav-threads", label: "Hilos de investigación", href: "/threads", icon: <NodeIndexOutlined />, group: "Navegar" },
-  { id: "nav-ws", label: "Workspaces", href: "/workspaces", icon: <ReadOutlined />, group: "Navegar" },
-  { id: "nav-prod", label: "Producciones", href: "/producciones", icon: <AppstoreOutlined />, group: "Navegar" },
-  { id: "nav-comp", label: "Comparador", href: "/compare", icon: <ClusterOutlined />, group: "Navegar" },
-  { id: "nav-bib", label: "Bibliografía", href: "/bibliography", icon: <BookOutlined />, group: "Navegar" },
-  { id: "nav-time", label: "Línea de tiempo", href: "/timeline", icon: <RadarChartOutlined />, group: "Navegar" },
-  { id: "nav-graph", label: "Grafo de conexiones", href: "/graph", icon: <NodeIndexOutlined />, group: "Navegar" },
-  { id: "nav-cov", label: "Cobertura temática", href: "/coverage", icon: <HeatMapOutlined />, group: "Navegar" },
-  { id: "nav-ent", label: "Entidades", href: "/entities", icon: <UserOutlined />, group: "Navegar" },
+  { id: "nav-home", label: "Inicio", href: "/", icon: Home, group: "Navegar" },
+  { id: "nav-upload", label: "Cargar PDFs", href: "/upload", icon: Upload, group: "Navegar" },
+  { id: "nav-docs", label: "Documentos", href: "/documents", icon: FileText, group: "Navegar" },
+  { id: "nav-enrich", label: "Enriquecer", href: "/enrich", icon: FlaskConical, group: "Navegar" },
+  { id: "nav-chat", label: "Consultar", href: "/chat", icon: MessageCircle, group: "Navegar" },
+  { id: "nav-deep", label: "Deep Research", href: "/deep-research", icon: Rocket, group: "Navegar" },
+  { id: "nav-hyp", label: "Hipótesis", href: "/hypothesis", icon: Lightbulb, group: "Navegar" },
+  { id: "nav-q", label: "Preguntas", href: "/questions", icon: BookOpen, group: "Navegar" },
+  { id: "nav-threads", label: "Hilos de investigación", href: "/threads", icon: Workflow, group: "Navegar" },
+  { id: "nav-ws", label: "Workspaces", href: "/workspaces", icon: BookMarked, group: "Navegar" },
+  { id: "nav-prod", label: "Producciones", href: "/producciones", icon: LayoutGrid, group: "Navegar" },
+  { id: "nav-comp", label: "Comparador", href: "/compare", icon: GitCompare, group: "Navegar" },
+  { id: "nav-bib", label: "Bibliografía", href: "/bibliography", icon: Library, group: "Navegar" },
+  { id: "nav-time", label: "Línea de tiempo", href: "/timeline", icon: Activity, group: "Navegar" },
+  { id: "nav-graph", label: "Grafo de conexiones", href: "/graph", icon: GitBranch, group: "Navegar" },
+  { id: "nav-cov", label: "Cobertura temática", href: "/coverage", icon: MapIcon, group: "Navegar" },
+  { id: "nav-ent", label: "Entidades", href: "/entities", icon: Users, group: "Navegar" },
 ];
 
 interface Props {
@@ -60,17 +70,10 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
   const [query, setQuery] = useState("");
   const [dynamicItems, setDynamicItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const { token } = theme.useToken();
-  const inputRef = useRef<{ focus: () => void } | null>(null);
   const fetchAbort = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (open) {
-      setQuery("");
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (open) setQuery("");
   }, [open]);
 
   // Búsqueda dinámica en docs/preguntas/producciones
@@ -104,7 +107,7 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
             label: d.title || d.filename,
             hint: `${d.pageCount ?? 0} pp · documento`,
             href: `/documents/${d.id}`,
-            icon: <FileTextOutlined />,
+            icon: FileText,
             group: "Documentos",
           });
         }
@@ -114,7 +117,7 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
             label: q.pregunta,
             hint: q.periodoNombre,
             href: `/questions?focus=${q.id}`,
-            icon: <BookOutlined />,
+            icon: BookOpen,
             group: "Preguntas",
           });
         }
@@ -124,7 +127,7 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
             label: p.title,
             hint: p.templateName,
             href: `/producciones/${p.id}`,
-            icon: <AppstoreOutlined />,
+            icon: LayoutGrid,
             group: "Producciones",
           });
         }
@@ -142,19 +145,12 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
     };
   }, [query, open]);
 
-  const items = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const filtered = q
-      ? STATIC_ITEMS.filter(
-          (i) =>
-            i.label.toLowerCase().includes(q) ||
-            i.href.toLowerCase().includes(q),
-        )
-      : STATIC_ITEMS;
-    return [...filtered, ...dynamicItems];
-  }, [query, dynamicItems]);
+  const items = useMemo(
+    () => [...STATIC_ITEMS, ...dynamicItems],
+    [dynamicItems],
+  );
 
-  const groups = useMemo(() => {
+  const grouped = useMemo(() => {
     const out = new Map<string, Item[]>();
     for (const it of items) {
       const arr = out.get(it.group) ?? [];
@@ -164,154 +160,102 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
     return out;
   }, [items]);
 
-  // Reset selección al filtrar
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [items.length]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setSelectedIndex((i) => Math.min(items.length - 1, i + 1));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setSelectedIndex((i) => Math.max(0, i - 1));
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      const item = items[selectedIndex];
-      if (item) onNavigate(item.href);
-    }
-  };
-
-  let runningIndex = -1;
-
   return (
-    <Modal
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      closable={false}
-      mask={{ closable: true }}
-      destroyOnHidden
-      width={640}
-      style={{ top: 96 }}
-      styles={{ body: { padding: 0 } }}
-    >
-      <div
-        style={{
-          padding: "10px 12px",
-          borderBottom: `1px solid ${token.colorBorderSecondary}`,
-        }}
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent
+        size="md"
+        hideClose
+        className="top-[20vh] translate-y-0 p-0 overflow-hidden"
       >
-        <Input
-          ref={(r) => {
-            inputRef.current = r;
-          }}
-          variant="borderless"
-          placeholder="Buscar documentos, preguntas, producciones…"
-          prefix={<SearchOutlined style={{ color: token.colorTextTertiary }} />}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          suffix={loading ? <Spin size="small" /> : null}
-        />
-      </div>
-
-      <div style={{ maxHeight: 460, overflowY: "auto", padding: "8px 0" }}>
-        {items.length === 0 ? (
-          <div style={{ padding: 40 }}>
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={query ? "Sin resultados" : "Escribe para buscar"}
+        <DialogTitle className="sr-only">Búsqueda global</DialogTitle>
+        <Command
+          label="Búsqueda global"
+          shouldFilter
+          className="flex flex-col max-h-[60vh]"
+        >
+          <div className="flex items-center gap-2 px-4 h-12 border-b border-[var(--border-default)]">
+            <Search className="size-4 text-[var(--fg-subtle)] shrink-0" />
+            <Command.Input
+              autoFocus
+              value={query}
+              onValueChange={setQuery}
+              placeholder="Buscar documentos, preguntas, producciones…"
+              className={cn(
+                "flex-1 bg-transparent outline-none text-sm",
+                "placeholder:text-[var(--fg-subtle)]",
+                "text-[var(--fg-default)]",
+              )}
             />
+            {loading && <Spinner size={14} className="text-[var(--fg-subtle)]" />}
           </div>
-        ) : (
-          Array.from(groups.entries()).map(([group, list]) => (
-            <div key={group} style={{ marginBottom: 8 }}>
-              <div
-                style={{
-                  padding: "6px 16px",
-                  fontSize: 11,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  color: token.colorTextTertiary,
-                  fontWeight: 600,
-                }}
-              >
-                {group}
-              </div>
-              {list.map((it) => {
-                runningIndex += 1;
-                const active = runningIndex === selectedIndex;
-                return (
-                  <div
-                    key={it.id}
-                    onMouseEnter={() => setSelectedIndex(runningIndex)}
-                    onClick={() => onNavigate(it.href)}
-                    style={{
-                      padding: "8px 16px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      background: active ? token.colorFillSecondary : "transparent",
-                      borderLeft: `2px solid ${active ? token.colorPrimary : "transparent"}`,
-                    }}
-                  >
-                    <span style={{ color: token.colorTextSecondary, fontSize: 16 }}>
-                      {it.icon}
-                    </span>
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          color: token.colorText,
-                          fontSize: 13,
-                          fontWeight: 500,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {it.label}
-                      </div>
-                      {it.hint && (
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: token.colorTextTertiary,
-                            marginTop: 1,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {it.hint}
-                        </div>
-                      )}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ))
-        )}
-      </div>
 
-      <div
-        style={{
-          padding: "8px 16px",
-          borderTop: `1px solid ${token.colorBorderSecondary}`,
-          fontSize: 11,
-          color: token.colorTextTertiary,
-          display: "flex",
-          gap: 16,
-          background: token.colorFillQuaternary,
-        }}
-      >
-        <span><kbd>↑↓</kbd> navegar</span>
-        <span><kbd>⏎</kbd> abrir</span>
-        <span><kbd>esc</kbd> cerrar</span>
-      </div>
-    </Modal>
+          <Command.List className="flex-1 overflow-y-auto p-2">
+            <Command.Empty className="py-10 text-center text-sm text-[var(--fg-subtle)]">
+              {query ? "Sin resultados" : "Escribí para buscar"}
+            </Command.Empty>
+
+            {Array.from(grouped.entries()).map(([group, list]) => (
+              <Command.Group
+                key={group}
+                heading={group}
+                className={cn(
+                  "[&_[cmdk-group-heading]]:px-2.5 [&_[cmdk-group-heading]]:py-1.5",
+                  "[&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium",
+                  "[&_[cmdk-group-heading]]:text-[var(--fg-subtle)]",
+                  "[&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider",
+                )}
+              >
+                {list.map((it) => {
+                  const Icon = it.icon;
+                  return (
+                    <Command.Item
+                      key={it.id}
+                      value={`${it.label} ${it.hint ?? ""}`}
+                      onSelect={() => onNavigate(it.href)}
+                      className={cn(
+                        "flex items-center gap-2.5 px-2.5 py-2 rounded-md",
+                        "text-sm cursor-pointer",
+                        "data-[selected=true]:bg-[var(--bg-hover)] data-[selected=true]:text-[var(--fg-default)]",
+                        "text-[var(--fg-muted)]",
+                      )}
+                    >
+                      <Icon className="size-4 shrink-0 text-[var(--fg-subtle)]" />
+                      <span className="flex-1 min-w-0">
+                        <span className="block truncate text-[var(--fg-default)] font-medium">
+                          {it.label}
+                        </span>
+                        {it.hint && (
+                          <span className="block truncate text-[11px] text-[var(--fg-subtle)] mt-0.5">
+                            {it.hint}
+                          </span>
+                        )}
+                      </span>
+                    </Command.Item>
+                  );
+                })}
+              </Command.Group>
+            ))}
+          </Command.List>
+
+          <div
+            className={cn(
+              "flex items-center gap-4 px-4 py-2",
+              "border-t border-[var(--border-default)] bg-[var(--bg-subtle)]",
+              "text-[11px] text-[var(--fg-subtle)]",
+            )}
+          >
+            <span className="flex items-center gap-1.5">
+              <Kbd keys="arrowup" /> <Kbd keys="arrowdown" /> navegar
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Kbd keys="enter" /> abrir
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Kbd keys="escape" /> cerrar
+            </span>
+          </div>
+        </Command>
+      </DialogContent>
+    </Dialog>
   );
 }
