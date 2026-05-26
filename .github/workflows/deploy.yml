@@ -87,7 +87,7 @@ jobs:
                     \"AWS_ACCESS_KEY_ID\": \"${{ secrets.APP_AWS_ACCESS_KEY_ID }}\",
                     \"AWS_SECRET_ACCESS_KEY\": \"${{ secrets.APP_AWS_SECRET_ACCESS_KEY }}\",
                     \"BEDROCK_CLAUDE_MODEL_ID\": \"us.anthropic.claude-opus-4-7\",
-                    \"BEDROCK_EMBEDDING_MODEL_ID\": \"${{ secrets.BEDROCK_EMBEDDING_MODEL_ID }}\",
+                    \"BEDROCK_EMBEDDING_MODEL_ID\": \"us.cohere.embed-v4:0\",
                     \"BEDROCK_EXPANSION_MODEL_ID\": \"us.anthropic.claude-haiku-4-5-20251001-v1:0\",
                     \"BEDROCK_VALIDATOR_MODEL_ID\": \"us.anthropic.claude-haiku-4-5-20251001-v1:0\",
                     \"BEDROCK_RERANK_MODEL_ID\": \"cohere.rerank-v3-5:0\",
