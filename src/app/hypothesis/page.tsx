@@ -2,31 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  Card,
-  Typography,
-  Space,
-  Tag,
-  Button,
-  Input,
-  theme,
-  App,
-  Row,
-  Col,
-  Empty,
-  Spin,
-  Alert,
-} from "antd";
-import {
-  BulbOutlined,
-  RocketOutlined,
-  CheckCircleFilled,
-  CloseCircleFilled,
-  ReloadOutlined,
-} from "@ant-design/icons";
+  Lightbulb,
+  Rocket,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  FileText,
+} from "lucide-react";
+import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
-
-const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
+import { Button, Textarea, Card, Badge, Spinner } from "@/components/ui";
+import { ProseBlock } from "@/components/domain/prose-block";
 
 interface SideResult {
   status: "idle" | "loading" | "complete" | "error";
@@ -36,8 +22,6 @@ interface SideResult {
 }
 
 export default function HypothesisPage() {
-  const { token } = theme.useToken();
-  const { message } = App.useApp();
   const [hypothesis, setHypothesis] = useState("");
   const [forResult, setForResult] = useState<SideResult>({ status: "idle", answer: "", citations: [] });
   const [againstResult, setAgainstResult] = useState<SideResult>({ status: "idle", answer: "", citations: [] });
@@ -105,7 +89,7 @@ export default function HypothesisPage() {
   const run = async () => {
     const h = hypothesis.trim();
     if (h.length < 10) {
-      message.warning("La hipótesis necesita al menos 10 caracteres.");
+      toast.warning("La hipótesis necesita al menos 10 caracteres.");
       return;
     }
     setRunning(true);
@@ -134,121 +118,158 @@ export default function HypothesisPage() {
   };
 
   return (
-    <div className="app-page-wide">
-      <div style={{ marginBottom: 20 }}>
-        <Title level={2} className="serif-title" style={{ margin: 0 }}>
-          <BulbOutlined /> Sistema de hipótesis
-        </Title>
-        <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0", maxWidth: 720 }}>
-          Plantea una hipótesis histórica y el sistema buscará evidencia <Text strong style={{ color: token.colorSuccess }}>a favor</Text>
-          {" "}y <Text strong style={{ color: token.colorError }}>en contra</Text> en el corpus, presentándolas lado a lado.
-          Útil para tesis, historiografía o argumentación.
-        </Paragraph>
-      </div>
+    <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
+      {/* Hero */}
+      <header className="mb-5">
+        <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
+          Plataforma de investigación
+        </div>
+        <h1
+          className="serif-title text-[36px] leading-tight mt-1.5 mb-2 text-[var(--color-ink-1000)] flex items-center gap-3"
+          style={{ fontWeight: 700 }}
+        >
+          <Lightbulb className="size-8 text-[var(--accent)]" />
+          Sistema de hipótesis
+        </h1>
+        <p className="text-[15px] leading-relaxed text-[var(--fg-muted)] max-w-[720px]">
+          Plantea una hipótesis histórica y el sistema buscará evidencia{" "}
+          <span className="font-semibold text-[var(--color-success-fg)]">a favor</span>{" "}
+          y{" "}
+          <span className="font-semibold text-[var(--color-danger-fg)]">en contra</span>{" "}
+          en el corpus, presentándolas lado a lado. Útil para tesis, historiografía o argumentación.
+        </p>
+      </header>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space vertical size={12} style={{ width: "100%" }}>
-          <TextArea
+      {/* Input */}
+      <Card variant="default" size="md" className="mb-4">
+        <div className="flex flex-col gap-3">
+          <Textarea
             value={hypothesis}
             onChange={(e) => setHypothesis(e.target.value)}
             placeholder='Ej: "El Frente Nacional consolidó la exclusión política y sembró las condiciones del conflicto armado contemporáneo."'
-            autoSize={{ minRows: 3, maxRows: 6 }}
+            rows={3}
             disabled={running}
+            className="min-h-[88px] max-h-[200px]"
           />
-          <Space>
+          <div className="flex items-center gap-3 flex-wrap">
             <Button
-              type="primary"
-              icon={<RocketOutlined />}
-              size="large"
-              loading={running}
+              variant="primary"
+              size="lg"
+              leadingIcon={<Rocket className="size-4" />}
+              isLoading={running}
               disabled={hypothesis.trim().length < 10}
               onClick={run}
             >
               Buscar evidencia
             </Button>
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <span className="text-xs text-[var(--fg-subtle)]">
               Se ejecutan dos consultas RAG en paralelo. ~30–60s.
-            </Text>
-          </Space>
-        </Space>
+            </span>
+          </div>
+        </div>
       </Card>
 
+      {/* Hipótesis evaluada */}
       {(forResult.status !== "idle" || againstResult.status !== "idle") && hypothesis.trim() && (
-        <Card style={{ marginBottom: 16, borderLeft: `3px solid ${token.colorPrimary}` }} styles={{ body: { padding: 14 } }}>
-          <Text type="secondary" style={{ fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <Card
+          variant="default"
+          size="sm"
+          className="mb-4 border-l-[3px] border-l-[var(--accent)]"
+        >
+          <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
             Hipótesis evaluada
-          </Text>
-          <Paragraph style={{ margin: "6px 0 0", fontFamily: "var(--font-serif)", fontSize: 15, lineHeight: 1.5 }}>
+          </div>
+          <p
+            className="mt-1.5 text-[15px] leading-snug text-[var(--fg-default)]"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
             {hypothesis.trim()}
-          </Paragraph>
+          </p>
         </Card>
       )}
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <SideCard
-            title="Evidencia a favor"
-            icon={<CheckCircleFilled />}
-            color={token.colorSuccess}
-            result={forResult}
-          />
-        </Col>
-        <Col xs={24} lg={12}>
-          <SideCard
-            title="Evidencia en contra"
-            icon={<CloseCircleFilled />}
-            color={token.colorError}
-            result={againstResult}
-          />
-        </Col>
-      </Row>
+      {/* Resultados lado a lado */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SideCard
+          title="Evidencia a favor"
+          icon={<CheckCircle2 className="size-4" />}
+          accentVar="--color-success-fg"
+          result={forResult}
+        />
+        <SideCard
+          title="Evidencia en contra"
+          icon={<XCircle className="size-4" />}
+          accentVar="--color-danger-fg"
+          result={againstResult}
+        />
+      </div>
     </div>
   );
 }
 
+/* ─── Sub-componentes ────────────────────────────────────────────────────── */
+
 function SideCard({
   title,
   icon,
-  color,
+  accentVar,
   result,
 }: {
   title: string;
   icon: React.ReactNode;
-  color: string;
+  accentVar: string;
   result: SideResult;
 }) {
-  const { token } = theme.useToken();
+  const badgeVariant = accentVar === "--color-success-fg" ? "success" : "danger";
+
   return (
     <Card
-      style={{ borderTop: `3px solid ${color}`, minHeight: 380 }}
-      title={
-        <Space>
-          <span style={{ color }}>{icon}</span>
-          <Text strong>{title}</Text>
-        </Space>
-      }
-      extra={
-        result.status === "complete" && (
-          <Tag style={{ background: `${color}1A`, border: "none", color }}>
-            {result.citations.length} fuentes
-          </Tag>
-        )
-      }
+      variant="default"
+      size="md"
+      className="min-h-[380px] relative overflow-hidden"
+      style={{ boxShadow: `inset 0 3px 0 var(${accentVar})` }}
     >
-      {result.status === "idle" && <Empty description="Sin ejecutar" />}
-      {result.status === "loading" && (
-        <div style={{ textAlign: "center", padding: 40 }}>
-          <Spin />
-          <Paragraph type="secondary" style={{ marginTop: 12 }}>
-            Buscando en el corpus…
-          </Paragraph>
+      <header className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-[var(--border-default)]">
+        <div className="flex items-center gap-2">
+          <span style={{ color: `var(${accentVar})` }}>{icon}</span>
+          <h3 className="text-[15px] font-semibold text-[var(--fg-default)]">
+            {title}
+          </h3>
+        </div>
+        {result.status === "complete" && (
+          <Badge variant={badgeVariant} size="xs">
+            {result.citations.length} fuentes
+          </Badge>
+        )}
+      </header>
+
+      {result.status === "idle" && (
+        <div className="py-10 text-center">
+          <FileText className="size-8 mx-auto mb-2 text-[var(--fg-subtle)] opacity-60" />
+          <div className="text-[13px] text-[var(--fg-subtle)]">Sin ejecutar</div>
         </div>
       )}
-      {result.status === "error" && <Alert type="error" message={result.answer} />}
-      {result.status === "complete" && (
-        <div className="prose-academic" style={{ fontSize: 14, maxWidth: "100%" }}>
-          <ReactMarkdown>{result.answer}</ReactMarkdown>
+
+      {result.status === "loading" && (
+        <div className="py-10 text-center">
+          <Spinner size={20} className="mx-auto text-[var(--accent)]" />
+          <p className="mt-3 text-[13px] text-[var(--fg-muted)]">
+            Buscando en el corpus…
+          </p>
         </div>
+      )}
+
+      {result.status === "error" && (
+        <div className="p-4 rounded-md border border-[var(--color-danger-fg)]/40 bg-[var(--color-danger-bg)] flex items-start gap-3">
+          <AlertCircle className="size-4 text-[var(--color-danger-fg)] mt-0.5 shrink-0" />
+          <div className="text-sm text-[var(--color-danger-fg)]">{result.answer}</div>
+        </div>
+      )}
+
+      {result.status === "complete" && (
+        <ProseBlock width="prose" className="text-sm max-w-full">
+          <ReactMarkdown>{result.answer}</ReactMarkdown>
+        </ProseBlock>
       )}
     </Card>
   );
