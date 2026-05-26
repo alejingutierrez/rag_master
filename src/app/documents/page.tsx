@@ -1,678 +1,427 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
-  Button,
-  IconButton,
-  Card,
-  Input,
-  Tooltip,
-  Skeleton,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogBody,
-  DialogFooter,
-  Badge,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  Pagination,
-} from "@/components/ui";
-import { PeriodBadge } from "@/components/domain/period-badge";
-import { toast } from "sonner";
-import {
-  FileText,
-  Trash2,
-  RotateCw,
-  Search,
-  Eye,
-  CloudUpload,
-  FlaskConical,
-  LayoutGrid,
-  List,
-  CheckCircle,
-  Clock,
-  Loader2,
-  XCircle,
-  ChevronDown,
-  X,
-  AlertCircle,
-} from "lucide-react";
-import dayjs from "@/lib/dayjs-config";
-import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
-import { getPeriodByCode } from "@/lib/taxonomy";
-import { useUrlFilters } from "@/lib/use-url-state";
-import { cn } from "@/lib/cn";
+  PageHeader,
+  FilterTabs,
+  SearchInput,
+  EmptyState,
+  PeriodTag,
+  StatusDot,
+  primaryBtn,
+} from "@/components/editorial";
+import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 
-function stripDiacritics(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-}
+type DocStatus = "PENDING" | "PROCESSING" | "READY" | "ERROR";
+type StatusFilter = "all" | DocStatus;
 
-interface DocumentRow {
+interface DocItem {
   id: string;
   filename: string;
-  fileSize: number;
+  status: DocStatus;
   pageCount: number;
-  status: string;
   createdAt: string;
   enriched: boolean;
-  metadata: EnrichmentMetadata;
+  metadata?: Record<string, unknown> | null;
+  fileSize?: number;
   _count: { chunks: number };
 }
 
-type StatusKey = "PENDING" | "PROCESSING" | "READY" | "ERROR";
-
-const STATUS_CONFIG: Record<
-  StatusKey,
-  {
-    label: string;
-    variant: "subtle" | "success" | "warning" | "danger";
-    Icon: React.ComponentType<{ className?: string }>;
-  }
-> = {
-  PENDING: { label: "Pendiente", variant: "subtle", Icon: Clock },
-  PROCESSING: { label: "Procesando", variant: "warning", Icon: Loader2 },
-  READY: { label: "Listo", variant: "success", Icon: CheckCircle },
-  ERROR: { label: "Error", variant: "danger", Icon: XCircle },
-};
-
-function formatBytes(n: number) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / 1024 / 1024).toFixed(2)} MB`;
+interface DocsResponse {
+  documents: DocItem[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
-function StatusBadgeDS({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status as StatusKey] ?? STATUS_CONFIG.PENDING;
-  const { Icon } = cfg;
-  return (
-    <Badge variant={cfg.variant} size="xs">
-      <Icon className={cn("size-3", status === "PROCESSING" && "animate-spin")} />
-      {cfg.label}
-    </Badge>
-  );
+function getDocTitle(doc: DocItem): string {
+  const meta = doc.metadata;
+  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
+    const bookTitle = (meta as Record<string, unknown>).bookTitle;
+    if (typeof bookTitle === "string" && bookTitle.trim()) return bookTitle.trim();
+  }
+  return doc.filename.replace(/\.pdf$/i, "");
+}
+
+function getDocAuthor(doc: DocItem): string | null {
+  const meta = doc.metadata;
+  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
+    const author = (meta as Record<string, unknown>).author;
+    if (typeof author === "string" && author.trim()) return author.trim();
+  }
+  return null;
+}
+
+function getDocYear(doc: DocItem): number | null {
+  const meta = doc.metadata;
+  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
+    const y = (meta as Record<string, unknown>).publicationYear;
+    if (typeof y === "number") return y;
+    if (typeof y === "string" && /^\d{4}$/.test(y)) return Number(y);
+  }
+  return null;
+}
+
+function getDocPeriod(doc: DocItem): PeriodCode | null {
+  const meta = doc.metadata;
+  if (meta && typeof meta === "object" && !Array.isArray(meta)) {
+    const period = (meta as Record<string, unknown>).primaryPeriod;
+    if (typeof period === "string" && period in PERIODS) return period as PeriodCode;
+  }
+  return null;
+}
+
+function formatSize(bytes?: number): string {
+  if (!bytes) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function normalize(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
 export default function DocumentsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
-          <Skeleton variant="line" className="h-8 w-64 mb-4" />
-          <Skeleton variant="line" className="h-4 w-96 mb-8" />
-          <Skeleton variant="block" className="h-[420px] w-full" />
-        </div>
-      }
-    >
-      <DocumentsContent />
-    </Suspense>
-  );
-}
-
-function DocumentsContent() {
-  const [documents, setDocuments] = useState<DocumentRow[]>([]);
+  const router = useRouter();
+  const [docs, setDocs] = useState<DocItem[]>([]);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
-  const [deleting, setDeleting] = useState(false);
-
-  const [filters, updateFilters, resetFilters] = useUrlFilters({
-    search: "",
-    status: "",
-    enriched: "",
-    view: "table",
-    page: "1",
-    pageSize: "20",
-  });
-
-  const page = Math.max(1, Number(filters.page) || 1);
-  const pageSize = Math.max(10, Number(filters.pageSize) || 20);
-
-  const [refreshTick, setRefreshTick] = useState(0);
-  const fetchDocuments = () => setRefreshTick((n) => n + 1);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     const ctrl = new AbortController();
-    setLoading(true);
-    (async () => {
+
+    const load = async () => {
       try {
-        const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
-        if (filters.status) params.set("status", filters.status);
-        if (filters.enriched) params.set("enriched", filters.enriched);
-        if (filters.search) params.set("search", filters.search);
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: "30",
+        });
+        if (statusFilter !== "all") params.set("status", statusFilter);
         const res = await fetch(`/api/documents?${params}`, { signal: ctrl.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (ctrl.signal.aborted) return;
-        setDocuments(data.documents ?? []);
-        setTotal(data.pagination?.total ?? 0);
+        const data = (await res.json()) as DocsResponse;
+        if (!mounted) return;
+        setDocs(data.documents);
+        setTotalPages(data.pagination.totalPages);
+        setError(null);
       } catch (e) {
-        if ((e as Error).name !== "AbortError") {
-          console.error(e);
-          toast.error("Error al cargar documentos");
+        if ((e as Error).name !== "AbortError" && mounted) {
+          setError((e as Error).message);
         }
       } finally {
-        if (!ctrl.signal.aborted) setLoading(false);
+        if (mounted) setLoading(false);
       }
-    })();
-    return () => ctrl.abort();
-  }, [page, pageSize, filters.status, filters.enriched, filters.search, refreshTick]);
+    };
 
-  // Auto-refresh mientras procesa
-  useEffect(() => {
-    if (!documents.some((d) => d.status === "PROCESSING")) return;
-    const id = setInterval(() => setRefreshTick((n) => n + 1), 5000);
-    return () => clearInterval(id);
-  }, [documents]);
+    load();
 
-  // Filtrado local complementario (sin acentos)
+    // Auto-refresh mientras haya PROCESSING.
+    const interval = setInterval(() => {
+      if (docs.some((d) => d.status === "PROCESSING")) load();
+    }, 5000);
+
+    return () => {
+      mounted = false;
+      ctrl.abort();
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, page]);
+
   const filtered = useMemo(() => {
-    const q = stripDiacritics(filters.search.trim());
-    if (!q) return documents;
-    return documents.filter((d) => {
-      const display = stripDiacritics(getDocumentDisplayName(d));
-      const file = stripDiacritics(d.filename);
-      const author = d.metadata?.author ? stripDiacritics(d.metadata.author) : "";
-      return display.includes(q) || file.includes(q) || author.includes(q);
+    if (!search.trim()) return docs;
+    const q = normalize(search.trim());
+    return docs.filter((d) => {
+      const title = normalize(getDocTitle(d));
+      const author = normalize(getDocAuthor(d) ?? "");
+      return title.includes(q) || author.includes(q);
     });
-  }, [documents, filters.search]);
+  }, [docs, search]);
 
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
-    setDeleting(true);
-    try {
-      await fetch(`/api/documents/${deleteTarget.id}`, { method: "DELETE" });
-      toast.success("Documento eliminado");
-      setDeleteTarget(null);
-      fetchDocuments();
-    } catch {
-      toast.error("Error al eliminar");
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  const hasFilters = Boolean(filters.search || filters.status || filters.enriched);
+  const counts = useMemo(() => {
+    return {
+      all: docs.length,
+      READY: docs.filter((d) => d.status === "READY").length,
+      PROCESSING: docs.filter((d) => d.status === "PROCESSING").length,
+      ERROR: docs.filter((d) => d.status === "ERROR").length,
+    };
+  }, [docs]);
 
   return (
-    <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
-      {/* Hero */}
-      <header className="flex justify-between items-end mb-6 flex-wrap gap-3">
-        <div>
-          <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
-            Corpus
-          </div>
-          <h1
-            className="serif-title text-[36px] leading-tight mt-1.5 mb-2 text-[var(--color-ink-1000)]"
-            style={{ fontWeight: 700 }}
+    <div className="fade-up" data-screen-label="Documents">
+      <PageHeader
+        label={`Repositorio · ${docs.length} obras`}
+        title="Documentos"
+        italic="del corpus"
+        subtitle="Cada PDF es procesado por hash SHA-256, chunkeado y vectorizado con Cohere v4. Las obras enriquecidas reciben metadata histórica."
+        action={
+          <button
+            type="button"
+            onClick={() => router.push("/upload")}
+            style={primaryBtn}
           >
-            Documentos
-          </h1>
-          <p className="text-[14px] text-[var(--fg-muted)] mt-1.5 mb-0 max-w-[720px]">
-            Corpus vectorizado. {total} {total === 1 ? "documento" : "documentos"}.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/enrich">
-            <Button variant="secondary" leadingIcon={<FlaskConical className="size-4" />}>
-              Enriquecer
-            </Button>
-          </Link>
-          <Link href="/upload">
-            <Button variant="primary" leadingIcon={<CloudUpload className="size-4" />}>
-              Cargar más
-            </Button>
-          </Link>
-        </div>
-      </header>
+            Cargar PDFs →
+          </button>
+        }
+      />
 
-      {/* Toolbar */}
-      <Card variant="default" size="md" className="mb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <Input
-            wrapperClassName="w-[280px]"
-            placeholder="Buscar por título, autor…"
-            leadingIcon={<Search />}
-            value={filters.search}
-            onChange={(e) => updateFilters({ search: e.target.value, page: "1" })}
-            trailingIcon={
-              filters.search ? (
-                <button
-                  type="button"
-                  className="text-[var(--fg-subtle)] hover:text-[var(--fg-default)]"
-                  aria-label="Limpiar búsqueda"
-                  onClick={() => updateFilters({ search: "", page: "1" })}
-                >
-                  <X className="size-3.5" />
-                </button>
-              ) : null
-            }
-          />
+      <hr className="hairline" style={{ margin: "0 56px" }} />
 
-          {/* Status dropdown (reemplaza Select Ant) */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="md" trailingIcon={<ChevronDown className="size-3.5" />}>
-                {filters.status
-                  ? STATUS_CONFIG[filters.status as StatusKey]?.label ?? "Estado"
-                  : "Estado"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onSelect={() => updateFilters({ status: "", page: "1" })}>
-                Todos los estados
-              </DropdownMenuItem>
-              {(Object.keys(STATUS_CONFIG) as StatusKey[]).map((k) => {
-                const { Icon, label } = STATUS_CONFIG[k];
-                return (
-                  <DropdownMenuItem
-                    key={k}
-                    onSelect={() => updateFilters({ status: k, page: "1" })}
-                  >
-                    <Icon className="size-4" />
-                    {label}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Enriched dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="md" trailingIcon={<ChevronDown className="size-3.5" />}>
-                {filters.enriched === "true"
-                  ? "Enriquecidos"
-                  : filters.enriched === "false"
-                    ? "Pendientes"
-                    : "Enriquecimiento"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onSelect={() => updateFilters({ enriched: "", page: "1" })}>
-                Todos
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => updateFilters({ enriched: "true", page: "1" })}>
-                Enriquecidos
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => updateFilters({ enriched: "false", page: "1" })}>
-                Pendientes de enriquecer
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button
-            variant="secondary"
-            leadingIcon={<RotateCw className="size-3.5" />}
-            onClick={() => fetchDocuments()}
-          >
-            Recargar
-          </Button>
-
-          {hasFilters && (
-            <Button variant="ghost" onClick={resetFilters}>
-              Limpiar filtros
-            </Button>
-          )}
-
-          <div className="ml-auto">
-            <Tabs
-              value={filters.view}
-              onValueChange={(v) => updateFilters({ view: v })}
-            >
-              <TabsList variant="segmented">
-                <TabsTrigger value="table" variant="segmented" aria-label="Tabla">
-                  <List className="size-3.5" />
-                </TabsTrigger>
-                <TabsTrigger value="grid" variant="segmented" aria-label="Grid">
-                  <LayoutGrid className="size-3.5" />
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
-      </Card>
-
-      {/* Content */}
-      <Card variant="default" size="md">
-        {loading ? (
-          <div className="space-y-2">
-            <Skeleton variant="line" className="h-12 w-full" />
-            <Skeleton variant="line" className="h-12 w-full" />
-            <Skeleton variant="line" className="h-12 w-full" />
-            <Skeleton variant="line" className="h-12 w-full" />
-            <Skeleton variant="line" className="h-12 w-full" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="py-12 text-center">
-            <FileText className="size-10 text-[var(--fg-subtle)] mx-auto mb-3" />
-            <div className="text-[14px] font-medium text-[var(--fg-default)] mb-1">
-              Sin documentos
-            </div>
-            <div className="text-[12px] text-[var(--fg-subtle)]">
-              {hasFilters ? "Ajusta los filtros o limpia para ver todos." : "Carga tu primer PDF."}
-            </div>
-          </div>
-        ) : filters.view === "table" ? (
-          <TableView
-            documents={filtered}
-            onDelete={(id, name) => setDeleteTarget({ id, name })}
-          />
-        ) : (
-          <GridView
-            documents={filtered}
-            onDelete={(id, name) => setDeleteTarget({ id, name })}
-          />
-        )}
-      </Card>
-
-      {/* Pagination — primitivo Crónica */}
-      <div className="flex items-center justify-between gap-3 mt-6">
-        <span className="text-[12px] text-[var(--fg-subtle)]">
-          {total.toLocaleString("es-CO")} documentos
-        </span>
-        <Pagination
-          current={page}
-          pageSize={pageSize}
-          total={total}
-          onChange={(p) => {
-            updateFilters({ page: String(p) });
-            if (typeof window !== "undefined") {
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-          }}
-        />
-      </div>
-
-      {/* Delete dialog (reemplaza Modal Ant) */}
-      <Dialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => {
-          if (!open && !deleting) setDeleteTarget(null);
+      <section
+        style={{
+          padding: "20px 56px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 24,
+          flexWrap: "wrap",
+          maxWidth: 1320,
         }}
       >
-        <DialogContent size="sm">
-          <DialogHeader>
-            <DialogTitle>Eliminar documento</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div className="flex items-start gap-3">
-              <AlertCircle className="size-5 text-[var(--color-danger-fg)] mt-0.5 shrink-0" />
-              <p className="text-[14px] leading-relaxed text-[var(--fg-default)]">
-                ¿Eliminar <strong>{deleteTarget?.name}</strong> y todos sus chunks? Esta acción no
-                se puede deshacer.
-              </p>
-            </div>
-          </DialogBody>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setDeleteTarget(null)}
-              disabled={deleting}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleConfirmDelete}
-              isLoading={deleting}
-            >
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+        <FilterTabs<StatusFilter>
+          value={statusFilter}
+          onChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+          options={[
+            { value: "all", label: `Todos · ${counts.all}` },
+            { value: "READY", label: `Listos · ${counts.READY}` },
+            { value: "PROCESSING", label: `Procesando · ${counts.PROCESSING}` },
+            { value: "ERROR", label: `Error · ${counts.ERROR}` },
+          ]}
+        />
+        <SearchInput value={search} onChange={setSearch} placeholder="Buscar título, autor…" />
+      </section>
 
-/* ─── Table view ─────────────────────────────────────────────────────────── */
-
-function TableView({
-  documents,
-  onDelete,
-}: {
-  documents: DocumentRow[];
-  onDelete: (id: string, name: string) => void;
-}) {
-  return (
-    <div className="overflow-x-auto -mx-6 -my-6">
-      <table className="w-full min-w-[900px] text-[13px]">
-        <thead>
-          <tr className="border-b border-[var(--border-default)]">
-            <th className="text-left font-medium text-[var(--fg-muted)] px-6 py-3 text-[12px] uppercase tracking-wide">
-              Documento
-            </th>
-            <th className="text-left font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[140px]">
-              Estado
-            </th>
-            <th className="text-right font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[90px]">
-              Chunks
-            </th>
-            <th className="text-right font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[90px]">
-              Páginas
-            </th>
-            <th className="text-right font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[100px]">
-              Tamaño
-            </th>
-            <th className="text-left font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[110px]">
-              Enriq.
-            </th>
-            <th className="text-left font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[110px]">
-              Cargado
-            </th>
-            <th className="px-6 py-3 w-[100px]" />
-          </tr>
-        </thead>
-        <tbody>
-          {documents.map((doc) => {
-            const display = getDocumentDisplayName(doc);
-            const periodCode = doc.metadata?.primaryPeriod;
-            const period = periodCode ? getPeriodByCode(periodCode) : undefined;
-            return (
-              <tr
-                key={doc.id}
-                className="border-b border-[var(--border-default)] last:border-b-0 hover:bg-[var(--bg-muted)] transition-colors duration-[var(--duration-instant)]"
-              >
-                <td className="px-6 py-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className="size-9 rounded-md flex items-center justify-center shrink-0"
-                      style={{
-                        background: periodCode
-                          ? `color-mix(in oklab, var(--color-period-${periodCode.toLowerCase().replace(/_/g, "-")}) 12%, transparent)`
-                          : "var(--bg-muted)",
-                        color: periodCode
-                          ? `var(--color-period-${periodCode.toLowerCase().replace(/_/g, "-")})`
-                          : "var(--fg-muted)",
-                      }}
-                    >
-                      <FileText className="size-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <Link
-                        href={`/documents/${doc.id}`}
-                        className="block min-w-0 hover:text-[var(--accent)] transition-colors duration-[var(--duration-instant)]"
-                      >
-                        <Tooltip content={display}>
-                          <div className="font-medium text-[var(--fg-default)] truncate">
-                            {display}
-                          </div>
-                        </Tooltip>
-                      </Link>
-                      <div className="flex items-center gap-2 mt-0.5 min-w-0">
-                        {doc.metadata?.author && (
-                          <span className="text-[11px] text-[var(--fg-subtle)] truncate max-w-[160px]">
-                            {doc.metadata.author}
-                          </span>
-                        )}
-                        {period && <PeriodBadge code={period.code} size="xs" />}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-3 py-3">
-                  <StatusBadgeDS status={doc.status} />
-                </td>
-                <td className="px-3 py-3 text-right font-mono text-[var(--fg-default)] tabular-nums">
-                  {doc._count.chunks}
-                </td>
-                <td className="px-3 py-3 text-right tabular-nums text-[var(--fg-default)]">
-                  {doc.pageCount}
-                </td>
-                <td className="px-3 py-3 text-right text-[var(--fg-muted)] tabular-nums">
-                  {formatBytes(doc.fileSize)}
-                </td>
-                <td className="px-3 py-3">
-                  {doc.enriched ? (
-                    <Badge variant="tinta" size="xs">
-                      ✓ Sí
-                    </Badge>
-                  ) : (
-                    <span className="text-[var(--fg-subtle)]">—</span>
-                  )}
-                </td>
-                <td className="px-3 py-3 text-[12px] text-[var(--fg-muted)]">
-                  <Tooltip content={dayjs(doc.createdAt).format("DD MMM YYYY HH:mm")}>
-                    <span>{dayjs(doc.createdAt).format("DD MMM")}</span>
-                  </Tooltip>
-                </td>
-                <td className="px-6 py-3 text-right">
-                  <div className="inline-flex items-center gap-1">
-                    <Tooltip content="Ver detalle">
-                      <Link href={`/documents/${doc.id}`}>
-                        <IconButton size="sm" aria-label="Ver detalle">
-                          <Eye />
-                        </IconButton>
-                      </Link>
-                    </Tooltip>
-                    <Tooltip content="Eliminar">
-                      <IconButton
-                        size="sm"
-                        variant="danger"
-                        aria-label="Eliminar"
-                        onClick={() => onDelete(doc.id, getDocumentDisplayName(doc))}
-                      >
-                        <Trash2 />
-                      </IconButton>
-                    </Tooltip>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-/* ─── Grid view ──────────────────────────────────────────────────────────── */
-
-function GridView({
-  documents,
-  onDelete,
-}: {
-  documents: DocumentRow[];
-  onDelete: (id: string, name: string) => void;
-}) {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-      {documents.map((doc) => {
-        const display = getDocumentDisplayName(doc);
-        const periodCode = doc.metadata?.primaryPeriod;
-        const period = periodCode ? getPeriodByCode(periodCode) : undefined;
-        const periodSlug = periodCode
-          ? periodCode.toLowerCase().replace(/_/g, "-")
-          : undefined;
-
-        return (
-          <article
-            key={doc.id}
-            className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-lg p-4 transition-shadow duration-[var(--duration-fast)] hover:shadow-[var(--elev-2)] hover:border-[var(--border-strong)] flex flex-col gap-2.5 relative overflow-hidden"
-            style={
-              periodSlug
-                ? { boxShadow: `inset 0 3px 0 var(--color-period-${periodSlug})` }
-                : undefined
-            }
+      <section style={{ padding: "0 56px 48px", maxWidth: 1320 }}>
+        {error && (
+          <div
+            style={{
+              padding: "12px 16px",
+              border: "1px solid var(--danger)",
+              color: "var(--danger)",
+              fontSize: 13,
+              marginBottom: 16,
+            }}
+            role="alert"
           >
-            <div className="flex items-start justify-between gap-2">
+            {error}
+          </div>
+        )}
+
+        <DocTable docs={filtered} loading={loading} onOpen={(id) => router.push(`/documents/${id}`)} />
+
+        {!loading && filtered.length === 0 && (
+          <EmptyState
+            title="Sin resultados"
+            hint="Ajusta los filtros o sube un PDF nuevo."
+            action={
+              <button
+                type="button"
+                onClick={() => router.push("/upload")}
+                style={primaryBtn}
+              >
+                Cargar PDFs →
+              </button>
+            }
+          />
+        )}
+
+        {totalPages > 1 && (
+          <div
+            style={{
+              marginTop: 32,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 12,
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              color: "var(--fg-muted)",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              style={{
+                appearance: "none",
+                background: "transparent",
+                border: "1px solid var(--line-strong)",
+                padding: "4px 10px",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--fg-muted)",
+                cursor: page <= 1 ? "default" : "pointer",
+                opacity: page <= 1 ? 0.4 : 1,
+              }}
+            >
+              ←
+            </button>
+            <span>
+              {page} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              style={{
+                appearance: "none",
+                background: "transparent",
+                border: "1px solid var(--line-strong)",
+                padding: "4px 10px",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--fg-muted)",
+                cursor: page >= totalPages ? "default" : "pointer",
+                opacity: page >= totalPages ? 0.4 : 1,
+              }}
+            >
+              →
+            </button>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function DocTable({
+  docs,
+  loading,
+  onOpen,
+}: {
+  docs: DocItem[];
+  loading: boolean;
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "44px 1fr 180px 130px 110px 90px",
+          gap: 16,
+          padding: "12px 0 14px",
+          borderBottom: "1px solid var(--line-strong)",
+          alignItems: "baseline",
+        }}
+      >
+        <div className="label">#</div>
+        <div className="label">Título / Autor</div>
+        <div className="label">Período</div>
+        <div className="label">Estado</div>
+        <div className="label" style={{ textAlign: "right" }}>
+          Chunks
+        </div>
+        <div className="label" style={{ textAlign: "right" }}>
+          Tamaño
+        </div>
+      </div>
+      {loading && docs.length === 0 && (
+        <div style={{ padding: "32px 0" }}>
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              style={{
+                padding: "20px 0",
+                borderBottom: "1px solid var(--line)",
+              }}
+            >
+              <div className="shimmer-line" style={{ height: 16, width: "70%", marginBottom: 8 }} />
+              <div className="shimmer-line" style={{ height: 10, width: "40%" }} />
+            </div>
+          ))}
+        </div>
+      )}
+      {docs.map((d, i) => {
+        const period = getDocPeriod(d);
+        const author = getDocAuthor(d);
+        const year = getDocYear(d);
+        return (
+          <button
+            key={d.id}
+            type="button"
+            onClick={() => onOpen(d.id)}
+            style={{
+              width: "100%",
+              appearance: "none",
+              background: "transparent",
+              border: 0,
+              borderBottom: "1px solid var(--line)",
+              padding: "16px 0",
+              cursor: "pointer",
+              textAlign: "left",
+              display: "grid",
+              gridTemplateColumns: "44px 1fr 180px 130px 110px 90px",
+              gap: 16,
+              alignItems: "baseline",
+              transition: "background 120ms var(--ease-out-custom)",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-muted)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          >
+            <div className="mono" style={{ fontSize: 11, color: "var(--fg-faint)" }}>
+              {String(i + 1).padStart(2, "0")}
+            </div>
+            <div style={{ minWidth: 0 }}>
               <div
-                className="size-9 rounded-md flex items-center justify-center shrink-0"
+                className="serif"
                 style={{
-                  background: periodSlug
-                    ? `color-mix(in oklab, var(--color-period-${periodSlug}) 12%, transparent)`
-                    : "var(--bg-muted)",
-                  color: periodSlug
-                    ? `var(--color-period-${periodSlug})`
-                    : "var(--fg-muted)",
+                  fontSize: 16,
+                  color: "var(--fg)",
+                  lineHeight: 1.25,
+                  letterSpacing: "-0.005em",
                 }}
               >
-                <FileText className="size-[18px]" />
+                {getDocTitle(d)}
               </div>
-              <StatusBadgeDS status={doc.status} />
+              <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>
+                {author ? `${author} · ` : ""}
+                {year ? `${year} · ` : ""}
+                {d.pageCount} pp
+                {d.enriched && (
+                  <span style={{ marginLeft: 8, color: "var(--accent)" }}>· enriquecido</span>
+                )}
+              </div>
             </div>
-
-            <Link
-              href={`/documents/${doc.id}`}
-              className="block hover:text-[var(--accent)] transition-colors duration-[var(--duration-instant)]"
+            {period ? <PeriodTag code={period} size="sm" /> : <span />}
+            <DocStatusBadge status={d.status} />
+            <div
+              className="mono num"
+              style={{ fontSize: 12.5, color: "var(--fg)", textAlign: "right" }}
             >
-              <h3
-                className="text-[14px] font-semibold leading-snug text-[var(--fg-default)] min-h-[38px] line-clamp-2"
-                style={{ fontFamily: "var(--font-serif)" }}
-              >
-                {display}
-              </h3>
-            </Link>
-
-            {doc.metadata?.author && (
-              <p className="text-[12px] text-[var(--fg-muted)] truncate">
-                {doc.metadata.author}
-              </p>
-            )}
-
-            <div className="flex flex-wrap items-center gap-1.5">
-              {period && <PeriodBadge code={period.code} size="xs" />}
-              {doc.enriched && (
-                <Badge variant="tinta" size="xs">
-                  ✓
-                </Badge>
-              )}
+              {d._count.chunks ? d._count.chunks.toLocaleString("es-CO") : "—"}
             </div>
-
-            <div className="text-[11px] text-[var(--fg-subtle)] tabular-nums">
-              {doc._count.chunks} chunks · {doc.pageCount} pp · {formatBytes(doc.fileSize)}
+            <div
+              className="mono"
+              style={{ fontSize: 11.5, color: "var(--fg-muted)", textAlign: "right" }}
+            >
+              {formatSize(d.fileSize)}
             </div>
-
-            <div className="flex items-center justify-end gap-1 mt-auto pt-1">
-              <Link href={`/documents/${doc.id}`}>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  leadingIcon={<Eye className="size-3.5" />}
-                >
-                  Ver
-                </Button>
-              </Link>
-              <IconButton
-                size="sm"
-                variant="danger"
-                aria-label="Eliminar"
-                onClick={() => onDelete(doc.id, display)}
-              >
-                <Trash2 />
-              </IconButton>
-            </div>
-          </article>
+          </button>
         );
       })}
     </div>
   );
+}
+
+function DocStatusBadge({ status }: { status: DocStatus }) {
+  const map: Record<
+    DocStatus,
+    { kind: "success" | "warning" | "danger" | "muted"; label: string }
+  > = {
+    READY: { kind: "success", label: "Listo" },
+    PROCESSING: { kind: "warning", label: "Procesando" },
+    PENDING: { kind: "muted", label: "Pendiente" },
+    ERROR: { kind: "danger", label: "Error" },
+  };
+  const cfg = map[status];
+  return <StatusDot kind={cfg.kind} label={cfg.label} />;
 }

@@ -1,42 +1,19 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useUrlFilters } from "@/lib/use-url-state";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Search,
-  Zap,
-  Table as TableIcon,
-  LayoutGrid,
-  List as ListIcon,
-  FileText,
-  Plus,
-  CheckCircle2,
-  Clock,
-} from "lucide-react";
-import {
-  Badge,
-  Button,
-  Card,
-  Input,
-  Skeleton,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  Tooltip,
-  Pagination,
-} from "@/components/ui";
-import { PeriodBadge } from "@/components/domain/period-badge";
-import { CategoryChip } from "@/components/domain/category-chip";
-import {
-  PERIOD_OPTIONS,
-  CATEGORY_OPTIONS,
-  getPeriodByCode,
-  getCategoryByCode,
-} from "@/lib/taxonomy";
-import { periodSlug, categorySlug } from "@/lib/design-tokens";
-import { cn } from "@/lib/cn";
+  PageHeader,
+  FilterTabs,
+  SearchInput,
+  Pill,
+  EmptyState,
+  PeriodTag,
+  StatusDot,
+  primaryBtn,
+  ghostBtn,
+} from "@/components/editorial";
+import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 
 type StateFilter = "all" | "pending" | "partial" | "complete";
 
@@ -49,891 +26,380 @@ interface Question {
   periodoRango: string;
   categoriaCode: string;
   categoriaNombre: string;
-  subcategoriaCode: string;
-  subcategoriaNombre: string;
-  periodosRelacionados: string[];
-  categoriasRelacionadas: string[];
   yearPrincipal?: number | null;
-  yearsSecondary?: number[];
   entidadesPersonas?: string[];
   entidadesLugares?: string[];
   entidadesConceptos?: string[];
-  justificacion: string;
-  document: { id: string; filename: string };
-  createdAt: string;
-  temaPeriodo?: string | null;
-  temaCategoria?: string | null;
-  deliverableCount?: number;
-  completedTemplateIds?: string[];
   deliverables?: Array<{ id: string; templateId: string; status: string }>;
+  document?: { id: string; filename: string };
 }
 
 interface StatsData {
   totalQuestions: number;
-  totalDocuments: number;
-  byCategoria: Array<{ code: string; nombre: string; count: number }>;
-  byPeriodo: Array<{ code: string; nombre: string; count: number }>;
   byState?: { pending: number; partial: number; complete: number; all: number };
-  totalTemplates?: number;
 }
 
-const SORT_OPTIONS = [
-  { value: "cronologico", label: "Cronológico" },
-  { value: "periodo", label: "Por periodo" },
-  { value: "categoria", label: "Por categoría" },
-  { value: "subcategoria", label: "Por subcategoría" },
-  { value: "recientes", label: "Recientes" },
-];
+function deriveState(q: Question): "pending" | "partial" | "complete" {
+  const dlv = q.deliverables ?? [];
+  if (dlv.length === 0) return "pending";
+  if (dlv.some((d) => d.status === "COMPLETE")) {
+    return dlv.length >= 3 ? "complete" : "partial";
+  }
+  return "partial";
+}
 
 export default function QuestionsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="app-page-wide">
-          <Skeleton variant="line" className="h-8 w-64 mb-4" />
-          <Skeleton variant="line" className="h-4 w-full mb-2" />
-          <Skeleton variant="line" className="h-4 w-3/4" />
-        </div>
-      }
-    >
+    <Suspense fallback={<QuestionsLoading />}>
       <QuestionsContent />
     </Suspense>
   );
 }
 
+function QuestionsLoading() {
+  return (
+    <div className="fade-up" style={{ padding: "72px 56px" }}>
+      <div className="shimmer-line" style={{ height: 16, width: 220, marginBottom: 24 }} />
+      <div className="shimmer-line" style={{ height: 64, width: "60%" }} />
+    </div>
+  );
+}
+
 function QuestionsContent() {
+  const router = useRouter();
   const params = useSearchParams();
+  const periodoParam = params.get("periodo") ?? "";
 
-  const [filters, updateFilters] = useUrlFilters({
-    documentId: params.get("documentId") ?? "",
-    periodo: params.get("periodo") ?? "",
-    categoria: "",
-    search: "",
-    entity: params.get("entity") ?? "",
-    yearMin: "",
-    yearMax: "",
-    sortBy: "cronologico",
-    state: "all",
-    view: "list",
-    page: "1",
-  });
-
-  const stateFilter = filters.state as StateFilter;
-  const page = Math.max(1, Number(filters.page) || 1);
+  const [stateFilter, setStateFilter] = useState<StateFilter>("all");
+  const [periodFilter, setPeriodFilter] = useState<string>(periodoParam);
+  const [search, setSearch] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
-  const [docs, setDocs] = useState<Array<{ id: string; filename: string }>>([]);
-  const [entityOptions, setEntityOptions] = useState<
-    Array<{ value: string; label: string }>
-  >([]);
   const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
-  const [pendingCount, setPendingCount] = useState(0);
-  const LIMIT = 30;
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    fetch("/api/entities?limit=400&minMentions=1", { signal: ctrl.signal })
-      .then((r) => r.json())
-      .then((data) => {
-        type EntityRow = { name: string; type: string; mentions: number };
-        const opts = (data.entities as EntityRow[] | undefined ?? []).map(
-          (e) => ({
-            value: e.name,
-            label: `${e.name} · ${
-              e.type === "person" ? "👤" : e.type === "place" ? "📍" : "💡"
-            } ${e.mentions}`,
-          }),
-        );
-        setEntityOptions(opts);
-      })
-      .catch((e) => {
-        if ((e as Error).name !== "AbortError") console.error(e);
-      });
-    return () => ctrl.abort();
-  }, []);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    fetch("/api/documents?limit=300", { signal: ctrl.signal })
-      .then((r) => r.json())
-      .then((data) => setDocs(data.documents ?? []))
-      .catch((e) => {
-        if ((e as Error).name !== "AbortError") console.error(e);
-      });
-    return () => ctrl.abort();
-  }, []);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    fetch("/api/questions?includeStats=true&limit=1", { signal: ctrl.signal })
-      .then((r) => r.json())
-      .then((data) => setStats(data.stats ?? null))
-      .catch((e) => {
-        if ((e as Error).name !== "AbortError") console.error(e);
-      });
-    return () => ctrl.abort();
-  }, []);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    fetch("/api/questions/generate-batch", { signal: ctrl.signal })
-      .then((r) => r.json())
-      .then((d) => setPendingCount(d.pendingCount ?? 0))
-      .catch((e) => {
-        if ((e as Error).name !== "AbortError") console.error(e);
-      });
-    return () => ctrl.abort();
-  }, []);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const ctrl = new AbortController();
     setLoading(true);
-    (async () => {
-      try {
-        const p = new URLSearchParams();
-        if (filters.documentId) p.set("documentId", filters.documentId);
-        if (filters.periodo) p.set("periodo", filters.periodo);
-        if (filters.categoria) p.set("categoria", filters.categoria);
-        if (filters.search) p.set("search", filters.search);
-        if (filters.entity) p.set("entity", filters.entity);
-        if (filters.yearMin) p.set("yearMin", filters.yearMin);
-        if (filters.yearMax) p.set("yearMax", filters.yearMax);
-        if (filters.sortBy) p.set("sortBy", filters.sortBy);
-        if (stateFilter !== "all") p.set("state", stateFilter);
-        p.set("includeDeliverables", "true");
-        p.set("page", String(page));
-        p.set("limit", String(LIMIT));
-        const res = await fetch(`/api/questions?${p}`, {
-          signal: ctrl.signal,
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (ctrl.signal.aborted) return;
-        setQuestions(data.questions ?? []);
-        setTotal(data.pagination?.total ?? 0);
-      } catch (e) {
-        if ((e as Error).name !== "AbortError") console.error(e);
-      } finally {
-        if (!ctrl.signal.aborted) setLoading(false);
-      }
-    })();
-    return () => ctrl.abort();
-  }, [
-    filters.documentId,
-    filters.periodo,
-    filters.categoria,
-    filters.search,
-    filters.entity,
-    filters.yearMin,
-    filters.yearMax,
-    filters.sortBy,
-    stateFilter,
-    page,
-  ]);
+    const p = new URLSearchParams({
+      page: String(page),
+      limit: "30",
+      includeStats: "true",
+      includeDeliverables: "true",
+      sortBy: "cronologico",
+    });
+    if (periodFilter) p.set("periodo", periodFilter);
+    if (search) p.set("search", search);
+    if (stateFilter !== "all") p.set("state", stateFilter);
 
-  const grouped = (() => {
-    if (filters.sortBy === "periodo" || filters.sortBy === "cronologico") {
-      const out: Record<string, Question[]> = {};
-      for (const q of questions) {
-        (out[q.periodoCode] = out[q.periodoCode] || []).push(q);
-      }
-      return out;
-    }
-    if (filters.sortBy === "categoria") {
-      const out: Record<string, Question[]> = {};
-      for (const q of questions) {
-        (out[q.categoriaCode] = out[q.categoriaCode] || []).push(q);
-      }
-      return out;
-    }
-    return null;
-  })();
+    fetch(`/api/questions?${p}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : { questions: [], pagination: { totalPages: 1 } }))
+      .then((data) => {
+        setQuestions(data.questions ?? []);
+        setStats(data.stats ?? null);
+        setTotalPages(data.pagination?.totalPages ?? 1);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
+    return () => ctrl.abort();
+  }, [page, periodFilter, search, stateFilter]);
+
+  const counts = useMemo(() => {
+    const total = stats?.totalQuestions ?? questions.length;
+    return {
+      all: total,
+      pending: stats?.byState?.pending ?? 0,
+      partial: stats?.byState?.partial ?? 0,
+      complete: stats?.byState?.complete ?? 0,
+    };
+  }, [stats, questions]);
 
   return (
-    <div className="app-page-wide">
-      {/* Hero */}
-      <header className="flex justify-between items-end mb-5 flex-wrap gap-4">
-        <div>
-          <h1
-            className="serif-title text-[36px] leading-tight m-0 text-[var(--color-ink-1000)]"
-            style={{ fontWeight: 700 }}
-          >
-            Preguntas de investigación
-          </h1>
-          <p className="text-[14px] text-[var(--fg-muted)] mt-1.5 mb-0">
-            {total > 0 ? `${total} preguntas generadas` : "Sin preguntas aún"} ·
-            taxonomía histórica colombiana
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/questions/matriz"
-            className={cn(
-              "inline-flex items-center justify-center gap-2 h-9 px-3.5 text-sm font-medium rounded-md",
-              "bg-[var(--bg-page)] text-[var(--fg-default)] border border-[var(--border-default)]",
-              "hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)]",
-              "transition-colors duration-[var(--duration-instant)]",
-            )}
-          >
-            <TableIcon className="size-4" />
-            Matriz de producción
-          </Link>
-          {pendingCount > 0 && (
-            <Tooltip content="Producir respuestas en lote para preguntas sin producción">
-              <Link
-                href="/questions/matriz"
-                className={cn(
-                  "inline-flex items-center justify-center gap-2 h-9 px-3.5 text-sm font-medium rounded-md",
-                  "bg-[var(--bg-page)] text-[var(--fg-default)] border border-[var(--border-default)]",
-                  "hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)]",
-                  "transition-colors duration-[var(--duration-instant)]",
-                )}
-              >
-                <Zap className="size-4" />
-                Producir {pendingCount} pendientes
-              </Link>
-            </Tooltip>
-          )}
-          <Link
-            href="/questions/generate"
-            className={cn(
-              "inline-flex items-center justify-center gap-2 h-9 px-3.5 text-sm font-medium rounded-md",
-              "bg-[var(--accent)] text-[var(--fg-inverted)] hover:bg-[var(--accent-hover)]",
-              "transition-colors duration-[var(--duration-instant)]",
-            )}
-          >
-            <Plus className="size-4" />
-            Generar preguntas
-          </Link>
-        </div>
-      </header>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-        <Card variant="default" size="sm">
-          <div className="text-[11px] text-[var(--fg-subtle)]">Total</div>
-          <div className="text-[22px] font-semibold text-[var(--fg-default)] tabular-nums mt-1">
-            {stats?.totalQuestions ?? 0}
-          </div>
-        </Card>
-        <Card variant="default" size="sm">
-          <div className="text-[11px] text-[var(--fg-subtle)]">Sin producción</div>
-          <div
-            className="text-[22px] font-semibold tabular-nums mt-1"
-            style={{ color: "var(--color-warning-fg)" }}
-          >
-            {stats?.byState?.pending ?? 0}
-          </div>
-        </Card>
-        <Card variant="default" size="sm">
-          <div className="text-[11px] text-[var(--fg-subtle)]">Parciales</div>
-          <div
-            className="text-[22px] font-semibold tabular-nums mt-1"
-            style={{ color: "var(--accent)" }}
-          >
-            {stats?.byState?.partial ?? 0}
-          </div>
-        </Card>
-        <Card variant="default" size="sm">
-          <div className="text-[11px] text-[var(--fg-subtle)]">Completas</div>
-          <div
-            className="text-[22px] font-semibold tabular-nums mt-1"
-            style={{ color: "var(--color-success-fg)" }}
-          >
-            {stats?.byState?.complete ?? 0}
-          </div>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card variant="default" size="sm" className="mb-4">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Input
-            placeholder="Buscar en preguntas y justificaciones…"
-            leadingIcon={<Search className="size-4" />}
-            wrapperClassName="w-[320px]"
-            value={filters.search}
-            onChange={(e) =>
-              updateFilters({ search: e.target.value, page: "1" })
-            }
-          />
-
-          <select
-            className={cn(
-              "h-9 px-3 text-sm rounded-md min-w-0",
-              "bg-[var(--bg-page)] text-[var(--fg-default)]",
-              "border border-[var(--border-default)]",
-              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
-            )}
-            style={{ width: 240 }}
-            value={filters.documentId}
-            onChange={(e) =>
-              updateFilters({ documentId: e.target.value, page: "1" })
-            }
-          >
-            <option value="">— Documento (todos) —</option>
-            {docs.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.filename}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className={cn(
-              "h-9 px-3 text-sm rounded-md",
-              "bg-[var(--bg-page)] text-[var(--fg-default)]",
-              "border border-[var(--border-default)]",
-              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
-            )}
-            style={{ width: 220 }}
-            value={filters.periodo}
-            onChange={(e) =>
-              updateFilters({ periodo: e.target.value, page: "1" })
-            }
-          >
-            <option value="">— Período (todos) —</option>
-            {PERIOD_OPTIONS.map((p) => (
-              <option key={p.code} value={p.code}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className={cn(
-              "h-9 px-3 text-sm rounded-md",
-              "bg-[var(--bg-page)] text-[var(--fg-default)]",
-              "border border-[var(--border-default)]",
-              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
-            )}
-            style={{ width: 220 }}
-            value={filters.categoria}
-            onChange={(e) =>
-              updateFilters({ categoria: e.target.value, page: "1" })
-            }
-          >
-            <option value="">— Categoría (todos) —</option>
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className={cn(
-              "h-9 px-3 text-sm rounded-md",
-              "bg-[var(--bg-page)] text-[var(--fg-default)]",
-              "border border-[var(--border-default)]",
-              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
-            )}
-            style={{ width: 260 }}
-            value={filters.entity}
-            onChange={(e) =>
-              updateFilters({ entity: e.target.value, page: "1" })
-            }
-          >
-            <option value="">— Entidad (todas) —</option>
-            {entityOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-
-          <Input
-            placeholder="Año desde"
-            wrapperClassName="w-[100px]"
-            className="font-mono"
-            value={filters.yearMin}
-            onChange={(e) =>
-              updateFilters({
-                yearMin: e.target.value.replace(/[^0-9-]/g, ""),
-                page: "1",
-              })
-            }
-          />
-          <Input
-            placeholder="Año hasta"
-            wrapperClassName="w-[100px]"
-            className="font-mono"
-            value={filters.yearMax}
-            onChange={(e) =>
-              updateFilters({
-                yearMax: e.target.value.replace(/[^0-9-]/g, ""),
-                page: "1",
-              })
-            }
-          />
-
-          <select
-            className={cn(
-              "h-9 px-3 text-sm rounded-md",
-              "bg-[var(--bg-page)] text-[var(--fg-default)]",
-              "border border-[var(--border-default)]",
-              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
-            )}
-            style={{ width: 160 }}
-            value={filters.sortBy}
-            onChange={(e) =>
-              updateFilters({ sortBy: e.target.value, page: "1" })
-            }
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-
-          {/* Segmented view switcher */}
-          <div
-            className={cn(
-              "inline-flex items-center gap-0 p-0.5 rounded-md",
-              "bg-[var(--bg-muted)] border border-[var(--border-default)]",
-            )}
-          >
+    <div className="fade-up" data-screen-label="Questions">
+      <PageHeader
+        label={`Investigación · ${counts.all} preguntas curadas`}
+        title="Preguntas"
+        italic="del corpus"
+        subtitle="Cada documento genera 6–32 preguntas guiadas. Cada pregunta puede materializarse en una o más producciones (ensayo, paper, análisis comparado…)."
+        action={
+          <div style={{ display: "flex", gap: 10 }}>
             <button
               type="button"
-              onClick={() => updateFilters({ view: "list" })}
-              aria-pressed={filters.view === "list"}
-              className={cn(
-                "inline-flex items-center justify-center size-7 rounded text-[var(--fg-muted)]",
-                "transition-colors duration-[var(--duration-instant)]",
-                "hover:text-[var(--fg-default)]",
-                filters.view === "list" &&
-                  "bg-[var(--bg-page)] text-[var(--fg-default)] shadow-[var(--elev-1)]",
-              )}
-              aria-label="Vista lista"
+              style={ghostBtn}
+              onClick={() => router.push("/questions/matriz")}
             >
-              <ListIcon className="size-4" />
+              Vista matriz
             </button>
             <button
               type="button"
-              onClick={() => updateFilters({ view: "cards" })}
-              aria-pressed={filters.view === "cards"}
-              className={cn(
-                "inline-flex items-center justify-center size-7 rounded text-[var(--fg-muted)]",
-                "transition-colors duration-[var(--duration-instant)]",
-                "hover:text-[var(--fg-default)]",
-                filters.view === "cards" &&
-                  "bg-[var(--bg-page)] text-[var(--fg-default)] shadow-[var(--elev-1)]",
-              )}
-              aria-label="Vista tarjetas"
+              style={primaryBtn}
+              onClick={() => router.push("/questions/generate")}
             >
-              <LayoutGrid className="size-4" />
+              Generar →
             </button>
           </div>
-        </div>
-      </Card>
+        }
+      />
 
-      {/* State tabs */}
-      <Tabs
-        value={stateFilter}
-        onValueChange={(k) => updateFilters({ state: k, page: "1" })}
-        className="mb-4"
-      >
-        <TabsList variant="underline">
-          <TabsTrigger value="all">
-            Todas ({stats?.byState?.all ?? 0})
-          </TabsTrigger>
-          <TabsTrigger value="pending">
-            Sin producción ({stats?.byState?.pending ?? 0})
-          </TabsTrigger>
-          <TabsTrigger value="partial">
-            Parciales ({stats?.byState?.partial ?? 0})
-          </TabsTrigger>
-          <TabsTrigger value="complete">
-            Completas ({stats?.byState?.complete ?? 0})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <hr className="hairline" style={{ margin: "0 56px" }} />
 
-      {loading ? (
-        <Card variant="default" size="md">
-          <div className="space-y-2">
-            <Skeleton variant="line" className="h-4 w-full" />
-            <Skeleton variant="line" className="h-4 w-11/12" />
-            <Skeleton variant="line" className="h-4 w-10/12" />
-            <Skeleton variant="line" className="h-4 w-full" />
-            <Skeleton variant="line" className="h-4 w-9/12" />
-            <Skeleton variant="line" className="h-4 w-11/12" />
-            <Skeleton variant="line" className="h-4 w-full" />
-            <Skeleton variant="line" className="h-4 w-10/12" />
-          </div>
-        </Card>
-      ) : questions.length === 0 ? (
-        <Card variant="default" size="md">
-          <div className="py-12 text-center">
-            <FileText className="size-10 text-[var(--fg-subtle)] mx-auto mb-3" />
-            <div className="text-[13px] text-[var(--fg-muted)]">
-              Sin preguntas con estos filtros
-            </div>
-          </div>
-        </Card>
-      ) : grouped ? (
-        <div>
-          {Object.entries(grouped).map(([code, qs]) => {
-            const isPeriod =
-              filters.sortBy === "periodo" || filters.sortBy === "cronologico";
-            const p = isPeriod ? getPeriodByCode(code) : undefined;
-            const c = !isPeriod ? getCategoryByCode(code) : undefined;
-            const colorVar = isPeriod
-              ? `var(--color-period-${periodSlug(code)})`
-              : `var(--color-category-${categorySlug(code)})`;
-            return (
-              <div key={code} className="mb-6">
-                <div
-                  className="sticky z-[2] py-3 mb-3"
-                  style={{
-                    top: 64,
-                    background: "var(--bg-page)",
-                    borderBottom: `2px solid ${colorVar}`,
-                  }}
-                >
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge
-                      variant="subtle"
-                      size="sm"
-                      style={{
-                        background: `color-mix(in oklab, ${colorVar} 12%, transparent)`,
-                        color: colorVar,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {p?.nombre || c?.nombre || code}
-                    </Badge>
-                    {p?.rango && (
-                      <span className="text-[12px] text-[var(--fg-subtle)]">
-                        {p.rango}
-                      </span>
-                    )}
-                    <span className="text-[12px] text-[var(--fg-subtle)]">
-                      {qs.length} preguntas
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 w-full">
-                  {qs.map((q) => (
-                    <QuestionRow
-                      key={q.id}
-                      question={q}
-                      view={filters.view as "list" | "cards"}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2 w-full">
-          {questions.map((q) => (
-            <QuestionRow
-              key={q.id}
-              question={q}
-              view={filters.view as "list" | "cards"}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Pagination — primitivo Crónica */}
-      <div className="flex items-center justify-between gap-3 mt-6">
-        <span className="text-[12px] text-[var(--fg-subtle)]">
-          {total.toLocaleString("es-CO")} preguntas
-        </span>
-        <Pagination
-          current={page}
-          pageSize={LIMIT}
-          total={total}
-          onChange={(p) => {
-            updateFilters({ page: String(p) });
-            window.scrollTo({ top: 0, behavior: "smooth" });
+      <section style={{ padding: "20px 56px", maxWidth: 1320 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 24,
+            flexWrap: "wrap",
           }}
-        />
-      </div>
+        >
+          <FilterTabs<StateFilter>
+            value={stateFilter}
+            onChange={(v) => {
+              setStateFilter(v);
+              setPage(1);
+            }}
+            options={[
+              { value: "all", label: `Todas · ${counts.all}` },
+              { value: "complete", label: `Completas · ${counts.complete}` },
+              { value: "partial", label: `Parciales · ${counts.partial}` },
+              { value: "pending", label: `Pendientes · ${counts.pending}` },
+            ]}
+          />
+          <SearchInput value={search} onChange={setSearch} placeholder="Buscar preguntas…" />
+        </div>
+
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 18 }}>
+          <Pill active={periodFilter === ""} onClick={() => setPeriodFilter("")}>
+            Todos los períodos
+          </Pill>
+          {(Object.keys(PERIODS) as PeriodCode[])
+            .filter((c) => c !== "TRANS")
+            .map((code) => (
+              <Pill
+                key={code}
+                active={periodFilter === code}
+                onClick={() => {
+                  setPeriodFilter(code);
+                  setPage(1);
+                }}
+              >
+                <span
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: `var(--p-${PERIODS[code].slug})`,
+                  }}
+                />
+                {code}
+              </Pill>
+            ))}
+        </div>
+      </section>
+
+      <section style={{ padding: "20px 56px 96px", maxWidth: 1320 }}>
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {loading &&
+            [0, 1, 2, 3].map((i) => (
+              <li
+                key={i}
+                style={{
+                  padding: "22px 0",
+                  borderBottom: "1px solid var(--line)",
+                }}
+              >
+                <div className="shimmer-line" style={{ height: 22, width: "70%", marginBottom: 8 }} />
+                <div className="shimmer-line" style={{ height: 12, width: "40%" }} />
+              </li>
+            ))}
+          {!loading &&
+            questions.map((q, i) => (
+              <QuestionRow key={q.id} q={q} i={i} onClick={() => router.push(`/chat?q=${encodeURIComponent(q.pregunta)}`)} />
+            ))}
+        </ul>
+
+        {!loading && questions.length === 0 && (
+          <EmptyState
+            title="Sin resultados"
+            hint="Ajusta los filtros o genera preguntas para un documento."
+            action={
+              <button
+                type="button"
+                style={primaryBtn}
+                onClick={() => router.push("/questions/generate")}
+              >
+                Generar preguntas →
+              </button>
+            }
+          />
+        )}
+
+        {totalPages > 1 && (
+          <div
+            style={{
+              marginTop: 32,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 12,
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              color: "var(--fg-muted)",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              style={{
+                appearance: "none",
+                background: "transparent",
+                border: "1px solid var(--line-strong)",
+                padding: "4px 10px",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--fg-muted)",
+                cursor: page <= 1 ? "default" : "pointer",
+                opacity: page <= 1 ? 0.4 : 1,
+              }}
+            >
+              ←
+            </button>
+            <span>
+              {page} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              style={{
+                appearance: "none",
+                background: "transparent",
+                border: "1px solid var(--line-strong)",
+                padding: "4px 10px",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--fg-muted)",
+                cursor: page >= totalPages ? "default" : "pointer",
+                opacity: page >= totalPages ? 0.4 : 1,
+              }}
+            >
+              →
+            </button>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
 
 function QuestionRow({
-  question,
-  view,
+  q,
+  i,
+  onClick,
 }: {
-  question: Question;
-  view: "list" | "cards";
+  q: Question;
+  i: number;
+  onClick: () => void;
 }) {
-  const periodColorVar = `var(--color-period-${periodSlug(question.periodoCode)})`;
-  const totalDelivs = question.deliverableCount ?? 0;
-
-  const personas = question.entidadesPersonas ?? [];
-  const lugares = question.entidadesLugares ?? [];
-  const conceptos = question.entidadesConceptos ?? [];
-  const yearsSec = question.yearsSecondary ?? [];
-  const hasEntities = personas.length + lugares.length + conceptos.length > 0;
-  const isCards = view === "cards";
-
+  const state = deriveState(q);
+  const completed = (q.deliverables ?? []).filter((d) => d.status === "COMPLETE").length;
+  const entities = [
+    ...(q.entidadesPersonas ?? []),
+    ...(q.entidadesLugares ?? []),
+    ...(q.entidadesConceptos ?? []),
+  ];
   return (
-    <Card
-      variant="default"
-      size="sm"
-      className={cn(
-        "transition-shadow hover:shadow-[var(--elev-2)]",
-        isCards ? "p-[18px]" : "p-[14px]",
-      )}
-      style={{ borderLeft: `4px solid ${periodColorVar}` }}
+    <li
+      style={{
+        borderTop: i === 0 ? "1px solid var(--line-strong)" : 0,
+        borderBottom: "1px solid var(--line)",
+      }}
     >
-      <div
-        className="flex items-start"
-        style={{ gap: isCards ? 18 : 12 }}
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          width: "100%",
+          appearance: "none",
+          background: "transparent",
+          border: 0,
+          padding: "22px 0",
+          cursor: "pointer",
+          textAlign: "left",
+          display: "grid",
+          gridTemplateColumns: "60px 1fr 180px 140px",
+          gap: 24,
+          alignItems: "baseline",
+          transition: "background 120ms var(--ease-out-custom)",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-muted)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       >
-        {/* Estampa del año principal */}
-        {question.yearPrincipal != null && (
+        <div className="mono num" style={{ fontSize: 11, color: "var(--fg-faint)" }}>
+          #{String(q.questionNumber).padStart(3, "0")}
+        </div>
+        <div style={{ minWidth: 0 }}>
           <div
-            className="shrink-0"
-            style={{ minWidth: isCards ? 72 : 56 }}
+            className="serif"
+            style={{
+              fontSize: 19,
+              color: "var(--fg)",
+              lineHeight: 1.3,
+              letterSpacing: "-0.005em",
+            }}
           >
-            <div
-              className="text-center rounded-lg font-mono"
-              style={{
-                background: `color-mix(in oklab, ${periodColorVar} 8%, transparent)`,
-                border: `1px solid color-mix(in oklab, ${periodColorVar} 20%, transparent)`,
-                padding: isCards ? "10px 8px" : "6px 6px",
-              }}
-              title="Año principal del proceso central de la pregunta"
-            >
-              <div
-                style={{
-                  fontSize: isCards ? 20 : 15,
-                  fontWeight: 700,
-                  color: periodColorVar,
-                  lineHeight: 1.1,
-                }}
-              >
-                {question.yearPrincipal}
-              </div>
-              <div
-                className="text-[var(--fg-subtle)] uppercase mt-0.5"
-                style={{
-                  fontSize: 9,
-                  letterSpacing: 0.5,
-                }}
-              >
-                {question.periodoRango || "—"}
-              </div>
-            </div>
+            {q.pregunta}
           </div>
-        )}
-
-        <div className="flex-1 min-w-0">
           <div
-            className="flex flex-col w-full"
-            style={{ gap: isCards ? 10 : 6 }}
+            style={{
+              marginTop: 8,
+              display: "flex",
+              gap: 14,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
           >
-            {/* Pregunta */}
-            <div className="flex items-baseline gap-2">
-              <span
-                className={cn(
-                  "inline-block text-center font-mono",
-                  "rounded-sm text-[var(--fg-muted)]",
-                )}
-                style={{
-                  minWidth: 26,
-                  fontSize: 11,
-                  background: "var(--bg-muted)",
-                  padding: "1px 6px",
-                  flex: "0 0 auto",
-                }}
-              >
-                {question.questionNumber}
-              </span>
-              <span
-                className="text-[var(--fg-default)]"
-                style={{
-                  fontSize: isCards ? 15 : 14,
-                  lineHeight: 1.55,
-                  fontWeight: 500,
-                }}
-              >
-                {question.pregunta}
-              </span>
-            </div>
-
-            {/* Meta */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Tooltip content={question.periodoRango}>
-                <PeriodBadge
-                  code={question.periodoCode}
-                  size="xs"
-                  variant="subtle"
-                />
-              </Tooltip>
-              <CategoryChip
-                code={question.categoriaCode}
-                size="xs"
-                variant="subtle"
-              />
-              {question.subcategoriaNombre && (
-                <Badge variant="subtle" size="xs">
-                  {question.subcategoriaNombre}
-                </Badge>
-              )}
-              {yearsSec.length > 0 && (
-                <Tooltip content="Años secundarios — antecedentes, hitos, consecuencias">
-                  <Badge
-                    variant="outline"
-                    size="xs"
-                    className="font-mono"
-                    style={{ borderStyle: "dashed" }}
-                  >
-                    + {yearsSec.join(", ")}
-                  </Badge>
-                </Tooltip>
-              )}
-            </div>
-
-            {/* Justificación */}
-            {question.justificacion && (
-              <p
-                className="text-[var(--fg-muted)] italic m-0"
-                style={{
-                  fontSize: 12.5,
-                  lineHeight: 1.55,
-                  display: "-webkit-box",
-                  WebkitLineClamp: isCards ? 3 : 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}
-              >
-                {question.justificacion}
-              </p>
-            )}
-
-            {/* Entidades */}
-            {hasEntities && (
-              <EntitiesRow
-                personas={personas}
-                lugares={lugares}
-                conceptos={conceptos}
-                compact={!isCards}
-              />
-            )}
-
-            {/* Footer */}
-            <div
-              className="flex items-center justify-between gap-2 flex-wrap mt-1 pt-2"
+            <span
+              className="mono"
               style={{
-                borderTop: "1px dashed var(--border-default)",
+                fontSize: 10.5,
+                color: "var(--fg-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
               }}
             >
-              <div className="flex items-center gap-2.5 flex-wrap">
-                {question.document && (
-                  <Tooltip content={question.document.filename}>
-                    <Link
-                      href={`/documents/${question.document.id}`}
-                      className="text-[11px] text-[var(--fg-subtle)] hover:text-[var(--fg-default)] inline-flex items-center gap-1"
-                    >
-                      <FileText className="size-3" />
-                      {question.document.filename.slice(0, 38)}
-                      {question.document.filename.length > 38 ? "…" : ""}
-                    </Link>
-                  </Tooltip>
-                )}
-                <Badge
-                  variant={totalDelivs > 0 ? "success" : "subtle"}
-                  size="xs"
-                >
-                  {totalDelivs > 0 ? (
-                    <CheckCircle2 className="size-3" />
-                  ) : (
-                    <Clock className="size-3" />
-                  )}
-                  {totalDelivs} producciones
-                </Badge>
-              </div>
-              <Link
-                href={`/questions/matriz?focus=${question.id}`}
-                className={cn(
-                  "inline-flex items-center justify-center gap-2 h-7 px-2.5 text-xs font-medium rounded-md",
-                  "bg-transparent text-[var(--fg-default)] hover:bg-[var(--bg-hover)]",
-                  "transition-colors duration-[var(--duration-instant)]",
-                )}
-              >
-                Producir →
-              </Link>
-            </div>
+              {q.periodoNombre} · {q.categoriaCode}
+            </span>
+            {entities.slice(0, 2).map((e) => (
+              <span key={e} style={{ fontSize: 11.5, color: "var(--fg-muted)" }}>
+                {e}
+              </span>
+            ))}
           </div>
         </div>
-      </div>
-    </Card>
+        <PeriodTag code={q.periodoCode} size="sm" />
+        <QState state={state} completed={completed} />
+      </button>
+    </li>
   );
 }
 
-function EntitiesRow({
-  personas,
-  lugares,
-  conceptos,
-  compact = false,
+function QState({
+  state,
+  completed,
 }: {
-  personas: string[];
-  lugares: string[];
-  conceptos: string[];
-  compact?: boolean;
+  state: "pending" | "partial" | "complete";
+  completed: number;
 }) {
-  const group = (
-    label: string,
-    icon: string,
-    items: string[],
-    colorVar: string,
-  ) => {
-    if (items.length === 0) return null;
-    return (
-      <div className="flex items-start gap-2 flex-wrap">
-        <Tooltip content={`${label} clave de la pregunta`}>
-          <span
-            className="font-semibold uppercase shrink-0 pt-[3px]"
-            style={{
-              fontSize: 10,
-              color: colorVar,
-              letterSpacing: 0.6,
-              minWidth: compact ? 60 : 72,
-            }}
-          >
-            {icon} {label}
-          </span>
-        </Tooltip>
-        <div className="flex flex-wrap gap-1 flex-1">
-          {items.map((it) => (
-            <Badge
-              key={`${label}-${it}`}
-              variant="subtle"
-              size="xs"
-              style={{
-                background: `color-mix(in oklab, ${colorVar} 12%, transparent)`,
-                border: `1px solid color-mix(in oklab, ${colorVar} 25%, transparent)`,
-                color: colorVar,
-                fontWeight: 500,
-              }}
-            >
-              {it}
-            </Badge>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div
-      className="flex flex-col w-full"
-      style={{ gap: compact ? 4 : 6 }}
-    >
-      {group("Personas", "◐", personas, "var(--color-info-fg)")}
-      {group("Lugares", "◈", lugares, "var(--color-success-fg)")}
-      {group("Conceptos", "◇", conceptos, "var(--color-warning-fg)")}
-    </div>
-  );
+  if (state === "complete") {
+    return <StatusDot kind="success" label={`${completed} producciones`} />;
+  }
+  if (state === "partial") {
+    return <StatusDot kind="warning" label={`${completed} parcial`} />;
+  }
+  return <StatusDot kind="muted" label="Pendiente" />;
 }

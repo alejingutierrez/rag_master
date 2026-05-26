@@ -2,47 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { toast } from "sonner";
 import {
-  Button,
-  IconButton,
-  Card,
-  Input,
-  Tooltip,
-  Skeleton,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogBody,
-  DialogFooter,
-  Badge,
-} from "@/components/ui";
-import { PeriodBadge } from "@/components/domain/period-badge";
-import { CategoryChip } from "@/components/domain/category-chip";
-import {
-  ArrowLeft,
-  RotateCw,
-  FileText,
-  Layers,
-  BookOpen as Read,
-  FlaskConical,
-  BookOpen,
-  Search,
-  Trash2,
-  Info,
-  AlertCircle,
-} from "lucide-react";
-import dayjs from "@/lib/dayjs-config";
-import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
-import { getPeriodByCode, getCategoryByCode } from "@/lib/taxonomy";
-import { safeGet, safeSet } from "@/lib/safe-storage";
-import { cn } from "@/lib/cn";
+  FilterTabs,
+  SearchInput,
+  PeriodTag,
+  StatusDot,
+  SectionHeader,
+  linkBtn,
+  ghostBtn,
+} from "@/components/editorial";
+import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 
 interface Chunk {
   id: string;
@@ -52,7 +21,21 @@ interface Chunk {
   chunkSize: number;
   overlap: number;
   strategy: string;
-  metadata: Record<string, unknown>;
+}
+
+interface EnrichmentMetadata {
+  bookTitle?: string;
+  author?: string;
+  publicationYear?: number | string;
+  publisher?: string;
+  isbn?: string;
+  edition?: string;
+  summary?: string;
+  primaryPeriod?: string;
+  secondaryPeriod?: string;
+  primaryCategory?: string;
+  secondaryCategory?: string;
+  keywords?: string[];
 }
 
 interface DocumentDetail {
@@ -61,7 +44,7 @@ interface DocumentDetail {
   s3Url: string;
   fileSize: number;
   pageCount: number;
-  status: string;
+  status: "PENDING" | "PROCESSING" | "READY" | "ERROR";
   enriched: boolean;
   metadata: EnrichmentMetadata;
   error?: string;
@@ -71,14 +54,23 @@ interface DocumentDetail {
 }
 
 function formatBytes(n: number) {
+  if (!n) return "—";
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / 1024 / 1024).toFixed(2)} MB`;
+  return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-function periodSlugify(code: string): string {
-  return code.toLowerCase().replace(/_/g, "-");
-}
+type Tab = "overview" | "chunks" | "metadata";
+
+const STATUS_MAP: Record<
+  DocumentDetail["status"],
+  { kind: "success" | "warning" | "danger" | "muted"; label: string }
+> = {
+  READY: { kind: "success", label: "Listo" },
+  PROCESSING: { kind: "warning", label: "Procesando" },
+  PENDING: { kind: "muted", label: "Pendiente" },
+  ERROR: { kind: "danger", label: "Error" },
+};
 
 export default function DocumentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -86,69 +78,50 @@ export default function DocumentDetailPage() {
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [reprocessing, setReprocessing] = useState(false);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("overview");
-  const [readingMode, setReadingMode] = useState<"by-page" | "continuous">(() =>
-    safeGet<"by-page" | "continuous">("rag-master-reading-mode", "by-page"),
-  );
-  const [reprocessOpen, setReprocessOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const updateReadingMode = (m: "by-page" | "continuous") => {
-    setReadingMode(m);
-    safeSet("rag-master-reading-mode", m);
-  };
+  const [tab, setTab] = useState<Tab>("overview");
 
   useEffect(() => {
+    if (!id) return;
     const ctrl = new AbortController();
-    async function fetchDoc() {
+    let cancelled = false;
+    const load = async () => {
       try {
         const res = await fetch(`/api/documents/${id}`, { signal: ctrl.signal });
         if (res.status === 404) {
-          setNotFound(true);
+          if (!cancelled) setNotFound(true);
           return;
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setDoc(data.document);
+        if (!cancelled) setDoc(data.document);
       } catch (e) {
         if ((e as Error).name !== "AbortError") console.error(e);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    }
-    fetchDoc();
-    return () => ctrl.abort();
-  }, [id]);
+    };
 
-  // Polling con backoff exponencial
-  useEffect(() => {
-    if (doc?.status !== "PROCESSING") return;
-    let cancelled = false;
+    load();
+
     let delay = 3000;
-    let tid: ReturnType<typeof setTimeout>;
+    let tid: ReturnType<typeof setTimeout> | null = null;
     const tick = async () => {
       if (cancelled) return;
-      try {
-        const res = await fetch(`/api/documents/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (!cancelled) setDoc(data.document);
-        }
-      } catch {
-        /* retry */
-      }
+      await load();
+      // backoff suave
       delay = Math.min(delay * 1.3, 15000);
-      tid = setTimeout(tick, delay);
+      if (doc?.status === "PROCESSING") tid = setTimeout(tick, delay);
     };
-    tid = setTimeout(tick, delay);
+    if (doc?.status === "PROCESSING") tid = setTimeout(tick, delay);
+
     return () => {
       cancelled = true;
-      clearTimeout(tid);
+      ctrl.abort();
+      if (tid) clearTimeout(tid);
     };
-  }, [doc?.status, id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, doc?.status]);
 
   const filteredChunks = useMemo(() => {
     if (!doc) return [];
@@ -157,697 +130,341 @@ export default function DocumentDetailPage() {
     return doc.chunks.filter((c) => c.content.toLowerCase().includes(q));
   }, [doc, search]);
 
-  const chunksByPage = useMemo(() => {
-    if (!doc) return [];
-    const map = new Map<number, Chunk[]>();
-    for (const c of doc.chunks) {
-      const arr = map.get(c.pageNumber) ?? [];
-      arr.push(c);
-      map.set(c.pageNumber, arr);
-    }
-    return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
-  }, [doc]);
-
-  const handleConfirmReprocess = async () => {
-    setReprocessing(true);
-    try {
-      await fetch(`/api/documents/${id}/reprocess`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chunkSize: 2000, chunkOverlap: 500, strategy: "FIXED" }),
-      });
-      const res = await fetch(`/api/documents/${id}`);
-      const data = await res.json();
-      setDoc(data.document);
-      toast.success("Reprocesamiento iniciado");
-      setReprocessOpen(false);
-    } catch {
-      toast.error("Error al reprocesar");
-    } finally {
-      setReprocessing(false);
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    setDeleting(true);
-    try {
-      await fetch(`/api/documents/${id}`, { method: "DELETE" });
-      toast.success("Documento eliminado");
-      router.push("/documents");
-    } catch {
-      toast.error("Error al eliminar");
-      setDeleting(false);
-    }
-  };
-
-  if (loading) {
+  if (notFound) {
     return (
-      <div className="max-w-[var(--container-default)] mx-auto px-8 py-8">
-        <Skeleton variant="line" className="h-6 w-24 mb-4" />
-        <Skeleton variant="block" className="h-[200px] w-full mb-4" />
-        <Skeleton variant="line" className="h-4 w-full mb-2" />
-        <Skeleton variant="line" className="h-4 w-11/12 mb-2" />
-        <Skeleton variant="line" className="h-4 w-10/12 mb-2" />
-        <Skeleton variant="line" className="h-4 w-full" />
-      </div>
-    );
-  }
-
-  if (notFound || !doc) {
-    return (
-      <div className="max-w-[var(--container-default)] mx-auto px-8 py-8">
-        <div className="py-12 text-center">
-          <FileText className="size-12 text-[var(--fg-subtle)] mx-auto mb-4" />
-          <h2
-            className="serif-title text-[20px] mb-2 text-[var(--color-ink-1000)]"
-            style={{ fontWeight: 600 }}
-          >
-            Documento no encontrado
-          </h2>
-          <p className="text-[13px] text-[var(--fg-muted)] mb-4">
-            Este documento puede haber sido eliminado o no existe.
-          </p>
-          <Link href="/documents">
-            <Button variant="primary" leadingIcon={<ArrowLeft className="size-4" />}>
-              Ver todos los documentos
-            </Button>
-          </Link>
+      <div className="fade-up" style={{ padding: "96px 56px", maxWidth: 760 }}>
+        <div className="label" style={{ marginBottom: 16 }}>
+          404
         </div>
-      </div>
-    );
-  }
-
-  const display = getDocumentDisplayName(doc);
-  const periodCode = doc.metadata?.primaryPeriod;
-  const period = periodCode ? getPeriodByCode(periodCode) : undefined;
-  const categoryCode = doc.metadata?.primaryCategory;
-  const category = categoryCode ? getCategoryByCode(categoryCode) : undefined;
-  const periodSlug = periodCode ? periodSlugify(periodCode) : undefined;
-
-  return (
-    <div className="max-w-[var(--container-default)] mx-auto px-8 py-8">
-      <Button
-        variant="ghost"
-        size="sm"
-        leadingIcon={<ArrowLeft className="size-4" />}
-        className="mb-4"
-        onClick={() => {
-          if (typeof window !== "undefined" && window.history.length > 1) router.back();
-          else router.push("/documents");
-        }}
-      >
-        Volver
-      </Button>
-
-      {/* Hero card */}
-      <Card
-        variant="default"
-        size="md"
-        className="mb-5 relative overflow-hidden"
-        style={
-          periodSlug
-            ? { boxShadow: `inset 4px 0 0 var(--color-period-${periodSlug})` }
-            : undefined
-        }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-          <div className="md:col-span-2">
-            <div className="flex items-start gap-4">
-              <div
-                className="size-16 rounded-xl flex items-center justify-center shrink-0"
-                style={{
-                  background: periodSlug
-                    ? `color-mix(in oklab, var(--color-period-${periodSlug}) 12%, transparent)`
-                    : "var(--bg-muted)",
-                  color: periodSlug
-                    ? `var(--color-period-${periodSlug})`
-                    : "var(--fg-muted)",
-                }}
-              >
-                <FileText className="size-7" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h1
-                  className="serif-title text-[24px] leading-tight mb-1 text-[var(--color-ink-1000)]"
-                  style={{ fontWeight: 700 }}
-                >
-                  {display}
-                </h1>
-                {doc.metadata?.bookTitle && doc.filename !== doc.metadata.bookTitle && (
-                  <div className="text-[12px] font-mono text-[var(--fg-subtle)] mt-1 truncate">
-                    {doc.filename}
-                  </div>
-                )}
-                {doc.metadata?.author && (
-                  <div className="text-[14px] text-[var(--fg-muted)] mt-1.5">
-                    {doc.metadata.author}
-                    {doc.metadata.publicationYear && <> · {doc.metadata.publicationYear}</>}
-                    {doc.metadata.publisher && <> · {doc.metadata.publisher}</>}
-                  </div>
-                )}
-                <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                  {period && (
-                    <PeriodBadge code={period.code} size="sm" showYears />
-                  )}
-                  {category && <CategoryChip code={category.code} size="sm" />}
-                  {doc.enriched && (
-                    <Badge variant="tinta" size="sm">
-                      ✓ Enriquecido
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-start justify-start md:justify-end gap-2">
-            <Link href={`/enrich?docId=${doc.id}`}>
-              <Button
-                variant="secondary"
-                size="sm"
-                leadingIcon={<FlaskConical className="size-3.5" />}
-              >
-                Enriquecer
-              </Button>
-            </Link>
-            <Link href={`/questions?documentId=${doc.id}`}>
-              <Button
-                variant="secondary"
-                size="sm"
-                leadingIcon={<BookOpen className="size-3.5" />}
-              >
-                Ver preguntas
-              </Button>
-            </Link>
-            <Button
-              variant="secondary"
-              size="sm"
-              leadingIcon={<RotateCw className="size-3.5" />}
-              isLoading={reprocessing}
-              onClick={() => setReprocessOpen(true)}
-              disabled={doc.status === "PROCESSING"}
-            >
-              Reprocesar
-            </Button>
-            <Button
-              variant="danger-outline"
-              size="sm"
-              leadingIcon={<Trash2 className="size-3.5" />}
-              onClick={() => setDeleteOpen(true)}
-            >
-              Eliminar
-            </Button>
-          </div>
-        </div>
-
-        {doc.error && (
-          <div className="mt-4 p-3 rounded-md border border-[var(--color-danger-fg)]/40 bg-[var(--color-danger-bg)] flex items-start gap-2.5">
-            <AlertCircle className="size-4 text-[var(--color-danger-fg)] mt-0.5 shrink-0" />
-            <div className="text-[13px] text-[var(--color-danger-fg)]">{doc.error}</div>
-          </div>
-        )}
-
-        {doc.status === "PROCESSING" && (
-          <div className="mt-4 p-3 rounded-md border border-[var(--color-info-fg)]/30 bg-[var(--color-info-bg)] flex items-start gap-2.5">
-            <Info className="size-4 text-[var(--color-info-fg)] mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <div className="text-[13px] font-medium text-[var(--color-info-fg)]">
-                Procesamiento en curso
-              </div>
-              <div className="text-[12px] text-[var(--color-info-fg)]/85 mt-0.5">
-                Los chunks y embeddings se están generando. La página se actualizará
-                automáticamente.
-              </div>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <StatTile icon={Read} label="Páginas" value={String(doc.pageCount)} />
-        <StatTile icon={Layers} label="Chunks" value={String(doc.chunks.length)} />
-        <StatTile label="Tamaño" value={formatBytes(doc.fileSize)} />
-        <StatTile label="Cargado" value={dayjs(doc.createdAt).format("DD MMM YY")} />
-      </div>
-
-      {/* Tabs */}
-      <Card variant="default" size="md">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList variant="underline">
-            <TabsTrigger value="overview" variant="underline">
-              <Info className="size-3.5" /> Resumen
-            </TabsTrigger>
-            {doc.chunks.length > 0 && (
-              <>
-                <TabsTrigger value="reading" variant="underline">
-                  <Read className="size-3.5" /> Lectura inmersiva
-                </TabsTrigger>
-                <TabsTrigger value="chunks" variant="underline">
-                  <Layers className="size-3.5" /> Chunks
-                  <Badge variant="subtle" size="xs" className="ml-1">
-                    {doc.chunks.length}
-                  </Badge>
-                </TabsTrigger>
-              </>
-            )}
-          </TabsList>
-
-          <TabsContent value="overview">
-            <OverviewTab doc={doc} />
-          </TabsContent>
-
-          {doc.chunks.length > 0 && (
-            <>
-              <TabsContent value="reading">
-                <ReadingTab
-                  chunksByPage={chunksByPage}
-                  mode={readingMode}
-                  onModeChange={updateReadingMode}
-                />
-              </TabsContent>
-              <TabsContent value="chunks">
-                <ChunksTab chunks={filteredChunks} search={search} onSearch={setSearch} />
-              </TabsContent>
-            </>
-          )}
-        </Tabs>
-      </Card>
-
-      {/* Reprocess dialog */}
-      <Dialog
-        open={reprocessOpen}
-        onOpenChange={(open) => {
-          if (!open && !reprocessing) setReprocessOpen(false);
-        }}
-      >
-        <DialogContent size="sm">
-          <DialogHeader>
-            <DialogTitle>Reprocesar documento</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <p className="text-[14px] leading-relaxed text-[var(--fg-default)]">
-              Esto regenera todos los chunks y embeddings. Las preguntas ya generadas se
-              mantienen pero las citas pueden cambiar.
-            </p>
-          </DialogBody>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setReprocessOpen(false)}
-              disabled={reprocessing}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleConfirmReprocess}
-              isLoading={reprocessing}
-            >
-              Reprocesar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete dialog */}
-      <Dialog
-        open={deleteOpen}
-        onOpenChange={(open) => {
-          if (!open && !deleting) setDeleteOpen(false);
-        }}
-      >
-        <DialogContent size="sm">
-          <DialogHeader>
-            <DialogTitle>Eliminar documento</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <div className="flex items-start gap-3">
-              <AlertCircle className="size-5 text-[var(--color-danger-fg)] mt-0.5 shrink-0" />
-              <p className="text-[14px] leading-relaxed text-[var(--fg-default)]">
-                ¿Eliminar este documento y todos sus chunks y preguntas? Esta acción no se
-                puede deshacer.
-              </p>
-            </div>
-          </DialogBody>
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setDeleteOpen(false)}
-              disabled={deleting}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleConfirmDelete}
-              isLoading={deleting}
-            >
-              Eliminar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-/* ─── Stat tile ──────────────────────────────────────────────────────────── */
-
-function StatTile({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon?: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-lg p-4">
-      <div className="flex items-center gap-2 text-[12px] text-[var(--fg-subtle)]">
-        {Icon && <Icon className="size-3.5" />}
-        {label}
-      </div>
-      <div
-        className="text-[20px] font-semibold text-[var(--fg-default)] mt-1 tabular-nums"
-        style={{ fontFamily: "var(--font-serif)" }}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Overview tab ───────────────────────────────────────────────────────── */
-
-function OverviewTab({ doc }: { doc: DocumentDetail }) {
-  const m = doc.metadata ?? {};
-  const summary = typeof m.summary === "string" ? m.summary : null;
-  const keywords = Array.isArray(m.keywords) ? m.keywords : [];
-
-  return (
-    <div>
-      {summary ? (
-        <div className="mb-5 p-5 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border-default)]">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
-            Resumen
-          </div>
-          <p
-            className="mt-2 text-[15px] leading-relaxed text-[var(--fg-default)]"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            {summary}
-          </p>
-        </div>
-      ) : (
-        <div className="mb-5 p-3 rounded-md border border-[var(--color-info-fg)]/30 bg-[var(--color-info-bg)] flex items-start gap-2.5">
-          <Info className="size-4 text-[var(--color-info-fg)] mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <div className="text-[13px] font-medium text-[var(--color-info-fg)]">Sin resumen</div>
-            <div className="text-[12px] text-[var(--color-info-fg)]/85 mt-0.5">
-              Este documento aún no está enriquecido.{" "}
-              <Link
-                href={`/enrich?docId=${doc.id}`}
-                className="underline hover:no-underline font-medium"
-              >
-                Enriquecer ahora
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card variant="outline" size="sm">
-          <h3 className="text-[13px] font-semibold text-[var(--fg-default)] mb-3">
-            Bibliografía
-          </h3>
-          <MetaList
-            items={[
-              ["Autor", m.author],
-              ["Título", m.bookTitle],
-              ["ISBN", m.isbn],
-              ["Editorial", m.publisher],
-              ["Año", m.publicationYear],
-              ["Edición", m.edition],
-              ["Páginas", m.pageCount],
-            ]}
-          />
-        </Card>
-        <Card variant="outline" size="sm">
-          <h3 className="text-[13px] font-semibold text-[var(--fg-default)] mb-3">
-            Clasificación
-          </h3>
-          <MetaList
-            items={[
-              ["Periodo primario", m.primaryPeriod && getPeriodByCode(m.primaryPeriod)?.nombre],
-              [
-                "Periodo secundario",
-                m.secondaryPeriod && getPeriodByCode(m.secondaryPeriod)?.nombre,
-              ],
-              [
-                "Categoría primaria",
-                m.primaryCategory && getCategoryByCode(m.primaryCategory)?.nombre,
-              ],
-              [
-                "Categoría secundaria",
-                m.secondaryCategory && getCategoryByCode(m.secondaryCategory)?.nombre,
-              ],
-            ]}
-          />
-          {keywords.length > 0 && (
-            <div className="mt-3">
-              <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
-                Palabras clave
-              </div>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {keywords.map((k) => (
-                  <Badge key={k} variant="subtle" size="xs">
-                    {k}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function MetaList({
-  items,
-}: {
-  items: Array<[string, string | number | undefined | null]>;
-}) {
-  const filtered = items.filter(([, v]) => v !== undefined && v !== null && v !== "");
-  if (filtered.length === 0)
-    return <div className="text-[13px] text-[var(--fg-subtle)]">Sin información.</div>;
-  return (
-    <div className="flex flex-col gap-1.5">
-      {filtered.map(([k, v]) => (
-        <div
-          key={k}
-          className="grid gap-2 text-[13px]"
-          style={{ gridTemplateColumns: "140px 1fr" }}
-        >
-          <div className="text-[12px] text-[var(--fg-muted)]">{k}</div>
-          <div className="text-[var(--fg-default)]">{v}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ─── Reading tab ────────────────────────────────────────────────────────── */
-
-function ReadingTab({
-  chunksByPage,
-  mode,
-  onModeChange,
-}: {
-  chunksByPage: Array<[number, Chunk[]]>;
-  mode: "by-page" | "continuous";
-  onModeChange: (m: "by-page" | "continuous") => void;
-}) {
-  if (chunksByPage.length === 0) {
-    return (
-      <div className="py-12 text-center">
-        <FileText className="size-10 text-[var(--fg-subtle)] mx-auto mb-3" />
-        <div className="text-[13px] text-[var(--fg-muted)]">Sin chunks generados</div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <Tabs value={mode} onValueChange={(v) => onModeChange(v as "by-page" | "continuous")}>
-          <TabsList variant="segmented">
-            <TabsTrigger value="by-page" variant="segmented">
-              Por página
-            </TabsTrigger>
-            <TabsTrigger value="continuous" variant="segmented">
-              Continuo
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <span className="text-[12px] text-[var(--fg-muted)]">
-          {chunksByPage.length} página{chunksByPage.length !== 1 ? "s" : ""} con chunks
-        </span>
-      </div>
-
-      {mode === "continuous" ? (
-        <div className="prose-academic max-w-[760px] mx-auto">
-          {chunksByPage.map(([p, chunks]) => (
-            <div key={p}>
-              <div className="flex items-center gap-3 my-8">
-                <div className="h-px flex-1 bg-[var(--border-default)]" />
-                <Badge variant="subtle" size="xs" className="font-mono">
-                  Página {p}
-                </Badge>
-                <div className="h-px flex-1 bg-[var(--border-default)]" />
-              </div>
-              {chunks.map((c) => (
-                <p key={c.id}>{c.content}</p>
-              ))}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="max-w-[820px] mx-auto space-y-3">
-          {chunksByPage.map(([p, chunks]) => (
-            <Card key={p} variant="outline" size="sm">
-              <header className="flex items-center gap-2 mb-2 pb-2 border-b border-[var(--border-default)]">
-                <Badge variant="subtle" size="xs" className="font-mono">
-                  Página {p}
-                </Badge>
-                <span className="text-[11px] text-[var(--fg-subtle)]">
-                  {chunks.length} chunk{chunks.length !== 1 ? "s" : ""}
-                </span>
-              </header>
-              <div className="prose-academic max-w-full">
-                {chunks.map((c) => (
-                  <p key={c.id} className="mb-3 last:mb-0">
-                    {c.content}
-                  </p>
-                ))}
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─── Chunks tab ─────────────────────────────────────────────────────────── */
-
-function ChunksTab({
-  chunks,
-  search,
-  onSearch,
-}: {
-  chunks: Chunk[];
-  search: string;
-  onSearch: (v: string) => void;
-}) {
-  return (
-    <div>
-      <Input
-        wrapperClassName="max-w-[480px] mb-4"
-        placeholder="Buscar dentro de chunks…"
-        leadingIcon={<Search />}
-        value={search}
-        onChange={(e) => onSearch(e.target.value)}
-      />
-      {chunks.length === 0 ? (
-        <div className="py-12 text-center">
-          <Search className="size-10 text-[var(--fg-subtle)] mx-auto mb-3" />
-          <div className="text-[13px] text-[var(--fg-muted)]">
-            {search ? "Sin coincidencias" : "Sin chunks"}
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2.5">
-          {chunks.map((c) => (
-            <Card key={c.id} variant="outline" size="sm">
-              <header className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-[var(--border-default)]">
-                <div className="text-[12px] font-medium text-[var(--fg-muted)]">
-                  Chunk {c.chunkIndex + 1}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Badge variant="subtle" size="xs" className="font-mono">
-                    #{c.chunkIndex}
-                  </Badge>
-                  <Badge variant="subtle" size="xs" className="font-mono">
-                    p. {c.pageNumber}
-                  </Badge>
-                  <Badge variant="subtle" size="xs">
-                    {c.chunkSize} ch
-                  </Badge>
-                </div>
-              </header>
-              <ChunkContent text={c.content} query={search} />
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ChunkContent({ text, query }: { text: string; query: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const isLong = text.length > 600;
-  const visible = !isLong || expanded ? text : `${text.slice(0, 600).trimEnd()}…`;
-
-  return (
-    <div>
-      <p
-        className={cn(
-          "leading-relaxed text-[14px] text-[var(--fg-default)] whitespace-pre-wrap",
-        )}
-        style={{ fontFamily: "var(--font-serif)" }}
-      >
-        <Highlight text={visible} query={query} />
-      </p>
-      {isLong && (
+        <h1 className="display" style={{ fontSize: 56, margin: 0 }}>
+          Documento no encontrado.
+        </h1>
         <button
           type="button"
-          onClick={() => setExpanded((e) => !e)}
-          className="mt-2 text-[12px] text-[var(--accent)] hover:underline font-medium"
+          onClick={() => router.push("/documents")}
+          style={{ ...ghostBtn, marginTop: 28 }}
         >
-          {expanded ? "Mostrar menos" : "Mostrar más"}
+          ← Volver a documentos
         </button>
-      )}
-    </div>
-  );
-}
+      </div>
+    );
+  }
 
-function Highlight({ text, query }: { text: string; query: string }) {
-  if (!query) return <>{text}</>;
-  const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "ig");
-  const parts = text.split(re);
+  if (loading || !doc) {
+    return (
+      <div className="fade-up" style={{ padding: "96px 56px", maxWidth: 760 }}>
+        <div className="shimmer-line" style={{ height: 16, width: 200, marginBottom: 24 }} />
+        <div className="shimmer-line" style={{ height: 48, width: "80%", marginBottom: 16 }} />
+        <div className="shimmer-line" style={{ height: 48, width: "60%" }} />
+      </div>
+    );
+  }
+
+  const m = doc.metadata ?? {};
+  const title = m.bookTitle?.trim() || doc.filename.replace(/\.pdf$/i, "");
+  const periodCode = m.primaryPeriod && m.primaryPeriod in PERIODS ? (m.primaryPeriod as PeriodCode) : null;
+  const status = STATUS_MAP[doc.status];
+
   return (
-    <>
-      {parts.map((p, i) =>
-        re.test(p) ? (
-          <mark
-            key={i}
+    <div className="fade-up" style={{ paddingBottom: 96 }} data-screen-label="DocumentDetail">
+      <section style={{ padding: "32px 56px 12px", maxWidth: 1320 }}>
+        <button
+          type="button"
+          onClick={() => router.push("/documents")}
+          style={{ ...linkBtn, fontSize: 12 }}
+        >
+          ← Documentos
+        </button>
+      </section>
+
+      <section style={{ padding: "16px 56px 32px", maxWidth: 1320 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            marginBottom: 18,
+            flexWrap: "wrap",
+          }}
+        >
+          {periodCode && <PeriodTag code={periodCode} showName />}
+          {periodCode && <span style={{ color: "var(--fg-dim)" }}>·</span>}
+          <StatusDot kind={status.kind} label={status.label} />
+          {doc.enriched && (
+            <>
+              <span style={{ color: "var(--fg-dim)" }}>·</span>
+              <span
+                className="mono"
+                style={{
+                  fontSize: 11,
+                  color: "var(--accent)",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Enriquecido
+              </span>
+            </>
+          )}
+        </div>
+
+        <h1
+          className="display"
+          style={{
+            fontSize: "clamp(40px, 5.5vw, 72px)",
+            margin: 0,
+            color: "var(--fg)",
+            lineHeight: 1.05,
+            letterSpacing: "-0.025em",
+            maxWidth: 1000,
+          }}
+        >
+          {title}
+        </h1>
+        {m.author && (
+          <div
+            className="serif"
             style={{
-              background: "color-mix(in oklab, var(--color-warning-fg) 25%, transparent)",
-              color: "var(--fg-default)",
-              padding: "0 2px",
-              borderRadius: 2,
+              fontSize: 19,
+              color: "var(--fg-muted)",
+              marginTop: 16,
+              fontStyle: "italic",
             }}
           >
-            {p}
-          </mark>
-        ) : (
-          <span key={i}>{p}</span>
-        ),
+            {m.author}
+            {m.publicationYear && ` · ${m.publicationYear}`}
+          </div>
+        )}
+
+        <div
+          style={{
+            marginTop: 40,
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 0,
+            borderTop: "1px solid var(--line)",
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          {[
+            ["Páginas", doc.pageCount.toString()],
+            ["Fragmentos", doc.chunks.length.toLocaleString("es-CO")],
+            ["Tamaño", formatBytes(doc.fileSize)],
+            [
+              "Subido",
+              new Date(doc.createdAt).toLocaleDateString("es-CO", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              }),
+            ],
+          ].map(([l, v], i) => (
+            <div
+              key={i}
+              style={{
+                padding: "20px 24px 20px 0",
+                borderLeft: i === 0 ? 0 : "1px solid var(--line)",
+                paddingLeft: i === 0 ? 0 : 24,
+              }}
+            >
+              <div className="label" style={{ marginBottom: 8 }}>
+                {l}
+              </div>
+              <div
+                className="display num"
+                style={{ fontSize: 22, color: "var(--fg)", lineHeight: 1 }}
+              >
+                {v}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ padding: "0 56px", maxWidth: 1320 }}>
+        <FilterTabs<Tab>
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "overview", label: "Resumen" },
+            {
+              value: "chunks",
+              label: `Fragmentos · ${doc.chunks.length.toLocaleString("es-CO")}`,
+            },
+            { value: "metadata", label: "Metadata" },
+          ]}
+        />
+      </section>
+
+      {tab === "overview" && (
+        <section
+          style={{
+            padding: "44px 56px 0",
+            maxWidth: 1320,
+            display: "grid",
+            gridTemplateColumns: "1.4fr 1fr",
+            gap: 64,
+          }}
+        >
+          <div>
+            <SectionHeader
+              title="Resumen historiográfico"
+              caption="Generado a partir del enriquecimiento"
+            />
+            <p
+              className="serif"
+              style={{
+                fontSize: 18,
+                color: "var(--fg)",
+                lineHeight: 1.65,
+                maxWidth: 640,
+              }}
+            >
+              {m.summary ?? "Sin resumen aún. Enriquece este documento para generar uno automáticamente."}
+            </p>
+          </div>
+          <div>
+            <SectionHeader
+              title="Palabras clave"
+              caption={`${m.keywords?.length ?? 0} extraídas`}
+            />
+            {m.keywords && m.keywords.length > 0 ? (
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {m.keywords.slice(0, 12).map((kw, i) => (
+                  <li
+                    key={i}
+                    style={{
+                      borderTop: i === 0 ? 0 : "1px solid var(--line)",
+                      padding: "12px 0",
+                    }}
+                  >
+                    <span className="serif" style={{ fontSize: 15, color: "var(--fg)" }}>
+                      {kw}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p style={{ fontSize: 13, color: "var(--fg-muted)" }}>—</p>
+            )}
+          </div>
+        </section>
       )}
-    </>
+
+      {tab === "chunks" && (
+        <section style={{ padding: "44px 56px 0", maxWidth: 1320 }}>
+          <div style={{ marginBottom: 24 }}>
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Buscar en fragmentos…"
+              width={420}
+            />
+          </div>
+          <div className="label" style={{ marginBottom: 18 }}>
+            Mostrando {filteredChunks.length.toLocaleString("es-CO")} de{" "}
+            {doc.chunks.length.toLocaleString("es-CO")} fragmentos
+          </div>
+          {filteredChunks.slice(0, 30).map((c, i) => (
+            <div
+              key={c.id}
+              style={{
+                borderTop: i === 0 ? "1px solid var(--line-strong)" : "1px solid var(--line)",
+                padding: "24px 0",
+                display: "grid",
+                gridTemplateColumns: "120px 1fr",
+                gap: 48,
+                alignItems: "baseline",
+                maxWidth: 1100,
+              }}
+            >
+              <div>
+                <div
+                  className="display num"
+                  style={{ fontSize: 24, color: "var(--fg)", lineHeight: 1 }}
+                >
+                  p.{c.pageNumber}
+                </div>
+                <div
+                  className="mono"
+                  style={{
+                    fontSize: 10,
+                    color: "var(--fg-faint)",
+                    marginTop: 6,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  Fragmento {String(c.chunkIndex).padStart(4, "0")}
+                </div>
+              </div>
+              <div
+                className="serif"
+                style={{
+                  fontSize: 17,
+                  lineHeight: 1.6,
+                  color: "var(--fg)",
+                }}
+              >
+                {c.content.slice(0, 600)}
+                {c.content.length > 600 && "…"}
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {tab === "metadata" && (
+        <section style={{ padding: "44px 56px 0", maxWidth: 760 }}>
+          <dl style={{ margin: 0 }}>
+            {[
+              ["ID", doc.id],
+              ["Filename", doc.filename],
+              ["Autor", m.author ?? "—"],
+              ["Año", m.publicationYear ?? "—"],
+              ["Editorial", m.publisher ?? "—"],
+              ["ISBN", m.isbn ?? "—"],
+              ["Edición", m.edition ?? "—"],
+              [
+                "Período",
+                periodCode ? `${periodCode} · ${PERIODS[periodCode].label}` : "—",
+              ],
+              ["Período secundario", m.secondaryPeriod ?? "—"],
+              ["Categoría", m.primaryCategory ?? "—"],
+              [
+                "Chunks",
+                `${doc.chunks.length.toLocaleString("es-CO")} fragmentos`,
+              ],
+              ["Embedding", "Cohere embed-v4.0"],
+            ].map(([k, v], i) => (
+              <div
+                key={i}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "200px 1fr",
+                  gap: 24,
+                  padding: "14px 0",
+                  borderTop: "1px solid var(--line)",
+                }}
+              >
+                <dt className="label" style={{ alignSelf: "baseline" }}>
+                  {k}
+                </dt>
+                <dd
+                  style={{
+                    margin: 0,
+                    fontSize: 14,
+                    color: "var(--fg)",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {String(v ?? "—")}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+    </div>
   );
 }

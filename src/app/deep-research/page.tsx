@@ -1,44 +1,23 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Rocket,
-  Search,
-  Lightbulb,
-  Zap,
-  BookOpen,
-  FileSearch,
-  Calendar,
-  Users,
-  History,
-  FlaskConical,
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-  Circle,
-  XCircle,
-} from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+  Fragment,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Button,
-  Card,
-  Textarea,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  Badge,
-  Tooltip,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Skeleton,
-  Separator,
-} from "@/components/ui";
-import { cn } from "@/lib/cn";
+  PageHeader,
+  SectionHeader,
+  FilterTabs,
+  Pill,
+  primaryBtn,
+} from "@/components/editorial";
+import { Cita } from "@/components/editorial/cita";
 
 interface Subquery {
   query: string;
@@ -56,7 +35,7 @@ interface ChunkMeta {
 }
 
 interface ResearchPlan {
-  thinking: string;
+  thinking?: string;
   scope: string;
   entities: {
     personas: string[];
@@ -68,16 +47,18 @@ interface ResearchPlan {
   subqueries: string[];
 }
 
+type Stage =
+  | "planning"
+  | "executing"
+  | "fusing"
+  | "synthesizing"
+  | "annexes"
+  | "persisting"
+  | "complete"
+  | "error";
+
 interface DeepResearchMetadata {
-  stage:
-    | "planning"
-    | "executing"
-    | "fusing"
-    | "synthesizing"
-    | "annexes"
-    | "persisting"
-    | "complete"
-    | "error";
+  stage: Stage;
   message?: string;
   plan?: ResearchPlan;
   subqueriesProgress?: Subquery[];
@@ -98,16 +79,31 @@ interface DeepResearchData {
   modelUsed: string;
 }
 
+const STAGES: { key: Stage; label: string; desc: string }[] = [
+  { key: "planning", label: "Planificación", desc: "Claude Opus diseña el plan: entidades, sub-consultas, temporalidad." },
+  { key: "executing", label: "Ejecución", desc: "Se lanzan sub-consultas en paralelo contra el corpus." },
+  { key: "fusing", label: "Fusión", desc: "Chunks deduplicados y rerankeados por relevancia agregada." },
+  { key: "synthesizing", label: "Síntesis", desc: "Paper académico con citas inline obligatorias." },
+  { key: "annexes", label: "Anexos", desc: "Cronología, bibliografía APA y aparato crítico." },
+  { key: "complete", label: "Listo", desc: "Paper publicado." },
+];
+
+const STAGE_INDEX: Record<Stage, number> = {
+  planning: 0,
+  executing: 1,
+  fusing: 2,
+  synthesizing: 3,
+  annexes: 4,
+  persisting: 4,
+  complete: 5,
+  error: 0,
+};
+
+type Tab = "paper" | "plan" | "subqueries" | "sources";
+
 export default function DeepResearchPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-[var(--container-wide)] mx-auto px-8 py-6">
-          <Skeleton variant="line" className="h-8 w-64 mb-3" />
-          <Skeleton variant="block" className="h-40" />
-        </div>
-      }
-    >
+    <Suspense fallback={<div style={{ padding: 56 }} />}>
       <DeepResearchContent />
     </Suspense>
   );
@@ -121,26 +117,18 @@ function DeepResearchContent() {
   const [question, setQuestion] = useState("");
   const [data, setData] = useState<DeepResearchData | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("paper");
+  const [tab, setTab] = useState<Tab>("paper");
   const pollerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const stage = data?.metadata?.stage ?? "planning";
-  const isRunning = data?.status === "GENERATING" || data?.status === "PENDING";
-  const isComplete = data?.status === "COMPLETE";
-  const isError = data?.status === "ERROR";
-
-  // ─── Fetch + polling de un deliverable ────────────────────────────────
-  const fetchData = useCallback(async (id: string): Promise<DeepResearchData | null> => {
+  const fetchData = useCallback(async (id: string) => {
     try {
       const res = await fetch(`/api/deep-research?id=${id}`);
       if (!res.ok) throw new Error("Deep research no encontrado");
       const d = (await res.json()) as DeepResearchData;
       setData(d);
-      setLoadError(null);
       return d;
     } catch (e) {
-      setLoadError((e as Error).message);
+      console.error(e);
       return null;
     }
   }, []);
@@ -157,13 +145,12 @@ function DeepResearchContent() {
           }
         }
       };
-      tick(); // immediate
+      tick();
       pollerRef.current = setInterval(tick, 3000);
     },
-    [fetchData]
+    [fetchData],
   );
 
-  // ─── Cargar desde ?id= al montar ─────────────────────────────────────
   useEffect(() => {
     if (idFromUrl) startPolling(idFromUrl);
     return () => {
@@ -171,12 +158,10 @@ function DeepResearchContent() {
     };
   }, [idFromUrl, startPolling]);
 
-  // ─── Cuando se carga el deliverable, llenar el textarea con la pregunta ───
   useEffect(() => {
     if (data?.userQuestion && !question) setQuestion(data.userQuestion);
-  }, [data?.userQuestion]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data?.userQuestion]); // eslint-disable-line
 
-  // ─── Submit ───────────────────────────────────────────────────────────
   const submit = async () => {
     const q = question.trim();
     if (q.length < 12) {
@@ -185,8 +170,7 @@ function DeepResearchContent() {
     }
     setSubmitting(true);
     setData(null);
-    setLoadError(null);
-    setActiveTab("paper");
+    setTab("paper");
 
     try {
       const res = await fetch("/api/deep-research", {
@@ -195,13 +179,13 @@ function DeepResearchContent() {
         body: JSON.stringify({ question: q }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Error" }));
-        throw new Error(err.error || `HTTP ${res.status}`);
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
       }
       const { deliverableId } = (await res.json()) as { deliverableId: string };
       router.replace(`/deep-research?id=${deliverableId}`);
       startPolling(deliverableId);
-      toast.success("Investigación iniciada — procesará en background");
+      toast.success("Investigación iniciada");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -209,618 +193,498 @@ function DeepResearchContent() {
     }
   };
 
-  // ─── Sub-derivados ────────────────────────────────────────────────────
-  const sections = parseSections(data?.answer ?? "");
-  const plan = data?.metadata?.plan ?? null;
-  const subqueries = data?.metadata?.subqueriesProgress ?? [];
-  const totalSubqueries = subqueries.length || plan?.subqueries.length || 0;
-  const doneSubqueries = subqueries.filter((s) => s.status === "done").length;
-
-  const stepIndex =
-    stage === "planning" ? 0 :
-    stage === "executing" ? 1 :
-    stage === "fusing" ? 2 :
-    stage === "synthesizing" ? 3 :
-    stage === "annexes" ? 4 :
-    stage === "persisting" ? 5 :
-    stage === "complete" ? 6 : 0;
+  const stage = data?.metadata?.stage ?? "planning";
+  const stageIdx = STAGE_INDEX[stage];
+  const isRunning = data?.status === "GENERATING" || data?.status === "PENDING";
+  const phase: "idle" | "running" | "done" = !data
+    ? "idle"
+    : isRunning
+      ? "running"
+      : "done";
 
   return (
-    <div className="max-w-[var(--container-wide)] mx-auto px-8 py-6">
-      <header className="mb-5">
-        <h1
-          className="serif-title text-[36px] leading-tight text-[var(--color-ink-1000)] inline-flex items-center gap-3"
-          style={{ fontWeight: 700 }}
-        >
-          <Rocket className="size-7 text-[var(--accent)]" aria-hidden />
-          Deep Research
-        </h1>
-        <p className="text-[15px] leading-relaxed text-[var(--fg-muted)] mt-1.5 max-w-[760px]">
-          Investigación agéntica para preguntas amplias. Un planificador descompone tu pregunta
-          en 6-8 sub-investigaciones, ejecuta RAG completo (expansion + BM25 + RRF + rerank)
-          en cada una, fusiona la evidencia y sintetiza un <em>paper académico</em> con
-          cronología, tabla de actores y vacíos del corpus. Tarda 5-10 min — corre en
-          background, no necesitas mantener la pestaña abierta.
-        </p>
-      </header>
+    <div className="fade-up" data-screen-label="DeepResearch">
+      <PageHeader
+        label="Investigación · Agente con thinking extendido"
+        title="Deep Research"
+        subtitle="El agente planifica sub-consultas, ejecuta en paralelo, fusiona evidencia y escribe un paper académico. Tiempo típico: 90–180 segundos. Modelo: Claude Opus 4.7."
+      />
 
-      <Card variant="default" size="md" className="mb-4">
-        <div className="flex flex-col gap-3 w-full">
-          <Textarea
+      <hr className="hairline" style={{ margin: "0 56px" }} />
+
+      {phase === "idle" && (
+        <section style={{ padding: "56px 56px 0", maxWidth: 1100 }}>
+          <div className="label" style={{ marginBottom: 14 }}>
+            Pregunta de investigación
+          </div>
+          <textarea
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder='"¿Cómo se construyó el imaginario nacional en Colombia entre 1850 y 1900, y qué papel jugó la prensa liberal en la disputa con la Iglesia?"'
-            rows={4}
-            className="min-h-[112px] max-h-[224px]"
-            disabled={submitting || isRunning}
+            placeholder='Ej: "Reconstruye la consolidación del bipartidismo colombiano entre 1886 y 1957."'
+            rows={2}
+            style={{
+              width: "100%",
+              appearance: "none",
+              background: "transparent",
+              border: 0,
+              borderBottom: "1px solid var(--line-strong)",
+              outline: "none",
+              resize: "vertical",
+              fontFamily: "var(--font-display)",
+              fontSize: 28,
+              color: "var(--fg)",
+              lineHeight: 1.3,
+              padding: "12px 0",
+              letterSpacing: "-0.01em",
+            }}
           />
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="primary"
-              size="lg"
-              leadingIcon={<FlaskConical className="size-4" />}
-              isLoading={submitting}
-              disabled={isRunning || question.trim().length < 12}
+          <div
+            style={{
+              marginTop: 18,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
+            }}
+          >
+            <div style={{ fontSize: 12, color: "var(--fg-muted)" }}>
+              {question.length} caracteres · mínimo 12
+            </div>
+            <button
+              type="button"
               onClick={submit}
+              disabled={submitting || question.trim().length < 12}
+              style={
+                question.trim().length >= 12 && !submitting
+                  ? primaryBtn
+                  : { ...primaryBtn, opacity: 0.4, cursor: "default" }
+              }
             >
-              {data ? "Nueva investigación" : "Iniciar investigación"}
-            </Button>
-            <Tooltip content="Opus 4.7 planifica y sintetiza; Sonnet 4.6 genera los anexos">
-              <span className="text-xs text-[var(--fg-muted)] inline-flex items-center gap-1.5 cursor-help">
-                <Lightbulb className="size-3.5" />
-                Largo y costoso, pero riguroso
-              </span>
-            </Tooltip>
-            {data?.id && isComplete && (
-              <Button
-                variant="link"
-                size="md"
-                leadingIcon={<BookOpen className="size-4" />}
-                onClick={() => router.push(`/producciones/${data.id}`)}
-              >
-                Abrir en producciones
-              </Button>
-            )}
+              {submitting ? "Iniciando…" : "Iniciar investigación →"}
+            </button>
           </div>
-        </div>
-      </Card>
 
-      {data && (
+          <div style={{ marginTop: 56 }}>
+            <SectionHeader title="Cómo funciona" caption="Cinco etapas, una pieza acabada" />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: 24,
+              }}
+            >
+              {STAGES.slice(0, -1).map((s, i) => (
+                <div
+                  key={s.key}
+                  style={{
+                    padding: "20px 0",
+                    borderTop: "1px solid var(--line)",
+                  }}
+                >
+                  <div
+                    className="mono"
+                    style={{
+                      fontSize: 11,
+                      color: "var(--fg-faint)",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    Etapa {String(i + 1).padStart(2, "0")}
+                  </div>
+                  <div
+                    className="display"
+                    style={{ fontSize: 20, color: "var(--fg)", margin: "6px 0 6px" }}
+                  >
+                    {s.label}
+                  </div>
+                  <div style={{ fontSize: 13, color: "var(--fg-muted)", lineHeight: 1.5 }}>
+                    {s.desc}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {phase !== "idle" && data && (
         <>
-          {isRunning && (
-            <Card variant="default" size="md" className="mb-4">
-              <Steps
-                current={stepIndex}
-                status={isError ? "error" : "process"}
-                items={[
-                  { title: "Planificar", icon: Lightbulb },
-                  { title: "Recuperar evidencia", icon: Search },
-                  { title: "Fusionar", icon: Zap },
-                  { title: "Sintetizar paper", icon: BookOpen },
-                  { title: "Anexos", icon: FileSearch },
-                  { title: "Guardar", icon: CheckCircle2 },
-                ]}
-              />
-              {data.metadata?.message && (
-                <p className="mt-3 mb-0 text-xs italic text-[var(--fg-muted)]">
-                  {data.metadata.message}
-                </p>
-              )}
-              {totalSubqueries > 0 && stage === "executing" && (
-                <div className="mt-2">
-                  <div className="h-1.5 rounded-full bg-[var(--bg-muted)] overflow-hidden">
+          <section style={{ padding: "32px 56px 0", maxWidth: 1320 }}>
+            <div className="label" style={{ marginBottom: 12 }}>
+              Consulta de investigación
+            </div>
+            <h2
+              className="display"
+              style={{
+                fontSize: 32,
+                margin: 0,
+                color: "var(--fg)",
+                lineHeight: 1.2,
+                maxWidth: 900,
+              }}
+            >
+              {data.userQuestion}
+            </h2>
+          </section>
+
+          <section style={{ padding: "32px 56px 0", maxWidth: 1320 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${STAGES.length}, 1fr)`,
+                gap: 8,
+              }}
+            >
+              {STAGES.map((s, i) => {
+                const done = i < stageIdx;
+                const active = i === stageIdx;
+                return (
+                  <div key={s.key} style={{ paddingTop: 14 }}>
                     <div
-                      className="h-full bg-[var(--accent)] transition-all duration-500"
                       style={{
-                        width: `${Math.round((doneSubqueries / totalSubqueries) * 100)}%`,
+                        height: 2,
+                        background: done
+                          ? "var(--success)"
+                          : active
+                            ? "var(--accent)"
+                            : "var(--line)",
+                        marginBottom: 10,
+                        transition: "background 220ms var(--ease-out-custom)",
                       }}
                     />
-                  </div>
-                  <div className="text-[11px] text-[var(--fg-subtle)] mt-1 tabular-nums">
-                    {doneSubqueries} / {totalSubqueries} sub-investigaciones
-                  </div>
-                </div>
-              )}
-              {data.metadata?.paperWords !== undefined && stage === "synthesizing" && (
-                <span className="text-xs text-[var(--fg-muted)] mt-2 inline-block">
-                  Paper en curso: {data.metadata.paperWords} palabras
-                </span>
-              )}
-            </Card>
-          )}
-
-          {plan && (
-            <Card variant="inset" size="md" className="mb-4">
-              <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
-                Plan del investigador
-              </div>
-              {plan.thinking && (
-                <p className="mt-2 mb-2 text-[13px] italic text-[var(--fg-default)]">
-                  {plan.thinking}
-                </p>
-              )}
-              {plan.scope && (
-                <p className="mb-2 text-[13px] text-[var(--fg-default)]">
-                  <span className="font-semibold">Alcance: </span>
-                  {plan.scope}
-                </p>
-              )}
-              {plan.entities && (
-                <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                  {plan.entities.temporalidad && (
-                    <Badge variant="info" size="sm">
-                      <Calendar className="size-3" />
-                      {plan.entities.temporalidad}
-                    </Badge>
-                  )}
-                  {plan.entities.personas?.slice(0, 8).map((p) => (
-                    <Badge
-                      key={p}
-                      variant="subtle"
-                      size="sm"
-                      className="bg-[color-mix(in_oklab,var(--color-category-soc)_14%,transparent)] text-[var(--color-category-soc)]"
+                    <div
+                      className="mono"
+                      style={{
+                        fontSize: 10.5,
+                        color: done || active ? "var(--fg)" : "var(--fg-faint)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
                     >
-                      {p}
-                    </Badge>
-                  ))}
-                  {plan.entities.instituciones?.slice(0, 6).map((p) => (
-                    <Badge
-                      key={p}
-                      variant="warning"
-                      size="sm"
-                    >
-                      {p}
-                    </Badge>
-                  ))}
-                  {plan.entities.lugares?.slice(0, 6).map((p) => (
-                    <Badge
-                      key={p}
-                      variant="success"
-                      size="sm"
-                    >
-                      {p}
-                    </Badge>
-                  ))}
-                  {plan.entities.conceptos?.slice(0, 6).map((p) => (
-                    <Badge
-                      key={p}
-                      variant="subtle"
-                      size="sm"
-                      className="bg-[color-mix(in_oklab,var(--color-category-cul)_14%,transparent)] text-[var(--color-category-cul)]"
-                    >
-                      {p}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </Card>
-          )}
-
-          {subqueries.length > 0 && (
-            <Card variant="default" size="md" className="mb-4">
-              <header className="mb-3">
-                <h3 className="text-[15px] font-semibold text-[var(--fg-default)]">
-                  Sub-investigaciones ({subqueries.length})
-                </h3>
-              </header>
-              <div className="flex flex-col gap-1.5 w-full">
-                {subqueries.map((sq, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2.5 px-2.5 py-2 bg-[var(--bg-muted)] rounded-md"
-                  >
-                    <Badge variant="outline" size="xs" className="font-mono">
-                      #{i + 1}
-                    </Badge>
-                    <span className="text-[13px] flex-1 text-[var(--fg-default)]">
-                      {sq.query}
-                    </span>
-                    {sq.foundChunks !== undefined && (
-                      <Badge variant="info" size="xs">
-                        {sq.foundChunks} frags
-                      </Badge>
-                    )}
-                    {sq.status === "pending" && (
-                      <Badge variant="subtle" size="xs">pendiente</Badge>
-                    )}
-                    {sq.status === "running" && (
-                      <Badge variant="info" size="xs">
-                        <Loader2 className="size-3 animate-spin" />
-                        buscando…
-                      </Badge>
-                    )}
-                    {sq.status === "done" && (
-                      <Badge variant="success" size="xs">
-                        <CheckCircle2 className="size-3" />
-                      </Badge>
-                    )}
-                    {sq.status === "error" && (
-                      <Badge variant="danger" size="xs">
-                        <XCircle className="size-3" />
-                        error
-                      </Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {(loadError || isError) && (
-            <div
-              role="alert"
-              className="mb-4 p-4 rounded-lg border border-[var(--color-danger-fg)]/40 bg-[var(--color-danger-bg)] flex items-start gap-3"
-            >
-              <AlertCircle className="size-4 text-[var(--color-danger-fg)] mt-0.5 shrink-0" />
-              <div className="flex-1 text-sm text-[var(--color-danger-fg)]">
-                {loadError ?? data.metadata?.message ?? "Falló el procesamiento"}
-              </div>
-            </div>
-          )}
-
-          {(data.answer || isComplete) && (
-            <Card variant="default" size="sm" className="p-0 overflow-hidden">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <div className="px-4 pt-2 border-b border-[var(--border-default)]">
-                  <TabsList variant="underline">
-                    <TabsTrigger value="paper">
-                      <BookOpen className="size-3.5" />
-                      Paper
-                    </TabsTrigger>
-                    <TabsTrigger value="cronologia" disabled={!sections.cronologia}>
-                      <Calendar className="size-3.5" />
-                      Cronología
-                    </TabsTrigger>
-                    <TabsTrigger value="actores" disabled={!sections.actores}>
-                      <Users className="size-3.5" />
-                      Actores
-                    </TabsTrigger>
-                    <TabsTrigger value="vacios" disabled={!sections.vacios}>
-                      <FileSearch className="size-3.5" />
-                      Vacíos
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="fuentes"
-                      disabled={(data.chunksUsed?.length ?? 0) === 0}
-                    >
-                      <History className="size-3.5" />
-                      Fuentes ({data.chunksUsed?.length ?? 0})
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-
-                <TabsContent value="paper" className="mt-0">
-                  <div className="px-8 py-5 pb-10">
-                    {sections.paper ? (
-                      <MarkdownWithCitations
-                        text={sections.paper}
-                        chunks={data.chunksUsed ?? []}
-                      />
-                    ) : (
-                      <EmptyHint label="Aún no generado" />
-                    )}
-                  </div>
-                </TabsContent>
-                <TabsContent value="cronologia" className="mt-0">
-                  <div className="px-8 py-5 pb-10">
-                    {sections.cronologia ? (
-                      <MarkdownWithCitations
-                        text={sections.cronologia}
-                        chunks={data.chunksUsed ?? []}
-                      />
-                    ) : (
-                      <EmptyHint label="Aún no generada" />
-                    )}
-                  </div>
-                </TabsContent>
-                <TabsContent value="actores" className="mt-0">
-                  <div className="px-8 py-5 pb-10">
-                    {sections.actores ? (
-                      <MarkdownWithCitations
-                        text={sections.actores}
-                        chunks={data.chunksUsed ?? []}
-                      />
-                    ) : (
-                      <EmptyHint label="Aún no generada" />
-                    )}
-                  </div>
-                </TabsContent>
-                <TabsContent value="vacios" className="mt-0">
-                  <div className="px-8 py-5 pb-10">
-                    {sections.vacios ? (
-                      <MarkdownWithCitations
-                        text={sections.vacios}
-                        chunks={data.chunksUsed ?? []}
-                      />
-                    ) : (
-                      <EmptyHint label="Aún no generada" />
-                    )}
-                  </div>
-                </TabsContent>
-                <TabsContent value="fuentes" className="mt-0">
-                  <div className="px-6 py-4 pb-10">
-                    {(data.chunksUsed?.length ?? 0) > 0 ? (
-                      <div className="flex flex-col gap-2 w-full">
-                        {data.chunksUsed.map((c, i) => (
-                          <Card
-                            key={c.id ?? i}
-                            variant="default"
-                            size="sm"
-                          >
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-1.5">
-                                <Badge
-                                  variant="warning"
-                                  size="xs"
-                                  className="font-mono"
-                                >
-                                  #{i + 1}
-                                </Badge>
-                                <span className="text-[11px] text-[var(--fg-muted)]">
-                                  p. {c.pageNumber}
-                                  {c.similarity !== undefined &&
-                                    ` · sim ${(c.similarity * 100).toFixed(0)}%`}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="text-xs font-semibold text-[var(--fg-default)] mb-1.5">
-                              {c.documentFilename}
-                            </div>
-                            {c.content && (
-                              <p
-                                className="text-[13px] leading-relaxed text-[var(--fg-muted)] m-0 line-clamp-4"
-                                style={{ fontFamily: "var(--font-serif)" }}
-                              >
-                                {c.content}
-                              </p>
-                            )}
-                          </Card>
-                        ))}
+                      {s.label}
+                    </div>
+                    {active && isRunning && (
+                      <div
+                        style={{ fontSize: 11.5, color: "var(--fg-muted)", marginTop: 4 }}
+                      >
+                        {s.desc}
                       </div>
-                    ) : (
-                      <EmptyHint label="Sin fuentes registradas" />
                     )}
                   </div>
-                </TabsContent>
-              </Tabs>
-            </Card>
-          )}
+                );
+              })}
+            </div>
+          </section>
+
+          <section style={{ padding: "44px 56px 0", maxWidth: 1320 }}>
+            <FilterTabs<Tab>
+              value={tab}
+              onChange={setTab}
+              options={[
+                {
+                  value: "paper",
+                  label: `Paper${phase === "done" ? " · listo" : ""}`,
+                },
+                { value: "plan", label: "Plan de investigación" },
+                {
+                  value: "subqueries",
+                  label: `Sub-consultas · ${data.metadata.subqueriesProgress?.length ?? data.metadata.plan?.subqueries.length ?? 0}`,
+                },
+                {
+                  value: "sources",
+                  label: `Fuentes · ${data.chunksUsed?.length ?? 0}`,
+                },
+              ]}
+            />
+          </section>
+
+          <section style={{ padding: "44px 56px 96px", maxWidth: 1100 }}>
+            {tab === "paper" && (
+              <PaperRender data={data} isRunning={isRunning} />
+            )}
+            {tab === "plan" && data.metadata.plan && (
+              <DrPlan plan={data.metadata.plan} />
+            )}
+            {tab === "subqueries" && (
+              <DrSubqueries items={data.metadata.subqueriesProgress ?? []} />
+            )}
+            {tab === "sources" && (
+              <DrSources chunks={data.chunksUsed ?? []} />
+            )}
+          </section>
         </>
       )}
-
-      {!data && !submitting && (
-        <Card variant="default" size="md">
-          <EmptyHint label="Plantea una pregunta amplia de investigación para empezar" />
-        </Card>
-      )}
     </div>
   );
 }
 
-/* ─── Sub-componentes locales ───────────────────────────────────────────── */
-
-function EmptyHint({ label }: { label: string }) {
+function PaperRender({ data, isRunning }: { data: DeepResearchData; isRunning: boolean }) {
+  if (!data.answer && isRunning) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "var(--accent)",
+            animation: "caret-blink 1s infinite",
+          }}
+        />
+        <span style={{ fontSize: 14, color: "var(--fg-muted)" }}>
+          Generando paper…
+        </span>
+      </div>
+    );
+  }
+  if (!data.answer) {
+    return (
+      <p className="serif" style={{ color: "var(--fg-faint)" }}>
+        Sin contenido todavía.
+      </p>
+    );
+  }
+  const lines = data.answer.split("\n");
   return (
-    <div className="py-8 text-center text-sm text-[var(--fg-subtle)]">
-      {label}
-    </div>
-  );
-}
-
-interface StepItem {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-function Steps({
-  current,
-  status,
-  items,
-}: {
-  current: number;
-  status: "process" | "error";
-  items: StepItem[];
-}) {
-  return (
-    <ol className="flex items-start gap-2 w-full overflow-x-auto">
-      {items.map((item, i) => {
-        const isDone = i < current;
-        const isActive = i === current;
-        const isError = isActive && status === "error";
-        const Icon = item.icon;
-
-        const circleClass = cn(
-          "size-7 rounded-full flex items-center justify-center shrink-0 border transition-colors",
-          isError &&
-            "bg-[var(--color-danger-bg)] border-[var(--color-danger-fg)] text-[var(--color-danger-fg)]",
-          !isError && isDone &&
-            "bg-[var(--accent)] border-[var(--accent)] text-[var(--fg-inverted)]",
-          !isError && isActive &&
-            "bg-[var(--accent-bg-subtle)] border-[var(--accent)] text-[var(--accent)]",
-          !isError && !isDone && !isActive &&
-            "bg-[var(--bg-muted)] border-[var(--border-default)] text-[var(--fg-subtle)]",
-        );
-
-        return (
-          <li
-            key={item.title}
-            className="flex-1 min-w-[110px] flex flex-col items-start gap-1.5"
-          >
-            <div className="flex items-center gap-2 w-full">
-              <div className={circleClass}>
-                {isDone ? (
-                  <CheckCircle2 className="size-3.5" />
-                ) : isActive && status !== "error" ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Icon className="size-3.5" />
-                )}
-              </div>
-              {i < items.length - 1 && (
-                <div
-                  className={cn(
-                    "h-px flex-1 transition-colors",
-                    isDone
-                      ? "bg-[var(--accent)]"
-                      : "bg-[var(--border-default)]",
-                  )}
-                />
-              )}
-            </div>
-            <span
-              className={cn(
-                "text-[11px] leading-tight",
-                isActive
-                  ? "text-[var(--fg-default)] font-medium"
-                  : "text-[var(--fg-subtle)]",
-              )}
-            >
-              {item.title}
-            </span>
-          </li>
-        );
+    <div className="prose" style={{ maxWidth: "none", fontSize: 18 }}>
+      {lines.map((line, idx) => {
+        if (line.startsWith("# ")) {
+          return (
+            <h1 key={idx}>
+              {renderInline(line.slice(2), data.chunksUsed)}
+            </h1>
+          );
+        }
+        if (line.startsWith("## ")) {
+          return <h2 key={idx}>{renderInline(line.slice(3), data.chunksUsed)}</h2>;
+        }
+        if (line.startsWith("### ")) {
+          return <h3 key={idx}>{renderInline(line.slice(4), data.chunksUsed)}</h3>;
+        }
+        if (line.startsWith("- ")) {
+          return (
+            <li key={idx} style={{ marginLeft: 20 }}>
+              {renderInline(line.slice(2), data.chunksUsed)}
+            </li>
+          );
+        }
+        if (line.trim() === "") return <div key={idx} style={{ height: 4 }} />;
+        return <p key={idx}>{renderInline(line, data.chunksUsed)}</p>;
       })}
-    </ol>
+    </div>
   );
 }
 
-/**
- * Parsea el `answer` (markdown completo) y separa por secciones para los tabs.
- *
- * El backend de deep-research compone:
- *   [paper-academico, con # Título + ## El problema ... ## Conclusión]
- *   ---
- *   ## Cronología (tabla)
- *   ---
- *   ## Actores principales (tabla)
- *   ---
- *   ## Lo que el corpus no responde (lista)
- *   ---
- *   ## Referencias (APA)
- */
-function parseSections(text: string): {
-  paper: string;
-  cronologia: string;
-  actores: string;
-  vacios: string;
-  referencias: string;
-} {
-  if (!text) return { paper: "", cronologia: "", actores: "", vacios: "", referencias: "" };
-
-  const markers: Array<{ name: keyof ReturnType<typeof parseSections>; regex: RegExp }> = [
-    { name: "cronologia", regex: /^##\s+Cronolog[íi]a\s*$/m },
-    { name: "actores", regex: /^##\s+Actores\s+principales\s*$/m },
-    { name: "vacios", regex: /^##\s+Lo\s+que\s+el\s+corpus\s+no\s+responde\s*$/m },
-    { name: "referencias", regex: /^##\s+Referencias\s*$/m },
-  ];
-
-  const positions: Array<{ name: string; start: number }> = [];
-  for (const m of markers) {
-    const match = m.regex.exec(text);
-    if (match) positions.push({ name: m.name, start: match.index });
-  }
-  positions.sort((a, b) => a.start - b.start);
-
-  const sections = { paper: "", cronologia: "", actores: "", vacios: "", referencias: "" };
-
-  if (positions.length === 0) {
-    sections.paper = text;
-    return sections;
-  }
-
-  sections.paper = stripTrailingSeparator(text.slice(0, positions[0].start));
-  for (let i = 0; i < positions.length; i++) {
-    const start = positions[i].start;
-    const end = i + 1 < positions.length ? positions[i + 1].start : text.length;
-    sections[positions[i].name as keyof typeof sections] = stripTrailingSeparator(text.slice(start, end));
-  }
-  return sections;
-}
-
-function stripTrailingSeparator(s: string): string {
-  return s.replace(/\n*-{3,}\s*$/g, "").trim();
-}
-
-/**
- * Renderiza markdown sustituyendo [#N] por un Popover con hover que muestra
- * documento, página y snippet del chunk citado.
- */
-function MarkdownWithCitations({
-  text,
-  chunks,
-}: {
-  text: string;
-  chunks: ChunkMeta[];
-}) {
-  const prepared = text.replace(/\[#(\d+(?:\s*,\s*\d+)*)\]/g, (_m, nums) => {
-    const list = String(nums)
-      .split(",")
-      .map((n) => n.trim())
-      .filter(Boolean);
-    return list.map((n) => `\`#${n}\``).join(" ");
-  });
-
+function DrPlan({ plan }: { plan: ResearchPlan }) {
   return (
-    <div className="prose-academic">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          code({ children, ...props }) {
-            const txt = String(children).replace(/`/g, "");
-            const m = /^#(\d+)$/.exec(txt);
-            if (m) {
-              const idx = parseInt(m[1], 10) - 1;
-              const chunk = chunks[idx];
-              if (!chunk) {
-                return <code {...props}>{children}</code>;
-              }
-              return (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <span
-                      className={cn(
-                        "citation inline-flex items-center align-baseline",
-                        "font-mono text-[0.8em] font-medium",
-                        "px-1.5 py-0 rounded-sm cursor-help whitespace-nowrap",
-                        "bg-[color-mix(in_oklab,var(--color-warning-fg)_12%,transparent)]",
-                        "text-[var(--color-warning-fg)]",
-                        "border border-[color-mix(in_oklab,var(--color-warning-fg)_25%,transparent)]",
-                        "hover:bg-[color-mix(in_oklab,var(--color-warning-fg)_20%,transparent)]",
-                      )}
-                    >
-                      #{m[1]}
-                    </span>
-                  </PopoverTrigger>
-                  <PopoverContent align="center" className="max-w-[360px]">
-                    <div className="text-xs font-semibold text-[var(--fg-default)] mb-1">
-                      {chunk.documentFilename ?? "Documento sin nombre"}
-                    </div>
-                    <div className="text-[11px] text-[var(--fg-muted)]">
-                      p. {chunk.pageNumber}
-                      {chunk.similarity !== undefined &&
-                        ` · sim ${(chunk.similarity * 100).toFixed(0)}%`}
-                    </div>
-                    {chunk.content && (
-                      <>
-                        <Separator className="my-2" />
-                        <p
-                          className="text-[12.5px] leading-snug m-0 text-[var(--fg-muted)]"
-                          style={{ fontFamily: "var(--font-serif)" }}
-                        >
-                          {chunk.content}
-                        </p>
-                      </>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              );
-            }
-            return <code {...props}>{children}</code>;
-          },
+    <div className="fade-in">
+      <SectionHeader title="Alcance" caption="Definido por el agente al inicio" />
+      <p
+        className="serif"
+        style={{
+          fontSize: 19,
+          color: "var(--fg)",
+          lineHeight: 1.65,
+          maxWidth: 720,
         }}
       >
-        {prepared}
-      </ReactMarkdown>
+        {plan.scope}
+      </p>
+
+      <div style={{ marginTop: 56 }}>
+        <SectionHeader title="Entidades clave" />
+        {Object.entries(plan.entities).map(([k, v]) => {
+          const list = Array.isArray(v) ? v : [v];
+          return (
+            <div
+              key={k}
+              style={{
+                padding: "16px 0",
+                borderTop: "1px solid var(--line)",
+                display: "grid",
+                gridTemplateColumns: "160px 1fr",
+                gap: 24,
+              }}
+            >
+              <div className="label" style={{ alignSelf: "baseline" }}>
+                {k}
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {list.map((it, i) => (
+                  <Pill key={i}>{it}</Pill>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
+}
+
+function DrSubqueries({ items }: { items: Subquery[] }) {
+  return (
+    <div className="fade-in">
+      <SectionHeader
+        title="Sub-consultas"
+        caption={`${items.length} consultas ejecutadas en paralelo`}
+      />
+      <ol style={{ listStyle: "none", padding: 0, margin: 0 }}>
+        {items.map((q, i) => {
+          const done = q.status === "done";
+          return (
+            <li
+              key={i}
+              style={{
+                padding: "20px 0",
+                borderTop: "1px solid var(--line)",
+                display: "grid",
+                gridTemplateColumns: "30px 1fr 120px",
+                gap: 18,
+                alignItems: "baseline",
+              }}
+            >
+              <span
+                className="mono num"
+                style={{ fontSize: 11, color: "var(--fg-faint)" }}
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div
+                className="serif"
+                style={{ fontSize: 16, color: "var(--fg)", lineHeight: 1.4 }}
+              >
+                {q.query}
+              </div>
+              <div style={{ textAlign: "right" }}>
+                {done ? (
+                  <span
+                    className="mono"
+                    style={{ fontSize: 11, color: "var(--success)" }}
+                  >
+                    ✓ {q.foundChunks ?? 0} chunks
+                  </span>
+                ) : q.status === "running" ? (
+                  <span
+                    className="mono"
+                    style={{ fontSize: 11, color: "var(--accent)" }}
+                  >
+                    ◐ ejecutando
+                  </span>
+                ) : q.status === "error" ? (
+                  <span
+                    className="mono"
+                    style={{ fontSize: 11, color: "var(--danger)" }}
+                  >
+                    error
+                  </span>
+                ) : (
+                  <span
+                    className="mono"
+                    style={{ fontSize: 11, color: "var(--fg-faint)" }}
+                  >
+                    · pendiente
+                  </span>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+function DrSources({ chunks }: { chunks: ChunkMeta[] }) {
+  return (
+    <div className="fade-in">
+      <SectionHeader
+        title="Fuentes recuperadas"
+        caption="Chunks deduplicados y rerankeados por relevancia agregada"
+      />
+      <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+        {chunks.map((c, i) => (
+          <li
+            key={c.id ?? i}
+            style={{
+              padding: "16px 0",
+              borderTop: i === 0 ? "1px solid var(--line-strong)" : "1px solid var(--line)",
+              display: "grid",
+              gridTemplateColumns: "30px 1fr 80px",
+              gap: 18,
+              alignItems: "baseline",
+            }}
+          >
+            <span
+              className="mono"
+              style={{ fontSize: 11, color: "var(--accent)", fontWeight: 500 }}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <div>
+              <div
+                className="serif"
+                style={{ fontSize: 15, color: "var(--fg)", lineHeight: 1.3 }}
+              >
+                {c.documentFilename?.replace(/\.pdf$/i, "") ?? "Fuente"}
+              </div>
+              <div
+                className="mono"
+                style={{ fontSize: 10.5, color: "var(--fg-subtle)", marginTop: 4 }}
+              >
+                p. {c.pageNumber ?? "—"}
+              </div>
+            </div>
+            <div
+              className="mono"
+              style={{ fontSize: 11, color: "var(--fg-muted)", textAlign: "right" }}
+            >
+              sim {((c.similarity ?? 0) * 100).toFixed(0)}%
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function renderInline(text: string, chunks: ChunkMeta[]) {
+  const parts: React.ReactNode[] = [];
+  let r = text;
+  let k = 0;
+  while (r.length) {
+    const m = r.match(/^\[#?(\d+)\]/);
+    const bMatch = r.match(/^\*\*([^*]+)\*\*/);
+    const iMatch = r.match(/^\*([^*]+)\*/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      const chunk = chunks[n - 1];
+      parts.push(
+        <Cita
+          key={k++}
+          n={n}
+          page={chunk?.pageNumber}
+          doc={chunk?.documentFilename?.replace(/\.pdf$/i, "")}
+        />,
+      );
+      r = r.slice(m[0].length);
+    } else if (bMatch) {
+      parts.push(<strong key={k++}>{bMatch[1]}</strong>);
+      r = r.slice(bMatch[0].length);
+    } else if (iMatch) {
+      parts.push(<em key={k++}>{iMatch[1]}</em>);
+      r = r.slice(iMatch[0].length);
+    } else {
+      const nextC = r.search(/\[#?\d+\]/);
+      const nextB = r.indexOf("**");
+      const nextI = r.indexOf("*");
+      const candidates = [nextC, nextB, nextI].filter((x) => x >= 0);
+      const stop = candidates.length ? Math.min(...candidates) : r.length;
+      const slice = r.slice(0, Math.max(stop, 1));
+      parts.push(<Fragment key={k++}>{slice}</Fragment>);
+      r = r.slice(slice.length);
+    }
+  }
+  return parts;
 }

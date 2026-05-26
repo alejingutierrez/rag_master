@@ -2,19 +2,19 @@
 @import "tw-animate-css";
 
 /* ============================================================================
- * Crónica Design System — tokens
- * Documentación: /docs/design-system/
+ * Archivo — Design tokens v2 (minimal editorial)
+ * White ground, sharp ink, one restrained accent.
  * ========================================================================== */
 
 @theme {
-  /* ── Tipografía: tamaños ───────────────────────────────────────────────── */
+  /* ── Tipografía: tamaños base usados por utilidades Tailwind ────────────── */
   --text-micro: 11px;
   --text-micro--line-height: 1.4;
   --text-xs: 12px;
   --text-xs--line-height: 1.45;
   --text-sm: 13px;
   --text-sm--line-height: 1.5;
-  --text-body: 15px;
+  --text-body: 14px;
   --text-body--line-height: 1.55;
   --text-body-lg: 17px;
   --text-body-lg--line-height: 1.65;
@@ -28,29 +28,30 @@
   --text-h2--line-height: 1.2;
   --text-h1: 36px;
   --text-h1--line-height: 1.15;
-  --text-display: 48px;
-  --text-display--line-height: 1.05;
+  --text-display: 56px;
+  --text-display--line-height: 1.0;
 
-  /* ── Espaciado (extensión sobre el default de Tailwind) ─────────────────── */
+  /* ── Espaciado ──────────────────────────────────────────────────────────── */
   --spacing: 4px;
 
   /* ── Contenedores ──────────────────────────────────────────────────────── */
   --container-reading: 680px;
   --container-prose: 760px;
   --container-page: 1080px;
-  --container-wide: 1440px;
+  --container-wide: 1320px;
 
-  /* ── Radios ────────────────────────────────────────────────────────────── */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
+  /* ── Radios — 0 excepto pill ────────────────────────────────────────────── */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-pill: 999px;
 
   /* ── Duraciones ────────────────────────────────────────────────────────── */
   --duration-instant: 75ms;
-  --duration-fast: 150ms;
-  --duration-base: 220ms;
+  --duration-fast: 140ms;
+  --duration-base: 200ms;
   --duration-slow: 320ms;
   --duration-deliberate: 500ms;
 
@@ -58,213 +59,269 @@
   --ease-out-custom: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-in-out-custom: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  /* ── Color: neutros (ink) ──────────────────────────────────────────────── */
-  --color-ink-0: #ffffff;
-  --color-ink-25: #fafafb;
-  --color-ink-50: #f5f5f7;
-  --color-ink-100: #edeef0;
-  --color-ink-200: #dfe1e5;
-  --color-ink-300: #c5c8ce;
-  --color-ink-400: #9ca1ab;
-  --color-ink-500: #71767f;
-  --color-ink-600: #565a63;
-  --color-ink-700: #3d4148;
-  --color-ink-800: #272a30;
-  --color-ink-900: #16181c;
-  --color-ink-1000: #08090b;
-
-  /* ── Color: acento signature (tinta) ──────────────────────────────────── */
-  --color-tinta-50: #eff3f8;
-  --color-tinta-100: #dce5ef;
-  --color-tinta-200: #b6c7dc;
-  --color-tinta-300: #88a2c0;
-  --color-tinta-400: #5878a0;
-  --color-tinta-500: #345887;
-  --color-tinta-600: #264273;
-  --color-tinta-700: #1e3a5f;
-  --color-tinta-800: #162f4f;
-  --color-tinta-900: #0f2440;
-  --color-tinta-950: #0a1b30;
-
-  /* ── Color: acento secundario (monte) ─────────────────────────────────── */
-  --color-monte-100: #e1ece6;
-  --color-monte-500: #3d7059;
-  --color-monte-700: #2d5f3f;
-
-  /* ── Color: períodos (light, originales) ──────────────────────────────── */
-  --color-period-pre: #b45309;
-  --color-period-con: #92400e;
-  --color-period-col: #78350f;
-  --color-period-pre-ind: #a16207;
-  --color-period-ind: #1e40af;
-  --color-period-ngr: #1d4ed8;
-  --color-period-euc: #2563eb;
-  --color-period-reg: #7c2d12;
-  --color-period-rep-lib: #0f766e;
-  --color-period-vio: #991b1b;
-  --color-period-fn: #4f46e5;
-  --color-period-cna: #7c3aed;
-  --color-period-c91: #db2777;
-  --color-period-sde: #0891b2;
-  --color-period-pos: #059669;
-  --color-period-trans: #6b7280;
-
-  /* ── Color: categorías (light) ─────────────────────────────────────────── */
-  --color-category-pol: #1e40af;
-  --color-category-eco: #059669;
-  --color-category-con: #dc2626;
-  --color-category-soc: #d97706;
-  --color-category-cul: #7c3aed;
-  --color-category-rel: #0891b2;
-  --color-category-ter: #65a30d;
-  --color-category-mov: #db2777;
-  --color-category-ins: #475569;
-  --color-category-his: #a855f7;
-
-  /* ── Color: semánticos (light) ─────────────────────────────────────────── */
-  --color-success-bg: #e6f4ec;
-  --color-success-fg: #0e7b43;
-  --color-warning-bg: #fbf1dc;
-  --color-warning-fg: #a36a05;
-  --color-danger-bg: #fbe7e7;
-  --color-danger-fg: #b42323;
-  --color-info-bg: #e5edf7;
-  --color-info-fg: #2a5a95;
 }
 
 /* ============================================================================
- * Dark mode overrides (cuando html tiene class="dark")
+ * Tokens — light (default)
  * ========================================================================== */
 
 @layer base {
-  /* Las familias tipográficas se definen en body, NO en :root, porque las
-   * variables de next/font (--font-newsreader, --font-plex-sans, --font-plex-mono)
-   * están definidas en el body className. Si un var() apunta a una custom prop
-   * inexistente, todo el valor se vuelve invalid y la propiedad computa a vacío. */
-  body {
-    --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
-    --font-sans: var(--font-plex-sans), system-ui, -apple-system, "Segoe UI",
-      sans-serif;
-    --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Consolas,
-      monospace;
+  :root,
+  [data-mode="light"] {
+    /* Surfaces */
+    --bg: #ffffff;
+    --bg-subtle: #fafafa;
+    --bg-muted: #f5f5f5;
+    --bg-hover: #f5f5f5;
+    --bg-elevated: #ffffff;
+
+    /* Ink */
+    --fg: #0a0a0a;
+    --fg-1: #171717;
+    --fg-muted: #525252;
+    --fg-subtle: #737373;
+    --fg-faint: #a3a3a3;
+    --fg-dim: #d4d4d4;
+    --fg-inverted: #ffffff;
+
+    /* Hairlines */
+    --line: #ebebeb;
+    --line-strong: #d4d4d4;
+
+    /* Acento único: naranja quemado */
+    --accent: #c2410c;
+    --accent-soft: #fef3eb;
+    --accent-fg: #ffffff;
+    --accent-hover: #9a330a;
+
+    /* Estados semánticos (sólo dot — no fondos) */
+    --success: #166534;
+    --warning: #b45309;
+    --danger: #b91c1c;
+    --info: #1e40af;
+
+    /* Períodos — color propio, usado únicamente como dot 6px */
+    --p-pre: #92400e;
+    --p-con: #b45309;
+    --p-col: #78350f;
+    --p-pre-ind: #a16207;
+    --p-ind: #1e3a8a;
+    --p-ngr: #1e40af;
+    --p-euc: #2563eb;
+    --p-reg: #b91c1c;
+    --p-rep-lib: #166534;
+    --p-vio: #7f1d1d;
+    --p-fn: #3730a3;
+    --p-cna: #6b21a8;
+    --p-c91: #a21caf;
+    --p-sde: #0e7490;
+    --p-pos: #15803d;
+    --p-trans: #737373;
+
+    /* ── Aliases legacy mientras se migra (apuntan a tokens nuevos) ───────── */
+    --bg-page: var(--bg);
+    --fg-default: var(--fg);
+    --fg-disabled: var(--fg-faint);
+    --border-default: var(--line);
+    --border-strong: var(--line-strong);
+    --ring-focus: var(--accent);
+    --accent-bg-subtle: var(--accent-soft);
+    --accent-bg-strong: var(--accent-soft);
+    --bg-inverted: var(--fg);
+
+    /* Período aliases (componentes legacy esperan --color-period-*) */
+    --color-period-pre: var(--p-pre);
+    --color-period-con: var(--p-con);
+    --color-period-col: var(--p-col);
+    --color-period-pre-ind: var(--p-pre-ind);
+    --color-period-ind: var(--p-ind);
+    --color-period-ngr: var(--p-ngr);
+    --color-period-euc: var(--p-euc);
+    --color-period-reg: var(--p-reg);
+    --color-period-rep-lib: var(--p-rep-lib);
+    --color-period-vio: var(--p-vio);
+    --color-period-fn: var(--p-fn);
+    --color-period-cna: var(--p-cna);
+    --color-period-c91: var(--p-c91);
+    --color-period-sde: var(--p-sde);
+    --color-period-pos: var(--p-pos);
+    --color-period-trans: var(--p-trans);
+
+    /* Ink scale aliases (componentes legacy) */
+    --color-ink-0: var(--bg);
+    --color-ink-25: var(--bg-subtle);
+    --color-ink-50: var(--bg-muted);
+    --color-ink-100: var(--bg-muted);
+    --color-ink-200: var(--line);
+    --color-ink-300: var(--line-strong);
+    --color-ink-400: var(--fg-faint);
+    --color-ink-500: var(--fg-subtle);
+    --color-ink-600: var(--fg-muted);
+    --color-ink-700: var(--fg-muted);
+    --color-ink-800: var(--fg-1);
+    --color-ink-900: var(--fg);
+    --color-ink-1000: var(--fg);
+
+    /* Tinta legacy (apunta al nuevo accent) */
+    --color-tinta-50: var(--accent-soft);
+    --color-tinta-100: var(--accent-soft);
+    --color-tinta-500: var(--accent);
+    --color-tinta-600: var(--accent);
+    --color-tinta-700: var(--accent);
+    --color-tinta-800: var(--accent-hover);
+
+    /* Estados semánticos legacy */
+    --color-success-bg: var(--bg-muted);
+    --color-success-fg: var(--success);
+    --color-warning-bg: var(--bg-muted);
+    --color-warning-fg: var(--warning);
+    --color-danger-bg: var(--bg-muted);
+    --color-danger-fg: var(--danger);
+    --color-info-bg: var(--bg-muted);
+    --color-info-fg: var(--info);
+
+    /* Categorías legacy */
+    --color-category-pol: var(--p-ind);
+    --color-category-eco: var(--p-pos);
+    --color-category-con: var(--p-reg);
+    --color-category-soc: var(--p-con);
+    --color-category-cul: var(--p-cna);
+    --color-category-rel: var(--p-sde);
+    --color-category-ter: var(--p-rep-lib);
+    --color-category-mov: var(--p-c91);
+    --color-category-ins: var(--fg-subtle);
+    --color-category-his: var(--p-cna);
+
+    /* Shadows: sin shadow real, sólo hairline inset cuando hace falta */
+    --elev-1: none;
+    --elev-2: none;
+    --elev-3: none;
+    --elev-4: none;
   }
 
-  :root {
-    --bg-page: var(--color-ink-0);
-    --bg-subtle: var(--color-ink-25);
-    --bg-muted: var(--color-ink-50);
-    --bg-hover: var(--color-ink-100);
-    --bg-inverted: var(--color-ink-900);
-    --fg-default: var(--color-ink-900);
-    --fg-muted: var(--color-ink-700);
-    --fg-subtle: var(--color-ink-500);
-    --fg-disabled: var(--color-ink-400);
-    --fg-inverted: var(--color-ink-0);
-    --border-default: var(--color-ink-200);
-    --border-strong: var(--color-ink-300);
-    --ring-focus: var(--color-tinta-300);
-    --accent: var(--color-tinta-700);
-    --accent-hover: var(--color-tinta-800);
-    --accent-bg-subtle: var(--color-tinta-50);
-    --accent-bg-strong: var(--color-tinta-100);
-
-    /* Shadows light */
-    --elev-1: 0 1px 2px rgba(8, 9, 11, 0.05);
-    --elev-2: 0 2px 4px rgba(8, 9, 11, 0.06), 0 1px 2px rgba(8, 9, 11, 0.04);
-    --elev-3: 0 8px 24px rgba(8, 9, 11, 0.08), 0 2px 4px rgba(8, 9, 11, 0.04);
-    --elev-4: 0 16px 48px rgba(8, 9, 11, 0.12), 0 4px 12px rgba(8, 9, 11, 0.06);
-  }
-
+  [data-mode="dark"],
   .dark {
-    /* Neutros invertidos */
-    --color-ink-0: #0a0b0d;
-    --color-ink-25: #101216;
-    --color-ink-50: #16181d;
-    --color-ink-100: #1d2026;
-    --color-ink-200: #262a31;
-    --color-ink-300: #363b44;
-    --color-ink-400: #4d525c;
-    --color-ink-500: #6c7280;
-    --color-ink-600: #8a8f98;
-    --color-ink-700: #a7abb3;
-    --color-ink-800: #c5c8ce;
-    --color-ink-900: #e1e3e7;
-    --color-ink-1000: #f5f6f8;
+    --bg: #0a0a0a;
+    --bg-subtle: #0f0f0f;
+    --bg-muted: #171717;
+    --bg-hover: #171717;
+    --bg-elevated: #0f0f0f;
 
-    /* Tinta dark */
-    --color-tinta-50: #0f1620;
-    --color-tinta-100: #162338;
-    --color-tinta-200: #1f3252;
-    --color-tinta-300: #2c4470;
-    --color-tinta-400: #3f5a8c;
-    --color-tinta-500: #5b7aae;
-    --color-tinta-600: #7991c0;
-    --color-tinta-700: #94a8ce;
-    --color-tinta-800: #b0bfdc;
-    --color-tinta-900: #cdd7e8;
-    --color-tinta-950: #e2e8f2;
+    --fg: #fafafa;
+    --fg-1: #f5f5f5;
+    --fg-muted: #a3a3a3;
+    --fg-subtle: #737373;
+    --fg-faint: #525252;
+    --fg-dim: #2a2a2a;
+    --fg-inverted: #0a0a0a;
 
-    /* Períodos dark (recalibrados) */
-    --color-period-pre: #e8995f;
-    --color-period-con: #d88860;
-    --color-period-col: #c97a55;
-    --color-period-pre-ind: #dba653;
-    --color-period-ind: #7a9ce8;
-    --color-period-ngr: #7a99e8;
-    --color-period-euc: #7aa8e8;
-    --color-period-reg: #d88060;
-    --color-period-rep-lib: #5fb3a9;
-    --color-period-vio: #e07a7a;
-    --color-period-fn: #9b95f0;
-    --color-period-cna: #b399f0;
-    --color-period-c91: #f08ab3;
-    --color-period-sde: #5fbed8;
-    --color-period-pos: #5fbe96;
-    --color-period-trans: #9ca3af;
+    --line: #1f1f1f;
+    --line-strong: #2a2a2a;
 
-    /* Categorías dark */
-    --color-category-pol: #7a9ce8;
-    --color-category-eco: #5fbe96;
-    --color-category-con: #f08585;
-    --color-category-soc: #e8995f;
-    --color-category-cul: #b399f0;
-    --color-category-rel: #5fbed8;
-    --color-category-ter: #9dc95e;
-    --color-category-mov: #f08ab3;
-    --color-category-ins: #94a3b8;
-    --color-category-his: #c99ff6;
+    --accent: #fb923c;
+    --accent-soft: #2a1b10;
+    --accent-fg: #0a0a0a;
+    --accent-hover: #fdba74;
 
-    /* Semánticos dark */
-    --color-success-bg: #0f2a1c;
-    --color-success-fg: #5fbe96;
-    --color-warning-bg: #2c2110;
-    --color-warning-fg: #e8b660;
-    --color-danger-bg: #2c1010;
-    --color-danger-fg: #e88585;
-    --color-info-bg: #101c2c;
-    --color-info-fg: #7a9ce8;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: #60a5fa;
 
-    /* Monte dark */
-    --color-monte-100: #142420;
-    --color-monte-500: #5c9b7e;
-    --color-monte-700: #88bda1;
+    --p-pre: #e8995f;
+    --p-con: #d88860;
+    --p-col: #c97a55;
+    --p-pre-ind: #dba653;
+    --p-ind: #7a9ce8;
+    --p-ngr: #7a99e8;
+    --p-euc: #7aa8e8;
+    --p-reg: #f08585;
+    --p-rep-lib: #5fbe96;
+    --p-vio: #e07a7a;
+    --p-fn: #9b95f0;
+    --p-cna: #b399f0;
+    --p-c91: #f08ab3;
+    --p-sde: #5fbed8;
+    --p-pos: #5fbe96;
+    --p-trans: #9ca3af;
 
-    /* Roles semánticos en dark */
-    --ring-focus: var(--color-tinta-400);
-    --accent: var(--color-tinta-700);
-    --accent-hover: var(--color-tinta-800);
+    /* Re-asignar aliases (resolución bajo dark) */
+    --bg-page: var(--bg);
+    --fg-default: var(--fg);
+    --fg-disabled: var(--fg-faint);
+    --border-default: var(--line);
+    --border-strong: var(--line-strong);
+    --ring-focus: var(--accent);
+    --accent-bg-subtle: var(--accent-soft);
+    --accent-bg-strong: var(--accent-soft);
 
-    /* Shadows dark (con ring inset por contraste) */
-    --elev-1: 0 0 0 1px var(--color-ink-200) inset;
-    --elev-2: 0 0 0 1px var(--color-ink-200) inset, 0 2px 6px rgba(0, 0, 0, 0.4);
-    --elev-3: 0 0 0 1px var(--color-ink-300) inset, 0 8px 24px rgba(0, 0, 0, 0.5);
-    --elev-4: 0 0 0 1px var(--color-ink-300) inset, 0 16px 48px rgba(0, 0, 0, 0.6);
+    --color-period-pre: var(--p-pre);
+    --color-period-con: var(--p-con);
+    --color-period-col: var(--p-col);
+    --color-period-pre-ind: var(--p-pre-ind);
+    --color-period-ind: var(--p-ind);
+    --color-period-ngr: var(--p-ngr);
+    --color-period-euc: var(--p-euc);
+    --color-period-reg: var(--p-reg);
+    --color-period-rep-lib: var(--p-rep-lib);
+    --color-period-vio: var(--p-vio);
+    --color-period-fn: var(--p-fn);
+    --color-period-cna: var(--p-cna);
+    --color-period-c91: var(--p-c91);
+    --color-period-sde: var(--p-sde);
+    --color-period-pos: var(--p-pos);
+    --color-period-trans: var(--p-trans);
+
+    --color-ink-0: var(--bg);
+    --color-ink-25: var(--bg-subtle);
+    --color-ink-50: var(--bg-muted);
+    --color-ink-100: var(--bg-muted);
+    --color-ink-200: var(--line);
+    --color-ink-300: var(--line-strong);
+    --color-ink-400: var(--fg-faint);
+    --color-ink-500: var(--fg-subtle);
+    --color-ink-600: var(--fg-muted);
+    --color-ink-700: var(--fg-muted);
+    --color-ink-800: var(--fg-1);
+    --color-ink-900: var(--fg);
+    --color-ink-1000: var(--fg);
+
+    --color-tinta-50: var(--accent-soft);
+    --color-tinta-100: var(--accent-soft);
+    --color-tinta-500: var(--accent);
+    --color-tinta-600: var(--accent);
+    --color-tinta-700: var(--accent);
+    --color-tinta-800: var(--accent-hover);
+
+    --color-success-bg: var(--bg-muted);
+    --color-success-fg: var(--success);
+    --color-warning-bg: var(--bg-muted);
+    --color-warning-fg: var(--warning);
+    --color-danger-bg: var(--bg-muted);
+    --color-danger-fg: var(--danger);
+    --color-info-bg: var(--bg-muted);
+    --color-info-fg: var(--info);
+
+    --color-category-pol: var(--p-ind);
+    --color-category-eco: var(--p-pos);
+    --color-category-con: var(--p-reg);
+    --color-category-soc: var(--p-con);
+    --color-category-cul: var(--p-cna);
+    --color-category-rel: var(--p-sde);
+    --color-category-ter: var(--p-rep-lib);
+    --color-category-mov: var(--p-c91);
+    --color-category-ins: var(--fg-subtle);
+    --color-category-his: var(--p-cna);
+
+    --elev-1: none;
+    --elev-2: none;
+    --elev-3: none;
+    --elev-4: none;
   }
 }
 
 /* ============================================================================
- * Base styles
+ * Base
  * ========================================================================== */
 
 @layer base {
@@ -277,15 +334,15 @@
     margin: 0;
     padding: 0;
     min-height: 100%;
-    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-  }
-
-  body {
-    background: var(--bg-page);
-    color: var(--fg-default);
+    font-feature-settings: "ss01", "cv11";
   }
 
   a {
@@ -293,33 +350,38 @@
     text-decoration: none;
   }
 
+  button {
+    font-family: inherit;
+  }
+
   *:focus-visible {
-    outline: 2px solid var(--ring-focus);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: var(--radius-sm);
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--accent) 30%, transparent);
+    background: var(--fg);
+    color: var(--bg);
   }
 
-  /* Scrollbar fino */
+  /* Scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--color-ink-200);
-    border-radius: 4px;
-    border: 2px solid transparent;
+    background: var(--line-strong);
+    border-radius: 999px;
+    border: 3px solid var(--bg);
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-ink-300);
+    background: var(--fg-faint);
     background-clip: content-box;
+    border: 3px solid var(--bg);
   }
 }
 
@@ -328,116 +390,272 @@
  * ========================================================================== */
 
 @layer components {
+  .display {
+    font-family: var(--font-display), "Source Serif 4", Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    padding-bottom: 0.08em;
+    color: var(--fg);
+  }
+  .display-italic {
+    font-style: italic;
+  }
+
+  .serif {
+    font-family: var(--font-display), "Source Serif 4", Georgia, serif;
+    font-weight: 400;
+  }
+
+  /* Alias legacy — algunas páginas usan serif-title */
   .serif-title {
-    font-family: var(--font-serif);
-    font-weight: 600;
+    font-family: var(--font-display), "Source Serif 4", Georgia, serif;
+    font-weight: 400;
     letter-spacing: -0.015em;
   }
 
-  /* Prosa académica — para producciones, respuestas RAG, research artifacts */
-  .prose-academic {
-    font-family: var(--font-serif);
-    font-size: 17px;
-    line-height: 1.75;
-    color: var(--fg-default);
-    max-width: 70ch;
+  .mono {
+    font-family: var(--font-mono), ui-monospace, "SF Mono", Consolas, monospace;
+    font-feature-settings: "ss01" on, "cv11" on;
   }
-  .prose-academic h1 {
-    font-family: var(--font-serif);
-    font-size: 36px;
-    line-height: 1.15;
-    margin: 0 0 0.6em;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--color-ink-1000);
+
+  .label {
+    font-family: var(--font-mono), ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+    color: var(--fg-subtle);
   }
-  .prose-academic h2 {
-    font-family: var(--font-serif);
-    font-size: 28px;
-    line-height: 1.2;
-    margin: 1.6em 0 0.6em;
+
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Hairline rule ─────────────────────────────────────────────────────── */
+  .hairline {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 0;
+  }
+
+  /* ── Citation — minimal footnote-style ─────────────────────────────────── */
+  .cita {
+    display: inline-flex;
+    align-items: baseline;
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 0.72em;
+    font-weight: 500;
+    color: var(--accent);
+    cursor: pointer;
+    position: relative;
+    top: -0.5em;
+    padding: 0 1px;
+    margin: 0 1px;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 140ms var(--ease-out-custom);
+  }
+  .cita:hover {
+    border-bottom-color: var(--accent);
+  }
+  .cita::before {
+    content: "[";
+    opacity: 0.6;
+  }
+  .cita::after {
+    content: "]";
+    opacity: 0.6;
+  }
+
+  /* Citation legacy (algunos componentes esperan .citation) */
+  .citation {
+    display: inline-flex;
+    align-items: baseline;
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 0.72em;
+    font-weight: 500;
+    color: var(--accent);
+    cursor: pointer;
+    position: relative;
+    top: -0.5em;
+    padding: 0 1px;
+    margin: 0 1px;
+    border-bottom: 1px solid transparent;
+    transition: border-color 140ms var(--ease-out-custom);
+  }
+  .citation:hover,
+  .citation:focus-visible {
+    border-bottom-color: var(--accent);
+  }
+  .citation::before {
+    content: "[";
+    opacity: 0.6;
+  }
+  .citation::after {
+    content: "]";
+    opacity: 0.6;
+  }
+
+  /* ── Prose editorial ──────────────────────────────────────────────────── */
+  .prose {
+    font-family: var(--font-display), "Source Serif 4", Georgia, serif;
+    font-size: 19px;
+    line-height: 1.65;
+    color: var(--fg);
+    max-width: 64ch;
+    letter-spacing: -0.005em;
+  }
+  .prose p {
+    margin: 0 0 1.1em;
+  }
+  .prose strong {
     font-weight: 600;
-    letter-spacing: -0.015em;
-    color: var(--color-ink-1000);
   }
-  .prose-academic h3 {
-    font-family: var(--font-serif);
-    font-size: 22px;
-    line-height: 1.25;
-    margin: 1.4em 0 0.5em;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-  .prose-academic h4 {
-    font-family: var(--font-sans);
-    font-size: 18px;
-    margin: 1.3em 0 0.5em;
-    font-weight: 600;
-  }
-  .prose-academic p {
-    margin: 0 0 1em;
-  }
-  .prose-academic blockquote {
-    border-left: 3px solid var(--accent);
-    padding: 4px 0 4px 16px;
-    margin: 1em 0;
-    color: var(--fg-muted);
+  .prose em {
     font-style: italic;
   }
+  .prose h1 {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 400;
+    font-size: 44px;
+    line-height: 1.05;
+    margin: 0 0 0.5em;
+    letter-spacing: -0.025em;
+  }
+  .prose h2 {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 400;
+    font-size: 36px;
+    line-height: 1.1;
+    margin: 1.8em 0 0.4em;
+    letter-spacing: -0.025em;
+    padding-bottom: 0.04em;
+  }
+  .prose h3 {
+    font-family: var(--font-display), Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 26px;
+    margin: 1.4em 0 0.3em;
+    letter-spacing: -0.015em;
+  }
+  .prose h4 {
+    font-family: var(--font-sans), sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 1.3em 0 0.5em;
+  }
+  .prose blockquote {
+    margin: 1.6em 0;
+    padding-left: 24px;
+    border-left: 1px solid var(--line-strong);
+    font-style: italic;
+    color: var(--fg-muted);
+  }
+  .prose ol,
+  .prose ul {
+    padding-left: 22px;
+    margin: 0 0 1.1em;
+  }
+  .prose li {
+    margin-bottom: 0.4em;
+  }
+  .prose a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--accent) 40%, transparent);
+    text-underline-offset: 3px;
+  }
+  .prose a:hover {
+    text-decoration-color: var(--accent);
+  }
+
+  /* Alias legacy: algunas pantallas usan .prose-academic */
+  .prose-academic {
+    font-family: var(--font-display), Georgia, serif;
+    font-size: 19px;
+    line-height: 1.65;
+    color: var(--fg);
+    max-width: 64ch;
+    letter-spacing: -0.005em;
+  }
+  .prose-academic p {
+    margin: 0 0 1.1em;
+  }
+  .prose-academic strong {
+    font-weight: 600;
+  }
+  .prose-academic em {
+    font-style: italic;
+  }
+  .prose-academic h1,
+  .prose-academic h2,
+  .prose-academic h3,
+  .prose-academic h4 {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+  .prose-academic h1 {
+    font-size: 44px;
+    line-height: 1.05;
+    margin: 0 0 0.5em;
+  }
+  .prose-academic h2 {
+    font-size: 36px;
+    line-height: 1.1;
+    margin: 1.6em 0 0.4em;
+  }
+  .prose-academic h3 {
+    font-size: 26px;
+    font-style: italic;
+    margin: 1.4em 0 0.3em;
+  }
+  .prose-academic h4 {
+    font-family: var(--font-sans), sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 1.3em 0 0.4em;
+  }
+  .prose-academic blockquote {
+    margin: 1.6em 0;
+    padding: 0 0 0 24px;
+    border-left: 1px solid var(--line-strong);
+    font-style: italic;
+    color: var(--fg-muted);
+  }
+  .prose-academic ol,
+  .prose-academic ul {
+    padding-left: 22px;
+    margin: 0 0 1.1em;
+  }
+  .prose-academic li {
+    margin-bottom: 0.4em;
+  }
   .prose-academic code {
-    font-family: var(--font-mono);
+    font-family: var(--font-mono), monospace;
     font-size: 0.88em;
     padding: 1px 5px;
-    border-radius: var(--radius-sm);
     background: var(--bg-muted);
   }
   .prose-academic pre {
-    font-family: var(--font-mono);
+    font-family: var(--font-mono), monospace;
     background: var(--bg-muted);
     padding: 16px;
-    border-radius: var(--radius-lg);
     overflow-x: auto;
     font-size: 14px;
     line-height: 1.55;
   }
-  .prose-academic ul,
-  .prose-academic ol {
-    padding-left: 1.4em;
-    margin: 0 0 1em;
-  }
-  .prose-academic li {
-    margin-bottom: 0.35em;
-  }
   .prose-academic a {
-    color: var(--color-tinta-700);
+    color: var(--accent);
     text-decoration: underline;
     text-decoration-color: color-mix(in oklab, var(--accent) 40%, transparent);
     text-underline-offset: 3px;
   }
   .prose-academic a:hover {
     text-decoration-color: var(--accent);
-  }
-
-  /* Citation inline */
-  .prose-academic .citation,
-  .citation {
-    display: inline-flex;
-    align-items: center;
-    font-family: var(--font-mono);
-    font-size: 0.75em;
-    padding: 0 4px;
-    border-radius: var(--radius-sm);
-    background: color-mix(in oklab, var(--accent) 8%, transparent);
-    color: var(--color-tinta-700);
-    cursor: pointer;
-    margin: 0 1px;
-    vertical-align: baseline;
-    border: 1px solid color-mix(in oklab, var(--accent) 18%, transparent);
-    transition: background var(--duration-instant) var(--ease-out-custom);
-  }
-  .citation:hover,
-  .citation:focus-visible {
-    background: color-mix(in oklab, var(--accent) 16%, transparent);
   }
 
   /* Print: producciones legibles en papel */
@@ -449,6 +667,7 @@
     .no-print {
       display: none !important;
     }
+    .prose,
     .prose-academic {
       max-width: none;
       font-size: 12pt;
@@ -458,7 +677,7 @@
 }
 
 /* ============================================================================
- * Utilidades (containers, animaciones)
+ * Utilidades
  * ========================================================================== */
 
 @layer utilities {
@@ -488,10 +707,10 @@
 
   /* Glass overlay (command palette) */
   .glass-panel {
-    background: color-mix(in oklab, var(--bg-page) 75%, transparent);
+    background: color-mix(in oklab, var(--bg) 90%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--line);
   }
 
   /* Skeleton shimmer */
@@ -506,15 +725,25 @@
   .shimmer {
     background: linear-gradient(
       90deg,
-      var(--color-ink-100) 25%,
-      var(--color-ink-50) 50%,
-      var(--color-ink-100) 75%
+      var(--bg-muted) 25%,
+      var(--bg) 50%,
+      var(--bg-muted) 75%
     );
     background-size: 200% 100%;
-    animation: shimmer 1.6s infinite linear;
+    animation: shimmer 1.5s linear infinite;
+  }
+  .shimmer-line {
+    background: linear-gradient(
+      90deg,
+      var(--bg-muted) 25%,
+      var(--bg) 50%,
+      var(--bg-muted) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
   }
 
-  /* Cursor de streaming */
+  /* Caret de streaming */
   @keyframes caret-blink {
     0%,
     100% {
@@ -524,17 +753,45 @@
       opacity: 0;
     }
   }
+  .caret,
   .stream-caret {
     display: inline-block;
     width: 2px;
-    height: 1em;
+    height: 0.9em;
     background: var(--accent);
+    vertical-align: -1px;
     margin-left: 2px;
-    vertical-align: -2px;
     animation: caret-blink 1s steps(2, start) infinite;
   }
 
-  /* Period card tint */
+  /* Animaciones */
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .fade-up {
+    animation: fade-up 0.45s var(--ease-out-custom) both;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  .fade-in {
+    animation: fade-in 0.35s var(--ease-out-custom) both;
+  }
+
+  /* Period tint card (legacy) — el nuevo diseño no la usa pero hay imports */
   .tinted-card {
     position: relative;
     overflow: hidden;
@@ -552,7 +809,6 @@
     pointer-events: none;
   }
 
-  /* sr-only para accesibilidad */
   .sr-only {
     position: absolute;
     width: 1px;
@@ -578,8 +834,9 @@
     transition-duration: 0.01ms !important;
   }
   .shimmer,
+  .shimmer-line,
+  .caret,
   .stream-caret {
     animation-duration: revert !important;
   }
 }
-

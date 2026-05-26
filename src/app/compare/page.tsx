@@ -1,92 +1,89 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import {
-  GitCompare,
-  Send,
-  Plus,
-  X,
-  Copy,
-  Inbox,
-} from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
-import {
-  Button,
-  IconButton,
-  Textarea,
-  Card,
-  Badge,
-  Chip,
-  Tooltip,
-  Spinner,
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui";
-import { CHAT_TEMPLATES, getTemplateById } from "@/lib/chat-templates";
+import { PageHeader, Pill, primaryBtn } from "@/components/editorial";
+import { Cita } from "@/components/editorial/cita";
+import { CHAT_TEMPLATES } from "@/lib/chat-templates";
+
+interface ChunkCitation {
+  id: string;
+  documentId: string;
+  documentFilename?: string;
+  pageNumber: number;
+  similarity: number;
+  content: string;
+}
 
 interface CompareResult {
   templateId: string;
   status: "idle" | "loading" | "complete" | "error";
   answer: string;
-  citations: Array<{ id: string; documentFilename?: string; pageNumber: number; similarity: number }>;
-  totalChunksUsed?: number;
+  citations: ChunkCitation[];
   error?: string;
 }
 
-const RAG_CONFIG = { topK: 100, similarityThreshold: 0.25 };
+const DEFAULT_TEMPLATES = ["mini-ensayo", "ensayo-largo", "paper-academico"];
 
 export default function ComparePage() {
-  const [question, setQuestion] = useState("");
-  const [templates, setTemplates] = useState<string[]>([
-    "mini-ensayo",
-    "ensayo-largo",
-    "guion-tres-actos",
-  ]);
+  const [question, setQuestion] = useState(
+    "¿Cómo evolucionó el modelo bipartidista durante la Regeneración?",
+  );
+  const [activeTpls, setActiveTpls] = useState<string[]>(DEFAULT_TEMPLATES);
   const [results, setResults] = useState<Record<string, CompareResult>>({});
-  const [isRunning, setIsRunning] = useState(false);
+  const [running, setRunning] = useState(false);
   const pollersRef = useRef<Record<string, ReturnType<typeof setInterval> | null>>({});
 
-  // Cleanup global on unmount
   useEffect(() => {
     return () => {
-      for (const t of Object.values(pollersRef.current)) {
-        if (t) clearInterval(t);
-      }
+      Object.values(pollersRef.current).forEach((p) => {
+        if (p) clearInterval(p);
+      });
     };
   }, []);
 
   const run = async () => {
     const q = question.trim();
-    if (!q) return;
-    setIsRunning(true);
-    // reset
-    const initial: Record<string, CompareResult> = {};
-    for (const t of templates) {
-      initial[t] = { templateId: t, status: "loading", answer: "", citations: [] };
+    if (q.length < 10) {
+      toast.warning("La consulta necesita al menos 10 caracteres.");
+      return;
     }
+    if (activeTpls.length === 0) {
+      toast.warning("Selecciona al menos una plantilla.");
+      return;
+    }
+    setRunning(true);
+    const initial: Record<string, CompareResult> = {};
+    activeTpls.forEach((t) => {
+      initial[t] = { templateId: t, status: "loading", answer: "", citations: [] };
+    });
     setResults(initial);
+    Object.values(pollersRef.current).forEach((p) => {
+      if (p) clearInterval(p);
+    });
 
-    // Disparar todas las requests en paralelo
     await Promise.all(
-      templates.map(async (templateId) => {
+      activeTpls.map(async (templateId) => {
         try {
           const res = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               question: q,
-              topK: RAG_CONFIG.topK,
-              similarityThreshold: RAG_CONFIG.similarityThreshold,
+              topK: 100,
+              similarityThreshold: 0.25,
               templateId,
             }),
           });
           if (!res.ok) {
-            setResults((r) => ({ ...r, [templateId]: { ...r[templateId], status: "error", error: "HTTP error" } }));
+            setResults((r) => ({
+              ...r,
+              [templateId]: {
+                ...r[templateId],
+                status: "error",
+                error: "HTTP error",
+              },
+            }));
             return;
           }
           const data = await res.json();
@@ -94,276 +91,291 @@ export default function ComparePage() {
             ...r,
             [templateId]: {
               ...r[templateId],
-              citations: data.chunks || [],
-              totalChunksUsed: data.totalChunksUsed,
+              citations: data.chunks ?? [],
             },
           }));
-
-          // Poll
           pollersRef.current[templateId] = setInterval(async () => {
             try {
               const poll = await fetch(`/api/chat/${data.id}`);
               if (!poll.ok) return;
               const pd = await poll.json();
               if (pd.status === "COMPLETE") {
-                clearInterval(pollersRef.current[templateId]!);
-                pollersRef.current[templateId] = null;
-                setResults((r) => ({ ...r, [templateId]: { ...r[templateId], status: "complete", answer: pd.answer } }));
+                if (pollersRef.current[templateId]) {
+                  clearInterval(pollersRef.current[templateId]!);
+                  pollersRef.current[templateId] = null;
+                }
+                setResults((r) => ({
+                  ...r,
+                  [templateId]: {
+                    ...r[templateId],
+                    status: "complete",
+                    answer: pd.answer,
+                  },
+                }));
               } else if (pd.status === "ERROR") {
-                clearInterval(pollersRef.current[templateId]!);
-                pollersRef.current[templateId] = null;
-                setResults((r) => ({ ...r, [templateId]: { ...r[templateId], status: "error", error: pd.answer } }));
+                if (pollersRef.current[templateId]) {
+                  clearInterval(pollersRef.current[templateId]!);
+                  pollersRef.current[templateId] = null;
+                }
+                setResults((r) => ({
+                  ...r,
+                  [templateId]: {
+                    ...r[templateId],
+                    status: "error",
+                    error: pd.answer || "Error",
+                  },
+                }));
               }
             } catch {
               /* retry */
             }
           }, 2000);
         } catch {
-          setResults((r) => ({ ...r, [templateId]: { ...r[templateId], status: "error", error: "Error de red" } }));
+          setResults((r) => ({
+            ...r,
+            [templateId]: {
+              ...r[templateId],
+              status: "error",
+              error: "Error de red",
+            },
+          }));
         }
       }),
     );
 
-    // Espera hasta que todos terminen
     const checkDone = setInterval(() => {
-      const all = Object.values(pollersRef.current).every((v) => v === null);
-      if (all) {
+      const anyRunning = Object.values(pollersRef.current).some((p) => p);
+      if (!anyRunning) {
         clearInterval(checkDone);
-        setIsRunning(false);
+        setRunning(false);
       }
     }, 1000);
   };
 
-  const addTemplate = (tplId: string) => {
-    if (templates.includes(tplId) || templates.length >= 3) return;
-    setTemplates([...templates, tplId]);
-  };
-
-  const removeTemplate = (tplId: string) => {
-    setTemplates(templates.filter((t) => t !== tplId));
-  };
-
-  const availableTemplates = CHAT_TEMPLATES.filter((t) => !templates.includes(t.id));
-  // 3 = grid-cols-3, 2 = grid-cols-2, 1 = grid-cols-1
-  const gridColsClass =
-    templates.length >= 3
-      ? "lg:grid-cols-3"
-      : templates.length === 2
-        ? "lg:grid-cols-2"
-        : "lg:grid-cols-1";
+  const phase = Object.keys(results).length === 0 ? "idle" : "running";
 
   return (
-    <div className="app-page-wide">
-      {/* Header */}
-      <header className="mb-6">
-        <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
-          Comparador
-        </div>
-        <h1
-          className="serif-title text-[36px] leading-tight mt-1.5 mb-2 text-[var(--color-ink-1000)] flex items-center gap-3"
-          style={{ fontWeight: 700 }}
-        >
-          <GitCompare className="size-8 text-[var(--accent)]" />
-          Comparador de templates
-        </h1>
-        <p className="text-[15px] leading-relaxed text-[var(--fg-muted)] max-w-[720px]">
-          Envía una misma pregunta a hasta 3 templates simultáneamente y compara
-          las respuestas lado a lado.
-        </p>
-      </header>
+    <div className="fade-up" data-screen-label="Compare">
+      <PageHeader
+        label="Producción · Comparación de plantillas"
+        title="Comparador"
+        italic="lado a lado"
+        subtitle="Lanza la misma consulta contra varias plantillas en paralelo. Cada columna usa un prompt distinto: mini-ensayo, ensayo extenso, paper académico, análisis comparado, etc."
+      />
 
-      {/* Input form */}
-      <Card variant="default" size="md" className="mb-4">
-        <div className="flex flex-col gap-3.5 w-full">
-          <Textarea
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Escribe la pregunta de investigación…"
-            rows={3}
-            disabled={isRunning}
-            className="min-h-[72px]"
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            {templates.map((tid) => {
-              const t = getTemplateById(tid);
+      <hr className="hairline" style={{ margin: "0 56px" }} />
+
+      <section style={{ padding: "32px 56px 0", maxWidth: 1320 }}>
+        <div className="label" style={{ marginBottom: 14 }}>
+          Consulta
+        </div>
+        <textarea
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          rows={1}
+          style={{
+            width: "100%",
+            appearance: "none",
+            background: "transparent",
+            border: 0,
+            borderBottom: "1px solid var(--line-strong)",
+            outline: "none",
+            resize: "vertical",
+            fontFamily: "var(--font-display)",
+            fontSize: 24,
+            color: "var(--fg)",
+            lineHeight: 1.35,
+            padding: "10px 0",
+            letterSpacing: "-0.005em",
+          }}
+        />
+
+        <div style={{ marginTop: 20, marginBottom: 6 }}>
+          <div className="label" style={{ marginBottom: 12 }}>
+            Plantillas a comparar · {activeTpls.length}
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {CHAT_TEMPLATES.map((t) => {
+              const on = activeTpls.includes(t.id);
               return (
-                <Chip
-                  key={tid}
-                  variant="subtle"
-                  size="sm"
-                  onRemove={() => removeTemplate(tid)}
-                  removeLabel={`Quitar ${t?.name ?? tid}`}
+                <Pill
+                  key={t.id}
+                  active={on}
+                  onClick={() =>
+                    setActiveTpls((s) =>
+                      on ? s.filter((x) => x !== t.id) : [...s, t.id],
+                    )
+                  }
                 >
-                  <span className="mr-1">{t?.icon}</span>
-                  {t?.name}
-                </Chip>
+                  {t.name}
+                </Pill>
               );
             })}
-            {templates.length < 3 && availableTemplates.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    leadingIcon={<Plus className="size-3.5" />}
-                  >
-                    Añadir template
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuLabel>Templates disponibles</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {availableTemplates.map((t) => (
-                    <DropdownMenuItem
-                      key={t.id}
-                      onSelect={() => addTemplate(t.id)}
-                    >
-                      <span className="mr-1.5">{t.icon}</span>
-                      {t.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            <div className="ml-auto">
-              <Button
-                variant="primary"
-                onClick={run}
-                isLoading={isRunning}
-                disabled={!question.trim() || templates.length === 0}
-                leadingIcon={<Send className="size-3.5" />}
-              >
-                Comparar
-              </Button>
-            </div>
           </div>
         </div>
-      </Card>
 
-      {/* Results */}
-      {templates.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          description="Añade al menos un template para comparar"
-        />
-      ) : (
-        <div className={`grid grid-cols-1 ${gridColsClass} gap-3`}>
-          {templates.map((tid) => (
-            <ResultColumn key={tid} templateId={tid} result={results[tid]} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─── ResultColumn ────────────────────────────────────────────────────────── */
-
-function ResultColumn({
-  templateId,
-  result,
-}: {
-  templateId: string;
-  result?: CompareResult;
-}) {
-  const tpl = getTemplateById(templateId);
-
-  return (
-    <Card
-      variant="default"
-      size="sm"
-      className="h-full flex flex-col p-0 overflow-hidden"
-    >
-      {/* Header */}
-      <header className="flex items-start justify-between gap-2 px-4 py-3 border-b border-[var(--border-default)]">
-        <div className="flex items-start gap-2 min-w-0">
-          <span className="text-[18px] leading-none mt-0.5">{tpl?.icon}</span>
-          <div className="min-w-0">
-            <div className="text-[13px] font-semibold text-[var(--fg-default)] truncate">
-              {tpl?.name}
-            </div>
-            <div className="text-[11px] text-[var(--fg-subtle)] line-clamp-2 mt-0.5">
-              {tpl?.description}
-            </div>
-          </div>
-        </div>
-        {result?.status === "complete" && (
-          <div className="flex items-center gap-1 shrink-0">
-            <Badge variant="subtle" size="xs">
-              {result.citations.length} citas
-            </Badge>
-            <Tooltip content="Copiar markdown">
-              <IconButton
-                variant="ghost"
-                size="sm"
-                aria-label="Copiar markdown"
-                onClick={() => {
-                  navigator.clipboard.writeText(result.answer);
-                  toast.success("Copiado");
-                }}
-              >
-                <Copy className="size-3.5" />
-              </IconButton>
-            </Tooltip>
-          </div>
-        )}
-      </header>
-
-      {/* Body */}
-      <div className="flex-1 px-4 py-3 max-h-[640px] overflow-y-auto">
-        {!result || result.status === "idle" ? (
-          <EmptyState description="Sin resultado" icon={Inbox} compact />
-        ) : result.status === "loading" ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-            <Spinner size={20} />
-            <span className="text-[12px] text-[var(--fg-subtle)]">
-              Generando…
-            </span>
-          </div>
-        ) : result.status === "error" ? (
-          <div className="p-3 rounded-md border border-[var(--color-danger-fg)]/40 bg-[var(--color-danger-bg)]">
-            <div className="text-[13px] text-[var(--color-danger-fg)]">
-              {result.error || "Error"}
-            </div>
-          </div>
-        ) : (
-          <div
-            className="prose-academic max-w-full"
-            style={{ fontSize: 13.5 }}
+        <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>
+          <button
+            type="button"
+            onClick={run}
+            disabled={
+              question.trim().length < 10 || activeTpls.length === 0 || running
+            }
+            style={
+              question.trim().length >= 10 && activeTpls.length > 0 && !running
+                ? primaryBtn
+                : { ...primaryBtn, opacity: 0.4, cursor: "default" }
+            }
           >
-            <ReactMarkdown>{result.answer}</ReactMarkdown>
+            {running ? "Generando…" : "Comparar →"}
+          </button>
+        </div>
+      </section>
+
+      <section style={{ padding: "44px 56px 96px", maxWidth: 1640 }}>
+        {phase === "idle" && (
+          <div
+            style={{
+              padding: "120px 24px",
+              textAlign: "center",
+              color: "var(--fg-faint)",
+              borderTop: "1px solid var(--line-strong)",
+            }}
+          >
+            <div className="display" style={{ fontSize: 32 }}>
+              Esperando consulta.
+            </div>
+            <div style={{ fontSize: 14, marginTop: 12 }}>
+              Los resultados de cada plantilla aparecerán lado a lado.
+            </div>
           </div>
         )}
-      </div>
-    </Card>
+
+        {phase !== "idle" && (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${activeTpls.length}, minmax(360px, 1fr))`,
+              gap: 0,
+              overflowX: "auto",
+            }}
+          >
+            {activeTpls.map((tid, i) => {
+              const tpl = CHAT_TEMPLATES.find((t) => t.id === tid);
+              const r = results[tid];
+              return (
+                <div
+                  key={tid}
+                  style={{
+                    padding: "0 24px 0 0",
+                    paddingLeft: i === 0 ? 0 : 24,
+                    borderLeft: i === 0 ? 0 : "1px solid var(--line)",
+                    borderTop: "1px solid var(--line-strong)",
+                    paddingTop: 24,
+                  }}
+                >
+                  <div className="label" style={{ marginBottom: 6 }}>
+                    {tpl?.name ?? tid}
+                  </div>
+                  <div
+                    className="mono"
+                    style={{
+                      fontSize: 10.5,
+                      color: "var(--fg-faint)",
+                      marginBottom: 18,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    ≈{tpl?.maxTokens.toLocaleString() ?? "—"} tk
+                  </div>
+                  {r?.status === "loading" && !r.answer && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: "var(--accent)",
+                          animation: "caret-blink 1s infinite",
+                        }}
+                      />
+                      <span style={{ fontSize: 13, color: "var(--fg-muted)" }}>
+                        Generando…
+                      </span>
+                    </div>
+                  )}
+                  {r?.status === "error" && (
+                    <div
+                      style={{
+                        padding: "12px 16px",
+                        border: "1px solid var(--danger)",
+                        color: "var(--danger)",
+                        fontSize: 13,
+                      }}
+                    >
+                      {r.error ?? "Error"}
+                    </div>
+                  )}
+                  {r?.answer && (
+                    <div className="prose" style={{ fontSize: 15, maxWidth: "none" }}>
+                      {r.answer.split("\n").map((line, j) =>
+                        line.trim() === "" ? (
+                          <div key={j} style={{ height: 4 }} />
+                        ) : (
+                          <p key={j} style={{ margin: "0 0 0.9em" }}>
+                            {renderInline(line, r.citations)}
+                          </p>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
 
-/* ─── EmptyState ──────────────────────────────────────────────────────────── */
-
-function EmptyState({
-  description,
-  icon: Icon,
-  compact = false,
-}: {
-  description: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  compact?: boolean;
-}) {
-  return (
-    <div
-      className={`flex flex-col items-center justify-center text-center ${
-        compact ? "py-8" : "py-16"
-      }`}
-    >
-      {Icon && (
-        <Icon
-          className={`${
-            compact ? "size-5" : "size-8"
-          } text-[var(--fg-subtle)] mb-2`}
-        />
-      )}
-      <div className="text-[13px] text-[var(--fg-muted)]">{description}</div>
-    </div>
-  );
+function renderInline(text: string, chunks: ChunkCitation[]) {
+  const parts: React.ReactNode[] = [];
+  let r = text;
+  let k = 0;
+  while (r.length) {
+    const m = r.match(/^\[#?(\d+)\]/);
+    const bMatch = r.match(/^\*\*([^*]+)\*\*/);
+    const iMatch = r.match(/^\*([^*]+)\*/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      const chunk = chunks[n - 1];
+      parts.push(
+        <Cita
+          key={k++}
+          n={n}
+          page={chunk?.pageNumber}
+          doc={chunk?.documentFilename?.replace(/\.pdf$/i, "")}
+        />,
+      );
+      r = r.slice(m[0].length);
+    } else if (bMatch) {
+      parts.push(<strong key={k++}>{bMatch[1]}</strong>);
+      r = r.slice(bMatch[0].length);
+    } else if (iMatch) {
+      parts.push(<em key={k++}>{iMatch[1]}</em>);
+      r = r.slice(iMatch[0].length);
+    } else {
+      const nextC = r.search(/\[#?\d+\]/);
+      const nextB = r.indexOf("**");
+      const nextI = r.indexOf("*");
+      const candidates = [nextC, nextB, nextI].filter((x) => x >= 0);
+      const stop = candidates.length ? Math.min(...candidates) : r.length;
+      const slice = r.slice(0, Math.max(stop, 1));
+      parts.push(<Fragment key={k++}>{slice}</Fragment>);
+      r = r.slice(slice.length);
+    }
+  }
+  return parts;
 }

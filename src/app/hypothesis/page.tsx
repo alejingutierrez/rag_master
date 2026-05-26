@@ -1,33 +1,55 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  Lightbulb,
-  Rocket,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  FileText,
-} from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
-import { Button, Textarea, Card, Badge, Spinner } from "@/components/ui";
-import { ProseBlock } from "@/components/domain/prose-block";
+import { PageHeader, primaryBtn } from "@/components/editorial";
+import { Cita } from "@/components/editorial/cita";
+
+interface ChunkCitation {
+  id: string;
+  documentId: string;
+  documentFilename?: string;
+  pageNumber: number;
+  similarity: number;
+  content: string;
+}
 
 interface SideResult {
   status: "idle" | "loading" | "complete" | "error";
   answer: string;
-  citations: Array<{ id: string; documentFilename?: string; pageNumber: number; similarity: number }>;
-  totalChunksUsed?: number;
+  citations: ChunkCitation[];
+  streamPos?: number;
 }
+
+const FOR_PROMPT = (h: string) =>
+  `Evalúa la siguiente hipótesis histórica y busca evidencia EN FAVOR. Cita pasajes específicos del corpus que la respalden, con razonamiento claro.\n\nHIPÓTESIS:\n"${h}"\n\nResponde con un mini-ensayo de evidencia favorable, argumentando por qué los hechos del corpus respaldan esta tesis. Incluye citas [#N] obligatorias.`;
+
+const AGAINST_PROMPT = (h: string) =>
+  `Evalúa la siguiente hipótesis histórica y busca evidencia EN CONTRA. Cita pasajes que la cuestionen, matizen o refuten, con razonamiento claro.\n\nHIPÓTESIS:\n"${h}"\n\nResponde con un mini-ensayo crítico que problematice esta tesis basándote en evidencia del corpus. Incluye citas [#N] obligatorias.`;
 
 export default function HypothesisPage() {
   const [hypothesis, setHypothesis] = useState("");
-  const [forResult, setForResult] = useState<SideResult>({ status: "idle", answer: "", citations: [] });
-  const [againstResult, setAgainstResult] = useState<SideResult>({ status: "idle", answer: "", citations: [] });
   const [running, setRunning] = useState(false);
+  const [forResult, setForResult] = useState<SideResult>({
+    status: "idle",
+    answer: "",
+    citations: [],
+  });
+  const [againstResult, setAgainstResult] = useState<SideResult>({
+    status: "idle",
+    answer: "",
+    citations: [],
+  });
+
   const forPoller = useRef<ReturnType<typeof setInterval> | null>(null);
   const againstPoller = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (forPoller.current) clearInterval(forPoller.current);
+      if (againstPoller.current) clearInterval(againstPoller.current);
+    };
+  }, []);
 
   const runSide = async (
     setResult: (r: SideResult) => void,
@@ -52,39 +74,33 @@ export default function HypothesisPage() {
         status: "loading",
         answer: "",
         citations: data.chunks ?? [],
-        totalChunksUsed: data.totalChunksUsed,
       });
       pollerRef.current = setInterval(async () => {
         const poll = await fetch(`/api/chat/${data.id}`);
         if (!poll.ok) return;
         const pd = await poll.json();
         if (pd.status === "COMPLETE") {
-          clearInterval(pollerRef.current!);
+          if (pollerRef.current) clearInterval(pollerRef.current);
           pollerRef.current = null;
           setResult({
             status: "complete",
             answer: pd.answer,
             citations: data.chunks ?? [],
-            totalChunksUsed: data.totalChunksUsed,
           });
         } else if (pd.status === "ERROR") {
-          clearInterval(pollerRef.current!);
+          if (pollerRef.current) clearInterval(pollerRef.current);
           pollerRef.current = null;
-          setResult({ status: "error", answer: pd.answer || "Error", citations: [] });
+          setResult({
+            status: "error",
+            answer: pd.answer || "Error",
+            citations: [],
+          });
         }
       }, 2000);
     } catch {
       setResult({ status: "error", answer: "Error de red", citations: [] });
     }
   };
-
-  // Limpiar pollers al desmontar
-  useEffect(() => {
-    return () => {
-      if (forPoller.current) clearInterval(forPoller.current);
-      if (againstPoller.current) clearInterval(againstPoller.current);
-    };
-  }, []);
 
   const run = async () => {
     const h = hypothesis.trim();
@@ -97,16 +113,8 @@ export default function HypothesisPage() {
     if (againstPoller.current) clearInterval(againstPoller.current);
 
     await Promise.all([
-      runSide(
-        setForResult,
-        forPoller,
-        `Evalúa la siguiente hipótesis histórica y busca evidencia EN FAVOR. Cita pasajes específicos del corpus que la respalden, con razonamiento claro.\n\nHIPÓTESIS:\n"${h}"\n\nResponde con un mini-ensayo de evidencia favorable, argumentando por qué los hechos del corpus respaldan esta tesis. Incluye citas [#N] obligatorias.`,
-      ),
-      runSide(
-        setAgainstResult,
-        againstPoller,
-        `Evalúa la siguiente hipótesis histórica y busca evidencia EN CONTRA. Cita pasajes que la cuestionen, matizan o refutan, con razonamiento claro.\n\nHIPÓTESIS:\n"${h}"\n\nResponde con un mini-ensayo crítico que problematice esta tesis basándote en evidencia del corpus. Incluye citas [#N] obligatorias.`,
-      ),
+      runSide(setForResult, forPoller, FOR_PROMPT(h)),
+      runSide(setAgainstResult, againstPoller, AGAINST_PROMPT(h)),
     ]);
 
     const checkDone = setInterval(() => {
@@ -117,160 +125,241 @@ export default function HypothesisPage() {
     }, 1000);
   };
 
-  return (
-    <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
-      {/* Hero */}
-      <header className="mb-5">
-        <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
-          Plataforma de investigación
-        </div>
-        <h1
-          className="serif-title text-[36px] leading-tight mt-1.5 mb-2 text-[var(--color-ink-1000)] flex items-center gap-3"
-          style={{ fontWeight: 700 }}
-        >
-          <Lightbulb className="size-8 text-[var(--accent)]" />
-          Sistema de hipótesis
-        </h1>
-        <p className="text-[15px] leading-relaxed text-[var(--fg-muted)] max-w-[720px]">
-          Plantea una hipótesis histórica y el sistema buscará evidencia{" "}
-          <span className="font-semibold text-[var(--color-success-fg)]">a favor</span>{" "}
-          y{" "}
-          <span className="font-semibold text-[var(--color-danger-fg)]">en contra</span>{" "}
-          en el corpus, presentándolas lado a lado. Útil para tesis, historiografía o argumentación.
-        </p>
-      </header>
+  const phase: "idle" | "running" | "done" =
+    forResult.status === "idle" && againstResult.status === "idle"
+      ? "idle"
+      : running ||
+          forResult.status === "loading" ||
+          againstResult.status === "loading"
+        ? "running"
+        : "done";
 
-      {/* Input */}
-      <Card variant="default" size="md" className="mb-4">
-        <div className="flex flex-col gap-3">
-          <Textarea
-            value={hypothesis}
-            onChange={(e) => setHypothesis(e.target.value)}
-            placeholder='Ej: "El Frente Nacional consolidó la exclusión política y sembró las condiciones del conflicto armado contemporáneo."'
-            rows={3}
-            disabled={running}
-            className="min-h-[88px] max-h-[200px]"
-          />
-          <div className="flex items-center gap-3 flex-wrap">
-            <Button
-              variant="primary"
-              size="lg"
-              leadingIcon={<Rocket className="size-4" />}
-              isLoading={running}
-              disabled={hypothesis.trim().length < 10}
-              onClick={run}
-            >
-              Buscar evidencia
-            </Button>
-            <span className="text-xs text-[var(--fg-subtle)]">
-              Se ejecutan dos consultas RAG en paralelo. ~30–60s.
+  return (
+    <div className="fade-up" data-screen-label="Hypothesis">
+      <PageHeader
+        label="Investigación · Argumentación bidireccional"
+        title="Hipótesis"
+        italic="contra hipótesis"
+        subtitle="Plantea una tesis histórica. El sistema buscará evidencia a favor y en contra en paralelo, citando pasajes específicos del corpus. Útil para historiografía y argumentación."
+      />
+
+      <hr className="hairline" style={{ margin: "0 56px" }} />
+
+      <section style={{ padding: "44px 56px 0", maxWidth: 1320 }}>
+        <div className="label" style={{ marginBottom: 14 }}>
+          Tesis a evaluar
+        </div>
+        <textarea
+          value={hypothesis}
+          onChange={(e) => setHypothesis(e.target.value)}
+          placeholder='Ej: "Las reformas de López Pumarejo transformaron de modo decisivo la matriz social colombiana."'
+          rows={2}
+          style={{
+            width: "100%",
+            appearance: "none",
+            background: "transparent",
+            border: 0,
+            borderBottom: "1px solid var(--line-strong)",
+            outline: "none",
+            resize: "vertical",
+            fontFamily: "var(--font-display)",
+            fontSize: 26,
+            color: "var(--fg)",
+            lineHeight: 1.35,
+            padding: "12px 0",
+            letterSpacing: "-0.01em",
+          }}
+        />
+        <div
+          style={{
+            marginTop: 18,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <div style={{ fontSize: 12, color: "var(--fg-muted)" }}>
+            {hypothesis.length} caracteres · mínimo 10
+          </div>
+          <button
+            type="button"
+            onClick={run}
+            disabled={running || hypothesis.trim().length < 10}
+            style={
+              hypothesis.trim().length >= 10 && !running
+                ? primaryBtn
+                : { ...primaryBtn, opacity: 0.4, cursor: "default" }
+            }
+          >
+            {running
+              ? "Argumentando…"
+              : phase === "done"
+                ? "Re-argumentar"
+                : "Argumentar →"}
+          </button>
+        </div>
+      </section>
+
+      <section
+        style={{
+          padding: "56px 56px 96px",
+          maxWidth: 1320,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 0,
+          borderTop: "1px solid var(--line-strong)",
+          marginTop: 32,
+        }}
+      >
+        <div
+          style={{
+            padding: "32px 32px 32px 0",
+            borderRight: "1px solid var(--line)",
+          }}
+        >
+          <div
+            style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}
+          >
+            <span style={{ width: 8, height: 8, background: "var(--success)" }} />
+            <span className="label" style={{ color: "var(--success)" }}>
+              En favor
             </span>
           </div>
+          <HypothesisColumn result={forResult} />
         </div>
-      </Card>
-
-      {/* Hipótesis evaluada */}
-      {(forResult.status !== "idle" || againstResult.status !== "idle") && hypothesis.trim() && (
-        <Card
-          variant="default"
-          size="sm"
-          className="mb-4 border-l-[3px] border-l-[var(--accent)]"
-        >
-          <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
-            Hipótesis evaluada
-          </div>
-          <p
-            className="mt-1.5 text-[15px] leading-snug text-[var(--fg-default)]"
-            style={{ fontFamily: "var(--font-serif)" }}
+        <div style={{ padding: "32px 0 32px 32px" }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}
           >
-            {hypothesis.trim()}
-          </p>
-        </Card>
-      )}
-
-      {/* Resultados lado a lado */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SideCard
-          title="Evidencia a favor"
-          icon={<CheckCircle2 className="size-4" />}
-          accentVar="--color-success-fg"
-          result={forResult}
-        />
-        <SideCard
-          title="Evidencia en contra"
-          icon={<XCircle className="size-4" />}
-          accentVar="--color-danger-fg"
-          result={againstResult}
-        />
-      </div>
+            <span style={{ width: 8, height: 8, background: "var(--danger)" }} />
+            <span className="label" style={{ color: "var(--danger)" }}>
+              En contra
+            </span>
+          </div>
+          <HypothesisColumn result={againstResult} />
+        </div>
+      </section>
     </div>
   );
 }
 
-/* ─── Sub-componentes ────────────────────────────────────────────────────── */
-
-function SideCard({
-  title,
-  icon,
-  accentVar,
-  result,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  accentVar: string;
-  result: SideResult;
-}) {
-  const badgeVariant = accentVar === "--color-success-fg" ? "success" : "danger";
-
+function HypothesisColumn({ result }: { result: SideResult }) {
+  if (result.status === "idle") {
+    return (
+      <div
+        className="serif"
+        style={{
+          fontSize: 16,
+          color: "var(--fg-faint)",
+          fontStyle: "italic",
+        }}
+      >
+        Plantea una tesis para comenzar.
+      </div>
+    );
+  }
+  if (result.status === "loading" && !result.answer) {
+    return (
+      <div
+        className="fade-in"
+        style={{ display: "flex", alignItems: "center", gap: 10 }}
+      >
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "var(--accent)",
+            animation: "caret-blink 1s infinite",
+          }}
+        />
+        <span style={{ fontSize: 13, color: "var(--fg-muted)" }}>
+          Buscando evidencia…
+        </span>
+      </div>
+    );
+  }
+  if (result.status === "error") {
+    return (
+      <div
+        style={{
+          padding: "12px 16px",
+          border: "1px solid var(--danger)",
+          color: "var(--danger)",
+          fontSize: 13,
+        }}
+      >
+        {result.answer || "Error al generar argumentación."}
+      </div>
+    );
+  }
   return (
-    <Card
-      variant="default"
-      size="md"
-      className="min-h-[380px] relative overflow-hidden"
-      style={{ boxShadow: `inset 0 3px 0 var(${accentVar})` }}
-    >
-      <header className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-[var(--border-default)]">
-        <div className="flex items-center gap-2">
-          <span style={{ color: `var(${accentVar})` }}>{icon}</span>
-          <h3 className="text-[15px] font-semibold text-[var(--fg-default)]">
-            {title}
-          </h3>
-        </div>
-        {result.status === "complete" && (
-          <Badge variant={badgeVariant} size="xs">
-            {result.citations.length} fuentes
-          </Badge>
-        )}
-      </header>
-
-      {result.status === "idle" && (
-        <div className="py-10 text-center">
-          <FileText className="size-8 mx-auto mb-2 text-[var(--fg-subtle)] opacity-60" />
-          <div className="text-[13px] text-[var(--fg-subtle)]">Sin ejecutar</div>
+    <div className="fade-in">
+      <div className="prose" style={{ maxWidth: "none", fontSize: 17 }}>
+        {result.answer.split("\n").map((line, i) => {
+          if (line.trim() === "") return <div key={i} style={{ height: 6 }} />;
+          return (
+            <p key={i} style={{ margin: "0 0 1em" }}>
+              {renderInline(line, result.citations)}
+            </p>
+          );
+        })}
+      </div>
+      {result.citations.length > 0 && (
+        <div
+          style={{
+            marginTop: 24,
+            paddingTop: 16,
+            borderTop: "1px solid var(--line)",
+            fontSize: 12,
+            color: "var(--fg-muted)",
+          }}
+        >
+          {result.citations.length} pasajes citados
         </div>
       )}
-
-      {result.status === "loading" && (
-        <div className="py-10 text-center">
-          <Spinner size={20} className="mx-auto text-[var(--accent)]" />
-          <p className="mt-3 text-[13px] text-[var(--fg-muted)]">
-            Buscando en el corpus…
-          </p>
-        </div>
-      )}
-
-      {result.status === "error" && (
-        <div className="p-4 rounded-md border border-[var(--color-danger-fg)]/40 bg-[var(--color-danger-bg)] flex items-start gap-3">
-          <AlertCircle className="size-4 text-[var(--color-danger-fg)] mt-0.5 shrink-0" />
-          <div className="text-sm text-[var(--color-danger-fg)]">{result.answer}</div>
-        </div>
-      )}
-
-      {result.status === "complete" && (
-        <ProseBlock width="prose" className="text-sm max-w-full">
-          <ReactMarkdown>{result.answer}</ReactMarkdown>
-        </ProseBlock>
-      )}
-    </Card>
+    </div>
   );
+}
+
+function renderInline(text: string, chunks: ChunkCitation[]) {
+  const parts: React.ReactNode[] = [];
+  let r = text;
+  let k = 0;
+  while (r.length) {
+    const m = r.match(/^\[#?(\d+)\]/);
+    const bMatch = r.match(/^\*\*([^*]+)\*\*/);
+    const iMatch = r.match(/^\*([^*]+)\*/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      const chunk = chunks[n - 1];
+      parts.push(
+        <Cita
+          key={k++}
+          n={n}
+          page={chunk?.pageNumber}
+          doc={chunk?.documentFilename?.replace(/\.pdf$/i, "")}
+        />,
+      );
+      r = r.slice(m[0].length);
+    } else if (bMatch) {
+      parts.push(<strong key={k++}>{bMatch[1]}</strong>);
+      r = r.slice(bMatch[0].length);
+    } else if (iMatch) {
+      parts.push(<em key={k++}>{iMatch[1]}</em>);
+      r = r.slice(iMatch[0].length);
+    } else {
+      const nextC = r.search(/\[#?\d+\]/);
+      const nextB = r.indexOf("**");
+      const nextI = r.indexOf("*");
+      const candidates = [nextC, nextB, nextI].filter((x) => x >= 0);
+      const stop = candidates.length ? Math.min(...candidates) : r.length;
+      const slice = r.slice(0, Math.max(stop, 1));
+      parts.push(<Fragment key={k++}>{slice}</Fragment>);
+      r = r.slice(slice.length);
+    }
+  }
+  return parts;
 }

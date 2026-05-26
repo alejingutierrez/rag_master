@@ -6,31 +6,20 @@ import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { CommandPalette } from "./command-palette";
 import { KeyboardHelp } from "./keyboard-help";
-import { safeGet, safeSet } from "@/lib/safe-storage";
-import { cn } from "@/lib/cn";
 
-const SIDEBAR_COLLAPSED_KEY = "rag-master-sider-collapsed";
+const SIDEBAR_WIDTH = 220;
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState<boolean>(() =>
-    safeGet<boolean>(SIDEBAR_COLLAPSED_KEY, false),
-  );
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobile, setMobile] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
-  // Bypass para páginas de desarrollo del nuevo design system.
+  // Bypass para páginas de desarrollo del nuevo design system (si se conservan).
   const isDevPath = pathname.startsWith("/dev");
 
-  // Detectar mobile y colapsar automáticamente
   useEffect(() => {
-    const check = () => {
-      const isMobile = window.innerWidth < 768;
-      setMobile(isMobile);
-      if (isMobile) setCollapsed(true);
-    };
+    const check = () => setMobile(window.innerWidth < 768);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -48,7 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // Atajos tipo Linear: g+letra, f para focus mode
+  // Atajos g+letra (Linear-style).
   useEffect(() => {
     let lastKey = "";
     let lastTime = 0;
@@ -64,16 +53,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const now = Date.now();
       const k = e.key.toLowerCase();
-
-      // Modo lectura / focus
-      if (k === "f") {
-        e.preventDefault();
-        setFocusMode((v) => !v);
-        return;
-      }
-      if (e.key === "Escape" && focusMode) {
-        setFocusMode(false);
-      }
 
       if (lastKey === "g" && now - lastTime < 800) {
         const map: Record<string, string> = {
@@ -101,46 +80,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [router, focusMode]);
+  }, [router]);
 
-  const toggleCollapsed = () => {
-    const next = !collapsed;
-    setCollapsed(next);
-    safeSet(SIDEBAR_COLLAPSED_KEY, next);
-  };
-
-  // Páginas dev: renderizar sin shell.
   if (isDevPath) {
     return <>{children}</>;
   }
 
-  const sidebarWidth = focusMode ? 0 : mobile ? 0 : collapsed ? 64 : 244;
-  const hideShell = focusMode;
+  // En mobile escondemos el sidebar; el shell del diseño está pensado para desktop.
+  const showSidebar = !mobile;
+  const mainOffset = showSidebar ? SIDEBAR_WIDTH : 0;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-page)]">
-      {!hideShell && !mobile && (
-        <Sidebar
-          collapsed={collapsed}
-          onCollapseToggle={toggleCollapsed}
-          onSearchClick={() => setPaletteOpen(true)}
-        />
-      )}
-
-      {!hideShell && (
-        <TopBar
-          sidebarWidth={sidebarWidth}
-          onSearchClick={() => setPaletteOpen(true)}
-        />
-      )}
-
+    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg)" }}>
+      {showSidebar && <Sidebar />}
       <main
-        className={cn(
-          "transition-[margin-left,padding-top] duration-200 ease-out",
-          !hideShell && "pt-16",
-        )}
-        style={{ marginLeft: sidebarWidth }}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          marginLeft: mainOffset,
+        }}
       >
+        <TopBar onSearchClick={() => setPaletteOpen(true)} />
         {children}
       </main>
 

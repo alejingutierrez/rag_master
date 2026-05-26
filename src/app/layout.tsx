@@ -1,35 +1,36 @@
 import type { Metadata } from "next";
-import { Newsreader, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Instrument_Serif, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import "@/lib/dayjs-config";
 import "./globals.css";
 
-const serif = Newsreader({
-  variable: "--font-newsreader",
+const display = Instrument_Serif({
+  variable: "--font-display",
   subsets: ["latin", "latin-ext"],
+  weight: ["400"],
+  style: ["normal", "italic"],
   display: "swap",
-  axes: ["opsz"],
 });
 
-const sans = IBM_Plex_Sans({
-  variable: "--font-plex-sans",
+const sans = DM_Sans({
+  variable: "--font-sans",
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const mono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
+const mono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Archivo Histórico Digital · Colombia",
+  title: "Archivo · Historia de Colombia",
   description:
-    "Plataforma de investigación con RAG, agentes y búsqueda semántica sobre la historia de Colombia.",
+    "Una historia de Colombia vectorizada, citable, abierta a la consulta. Plataforma de investigación con RAG, agentes y producción académica.",
 };
 
 export default function RootLayout({
@@ -37,7 +38,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
+      <body className={`${display.variable} ${sans.variable} ${mono.variable}`}>
         <ThemeProvider>
           <AppShell>{children}</AppShell>
         </ThemeProvider>

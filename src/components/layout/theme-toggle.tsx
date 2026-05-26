@@ -1,52 +1,54 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  IconButton,
-  Tooltip,
-} from "@/components/ui";
 
 export function ThemeToggle() {
-  const { mode, setMode } = useTheme();
+  const { mode, resolved, setMode } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Placeholder antes del mount para evitar hydration mismatch.
   if (!mounted) {
-    return <div className="size-8" aria-hidden />;
+    // Reservar el espacio para evitar layout shift sin pintar nada (hydration safe).
+    return (
+      <div
+        aria-hidden
+        style={{
+          width: 78,
+          height: 27,
+        }}
+      />
+    );
   }
 
-  const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+  const isDark = resolved === "dark";
+  const next = isDark ? "light" : "dark";
+  const label = isDark ? "Claro" : "Oscuro";
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Tooltip content="Tema">
-          <IconButton aria-label="Cambiar tema" variant="ghost">
-            <Icon />
-          </IconButton>
-        </Tooltip>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => setMode("light")}>
-          <Sun /> Claro
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setMode("dark")}>
-          <Moon /> Oscuro
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setMode("auto")}>
-          <Monitor /> Sistema
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <button
+      type="button"
+      onClick={() => setMode(next)}
+      aria-label={`Cambiar a tema ${label.toLowerCase()}`}
+      title={mode === "auto" ? "Tema: sistema" : `Tema: ${mode}`}
+      style={{
+        appearance: "none",
+        background: "transparent",
+        border: "1px solid var(--line-strong)",
+        padding: "5px 11px",
+        fontSize: 11,
+        fontFamily: "var(--font-mono)",
+        color: "var(--fg-muted)",
+        cursor: "pointer",
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label}
+    </button>
   );
 }

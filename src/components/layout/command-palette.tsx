@@ -56,7 +56,6 @@ const STATIC_ITEMS: Item[] = [
   { id: "nav-bib", label: "Bibliografía", href: "/bibliography", icon: Library, group: "Navegar" },
   { id: "nav-time", label: "Línea de tiempo", href: "/timeline", icon: Activity, group: "Navegar" },
   { id: "nav-graph", label: "Grafo de conexiones", href: "/graph", icon: GitBranch, group: "Navegar" },
-  { id: "nav-cov", label: "Cobertura temática", href: "/coverage", icon: MapIcon, group: "Navegar" },
   { id: "nav-ent", label: "Entidades", href: "/entities", icon: Users, group: "Navegar" },
 ];
 

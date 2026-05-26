@@ -1,26 +1,13 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import {
-  FileText,
-  Inbox,
-  UploadCloud,
-  Network,
-  FlaskConical,
-  CheckCircle,
-  XCircle,
-  Copy,
-  Loader2,
-  RotateCw,
-  Eraser,
-  Eye,
-  X,
-  AlertCircle,
-} from "lucide-react";
-import { Badge, Button, Card, IconButton } from "@/components/ui";
-import { cn } from "@/lib/cn";
+  PageHeader,
+  SectionHeader,
+  primaryBtn,
+  ghostBtn,
+} from "@/components/editorial";
 
 type FileStatus =
   | "queued"
@@ -43,14 +30,11 @@ interface FileUploadState {
 }
 
 const LARGE_FILE_MB = 50;
-
-// Unidad: PALABRAS (chunking cross-page por palabras desde 2026-05-25)
 const CHUNK_CONFIG = {
   chunkSize: 2000,
   chunkOverlap: 500,
   strategy: "FIXED" as const,
 };
-
 const CONCURRENCY = 2;
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY = 2000;
@@ -64,14 +48,20 @@ async function computeFileHash(file: File): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = MAX_RETRIES): Promise<Response> {
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = MAX_RETRIES,
+): Promise<Response> {
   let lastError: Error | null = null;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const res = await fetch(url, options);
-      if (res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504) {
+      if ([429, 502, 503, 504].includes(res.status)) {
         if (attempt < maxRetries) {
-          await new Promise((r) => setTimeout(r, RETRY_BASE_DELAY * 2 ** attempt + Math.random() * 1000));
+          await new Promise((r) =>
+            setTimeout(r, RETRY_BASE_DELAY * 2 ** attempt + Math.random() * 1000),
+          );
           continue;
         }
       }
@@ -79,7 +69,9 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = MA
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
       if (attempt < maxRetries) {
-        await new Promise((r) => setTimeout(r, RETRY_BASE_DELAY * 2 ** attempt + Math.random() * 1000));
+        await new Promise((r) =>
+          setTimeout(r, RETRY_BASE_DELAY * 2 ** attempt + Math.random() * 1000),
+        );
         continue;
       }
     }
@@ -87,18 +79,24 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = MA
   throw lastError || new Error("Fetch failed after retries");
 }
 
-const PIPELINE_STEPS = [
-  { key: "queued", title: "En cola", Icon: FileText },
-  { key: "hashing", title: "Hash SHA-256", Icon: Copy },
-  { key: "uploading", title: "Subir a S3", Icon: UploadCloud },
-  { key: "processing", title: "Chunking", Icon: Network },
-  { key: "embedding", title: "Embeddings", Icon: FlaskConical },
-  { key: "success", title: "Listo", Icon: CheckCircle },
+const PIPELINE_STEPS: { key: FileStatus; label: string }[] = [
+  { key: "queued", label: "En cola" },
+  { key: "hashing", label: "Hash SHA-256" },
+  { key: "uploading", label: "Subir a S3" },
+  { key: "processing", label: "Chunking" },
+  { key: "embedding", label: "Embeddings" },
+  { key: "success", label: "Listo" },
 ];
 
 function pipelineStepIndex(s: FileStatus): number {
   const idx = PIPELINE_STEPS.findIndex((p) => p.key === s);
   return idx === -1 ? 0 : idx;
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function UploadPage() {
@@ -113,33 +111,22 @@ export default function UploadPage() {
     setStates((prev) => prev.map((s) => (s.id === id ? { ...s, ...update } : s)));
   };
 
-  const removeState = (id: string) => {
-    setStates((prev) => prev.filter((s) => s.id !== id));
-  };
-
-  const handleClear = useCallback(() => {
-    setStates([]);
-    abortRef.current = false;
-    sessionHashesRef.current.clear();
-  }, []);
-
   const uploadSingle = async (state: FileUploadState) => {
     const { file, id } = state;
     if (abortRef.current) return;
     try {
       const sizeMB = file.size / 1024 / 1024;
-      if (sizeMB > LARGE_FILE_MB) {
-        updateState(id, {
-          status: "hashing",
-          message: `Archivo grande (${sizeMB.toFixed(1)} MB). Calculando hash, puede tardar 10‑30s…`,
-        });
-      } else {
-        updateState(id, { status: "hashing", message: "Calculando hash SHA-256…" });
-      }
+      updateState(id, {
+        status: "hashing",
+        message:
+          sizeMB > LARGE_FILE_MB
+            ? `Archivo grande (${sizeMB.toFixed(1)} MB). Calculando hash, puede tardar 10-30s…`
+            : "Calculando hash SHA-256…",
+      });
       const fileHash = await computeFileHash(file);
 
       if (sessionHashesRef.current.has(fileHash)) {
-        updateState(id, { status: "duplicate", message: "Duplicado en esta carga (mismo contenido)." });
+        updateState(id, { status: "duplicate", message: "Duplicado en esta carga." });
         return;
       }
 
@@ -153,7 +140,7 @@ export default function UploadPage() {
         if (checkData.isDuplicate) {
           updateState(id, {
             status: "duplicate",
-            message: `Ya existe en el sistema como "${checkData.existingFilename}".`,
+            message: `Ya existe como "${checkData.existingFilename}".`,
           });
           return;
         }
@@ -224,7 +211,11 @@ export default function UploadPage() {
           const progressRes = await fetch(`/api/documents/${documentId}/process`);
           if (!progressRes.ok) {
             if (++consecutiveErrors >= 10) {
-              updateState(id, { status: "success", message: "Embeddings continuando en background", chunkCount });
+              updateState(id, {
+                status: "success",
+                message: "Embeddings continuando en background",
+                chunkCount,
+              });
               return;
             }
             continue;
@@ -233,14 +224,21 @@ export default function UploadPage() {
           const progress = await progressRes.json();
           updateState(id, {
             message: `Generando embeddings: ${progress.processedChunks}/${progress.totalChunks}`,
-            embeddingProgress: { processed: progress.processedChunks, total: progress.totalChunks },
+            embeddingProgress: {
+              processed: progress.processedChunks,
+              total: progress.totalChunks,
+            },
           });
           if (progress.status === "READY") break;
           if (progress.status === "ERROR") throw new Error("Error al generar embeddings");
         } catch (e) {
           if (e instanceof Error && e.message === "Error al generar embeddings") throw e;
           if (++consecutiveErrors >= 10) {
-            updateState(id, { status: "success", message: "Embeddings continuando en background", chunkCount });
+            updateState(id, {
+              status: "success",
+              message: "Embeddings continuando en background",
+              chunkCount,
+            });
             return;
           }
         }
@@ -260,10 +258,12 @@ export default function UploadPage() {
     }
   };
 
-  // Acepta File[] (de input change o drop) y crea estados deduplicados
   const ingestFiles = useCallback((rawFiles: File[]) => {
     const newFiles = rawFiles.filter((f) => f.type === "application/pdf");
-    if (newFiles.length === 0) return;
+    if (newFiles.length === 0) {
+      toast.info("Sólo PDFs por ahora.");
+      return;
+    }
     const newStates: FileUploadState[] = newFiles.map((f) => ({
       id: `${f.name}-${f.size}-${f.lastModified}-${Math.random()}`,
       file: f,
@@ -272,9 +272,11 @@ export default function UploadPage() {
     }));
     setStates((prev) => {
       const existing = new Set(prev.map((s) => `${s.file.name}|${s.file.size}`));
-      const filtered = newStates.filter((s) => !existing.has(`${s.file.name}|${s.file.size}`));
+      const filtered = newStates.filter(
+        (s) => !existing.has(`${s.file.name}|${s.file.size}`),
+      );
       if (filtered.length < newStates.length) {
-        toast.info(`${newStates.length - filtered.length} duplicados ya en la lista`);
+        toast.info(`${newStates.length - filtered.length} duplicados ignorados`);
       }
       return [...prev, ...filtered];
     });
@@ -283,7 +285,6 @@ export default function UploadPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     ingestFiles(Array.from(e.target.files));
-    // reset input para permitir reseleccionar el mismo archivo
     e.target.value = "";
   };
 
@@ -296,11 +297,11 @@ export default function UploadPage() {
   };
 
   const startUpload = async () => {
-    const pendingStates = states.filter((s) => s.status === "queued" || s.status === "error");
-    if (pendingStates.length === 0) return;
+    const pending = states.filter((s) => s.status === "queued" || s.status === "error");
+    if (pending.length === 0) return;
     setIsProcessing(true);
     abortRef.current = false;
-    const queue = [...pendingStates];
+    const queue = [...pending];
     const workers = Array.from({ length: CONCURRENCY }, async () => {
       while (queue.length > 0 && !abortRef.current) {
         const item = queue.shift();
@@ -312,358 +313,271 @@ export default function UploadPage() {
     setIsProcessing(false);
   };
 
-  const successCount = states.filter((s) => s.status === "success").length;
-  const errorCount = states.filter((s) => s.status === "error").length;
-  const dupCount = states.filter((s) => s.status === "duplicate").length;
-  const totalChunks = states.reduce((s, x) => s + (x.chunkCount ?? 0), 0);
-  const pendingCount = states.filter((s) => s.status === "queued" || s.status === "error").length;
+  const pendingCount = states.filter(
+    (s) => s.status === "queued" || s.status === "error",
+  ).length;
 
   return (
-    <div className="app-page-narrow">
-      <div className="mb-6">
-        <h2 className="serif-title text-[28px] leading-tight text-[var(--color-ink-1000)] m-0" style={{ fontWeight: 700 }}>
-          Cargar PDFs
-        </h2>
-        <p className="text-[15px] leading-relaxed text-[var(--fg-muted)] mt-1.5 mb-0">
-          Sube fuentes históricas. El sistema calcula el hash para evitar duplicados, las divide en chunks de 3000 caracteres con overlap de 750, y genera embeddings con Cohere Embed v4.
-        </p>
-      </div>
+    <div className="fade-up" data-screen-label="Upload">
+      <PageHeader
+        label="Repositorio"
+        title="Cargar"
+        italic="PDFs al corpus"
+        subtitle="Arrastra tus PDFs. Cada archivo pasa por hash, S3, chunking y vectorización. Procesamiento concurrente: 2 archivos en paralelo."
+      />
 
-      <Card variant="default" size="md" className="mb-5">
+      <hr className="hairline" style={{ margin: "0 56px" }} />
+
+      <section style={{ padding: "44px 56px 0", maxWidth: 1100 }}>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="application/pdf"
+          multiple
+          onChange={handleInputChange}
+          style={{ display: "none" }}
+        />
         <div
-          onClick={() => !isProcessing && inputRef.current?.click()}
           onDragOver={(e) => {
             e.preventDefault();
-            if (!isProcessing) setIsDragOver(true);
+            setIsDragOver(true);
           }}
           onDragLeave={() => setIsDragOver(false)}
           onDrop={handleDrop}
-          className={cn(
-            "rounded-lg border-2 border-dashed py-10 px-6 text-center transition-colors duration-[var(--duration-instant)]",
-            isProcessing ? "cursor-not-allowed opacity-60" : "cursor-pointer",
-            isDragOver
-              ? "border-[var(--accent)] bg-[var(--accent-bg-subtle)]"
-              : "border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)]",
-          )}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if ((e.key === "Enter" || e.key === " ") && !isProcessing) {
-              e.preventDefault();
-              inputRef.current?.click();
-            }
+          onClick={() => inputRef.current?.click()}
+          style={{
+            padding: "80px 32px",
+            border:
+              "1px dashed " +
+              (isDragOver ? "var(--accent)" : "var(--line-strong)"),
+            background: isDragOver ? "var(--accent-soft)" : "transparent",
+            textAlign: "center",
+            cursor: "pointer",
+            transition: "all 160ms var(--ease-out-custom)",
           }}
         >
-          <input
-            ref={inputRef}
-            type="file"
-            multiple
-            accept=".pdf,application/pdf"
-            className="hidden"
-            onChange={handleInputChange}
-            disabled={isProcessing}
-          />
-          <div className="flex flex-col items-center gap-3">
-            <Inbox className="size-12 text-[var(--accent)]" />
-            <p className="text-[16px] font-medium text-[var(--fg-default)]">
-              Arrastra PDFs aquí o haz click para seleccionar
-            </p>
-            <p className="text-[13px] text-[var(--fg-subtle)]">
-              Soporta múltiples archivos. El procesamiento es paralelo (concurrencia {CONCURRENCY}).
-            </p>
+          <div
+            className="display"
+            style={{
+              fontSize: 56,
+              color: isDragOver ? "var(--accent)" : "var(--fg)",
+              margin: 0,
+              lineHeight: 1.0,
+            }}
+          >
+            Arrastra{" "}
+            <span className="display-italic" style={{ color: "var(--fg-muted)" }}>
+              aquí.
+            </span>
+          </div>
+          <div
+            className="serif"
+            style={{
+              fontSize: 17,
+              color: "var(--fg-muted)",
+              marginTop: 14,
+              fontStyle: "italic",
+            }}
+          >
+            O haz clic para seleccionar archivos. Tamaño máximo: 100 MB por PDF.
+          </div>
+          <div style={{ marginTop: 28 }}>
+            <button
+              type="button"
+              style={primaryBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                inputRef.current?.click();
+              }}
+            >
+              Seleccionar archivos →
+            </button>
           </div>
         </div>
-      </Card>
 
-      {states.length > 0 && (
-        <>
-          <Card variant="default" size="md" className="mb-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatBlock label="En cola" value={pendingCount} />
-              <StatBlock label="Listos" value={successCount} colorVar="--color-success-fg" />
-              <StatBlock label="Duplicados" value={dupCount} colorVar="--color-warning-fg" />
-              <StatBlock label="Chunks totales" value={totalChunks} />
-            </div>
-            <div className="flex gap-2 mt-4">
-              <Button
-                variant="primary"
-                size="md"
-                onClick={startUpload}
-                disabled={isProcessing || pendingCount === 0}
-                leadingIcon={
-                  isProcessing ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />
-                }
-              >
-                {isProcessing
-                  ? "Procesando…"
-                  : `Subir y procesar ${pendingCount} archivo${pendingCount !== 1 ? "s" : ""}`}
-              </Button>
-              {isProcessing && (
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onClick={() => (abortRef.current = true)}
-                  leadingIcon={<XCircle className="size-4" />}
-                >
-                  Detener
-                </Button>
-              )}
-              {!isProcessing && (
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onClick={handleClear}
-                  leadingIcon={<Eraser className="size-4" />}
-                >
-                  Limpiar
-                </Button>
-              )}
-            </div>
-          </Card>
-
-          {successCount > 0 && !isProcessing && errorCount === 0 && (
-            <div className="mb-4 p-4 rounded-lg border border-[var(--color-success-fg)]/40 bg-[var(--color-success-bg)] flex items-start gap-3">
-              <CheckCircle className="size-4 text-[var(--color-success-fg)] mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <div className="text-sm font-medium text-[var(--color-success-fg)]">
-                  {successCount} archivo{successCount !== 1 ? "s" : ""} procesado{successCount !== 1 ? "s" : ""}
-                </div>
-                <div className="text-sm text-[var(--color-success-fg)]/80 mt-0.5">
-                  {totalChunks} chunks creados y vectorizados. Ya puedes consultarlos en /chat o generar preguntas.
-                </div>
+        {/* Config strip */}
+        <div
+          style={{
+            marginTop: 24,
+            padding: "16px 0",
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 0,
+            borderTop: "1px solid var(--line)",
+            borderBottom: "1px solid var(--line)",
+          }}
+        >
+          {[
+            ["Chunk size", "2000 palabras"],
+            ["Overlap", "500 palabras"],
+            ["Estrategia", "FIXED · cross-page"],
+            ["Embedding", "Cohere v4.0"],
+          ].map(([l, v], i) => (
+            <div
+              key={i}
+              style={{
+                paddingLeft: i === 0 ? 0 : 24,
+                borderLeft: i === 0 ? 0 : "1px solid var(--line)",
+              }}
+            >
+              <div className="label" style={{ marginBottom: 4 }}>
+                {l}
+              </div>
+              <div className="mono" style={{ fontSize: 12, color: "var(--fg)" }}>
+                {v}
               </div>
             </div>
-          )}
+          ))}
+        </div>
+      </section>
 
-          <div className="flex flex-col gap-2.5">
-            {states.map((s) => (
-              <FileRow
-                key={s.id}
-                state={s}
-                onRemove={() => removeState(s.id)}
-                onRetry={() => uploadSingle(s)}
-                disabled={isProcessing}
+      {states.length > 0 && (
+        <section style={{ padding: "56px 56px 96px", maxWidth: 1100 }}>
+          <SectionHeader
+            index="01"
+            title="Cola de procesamiento"
+            caption={`${states.length} archivos · ${pendingCount} pendientes`}
+            action={
+              <div style={{ display: "flex", gap: 8 }}>
+                {pendingCount > 0 && !isProcessing && (
+                  <button type="button" style={primaryBtn} onClick={startUpload}>
+                    Iniciar carga →
+                  </button>
+                )}
+                {isProcessing && (
+                  <button
+                    type="button"
+                    style={ghostBtn}
+                    onClick={() => {
+                      abortRef.current = true;
+                    }}
+                  >
+                    Detener
+                  </button>
+                )}
+                {!isProcessing && (
+                  <button
+                    type="button"
+                    style={ghostBtn}
+                    onClick={() => {
+                      setStates([]);
+                      sessionHashesRef.current.clear();
+                    }}
+                  >
+                    Limpiar
+                  </button>
+                )}
+              </div>
+            }
+          />
+          {states.map((f) => (
+            <UploadRow key={f.id} file={f} />
+          ))}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function UploadRow({ file }: { file: FileUploadState }) {
+  const step = pipelineStepIndex(file.status);
+  const isError = file.status === "error";
+  const isDup = file.status === "duplicate";
+  const labelColor = isError
+    ? "var(--danger)"
+    : file.status === "success"
+      ? "var(--success)"
+      : isDup
+        ? "var(--fg-faint)"
+        : "var(--accent)";
+  const stepLabel = isError ? "Error" : isDup ? "Duplicado" : PIPELINE_STEPS[step].label;
+
+  return (
+    <div style={{ padding: "20px 0", borderBottom: "1px solid var(--line)" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: 14,
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div className="serif" style={{ fontSize: 16, color: "var(--fg)" }}>
+            {file.file.name}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 3 }}>
+            {formatSize(file.file.size)} · {file.message}
+          </div>
+        </div>
+        <div
+          className="mono"
+          style={{
+            fontSize: 11,
+            color: labelColor,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          {stepLabel}
+        </div>
+      </div>
+
+      {!isDup && (
+        <>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${PIPELINE_STEPS.length}, 1fr)`,
+              gap: 4,
+              marginBottom: 4,
+            }}
+          >
+            {PIPELINE_STEPS.map((s, i) => (
+              <div
+                key={s.key}
+                style={{
+                  height: 2,
+                  background: isError
+                    ? i <= step
+                      ? "var(--danger)"
+                      : "var(--line)"
+                    : i < step
+                      ? "var(--success)"
+                      : i === step
+                        ? "var(--accent)"
+                        : "var(--line)",
+                  transition: "background 220ms var(--ease-out-custom)",
+                }}
               />
+            ))}
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${PIPELINE_STEPS.length}, 1fr)`,
+              gap: 4,
+            }}
+          >
+            {PIPELINE_STEPS.map((s, i) => (
+              <div
+                key={s.key}
+                className="mono"
+                style={{
+                  fontSize: 10,
+                  color: i <= step ? "var(--fg-muted)" : "var(--fg-faint)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {s.label}
+              </div>
             ))}
           </div>
         </>
       )}
-
-      {states.length === 0 && (
-        <Card variant="default" size="md">
-          <div className="py-10 text-center">
-            <Inbox className="size-10 text-[var(--fg-disabled)] mx-auto mb-3" />
-            <div className="text-[13px] text-[var(--fg-subtle)]">
-              Arrastra archivos arriba para comenzar
-            </div>
-          </div>
-        </Card>
-      )}
-    </div>
-  );
-}
-
-function StatBlock({
-  label,
-  value,
-  colorVar,
-}: {
-  label: string;
-  value: number;
-  colorVar?: string;
-}) {
-  return (
-    <div>
-      <div className="text-[12px] text-[var(--fg-subtle)]">{label}</div>
-      <div
-        className="text-[22px] font-semibold tabular-nums mt-0.5"
-        style={colorVar ? { color: `var(${colorVar})` } : { color: "var(--fg-default)" }}
-      >
-        {value.toLocaleString("es-CO")}
-      </div>
-    </div>
-  );
-}
-
-function FileRow({
-  state,
-  onRemove,
-  onRetry,
-  disabled,
-}: {
-  state: FileUploadState;
-  onRemove: () => void;
-  onRetry: () => void;
-  disabled: boolean;
-}) {
-  const stepIdx = pipelineStepIndex(state.status);
-  const isError = state.status === "error";
-  const isDup = state.status === "duplicate";
-  const isSuccess = state.status === "success";
-  const isWorking = ["hashing", "uploading", "processing", "embedding"].includes(state.status);
-
-  const statusColorVar = isError
-    ? "--color-danger-fg"
-    : isDup
-    ? "--color-warning-fg"
-    : isSuccess
-    ? "--color-success-fg"
-    : "--accent";
-
-  return (
-    <Card
-      variant="default"
-      size="sm"
-      style={{
-        borderLeft: `3px solid var(${statusColorVar})`,
-      }}
-    >
-      <div className="flex flex-col gap-1.5 w-full">
-        <div className="flex items-center justify-between gap-2 w-full">
-          <div className="flex items-center gap-2 min-w-0">
-            <FileText className="size-4 shrink-0" style={{ color: `var(${statusColorVar})` }} />
-            <span className="text-[13px] font-semibold text-[var(--fg-default)] truncate">
-              {state.file.name}
-            </span>
-            <span className="text-[11px] text-[var(--fg-subtle)] shrink-0">
-              {(state.file.size / 1024 / 1024).toFixed(2)} MB
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            {state.chunkCount !== undefined && (
-              <Badge variant="subtle" size="xs">
-                {state.chunkCount.toLocaleString("es")} chunks
-              </Badge>
-            )}
-            {isSuccess && state.documentId && (
-              <Link href={`/documents/${state.documentId}`}>
-                <Button variant="link" size="sm" leadingIcon={<Eye className="size-3.5" />}>
-                  Abrir
-                </Button>
-              </Link>
-            )}
-            {isError && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onRetry}
-                disabled={disabled}
-                leadingIcon={<RotateCw className="size-3.5" />}
-              >
-                Reintentar
-              </Button>
-            )}
-            {!isWorking && (
-              <IconButton aria-label="Eliminar" size="sm" variant="ghost" onClick={onRemove}>
-                <X className="size-3.5" />
-              </IconButton>
-            )}
-          </div>
-        </div>
-
-        <div
-          className="text-[12px] flex items-center gap-1.5"
-          style={{ color: `var(${statusColorVar})` }}
-        >
-          {isWorking && <Loader2 className="size-3 animate-spin" />}
-          <span>{state.message}</span>
-        </div>
-
-        {state.status === "embedding" && state.embeddingProgress && (
-          <div className="h-1.5 rounded-full bg-[var(--bg-muted)] overflow-hidden">
-            <div
-              className="h-full transition-all duration-300"
-              style={{
-                width: `${Math.round(
-                  (state.embeddingProgress.processed / Math.max(1, state.embeddingProgress.total)) * 100,
-                )}%`,
-                background: "var(--accent)",
-              }}
-            />
-          </div>
-        )}
-
-        {!isError && !isDup && (
-          <PipelineSteps current={stepIdx} isWorking={isWorking} isSuccess={isSuccess} />
-        )}
-      </div>
-    </Card>
-  );
-}
-
-function PipelineSteps({
-  current,
-  isWorking,
-  isSuccess,
-}: {
-  current: number;
-  isWorking: boolean;
-  isSuccess: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-1 mt-2 overflow-x-auto">
-      {PIPELINE_STEPS.map((step, i) => {
-        const Icon = step.Icon;
-        const stateKind =
-          isSuccess && i <= current
-            ? "finish"
-            : i < current
-            ? "finish"
-            : i === current
-            ? isWorking
-              ? "process"
-              : isSuccess
-              ? "finish"
-              : "wait"
-            : "wait";
-
-        const color =
-          stateKind === "finish"
-            ? "var(--color-success-fg)"
-            : stateKind === "process"
-            ? "var(--accent)"
-            : "var(--fg-disabled)";
-
-        return (
-          <div key={step.key} className="flex items-center gap-1 shrink-0">
-            <div
-              className={cn(
-                "size-5 rounded-full flex items-center justify-center border",
-                stateKind === "process" && "animate-pulse",
-              )}
-              style={{
-                borderColor: color,
-                color,
-                background:
-                  stateKind === "finish"
-                    ? "color-mix(in oklab, var(--color-success-fg) 12%, transparent)"
-                    : stateKind === "process"
-                    ? "color-mix(in oklab, var(--accent) 12%, transparent)"
-                    : "transparent",
-              }}
-            >
-              <Icon className="size-2.5" />
-            </div>
-            <span
-              className="text-[10.5px] font-mono uppercase tracking-wider"
-              style={{ color }}
-            >
-              {step.title}
-            </span>
-            {i < PIPELINE_STEPS.length - 1 && (
-              <div
-                className="w-3 h-px mx-0.5"
-                style={{
-                  background:
-                    i < current || (isSuccess && i <= current)
-                      ? "var(--color-success-fg)"
-                      : "var(--border-default)",
-                }}
-              />
-            )}
-          </div>
-        );
-      })}
     </div>
   );
 }
