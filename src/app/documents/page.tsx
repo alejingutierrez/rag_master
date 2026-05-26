@@ -2,48 +2,58 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Pagination } from "antd"; // Pagination Ant — sin equivalente DS, queda como excepción
 import {
-  Card,
-  Table,
-  Typography,
-  Tag,
-  Space,
   Button,
+  IconButton,
+  Card,
   Input,
-  Select,
   Tooltip,
-  App,
-  theme,
-  Segmented,
   Skeleton,
-} from "antd";
-import type { ColumnsType } from "antd/es/table";
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogFooter,
+  Badge,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui";
+import { PeriodBadge } from "@/components/domain/period-badge";
+import { toast } from "sonner";
 import {
-  FileTextOutlined,
-  DeleteOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-  EyeOutlined,
-  CloudUploadOutlined,
-  ExperimentOutlined,
-  AppstoreOutlined,
-  UnorderedListOutlined,
-  CheckCircleFilled,
-  ClockCircleFilled,
-  LoadingOutlined,
-  CloseCircleFilled,
-} from "@ant-design/icons";
+  FileText,
+  Trash2,
+  RotateCw,
+  Search,
+  Eye,
+  CloudUpload,
+  FlaskConical,
+  LayoutGrid,
+  List,
+  CheckCircle,
+  Clock,
+  Loader2,
+  XCircle,
+  ChevronDown,
+  X,
+  AlertCircle,
+} from "lucide-react";
 import dayjs from "@/lib/dayjs-config";
 import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
-import { getPeriodColor } from "@/lib/theme";
 import { getPeriodByCode } from "@/lib/taxonomy";
 import { useUrlFilters } from "@/lib/use-url-state";
+import { cn } from "@/lib/cn";
 
 function stripDiacritics(s: string): string {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
-
-const { Title, Text, Paragraph } = Typography;
 
 interface DocumentRow {
   id: string;
@@ -57,11 +67,20 @@ interface DocumentRow {
   _count: { chunks: number };
 }
 
-const STATUS_CONFIG: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
-  PENDING: { color: "default", label: "Pendiente", icon: <ClockCircleFilled /> },
-  PROCESSING: { color: "processing", label: "Procesando", icon: <LoadingOutlined /> },
-  READY: { color: "success", label: "Listo", icon: <CheckCircleFilled /> },
-  ERROR: { color: "error", label: "Error", icon: <CloseCircleFilled /> },
+type StatusKey = "PENDING" | "PROCESSING" | "READY" | "ERROR";
+
+const STATUS_CONFIG: Record<
+  StatusKey,
+  {
+    label: string;
+    variant: "subtle" | "success" | "warning" | "danger";
+    Icon: React.ComponentType<{ className?: string }>;
+  }
+> = {
+  PENDING: { label: "Pendiente", variant: "subtle", Icon: Clock },
+  PROCESSING: { label: "Procesando", variant: "warning", Icon: Loader2 },
+  READY: { label: "Listo", variant: "success", Icon: CheckCircle },
+  ERROR: { label: "Error", variant: "danger", Icon: XCircle },
 };
 
 function formatBytes(n: number) {
@@ -70,20 +89,39 @@ function formatBytes(n: number) {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
+function StatusBadgeDS({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status as StatusKey] ?? STATUS_CONFIG.PENDING;
+  const { Icon } = cfg;
+  return (
+    <Badge variant={cfg.variant} size="xs">
+      <Icon className={cn("size-3", status === "PROCESSING" && "animate-spin")} />
+      {cfg.label}
+    </Badge>
+  );
+}
+
 export default function DocumentsPage() {
   return (
-    <Suspense fallback={<div className="app-page-wide"><Skeleton active /></div>}>
+    <Suspense
+      fallback={
+        <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
+          <Skeleton variant="line" className="h-8 w-64 mb-4" />
+          <Skeleton variant="line" className="h-4 w-96 mb-8" />
+          <Skeleton variant="block" className="h-[420px] w-full" />
+        </div>
+      }
+    >
       <DocumentsContent />
     </Suspense>
   );
 }
 
 function DocumentsContent() {
-  const { token } = theme.useToken();
-  const { modal, message } = App.useApp();
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [filters, updateFilters, resetFilters] = useUrlFilters({
     search: "",
@@ -118,14 +156,14 @@ function DocumentsContent() {
       } catch (e) {
         if ((e as Error).name !== "AbortError") {
           console.error(e);
-          message.error("Error al cargar documentos");
+          toast.error("Error al cargar documentos");
         }
       } finally {
         if (!ctrl.signal.aborted) setLoading(false);
       }
     })();
     return () => ctrl.abort();
-  }, [page, pageSize, filters.status, filters.enriched, filters.search, refreshTick, message]);
+  }, [page, pageSize, filters.status, filters.enriched, filters.search, refreshTick]);
 
   // Auto-refresh mientras procesa
   useEffect(() => {
@@ -134,8 +172,7 @@ function DocumentsContent() {
     return () => clearInterval(id);
   }, [documents]);
 
-  // Filtrado local complementario (sin acentos) — el server ya filtra search,
-  // pero esto pule resultados si el server hace LIKE simple.
+  // Filtrado local complementario (sin acentos)
   const filtered = useMemo(() => {
     const q = stripDiacritics(filters.search.trim());
     if (!q) return documents;
@@ -147,329 +184,493 @@ function DocumentsContent() {
     });
   }, [documents, filters.search]);
 
-
-  const handleDelete = (id: string, name: string) => {
-    modal.confirm({
-      title: "Eliminar documento",
-      content: (
-        <span>
-          ¿Eliminar <strong>{name}</strong> y todos sus chunks? Esta acción no se puede deshacer.
-        </span>
-      ),
-      okText: "Eliminar",
-      okButtonProps: { danger: true },
-      cancelText: "Cancelar",
-      onOk: async () => {
-        try {
-          await fetch(`/api/documents/${id}`, { method: "DELETE" });
-          message.success("Documento eliminado");
-          fetchDocuments();
-        } catch {
-          message.error("Error al eliminar");
-        }
-      },
-    });
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await fetch(`/api/documents/${deleteTarget.id}`, { method: "DELETE" });
+      toast.success("Documento eliminado");
+      setDeleteTarget(null);
+      fetchDocuments();
+    } catch {
+      toast.error("Error al eliminar");
+    } finally {
+      setDeleting(false);
+    }
   };
 
-  const columns: ColumnsType<DocumentRow> = [
-    {
-      title: "Documento",
-      dataIndex: "filename",
-      key: "filename",
-      width: 360,
-      ellipsis: true,
-      render: (_v, doc) => {
-        const display = getDocumentDisplayName(doc);
-        const periodCode = doc.metadata?.primaryPeriod;
-        const period = periodCode ? getPeriodByCode(periodCode) : undefined;
-        return (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 8,
-                background: periodCode ? `${getPeriodColor(periodCode)}1A` : token.colorFillSecondary,
-                color: periodCode ? getPeriodColor(periodCode) : token.colorTextSecondary,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 16,
-                flexShrink: 0,
-              }}
-            >
-              <FileTextOutlined />
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <Link href={`/documents/${doc.id}`}>
-                <Tooltip title={display} placement="topLeft">
-                  <Text
-                    strong
-                    style={{
-                      color: token.colorText,
-                      display: "block",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {display}
-                  </Text>
-                </Tooltip>
-              </Link>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: token.colorTextTertiary, marginTop: 2 }}>
-                {doc.metadata?.author && (
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 120 }}>
-                    {doc.metadata.author}
-                  </span>
-                )}
-                {period && (
-                  <Tag
-                    style={{
-                      background: `${getPeriodColor(period.code)}1A`,
-                      border: "none",
-                      color: getPeriodColor(period.code),
-                      fontSize: 10,
-                      margin: 0,
-                    }}
-                  >
-                    {period.nombre}
-                  </Tag>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      title: "Estado",
-      dataIndex: "status",
-      key: "status",
-      width: 140,
-      filters: Object.entries(STATUS_CONFIG).map(([k, v]) => ({ text: v.label, value: k })),
-      onFilter: (value, record) => record.status === value,
-      render: (s: string) => {
-        const cfg = STATUS_CONFIG[s] ?? STATUS_CONFIG.PENDING;
-        return <Tag color={cfg.color} icon={cfg.icon}>{cfg.label}</Tag>;
-      },
-    },
-    {
-      title: "Chunks",
-      dataIndex: ["_count", "chunks"],
-      key: "chunks",
-      width: 90,
-      sorter: (a, b) => a._count.chunks - b._count.chunks,
-      render: (n: number) => <Text style={{ fontFamily: "var(--font-mono)" }}>{n}</Text>,
-    },
-    {
-      title: "Páginas",
-      dataIndex: "pageCount",
-      key: "pageCount",
-      width: 90,
-      sorter: (a, b) => a.pageCount - b.pageCount,
-    },
-    {
-      title: "Tamaño",
-      dataIndex: "fileSize",
-      key: "size",
-      width: 110,
-      sorter: (a, b) => a.fileSize - b.fileSize,
-      render: (n: number) => <Text type="secondary">{formatBytes(n)}</Text>,
-    },
-    {
-      title: "Enriquecido",
-      dataIndex: "enriched",
-      key: "enriched",
-      width: 120,
-      filters: [{ text: "Sí", value: "true" }, { text: "No", value: "false" }],
-      onFilter: (value, record) => String(record.enriched) === value,
-      render: (e: boolean) =>
-        e ? <Tag color="purple">✓ Sí</Tag> : <Tag>—</Tag>,
-    },
-    {
-      title: "Cargado",
-      dataIndex: "createdAt",
-      key: "date",
-      width: 110,
-      sorter: (a, b) => +new Date(a.createdAt) - +new Date(b.createdAt),
-      render: (d: string) => (
-        <Tooltip title={dayjs(d).format("DD MMM YYYY HH:mm")}>
-          <Text type="secondary" style={{ fontSize: 12 }}>{dayjs(d).format("DD MMM")}</Text>
-        </Tooltip>
-      ),
-    },
-    {
-      title: "",
-      key: "actions",
-      width: 110,
-      align: "right",
-      render: (_v, doc) => (
-        <Space size={4}>
-          <Tooltip title="Ver detalle">
-            <Link href={`/documents/${doc.id}`}>
-              <Button type="text" icon={<EyeOutlined />} size="small" />
-            </Link>
-          </Tooltip>
-          <Tooltip title="Eliminar">
-            <Button
-              type="text"
-              icon={<DeleteOutlined />}
-              danger
-              size="small"
-              onClick={() => handleDelete(doc.id, getDocumentDisplayName(doc))}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
-  ];
+  const hasFilters = Boolean(filters.search || filters.status || filters.enriched);
 
   return (
-    <div className="app-page-wide">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
+    <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
+      {/* Hero */}
+      <header className="flex justify-between items-end mb-6 flex-wrap gap-3">
         <div>
-          <Title level={2} className="serif-title" style={{ margin: 0 }}>
+          <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
+            Corpus
+          </div>
+          <h1
+            className="serif-title text-[36px] leading-tight mt-1.5 mb-2 text-[var(--color-ink-1000)]"
+            style={{ fontWeight: 700 }}
+          >
             Documentos
-          </Title>
-          <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0" }}>
-            Corpus vectorizado. {total} documentos.
-          </Paragraph>
+          </h1>
+          <p className="text-[14px] text-[var(--fg-muted)] mt-1.5 mb-0 max-w-[720px]">
+            Corpus vectorizado. {total} {total === 1 ? "documento" : "documentos"}.
+          </p>
         </div>
-        <Space>
+        <div className="flex items-center gap-2">
           <Link href="/enrich">
-            <Button icon={<ExperimentOutlined />}>Enriquecer</Button>
+            <Button variant="secondary" leadingIcon={<FlaskConical className="size-4" />}>
+              Enriquecer
+            </Button>
           </Link>
           <Link href="/upload">
-            <Button type="primary" icon={<CloudUploadOutlined />}>Cargar más</Button>
+            <Button variant="primary" leadingIcon={<CloudUpload className="size-4" />}>
+              Cargar más
+            </Button>
           </Link>
-        </Space>
-      </div>
+        </div>
+      </header>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap size={12}>
+      {/* Toolbar */}
+      <Card variant="default" size="md" className="mb-4">
+        <div className="flex flex-wrap items-center gap-3">
           <Input
-            allowClear
+            wrapperClassName="w-[280px]"
             placeholder="Buscar por título, autor…"
-            prefix={<SearchOutlined />}
-            style={{ width: 280 }}
+            leadingIcon={<Search />}
             value={filters.search}
             onChange={(e) => updateFilters({ search: e.target.value, page: "1" })}
+            trailingIcon={
+              filters.search ? (
+                <button
+                  type="button"
+                  className="text-[var(--fg-subtle)] hover:text-[var(--fg-default)]"
+                  aria-label="Limpiar búsqueda"
+                  onClick={() => updateFilters({ search: "", page: "1" })}
+                >
+                  <X className="size-3.5" />
+                </button>
+              ) : null
+            }
           />
-          <Select
-            allowClear
-            placeholder="Estado"
-            style={{ width: 140 }}
-            value={filters.status || undefined}
-            onChange={(v) => updateFilters({ status: v ?? "", page: "1" })}
-            options={Object.entries(STATUS_CONFIG).map(([k, v]) => ({ value: k, label: v.label }))}
-          />
-          <Select
-            allowClear
-            placeholder="Enriquecimiento"
-            style={{ width: 180 }}
-            value={filters.enriched || undefined}
-            onChange={(v) => updateFilters({ enriched: v ?? "", page: "1" })}
-            options={[
-              { value: "true", label: "Enriquecidos" },
-              { value: "false", label: "Pendientes de enriquecer" },
-            ]}
-          />
-          <Button icon={<ReloadOutlined />} onClick={() => fetchDocuments()}>Recargar</Button>
-          {(filters.search || filters.status || filters.enriched) && (
-            <Button type="text" onClick={resetFilters}>Limpiar filtros</Button>
+
+          {/* Status dropdown (reemplaza Select Ant) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="md" trailingIcon={<ChevronDown className="size-3.5" />}>
+                {filters.status
+                  ? STATUS_CONFIG[filters.status as StatusKey]?.label ?? "Estado"
+                  : "Estado"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => updateFilters({ status: "", page: "1" })}>
+                Todos los estados
+              </DropdownMenuItem>
+              {(Object.keys(STATUS_CONFIG) as StatusKey[]).map((k) => {
+                const { Icon, label } = STATUS_CONFIG[k];
+                return (
+                  <DropdownMenuItem
+                    key={k}
+                    onSelect={() => updateFilters({ status: k, page: "1" })}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Enriched dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="md" trailingIcon={<ChevronDown className="size-3.5" />}>
+                {filters.enriched === "true"
+                  ? "Enriquecidos"
+                  : filters.enriched === "false"
+                    ? "Pendientes"
+                    : "Enriquecimiento"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => updateFilters({ enriched: "", page: "1" })}>
+                Todos
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => updateFilters({ enriched: "true", page: "1" })}>
+                Enriquecidos
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => updateFilters({ enriched: "false", page: "1" })}>
+                Pendientes de enriquecer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="secondary"
+            leadingIcon={<RotateCw className="size-3.5" />}
+            onClick={() => fetchDocuments()}
+          >
+            Recargar
+          </Button>
+
+          {hasFilters && (
+            <Button variant="ghost" onClick={resetFilters}>
+              Limpiar filtros
+            </Button>
           )}
-          <Segmented
-            value={filters.view}
-            onChange={(v) => updateFilters({ view: String(v) })}
-            options={[
-              { value: "table", icon: <UnorderedListOutlined /> },
-              { value: "grid", icon: <AppstoreOutlined /> },
-            ]}
-          />
-        </Space>
+
+          <div className="ml-auto">
+            <Tabs
+              value={filters.view}
+              onValueChange={(v) => updateFilters({ view: v })}
+            >
+              <TabsList variant="segmented">
+                <TabsTrigger value="table" variant="segmented" aria-label="Tabla">
+                  <List className="size-3.5" />
+                </TabsTrigger>
+                <TabsTrigger value="grid" variant="segmented" aria-label="Grid">
+                  <LayoutGrid className="size-3.5" />
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
       </Card>
 
-      <Card styles={{ body: { padding: filters.view === "table" ? 0 : 16 } }}>
-        {filters.view === "table" ? (
-          <Table<DocumentRow>
-            rowKey="id"
-            dataSource={filtered}
-            columns={columns}
-            loading={loading}
-            pagination={{
-              current: page,
-              pageSize,
-              total,
-              onChange: (p, s) => {
-                updateFilters({ page: String(p), pageSize: String(s) });
-              },
-              showSizeChanger: true,
-              showTotal: (t) => `${t} documentos`,
-              pageSizeOptions: ["10", "20", "50", "100"],
-            }}
-            scroll={{ x: 900 }}
+      {/* Content */}
+      <Card variant="default" size="md">
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton variant="line" className="h-12 w-full" />
+            <Skeleton variant="line" className="h-12 w-full" />
+            <Skeleton variant="line" className="h-12 w-full" />
+            <Skeleton variant="line" className="h-12 w-full" />
+            <Skeleton variant="line" className="h-12 w-full" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center">
+            <FileText className="size-10 text-[var(--fg-subtle)] mx-auto mb-3" />
+            <div className="text-[14px] font-medium text-[var(--fg-default)] mb-1">
+              Sin documentos
+            </div>
+            <div className="text-[12px] text-[var(--fg-subtle)]">
+              {hasFilters ? "Ajusta los filtros o limpia para ver todos." : "Carga tu primer PDF."}
+            </div>
+          </div>
+        ) : filters.view === "table" ? (
+          <TableView
+            documents={filtered}
+            onDelete={(id, name) => setDeleteTarget({ id, name })}
           />
         ) : (
-          <GridView documents={filtered} onDelete={handleDelete} />
+          <GridView
+            documents={filtered}
+            onDelete={(id, name) => setDeleteTarget({ id, name })}
+          />
         )}
       </Card>
+
+      {/* Pagination Ant — sin equivalente DS por ahora */}
+      <div className="flex justify-center mt-6">
+        <Pagination
+          current={page}
+          pageSize={pageSize}
+          total={total}
+          onChange={(p, s) => {
+            updateFilters({ page: String(p), pageSize: String(s) });
+            if (typeof window !== "undefined") {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
+          showSizeChanger
+          showTotal={(t) => `${t} documentos`}
+          pageSizeOptions={["10", "20", "50", "100"]}
+        />
+      </div>
+
+      {/* Delete dialog (reemplaza Modal Ant) */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent size="sm">
+          <DialogHeader>
+            <DialogTitle>Eliminar documento</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <div className="flex items-start gap-3">
+              <AlertCircle className="size-5 text-[var(--color-danger-fg)] mt-0.5 shrink-0" />
+              <p className="text-[14px] leading-relaxed text-[var(--fg-default)]">
+                ¿Eliminar <strong>{deleteTarget?.name}</strong> y todos sus chunks? Esta acción no
+                se puede deshacer.
+              </p>
+            </div>
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleConfirmDelete}
+              isLoading={deleting}
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function GridView({ documents, onDelete }: { documents: DocumentRow[]; onDelete: (id: string, name: string) => void }) {
-  const { token } = theme.useToken();
-  if (documents.length === 0) {
-    return <div style={{ padding: 60, textAlign: "center", color: token.colorTextTertiary }}>Sin documentos</div>;
-  }
+/* ─── Table view ─────────────────────────────────────────────────────────── */
+
+function TableView({
+  documents,
+  onDelete,
+}: {
+  documents: DocumentRow[];
+  onDelete: (id: string, name: string) => void;
+}) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+    <div className="overflow-x-auto -mx-6 -my-6">
+      <table className="w-full min-w-[900px] text-[13px]">
+        <thead>
+          <tr className="border-b border-[var(--border-default)]">
+            <th className="text-left font-medium text-[var(--fg-muted)] px-6 py-3 text-[12px] uppercase tracking-wide">
+              Documento
+            </th>
+            <th className="text-left font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[140px]">
+              Estado
+            </th>
+            <th className="text-right font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[90px]">
+              Chunks
+            </th>
+            <th className="text-right font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[90px]">
+              Páginas
+            </th>
+            <th className="text-right font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[100px]">
+              Tamaño
+            </th>
+            <th className="text-left font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[110px]">
+              Enriq.
+            </th>
+            <th className="text-left font-medium text-[var(--fg-muted)] px-3 py-3 text-[12px] uppercase tracking-wide w-[110px]">
+              Cargado
+            </th>
+            <th className="px-6 py-3 w-[100px]" />
+          </tr>
+        </thead>
+        <tbody>
+          {documents.map((doc) => {
+            const display = getDocumentDisplayName(doc);
+            const periodCode = doc.metadata?.primaryPeriod;
+            const period = periodCode ? getPeriodByCode(periodCode) : undefined;
+            return (
+              <tr
+                key={doc.id}
+                className="border-b border-[var(--border-default)] last:border-b-0 hover:bg-[var(--bg-muted)] transition-colors duration-[var(--duration-instant)]"
+              >
+                <td className="px-6 py-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="size-9 rounded-md flex items-center justify-center shrink-0"
+                      style={{
+                        background: periodCode
+                          ? `color-mix(in oklab, var(--color-period-${periodCode.toLowerCase().replace(/_/g, "-")}) 12%, transparent)`
+                          : "var(--bg-muted)",
+                        color: periodCode
+                          ? `var(--color-period-${periodCode.toLowerCase().replace(/_/g, "-")})`
+                          : "var(--fg-muted)",
+                      }}
+                    >
+                      <FileText className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        href={`/documents/${doc.id}`}
+                        className="block min-w-0 hover:text-[var(--accent)] transition-colors duration-[var(--duration-instant)]"
+                      >
+                        <Tooltip content={display}>
+                          <div className="font-medium text-[var(--fg-default)] truncate">
+                            {display}
+                          </div>
+                        </Tooltip>
+                      </Link>
+                      <div className="flex items-center gap-2 mt-0.5 min-w-0">
+                        {doc.metadata?.author && (
+                          <span className="text-[11px] text-[var(--fg-subtle)] truncate max-w-[160px]">
+                            {doc.metadata.author}
+                          </span>
+                        )}
+                        {period && <PeriodBadge code={period.code} size="xs" />}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-3 py-3">
+                  <StatusBadgeDS status={doc.status} />
+                </td>
+                <td className="px-3 py-3 text-right font-mono text-[var(--fg-default)] tabular-nums">
+                  {doc._count.chunks}
+                </td>
+                <td className="px-3 py-3 text-right tabular-nums text-[var(--fg-default)]">
+                  {doc.pageCount}
+                </td>
+                <td className="px-3 py-3 text-right text-[var(--fg-muted)] tabular-nums">
+                  {formatBytes(doc.fileSize)}
+                </td>
+                <td className="px-3 py-3">
+                  {doc.enriched ? (
+                    <Badge variant="tinta" size="xs">
+                      ✓ Sí
+                    </Badge>
+                  ) : (
+                    <span className="text-[var(--fg-subtle)]">—</span>
+                  )}
+                </td>
+                <td className="px-3 py-3 text-[12px] text-[var(--fg-muted)]">
+                  <Tooltip content={dayjs(doc.createdAt).format("DD MMM YYYY HH:mm")}>
+                    <span>{dayjs(doc.createdAt).format("DD MMM")}</span>
+                  </Tooltip>
+                </td>
+                <td className="px-6 py-3 text-right">
+                  <div className="inline-flex items-center gap-1">
+                    <Tooltip content="Ver detalle">
+                      <Link href={`/documents/${doc.id}`}>
+                        <IconButton size="sm" aria-label="Ver detalle">
+                          <Eye />
+                        </IconButton>
+                      </Link>
+                    </Tooltip>
+                    <Tooltip content="Eliminar">
+                      <IconButton
+                        size="sm"
+                        variant="danger"
+                        aria-label="Eliminar"
+                        onClick={() => onDelete(doc.id, getDocumentDisplayName(doc))}
+                      >
+                        <Trash2 />
+                      </IconButton>
+                    </Tooltip>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ─── Grid view ──────────────────────────────────────────────────────────── */
+
+function GridView({
+  documents,
+  onDelete,
+}: {
+  documents: DocumentRow[];
+  onDelete: (id: string, name: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
       {documents.map((doc) => {
         const display = getDocumentDisplayName(doc);
         const periodCode = doc.metadata?.primaryPeriod;
-        const color = periodCode ? getPeriodColor(periodCode) : token.colorPrimary;
         const period = periodCode ? getPeriodByCode(periodCode) : undefined;
-        const cfg = STATUS_CONFIG[doc.status] ?? STATUS_CONFIG.PENDING;
+        const periodSlug = periodCode
+          ? periodCode.toLowerCase().replace(/_/g, "-")
+          : undefined;
 
         return (
-          <Card
+          <article
             key={doc.id}
-            hoverable
-            styles={{ body: { padding: 16 } }}
-            style={{ borderTop: `3px solid ${color}` }}
+            className="bg-[var(--bg-page)] border border-[var(--border-default)] rounded-lg p-4 transition-shadow duration-[var(--duration-fast)] hover:shadow-[var(--elev-2)] hover:border-[var(--border-strong)] flex flex-col gap-2.5 relative overflow-hidden"
+            style={
+              periodSlug
+                ? { boxShadow: `inset 0 3px 0 var(--color-period-${periodSlug})` }
+                : undefined
+            }
           >
-            <Space vertical size={8} style={{ width: "100%" }}>
-              <Space style={{ justifyContent: "space-between", width: "100%" }}>
-                <FileTextOutlined style={{ color, fontSize: 22 }} />
-                <Tag color={cfg.color} icon={cfg.icon} style={{ fontSize: 10 }}>{cfg.label}</Tag>
-              </Space>
+            <div className="flex items-start justify-between gap-2">
+              <div
+                className="size-9 rounded-md flex items-center justify-center shrink-0"
+                style={{
+                  background: periodSlug
+                    ? `color-mix(in oklab, var(--color-period-${periodSlug}) 12%, transparent)`
+                    : "var(--bg-muted)",
+                  color: periodSlug
+                    ? `var(--color-period-${periodSlug})`
+                    : "var(--fg-muted)",
+                }}
+              >
+                <FileText className="size-[18px]" />
+              </div>
+              <StatusBadgeDS status={doc.status} />
+            </div>
+
+            <Link
+              href={`/documents/${doc.id}`}
+              className="block hover:text-[var(--accent)] transition-colors duration-[var(--duration-instant)]"
+            >
+              <h3
+                className="text-[14px] font-semibold leading-snug text-[var(--fg-default)] min-h-[38px] line-clamp-2"
+                style={{ fontFamily: "var(--font-serif)" }}
+              >
+                {display}
+              </h3>
+            </Link>
+
+            {doc.metadata?.author && (
+              <p className="text-[12px] text-[var(--fg-muted)] truncate">
+                {doc.metadata.author}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              {period && <PeriodBadge code={period.code} size="xs" />}
+              {doc.enriched && (
+                <Badge variant="tinta" size="xs">
+                  ✓
+                </Badge>
+              )}
+            </div>
+
+            <div className="text-[11px] text-[var(--fg-subtle)] tabular-nums">
+              {doc._count.chunks} chunks · {doc.pageCount} pp · {formatBytes(doc.fileSize)}
+            </div>
+
+            <div className="flex items-center justify-end gap-1 mt-auto pt-1">
               <Link href={`/documents/${doc.id}`}>
-                <Text strong style={{ fontSize: 14, color: token.colorText, display: "block", minHeight: 38 }}>
-                  {display}
-                </Text>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  leadingIcon={<Eye className="size-3.5" />}
+                >
+                  Ver
+                </Button>
               </Link>
-              {doc.metadata?.author && (
-                <Text type="secondary" style={{ fontSize: 12 }}>{doc.metadata.author}</Text>
-              )}
-              {period && (
-                <Tag style={{ background: `${color}1A`, border: "none", color, fontSize: 10, alignSelf: "flex-start" }}>
-                  {period.nombre}
-                </Tag>
-              )}
-              <Space split={<Text type="secondary">·</Text>} style={{ fontSize: 12, color: token.colorTextTertiary }}>
-                <Text type="secondary">{doc._count.chunks} chunks</Text>
-                <Text type="secondary">{doc.pageCount} pp</Text>
-                <Text type="secondary">{formatBytes(doc.fileSize)}</Text>
-              </Space>
-              <Space style={{ justifyContent: "flex-end", width: "100%", marginTop: 4 }}>
-                <Link href={`/documents/${doc.id}`}>
-                  <Button size="small" icon={<EyeOutlined />}>Ver</Button>
-                </Link>
-                <Button size="small" type="text" danger icon={<DeleteOutlined />} onClick={() => onDelete(doc.id, display)} />
-              </Space>
-            </Space>
-          </Card>
+              <IconButton
+                size="sm"
+                variant="danger"
+                aria-label="Eliminar"
+                onClick={() => onDelete(doc.id, display)}
+              >
+                <Trash2 />
+              </IconButton>
+            </div>
+          </article>
         );
       })}
     </div>
