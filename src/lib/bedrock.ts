@@ -25,11 +25,10 @@ const EMBEDDING_MODEL = (() => {
 // y saturan la cuota. Este semáforo limita a MAX_CONCURRENT_EMBEDDINGS
 // llamadas en vuelo GLOBALMENTE, sin importar cuántos docs estén procesando.
 // ────────────────────────────────────────────────────────────────────────
-// Empíricamente con semaforo=4 vimos throttle catastrófico (372/min, backoffs
-// 40-321s). Bajamos a 2 para dar tiempo al bucket de tokens de Bedrock.
-// 2 calls x 8 texts x 2500 tokens = 40k tokens in flight, 300k/min cuota.
+// Mínimo absoluto: 1 call concurrent. Throughput máximo determinado por
+// quota Bedrock, pero al menos NO hay throttle por burst.
 const MAX_CONCURRENT_EMBEDDINGS = Number(
-  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "2"
+  process.env.BEDROCK_EMBEDDINGS_CONCURRENCY || "1"
 );
 
 let activeEmbeddingCalls = 0;
@@ -178,9 +177,8 @@ export async function generateEmbeddings(
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
 
-  // Batch=8: ~20k tokens/request. Con semaforo=4 = 80k tokens in flight.
-  // Cuota cross-region: 300k tokens/min, dejando margen para sostener.
-  const BATCH_SIZE = 8;
+  // Batch pequeño + semaforo=1 = throughput sostenible sin throttle burst.
+  const BATCH_SIZE = 16;
   const MAX_RETRIES = 5;
 
   const embeddings: number[][] = [];
