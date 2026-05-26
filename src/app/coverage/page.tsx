@@ -2,22 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Flame } from "lucide-react";
 import {
   Card,
-  Typography,
-  Space,
-  Tag,
   Skeleton,
-  theme,
-  Segmented,
   Tooltip,
-  Empty,
-} from "antd";
-import { HeatMapOutlined } from "@ant-design/icons";
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui";
 import { PERIOD_OPTIONS, CATEGORY_OPTIONS } from "@/lib/taxonomy";
 import { getPeriodColor, getCategoryColor } from "@/lib/theme";
-
-const { Title, Text, Paragraph } = Typography;
 
 interface CoverageData {
   questions: Array<{ periodoCode: string; categoriaCode: string; count: number }>;
@@ -25,7 +20,6 @@ interface CoverageData {
 }
 
 export default function CoveragePage() {
-  const { token } = theme.useToken();
   const [data, setData] = useState<CoverageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [metric, setMetric] = useState<"questions" | "deliverables">("questions");
@@ -56,33 +50,48 @@ export default function CoveragePage() {
   const periods = PERIOD_OPTIONS.filter((p) => p.code !== "TRANS");
 
   if (loading || !data) {
-    return <div className="app-page-wide"><Skeleton active /></div>;
+    return (
+      <div className="app-page-wide">
+        <Skeleton variant="line" className="h-8 w-72 mb-3" />
+        <Skeleton variant="line" className="h-4 w-[480px] mb-6" />
+        <Skeleton variant="rect" className="h-[420px] w-full" />
+      </div>
+    );
   }
 
   return (
     <div className="app-page-wide">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+      <div className="flex justify-between items-end mb-6 flex-wrap gap-3">
         <div>
-          <Title level={2} className="serif-title" style={{ margin: 0 }}>
-            <HeatMapOutlined /> Heatmap de cobertura temática
-          </Title>
-          <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0", maxWidth: 720 }}>
+          <h1
+            className="serif-title text-[36px] leading-tight m-0 text-[var(--color-ink-1000)] inline-flex items-center gap-2"
+            style={{ fontWeight: 700 }}
+          >
+            <Flame className="size-7 text-[var(--accent)]" />
+            Heatmap de cobertura temática
+          </h1>
+          <p className="text-[14px] leading-relaxed text-[var(--fg-muted)] mt-1.5 mb-0 max-w-[720px]">
             Matriz período × categoría con densidad de contenido. Las celdas vacías son lagunas
             de investigación donde podrías generar más preguntas.
-          </Paragraph>
+          </p>
         </div>
-        <Segmented
+        <Tabs
           value={metric}
-          onChange={(v) => setMetric(v as "questions" | "deliverables")}
-          options={[
-            { value: "questions", label: "Preguntas" },
-            { value: "deliverables", label: "Producciones" },
-          ]}
-        />
+          onValueChange={(v) => setMetric(v as "questions" | "deliverables")}
+        >
+          <TabsList variant="segmented">
+            <TabsTrigger value="questions" variant="segmented">
+              Preguntas
+            </TabsTrigger>
+            <TabsTrigger value="deliverables" variant="segmented">
+              Producciones
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      <Card styles={{ body: { padding: 16 } }}>
-        <div style={{ overflowX: "auto" }}>
+      <Card variant="default" size="md">
+        <div className="overflow-x-auto">
           <table style={{ borderCollapse: "separate", borderSpacing: 4, minWidth: 1100 }}>
             <thead>
               <tr>
@@ -101,7 +110,9 @@ export default function CoveragePage() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    <Tooltip title={p.rango}>{p.nombre}</Tooltip>
+                    <Tooltip content={p.rango}>
+                      <span>{p.nombre}</span>
+                    </Tooltip>
                   </th>
                 ))}
               </tr>
@@ -117,7 +128,7 @@ export default function CoveragePage() {
                       color: getCategoryColor(c.code),
                       textAlign: "left",
                       borderLeft: `3px solid ${getCategoryColor(c.code)}`,
-                      background: token.colorFillQuaternary,
+                      background: "var(--bg-muted)",
                       borderRadius: 4,
                       position: "sticky",
                       left: 0,
@@ -136,7 +147,7 @@ export default function CoveragePage() {
                     return (
                       <td key={key}>
                         <Tooltip
-                          title={
+                          content={
                             <div>
                               <div style={{ fontWeight: 600 }}>{p.nombre}</div>
                               <div style={{ fontSize: 11 }}>{c.nombre}</div>
@@ -154,17 +165,17 @@ export default function CoveragePage() {
                               borderRadius: 6,
                               background:
                                 count === 0
-                                  ? token.colorFillQuaternary
+                                  ? "var(--bg-muted)"
                                   : `linear-gradient(135deg, ${periodColor}${Math.round(intensity * 255)
                                       .toString(16)
                                       .padStart(2, "0")}, ${categoryColor}${Math.round(intensity * 200)
                                       .toString(16)
                                       .padStart(2, "0")})`,
-                              border: count === 0 ? `1px dashed ${token.colorBorderSecondary}` : "none",
+                              border: count === 0 ? "1px dashed var(--border-default)" : "none",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              color: intensity > 0.5 ? "#fff" : token.colorText,
+                              color: intensity > 0.5 ? "#fff" : "var(--fg-default)",
                               fontSize: 11,
                               fontWeight: 600,
                               fontFamily: "var(--font-mono)",
@@ -185,8 +196,13 @@ export default function CoveragePage() {
         </div>
       </Card>
 
-      <Card title="Lagunas detectadas" style={{ marginTop: 16 }}>
-        <Space wrap>
+      <Card variant="default" size="md" className="mt-4">
+        <header className="mb-3">
+          <h3 className="text-[15px] font-semibold text-[var(--fg-default)] m-0">
+            Lagunas detectadas
+          </h3>
+        </header>
+        <div className="flex flex-wrap gap-2">
           {(() => {
             const gaps: Array<{ p: typeof PERIOD_OPTIONS[number]; c: typeof CATEGORY_OPTIONS[number] }> = [];
             for (const p of periods) {
@@ -197,23 +213,27 @@ export default function CoveragePage() {
               }
             }
             if (gaps.length === 0) {
-              return <Text type="secondary">Cobertura completa, sin lagunas.</Text>;
+              return (
+                <span className="text-sm text-[var(--fg-muted)]">
+                  Cobertura completa, sin lagunas.
+                </span>
+              );
             }
             return gaps.slice(0, 30).map(({ p, c }, i) => (
-              <Link key={i} href={`/questions?periodo=${p.code}&categoria=${c.code}`}>
-                <Tag
-                  style={{
-                    border: `1px dashed ${getCategoryColor(c.code)}`,
-                    background: "transparent",
-                    color: getCategoryColor(c.code),
-                  }}
-                >
-                  {p.nombre} · {c.nombre}
-                </Tag>
+              <Link
+                key={i}
+                href={`/questions?periodo=${p.code}&categoria=${c.code}`}
+                className="inline-flex items-center gap-1 h-[22px] px-2 text-xs rounded-sm bg-transparent hover:opacity-80 transition-opacity"
+                style={{
+                  border: `1px dashed ${getCategoryColor(c.code)}`,
+                  color: getCategoryColor(c.code),
+                }}
+              >
+                {p.nombre} · {c.nombre}
               </Link>
             ));
           })()}
-        </Space>
+        </div>
       </Card>
     </div>
   );
