@@ -4,39 +4,39 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useUrlFilters } from "@/lib/use-url-state";
+import { Pagination } from "antd";
 import {
-  Card,
-  Typography,
-  Tag,
-  Space,
+  Search,
+  Zap,
+  Table as TableIcon,
+  LayoutGrid,
+  List as ListIcon,
+  FileText,
+  Plus,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
+import {
+  Badge,
   Button,
+  Card,
   Input,
-  Select,
-  Pagination,
-  Empty,
-  theme,
-  Row,
-  Col,
-  Tooltip,
   Skeleton,
-  Segmented,
   Tabs,
-} from "antd";
+  TabsList,
+  TabsTrigger,
+  Tooltip,
+} from "@/components/ui";
+import { PeriodBadge } from "@/components/domain/period-badge";
+import { CategoryChip } from "@/components/domain/category-chip";
 import {
-  SearchOutlined,
-  ThunderboltOutlined,
-  TableOutlined,
-  AppstoreOutlined,
-  UnorderedListOutlined,
-  FileTextOutlined,
-  PlusOutlined,
-  CheckCircleFilled,
-  ClockCircleOutlined,
-} from "@ant-design/icons";
-import { PERIOD_OPTIONS, CATEGORY_OPTIONS, getPeriodByCode, getCategoryByCode } from "@/lib/taxonomy";
-import { getPeriodColor, getCategoryColor } from "@/lib/theme";
-
-const { Title, Text, Paragraph } = Typography;
+  PERIOD_OPTIONS,
+  CATEGORY_OPTIONS,
+  getPeriodByCode,
+  getCategoryByCode,
+} from "@/lib/taxonomy";
+import { periodSlug, categorySlug } from "@/lib/design-tokens";
+import { cn } from "@/lib/cn";
 
 type StateFilter = "all" | "pending" | "partial" | "complete";
 
@@ -87,7 +87,15 @@ const SORT_OPTIONS = [
 
 export default function QuestionsPage() {
   return (
-    <Suspense fallback={<div className="app-page-wide"><Skeleton active /></div>}>
+    <Suspense
+      fallback={
+        <div className="app-page-wide">
+          <Skeleton variant="line" className="h-8 w-64 mb-4" />
+          <Skeleton variant="line" className="h-4 w-full mb-2" />
+          <Skeleton variant="line" className="h-4 w-3/4" />
+        </div>
+      }
+    >
       <QuestionsContent />
     </Suspense>
   );
@@ -95,7 +103,6 @@ export default function QuestionsPage() {
 
 function QuestionsContent() {
   const params = useSearchParams();
-  const { token } = theme.useToken();
 
   const [filters, updateFilters] = useUrlFilters({
     documentId: params.get("documentId") ?? "",
@@ -116,7 +123,9 @@ function QuestionsContent() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [docs, setDocs] = useState<Array<{ id: string; filename: string }>>([]);
-  const [entityOptions, setEntityOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [entityOptions, setEntityOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
@@ -128,13 +137,19 @@ function QuestionsContent() {
       .then((r) => r.json())
       .then((data) => {
         type EntityRow = { name: string; type: string; mentions: number };
-        const opts = (data.entities as EntityRow[] | undefined ?? []).map((e) => ({
-          value: e.name,
-          label: `${e.name} · ${e.type === "person" ? "👤" : e.type === "place" ? "📍" : "💡"} ${e.mentions}`,
-        }));
+        const opts = (data.entities as EntityRow[] | undefined ?? []).map(
+          (e) => ({
+            value: e.name,
+            label: `${e.name} · ${
+              e.type === "person" ? "👤" : e.type === "place" ? "📍" : "💡"
+            } ${e.mentions}`,
+          }),
+        );
         setEntityOptions(opts);
       })
-      .catch((e) => { if ((e as Error).name !== "AbortError") console.error(e); });
+      .catch((e) => {
+        if ((e as Error).name !== "AbortError") console.error(e);
+      });
     return () => ctrl.abort();
   }, []);
 
@@ -143,7 +158,9 @@ function QuestionsContent() {
     fetch("/api/documents?limit=300", { signal: ctrl.signal })
       .then((r) => r.json())
       .then((data) => setDocs(data.documents ?? []))
-      .catch((e) => { if ((e as Error).name !== "AbortError") console.error(e); });
+      .catch((e) => {
+        if ((e as Error).name !== "AbortError") console.error(e);
+      });
     return () => ctrl.abort();
   }, []);
 
@@ -152,7 +169,9 @@ function QuestionsContent() {
     fetch("/api/questions?includeStats=true&limit=1", { signal: ctrl.signal })
       .then((r) => r.json())
       .then((data) => setStats(data.stats ?? null))
-      .catch((e) => { if ((e as Error).name !== "AbortError") console.error(e); });
+      .catch((e) => {
+        if ((e as Error).name !== "AbortError") console.error(e);
+      });
     return () => ctrl.abort();
   }, []);
 
@@ -161,7 +180,9 @@ function QuestionsContent() {
     fetch("/api/questions/generate-batch", { signal: ctrl.signal })
       .then((r) => r.json())
       .then((d) => setPendingCount(d.pendingCount ?? 0))
-      .catch((e) => { if ((e as Error).name !== "AbortError") console.error(e); });
+      .catch((e) => {
+        if ((e as Error).name !== "AbortError") console.error(e);
+      });
     return () => ctrl.abort();
   }, []);
 
@@ -183,7 +204,9 @@ function QuestionsContent() {
         p.set("includeDeliverables", "true");
         p.set("page", String(page));
         p.set("limit", String(LIMIT));
-        const res = await fetch(`/api/questions?${p}`, { signal: ctrl.signal });
+        const res = await fetch(`/api/questions?${p}`, {
+          signal: ctrl.signal,
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (ctrl.signal.aborted) return;
@@ -196,7 +219,18 @@ function QuestionsContent() {
       }
     })();
     return () => ctrl.abort();
-  }, [filters.documentId, filters.periodo, filters.categoria, filters.search, filters.entity, filters.yearMin, filters.yearMax, filters.sortBy, stateFilter, page]);
+  }, [
+    filters.documentId,
+    filters.periodo,
+    filters.categoria,
+    filters.search,
+    filters.entity,
+    filters.yearMin,
+    filters.yearMax,
+    filters.sortBy,
+    stateFilter,
+    page,
+  ]);
 
   const grouped = (() => {
     if (filters.sortBy === "periodo" || filters.sortBy === "cronologico") {
@@ -218,117 +252,201 @@ function QuestionsContent() {
 
   return (
     <div className="app-page-wide">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20, flexWrap: "wrap", gap: 16 }}>
+      {/* Hero */}
+      <header className="flex justify-between items-end mb-5 flex-wrap gap-4">
         <div>
-          <Title level={2} className="serif-title" style={{ margin: 0 }}>
+          <h1
+            className="serif-title text-[36px] leading-tight m-0 text-[var(--color-ink-1000)]"
+            style={{ fontWeight: 700 }}
+          >
             Preguntas de investigación
-          </Title>
-          <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0" }}>
-            {total > 0 ? `${total} preguntas generadas` : "Sin preguntas aún"} · taxonomía histórica colombiana
-          </Paragraph>
+          </h1>
+          <p className="text-[14px] text-[var(--fg-muted)] mt-1.5 mb-0">
+            {total > 0 ? `${total} preguntas generadas` : "Sin preguntas aún"} ·
+            taxonomía histórica colombiana
+          </p>
         </div>
-        <Space wrap>
-          <Link href="/questions/matriz">
-            <Button icon={<TableOutlined />}>Matriz de producción</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/questions/matriz"
+            className={cn(
+              "inline-flex items-center justify-center gap-2 h-9 px-3.5 text-sm font-medium rounded-md",
+              "bg-[var(--bg-page)] text-[var(--fg-default)] border border-[var(--border-default)]",
+              "hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)]",
+              "transition-colors duration-[var(--duration-instant)]",
+            )}
+          >
+            <TableIcon className="size-4" />
+            Matriz de producción
           </Link>
           {pendingCount > 0 && (
-            <Link href="/questions/matriz">
-              <Tooltip title="Producir respuestas en lote para preguntas sin producción">
-                <Button type="default" icon={<ThunderboltOutlined />}>
-                  Producir {pendingCount} pendientes
-                </Button>
-              </Tooltip>
-            </Link>
+            <Tooltip content="Producir respuestas en lote para preguntas sin producción">
+              <Link
+                href="/questions/matriz"
+                className={cn(
+                  "inline-flex items-center justify-center gap-2 h-9 px-3.5 text-sm font-medium rounded-md",
+                  "bg-[var(--bg-page)] text-[var(--fg-default)] border border-[var(--border-default)]",
+                  "hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)]",
+                  "transition-colors duration-[var(--duration-instant)]",
+                )}
+              >
+                <Zap className="size-4" />
+                Producir {pendingCount} pendientes
+              </Link>
+            </Tooltip>
           )}
-          <Link href="/questions/generate">
-            <Button type="primary" icon={<PlusOutlined />}>
-              Generar preguntas
-            </Button>
+          <Link
+            href="/questions/generate"
+            className={cn(
+              "inline-flex items-center justify-center gap-2 h-9 px-3.5 text-sm font-medium rounded-md",
+              "bg-[var(--accent)] text-[var(--fg-inverted)] hover:bg-[var(--accent-hover)]",
+              "transition-colors duration-[var(--duration-instant)]",
+            )}
+          >
+            <Plus className="size-4" />
+            Generar preguntas
           </Link>
-        </Space>
+        </div>
+      </header>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <Card variant="default" size="sm">
+          <div className="text-[11px] text-[var(--fg-subtle)]">Total</div>
+          <div className="text-[22px] font-semibold text-[var(--fg-default)] tabular-nums mt-1">
+            {stats?.totalQuestions ?? 0}
+          </div>
+        </Card>
+        <Card variant="default" size="sm">
+          <div className="text-[11px] text-[var(--fg-subtle)]">Sin producción</div>
+          <div
+            className="text-[22px] font-semibold tabular-nums mt-1"
+            style={{ color: "var(--color-warning-fg)" }}
+          >
+            {stats?.byState?.pending ?? 0}
+          </div>
+        </Card>
+        <Card variant="default" size="sm">
+          <div className="text-[11px] text-[var(--fg-subtle)]">Parciales</div>
+          <div
+            className="text-[22px] font-semibold tabular-nums mt-1"
+            style={{ color: "var(--accent)" }}
+          >
+            {stats?.byState?.partial ?? 0}
+          </div>
+        </Card>
+        <Card variant="default" size="sm">
+          <div className="text-[11px] text-[var(--fg-subtle)]">Completas</div>
+          <div
+            className="text-[22px] font-semibold tabular-nums mt-1"
+            style={{ color: "var(--color-success-fg)" }}
+          >
+            {stats?.byState?.complete ?? 0}
+          </div>
+        </Card>
       </div>
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={24} md={6}>
-          <Card styles={{ body: { padding: 14 } }}>
-            <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Total</Text>
-            <div style={{ fontSize: 22, fontWeight: 600, color: token.colorText }}>{stats?.totalQuestions ?? 0}</div>
-          </Card>
-        </Col>
-        <Col xs={24} md={6}>
-          <Card styles={{ body: { padding: 14 } }}>
-            <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Sin producción</Text>
-            <div style={{ fontSize: 22, fontWeight: 600, color: token.colorWarning }}>{stats?.byState?.pending ?? 0}</div>
-          </Card>
-        </Col>
-        <Col xs={24} md={6}>
-          <Card styles={{ body: { padding: 14 } }}>
-            <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Parciales</Text>
-            <div style={{ fontSize: 22, fontWeight: 600, color: token.colorPrimary }}>{stats?.byState?.partial ?? 0}</div>
-          </Card>
-        </Col>
-        <Col xs={24} md={6}>
-          <Card styles={{ body: { padding: 14 } }}>
-            <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>Completas</Text>
-            <div style={{ fontSize: 22, fontWeight: 600, color: token.colorSuccess }}>{stats?.byState?.complete ?? 0}</div>
-          </Card>
-        </Col>
-      </Row>
-
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap size={10}>
+      {/* Filters */}
+      <Card variant="default" size="sm" className="mb-4">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Input
-            allowClear
             placeholder="Buscar en preguntas y justificaciones…"
-            prefix={<SearchOutlined />}
-            style={{ width: 320 }}
+            leadingIcon={<Search className="size-4" />}
+            wrapperClassName="w-[320px]"
             value={filters.search}
-            onChange={(e) => updateFilters({ search: e.target.value, page: "1" })}
+            onChange={(e) =>
+              updateFilters({ search: e.target.value, page: "1" })
+            }
           />
-          <Select
-            allowClear
-            placeholder="Documento"
+
+          <select
+            className={cn(
+              "h-9 px-3 text-sm rounded-md min-w-0",
+              "bg-[var(--bg-page)] text-[var(--fg-default)]",
+              "border border-[var(--border-default)]",
+              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
+            )}
             style={{ width: 240 }}
-            value={filters.documentId || undefined}
-            onChange={(v) => updateFilters({ documentId: v ?? "", page: "1" })}
-            showSearch
-            optionFilterProp="label"
-            options={docs.map((d) => ({ value: d.id, label: d.filename }))}
-          />
-          <Select
-            allowClear
-            placeholder="Período"
+            value={filters.documentId}
+            onChange={(e) =>
+              updateFilters({ documentId: e.target.value, page: "1" })
+            }
+          >
+            <option value="">— Documento (todos) —</option>
+            {docs.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.filename}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className={cn(
+              "h-9 px-3 text-sm rounded-md",
+              "bg-[var(--bg-page)] text-[var(--fg-default)]",
+              "border border-[var(--border-default)]",
+              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
+            )}
             style={{ width: 220 }}
-            value={filters.periodo || undefined}
-            onChange={(v) => updateFilters({ periodo: v ?? "", page: "1" })}
-            showSearch
-            optionFilterProp="label"
-            options={PERIOD_OPTIONS.map((p) => ({ value: p.code, label: p.nombre }))}
-          />
-          <Select
-            allowClear
-            placeholder="Categoría"
+            value={filters.periodo}
+            onChange={(e) =>
+              updateFilters({ periodo: e.target.value, page: "1" })
+            }
+          >
+            <option value="">— Período (todos) —</option>
+            {PERIOD_OPTIONS.map((p) => (
+              <option key={p.code} value={p.code}>
+                {p.nombre}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className={cn(
+              "h-9 px-3 text-sm rounded-md",
+              "bg-[var(--bg-page)] text-[var(--fg-default)]",
+              "border border-[var(--border-default)]",
+              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
+            )}
             style={{ width: 220 }}
-            value={filters.categoria || undefined}
-            onChange={(v) => updateFilters({ categoria: v ?? "", page: "1" })}
-            showSearch
-            optionFilterProp="label"
-            options={CATEGORY_OPTIONS.map((c) => ({ value: c.code, label: c.nombre }))}
-          />
-          <Select
-            allowClear
-            placeholder="Entidad (persona/lugar/concepto)"
+            value={filters.categoria}
+            onChange={(e) =>
+              updateFilters({ categoria: e.target.value, page: "1" })
+            }
+          >
+            <option value="">— Categoría (todos) —</option>
+            {CATEGORY_OPTIONS.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className={cn(
+              "h-9 px-3 text-sm rounded-md",
+              "bg-[var(--bg-page)] text-[var(--fg-default)]",
+              "border border-[var(--border-default)]",
+              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
+            )}
             style={{ width: 260 }}
-            value={filters.entity || undefined}
-            onChange={(v) => updateFilters({ entity: v ?? "", page: "1" })}
-            showSearch
-            optionFilterProp="label"
-            notFoundContent={null}
-            options={entityOptions}
-          />
+            value={filters.entity}
+            onChange={(e) =>
+              updateFilters({ entity: e.target.value, page: "1" })
+            }
+          >
+            <option value="">— Entidad (todas) —</option>
+            {entityOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+
           <Input
             placeholder="Año desde"
-            style={{ width: 100, fontFamily: "var(--font-mono)" }}
+            wrapperClassName="w-[100px]"
+            className="font-mono"
             value={filters.yearMin}
             onChange={(e) =>
               updateFilters({
@@ -336,11 +454,11 @@ function QuestionsContent() {
                 page: "1",
               })
             }
-            allowClear
           />
           <Input
             placeholder="Año hasta"
-            style={{ width: 100, fontFamily: "var(--font-mono)" }}
+            wrapperClassName="w-[100px]"
+            className="font-mono"
             value={filters.yearMax}
             onChange={(e) =>
               updateFilters({
@@ -348,91 +466,182 @@ function QuestionsContent() {
                 page: "1",
               })
             }
-            allowClear
           />
-          <Select
+
+          <select
+            className={cn(
+              "h-9 px-3 text-sm rounded-md",
+              "bg-[var(--bg-page)] text-[var(--fg-default)]",
+              "border border-[var(--border-default)]",
+              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
+            )}
             style={{ width: 160 }}
             value={filters.sortBy}
-            onChange={(v) => updateFilters({ sortBy: v, page: "1" })}
-            options={SORT_OPTIONS}
-          />
-          <Segmented
-            value={filters.view}
-            onChange={(v) => updateFilters({ view: String(v) })}
-            options={[
-              { value: "list", icon: <UnorderedListOutlined /> },
-              { value: "cards", icon: <AppstoreOutlined /> },
-            ]}
-          />
-        </Space>
+            onChange={(e) =>
+              updateFilters({ sortBy: e.target.value, page: "1" })
+            }
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Segmented view switcher */}
+          <div
+            className={cn(
+              "inline-flex items-center gap-0 p-0.5 rounded-md",
+              "bg-[var(--bg-muted)] border border-[var(--border-default)]",
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => updateFilters({ view: "list" })}
+              aria-pressed={filters.view === "list"}
+              className={cn(
+                "inline-flex items-center justify-center size-7 rounded text-[var(--fg-muted)]",
+                "transition-colors duration-[var(--duration-instant)]",
+                "hover:text-[var(--fg-default)]",
+                filters.view === "list" &&
+                  "bg-[var(--bg-page)] text-[var(--fg-default)] shadow-[var(--elev-1)]",
+              )}
+              aria-label="Vista lista"
+            >
+              <ListIcon className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => updateFilters({ view: "cards" })}
+              aria-pressed={filters.view === "cards"}
+              className={cn(
+                "inline-flex items-center justify-center size-7 rounded text-[var(--fg-muted)]",
+                "transition-colors duration-[var(--duration-instant)]",
+                "hover:text-[var(--fg-default)]",
+                filters.view === "cards" &&
+                  "bg-[var(--bg-page)] text-[var(--fg-default)] shadow-[var(--elev-1)]",
+              )}
+              aria-label="Vista tarjetas"
+            >
+              <LayoutGrid className="size-4" />
+            </button>
+          </div>
+        </div>
       </Card>
 
+      {/* State tabs */}
       <Tabs
-        activeKey={stateFilter}
-        onChange={(k) => updateFilters({ state: k, page: "1" })}
-        items={[
-          { key: "all", label: `Todas (${stats?.byState?.all ?? 0})` },
-          { key: "pending", label: `Sin producción (${stats?.byState?.pending ?? 0})` },
-          { key: "partial", label: `Parciales (${stats?.byState?.partial ?? 0})` },
-          { key: "complete", label: `Completas (${stats?.byState?.complete ?? 0})` },
-        ]}
-      />
+        value={stateFilter}
+        onValueChange={(k) => updateFilters({ state: k, page: "1" })}
+        className="mb-4"
+      >
+        <TabsList variant="underline">
+          <TabsTrigger value="all">
+            Todas ({stats?.byState?.all ?? 0})
+          </TabsTrigger>
+          <TabsTrigger value="pending">
+            Sin producción ({stats?.byState?.pending ?? 0})
+          </TabsTrigger>
+          <TabsTrigger value="partial">
+            Parciales ({stats?.byState?.partial ?? 0})
+          </TabsTrigger>
+          <TabsTrigger value="complete">
+            Completas ({stats?.byState?.complete ?? 0})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {loading ? (
-        <Card><Skeleton active paragraph={{ rows: 8 }} /></Card>
+        <Card variant="default" size="md">
+          <div className="space-y-2">
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-9/12" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+          </div>
+        </Card>
       ) : questions.length === 0 ? (
-        <Card>
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="Sin preguntas con estos filtros"
-          />
+        <Card variant="default" size="md">
+          <div className="py-12 text-center">
+            <FileText className="size-10 text-[var(--fg-subtle)] mx-auto mb-3" />
+            <div className="text-[13px] text-[var(--fg-muted)]">
+              Sin preguntas con estos filtros
+            </div>
+          </div>
         </Card>
       ) : grouped ? (
         <div>
           {Object.entries(grouped).map(([code, qs]) => {
-            const isPeriod = filters.sortBy === "periodo" || filters.sortBy === "cronologico";
+            const isPeriod =
+              filters.sortBy === "periodo" || filters.sortBy === "cronologico";
             const p = isPeriod ? getPeriodByCode(code) : undefined;
             const c = !isPeriod ? getCategoryByCode(code) : undefined;
-            const color = isPeriod ? getPeriodColor(code) : getCategoryColor(code);
+            const colorVar = isPeriod
+              ? `var(--color-period-${periodSlug(code)})`
+              : `var(--color-category-${categorySlug(code)})`;
             return (
-              <div key={code} style={{ marginBottom: 24 }}>
+              <div key={code} className="mb-6">
                 <div
+                  className="sticky z-[2] py-3 mb-3"
                   style={{
-                    position: "sticky",
                     top: 64,
-                    zIndex: 2,
-                    background: token.colorBgLayout,
-                    padding: "12px 0",
-                    borderBottom: `2px solid ${color}`,
-                    marginBottom: 12,
+                    background: "var(--bg-page)",
+                    borderBottom: `2px solid ${colorVar}`,
                   }}
                 >
-                  <Space>
-                    <Tag style={{ background: `${color}1A`, border: "none", color, fontWeight: 600 }}>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge
+                      variant="subtle"
+                      size="sm"
+                      style={{
+                        background: `color-mix(in oklab, ${colorVar} 12%, transparent)`,
+                        color: colorVar,
+                        fontWeight: 600,
+                      }}
+                    >
                       {p?.nombre || c?.nombre || code}
-                    </Tag>
-                    {p?.rango && <Text type="secondary" style={{ fontSize: 12 }}>{p.rango}</Text>}
-                    <Text type="secondary" style={{ fontSize: 12 }}>{qs.length} preguntas</Text>
-                  </Space>
+                    </Badge>
+                    {p?.rango && (
+                      <span className="text-[12px] text-[var(--fg-subtle)]">
+                        {p.rango}
+                      </span>
+                    )}
+                    <span className="text-[12px] text-[var(--fg-subtle)]">
+                      {qs.length} preguntas
+                    </span>
+                  </div>
                 </div>
-                <Space vertical size={8} style={{ width: "100%" }}>
+                <div className="flex flex-col gap-2 w-full">
                   {qs.map((q) => (
-                    <QuestionRow key={q.id} question={q} view={filters.view as "list" | "cards"} />
+                    <QuestionRow
+                      key={q.id}
+                      question={q}
+                      view={filters.view as "list" | "cards"}
+                    />
                   ))}
-                </Space>
+                </div>
               </div>
             );
           })}
         </div>
       ) : (
-        <Space vertical size={8} style={{ width: "100%" }}>
+        <div className="flex flex-col gap-2 w-full">
           {questions.map((q) => (
-            <QuestionRow key={q.id} question={q} view={filters.view as "list" | "cards"} />
+            <QuestionRow
+              key={q.id}
+              question={q}
+              view={filters.view as "list" | "cards"}
+            />
           ))}
-        </Space>
+        </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
+      {/* Pagination — sigue siendo Ant (no hay reemplazo aún) */}
+      <div className="flex justify-center mt-6">
         <Pagination
           current={page}
           pageSize={LIMIT}
@@ -449,10 +658,14 @@ function QuestionsContent() {
   );
 }
 
-function QuestionRow({ question, view }: { question: Question; view: "list" | "cards" }) {
-  const { token } = theme.useToken();
-  const periodColor = getPeriodColor(question.periodoCode);
-  const categoryColor = getCategoryColor(question.categoriaCode);
+function QuestionRow({
+  question,
+  view,
+}: {
+  question: Question;
+  view: "list" | "cards";
+}) {
+  const periodColorVar = `var(--color-period-${periodSlug(question.periodoCode)})`;
   const totalDelivs = question.deliverableCount ?? 0;
 
   const personas = question.entidadesPersonas ?? [];
@@ -464,158 +677,141 @@ function QuestionRow({ question, view }: { question: Question; view: "list" | "c
 
   return (
     <Card
-      hoverable
-      styles={{ body: { padding: isCards ? 18 : 14 } }}
-      style={{ borderLeft: `4px solid ${periodColor}` }}
+      variant="default"
+      size="sm"
+      className={cn(
+        "transition-shadow hover:shadow-[var(--elev-2)]",
+        isCards ? "p-[18px]" : "p-[14px]",
+      )}
+      style={{ borderLeft: `4px solid ${periodColorVar}` }}
     >
-      <Row gutter={isCards ? 18 : 12} wrap={false} align="top">
+      <div
+        className="flex items-start"
+        style={{ gap: isCards ? 18 : 12 }}
+      >
         {/* Estampa del año principal */}
         {question.yearPrincipal != null && (
-          <Col flex="none" style={{ minWidth: isCards ? 72 : 56 }}>
+          <div
+            className="shrink-0"
+            style={{ minWidth: isCards ? 72 : 56 }}
+          >
             <div
+              className="text-center rounded-lg font-mono"
               style={{
-                background: `${periodColor}14`,
-                border: `1px solid ${periodColor}33`,
-                borderRadius: 8,
+                background: `color-mix(in oklab, ${periodColorVar} 8%, transparent)`,
+                border: `1px solid color-mix(in oklab, ${periodColorVar} 20%, transparent)`,
                 padding: isCards ? "10px 8px" : "6px 6px",
-                textAlign: "center",
-                fontFamily: "var(--font-mono)",
               }}
-              title={`Año principal del proceso central de la pregunta`}
+              title="Año principal del proceso central de la pregunta"
             >
               <div
                 style={{
                   fontSize: isCards ? 20 : 15,
                   fontWeight: 700,
-                  color: periodColor,
+                  color: periodColorVar,
                   lineHeight: 1.1,
                 }}
               >
                 {question.yearPrincipal}
               </div>
               <div
+                className="text-[var(--fg-subtle)] uppercase mt-0.5"
                 style={{
                   fontSize: 9,
-                  color: token.colorTextTertiary,
-                  textTransform: "uppercase",
                   letterSpacing: 0.5,
-                  marginTop: 2,
                 }}
               >
                 {question.periodoRango || "—"}
               </div>
             </div>
-          </Col>
+          </div>
         )}
 
-        <Col flex="auto" style={{ minWidth: 0 }}>
-          <Space vertical size={isCards ? 10 : 6} style={{ width: "100%" }}>
+        <div className="flex-1 min-w-0">
+          <div
+            className="flex flex-col w-full"
+            style={{ gap: isCards ? 10 : 6 }}
+          >
             {/* Pregunta */}
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <div className="flex items-baseline gap-2">
               <span
+                className={cn(
+                  "inline-block text-center font-mono",
+                  "rounded-sm text-[var(--fg-muted)]",
+                )}
                 style={{
-                  display: "inline-block",
                   minWidth: 26,
-                  textAlign: "center",
-                  fontFamily: "var(--font-mono)",
                   fontSize: 11,
-                  background: token.colorFillSecondary,
-                  borderRadius: 4,
+                  background: "var(--bg-muted)",
                   padding: "1px 6px",
-                  color: token.colorTextSecondary,
                   flex: "0 0 auto",
                 }}
               >
                 {question.questionNumber}
               </span>
-              <Text
+              <span
+                className="text-[var(--fg-default)]"
                 style={{
                   fontSize: isCards ? 15 : 14,
                   lineHeight: 1.55,
-                  color: token.colorText,
                   fontWeight: 500,
                 }}
               >
                 {question.pregunta}
-              </Text>
+              </span>
             </div>
 
-            {/* Meta: período + categoría + subcategoría + años secundarios */}
-            <Space wrap size={[6, 6]}>
-              <Tooltip title={question.periodoRango}>
-                <Tag
-                  style={{
-                    background: `${periodColor}1F`,
-                    border: `1px solid ${periodColor}3D`,
-                    color: periodColor,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    margin: 0,
-                  }}
-                >
-                  {question.periodoNombre}
-                </Tag>
+            {/* Meta */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Tooltip content={question.periodoRango}>
+                <PeriodBadge
+                  code={question.periodoCode}
+                  size="xs"
+                  variant="subtle"
+                />
               </Tooltip>
-              <Tag
-                style={{
-                  background: `${categoryColor}1F`,
-                  border: `1px solid ${categoryColor}3D`,
-                  color: categoryColor,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  margin: 0,
-                }}
-              >
-                {question.categoriaNombre}
-              </Tag>
+              <CategoryChip
+                code={question.categoriaCode}
+                size="xs"
+                variant="subtle"
+              />
               {question.subcategoriaNombre && (
-                <Tag
-                  style={{
-                    fontSize: 11,
-                    background: token.colorFillTertiary,
-                    border: "none",
-                    color: token.colorTextSecondary,
-                    margin: 0,
-                  }}
-                >
+                <Badge variant="subtle" size="xs">
                   {question.subcategoriaNombre}
-                </Tag>
+                </Badge>
               )}
               {yearsSec.length > 0 && (
-                <Tooltip title="Años secundarios — antecedentes, hitos, consecuencias">
-                  <Tag
-                    style={{
-                      fontSize: 11,
-                      background: "transparent",
-                      border: `1px dashed ${token.colorBorder}`,
-                      color: token.colorTextTertiary,
-                      fontFamily: "var(--font-mono)",
-                      margin: 0,
-                    }}
+                <Tooltip content="Años secundarios — antecedentes, hitos, consecuencias">
+                  <Badge
+                    variant="outline"
+                    size="xs"
+                    className="font-mono"
+                    style={{ borderStyle: "dashed" }}
                   >
                     + {yearsSec.join(", ")}
-                  </Tag>
+                  </Badge>
                 </Tooltip>
               )}
-            </Space>
+            </div>
 
             {/* Justificación */}
             {question.justificacion && (
-              <Paragraph
-                ellipsis={{ rows: isCards ? 3 : 2, expandable: true, symbol: "más" }}
+              <p
+                className="text-[var(--fg-muted)] italic m-0"
                 style={{
                   fontSize: 12.5,
-                  color: token.colorTextSecondary,
-                  margin: 0,
-                  fontStyle: "italic",
                   lineHeight: 1.55,
+                  display: "-webkit-box",
+                  WebkitLineClamp: isCards ? 3 : 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
                 }}
               >
                 {question.justificacion}
-              </Paragraph>
+              </p>
             )}
 
-            {/* Entidades — siempre visibles si existen */}
+            {/* Entidades */}
             {hasEntities && (
               <EntitiesRow
                 personas={personas}
@@ -625,48 +821,52 @@ function QuestionRow({ question, view }: { question: Question; view: "list" | "c
               />
             )}
 
-            {/* Footer compact: doc + producciones + producir */}
+            {/* Footer */}
             <div
+              className="flex items-center justify-between gap-2 flex-wrap mt-1 pt-2"
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: 4,
-                paddingTop: 8,
-                borderTop: `1px dashed ${token.colorBorderSecondary}`,
-                gap: 8,
-                flexWrap: "wrap",
+                borderTop: "1px dashed var(--border-default)",
               }}
             >
-              <Space size={10} wrap>
+              <div className="flex items-center gap-2.5 flex-wrap">
                 {question.document && (
-                  <Tooltip title={question.document.filename}>
+                  <Tooltip content={question.document.filename}>
                     <Link
                       href={`/documents/${question.document.id}`}
-                      style={{ fontSize: 11, color: token.colorTextTertiary }}
+                      className="text-[11px] text-[var(--fg-subtle)] hover:text-[var(--fg-default)] inline-flex items-center gap-1"
                     >
-                      <FileTextOutlined /> {question.document.filename.slice(0, 38)}
+                      <FileText className="size-3" />
+                      {question.document.filename.slice(0, 38)}
                       {question.document.filename.length > 38 ? "…" : ""}
                     </Link>
                   </Tooltip>
                 )}
-                <Tag
-                  color={totalDelivs > 0 ? "success" : "default"}
-                  icon={totalDelivs > 0 ? <CheckCircleFilled /> : <ClockCircleOutlined />}
-                  style={{ margin: 0, fontSize: 11 }}
+                <Badge
+                  variant={totalDelivs > 0 ? "success" : "subtle"}
+                  size="xs"
                 >
+                  {totalDelivs > 0 ? (
+                    <CheckCircle2 className="size-3" />
+                  ) : (
+                    <Clock className="size-3" />
+                  )}
                   {totalDelivs} producciones
-                </Tag>
-              </Space>
-              <Link href={`/questions/matriz?focus=${question.id}`}>
-                <Button size="small" type="text">
-                  Producir →
-                </Button>
+                </Badge>
+              </div>
+              <Link
+                href={`/questions/matriz?focus=${question.id}`}
+                className={cn(
+                  "inline-flex items-center justify-center gap-2 h-7 px-2.5 text-xs font-medium rounded-md",
+                  "bg-transparent text-[var(--fg-default)] hover:bg-[var(--bg-hover)]",
+                  "transition-colors duration-[var(--duration-instant)]",
+                )}
+              >
+                Producir →
               </Link>
             </div>
-          </Space>
-        </Col>
-      </Row>
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }
@@ -682,66 +882,57 @@ function EntitiesRow({
   conceptos: string[];
   compact?: boolean;
 }) {
-  const { token } = theme.useToken();
-
   const group = (
     label: string,
     icon: string,
     items: string[],
-    color: string,
+    colorVar: string,
   ) => {
     if (items.length === 0) return null;
     return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 8,
-          flexWrap: "wrap",
-        }}
-      >
-        <Tooltip title={`${label} clave de la pregunta`}>
+      <div className="flex items-start gap-2 flex-wrap">
+        <Tooltip content={`${label} clave de la pregunta`}>
           <span
+            className="font-semibold uppercase shrink-0 pt-[3px]"
             style={{
               fontSize: 10,
-              color,
-              fontWeight: 600,
-              textTransform: "uppercase",
+              color: colorVar,
               letterSpacing: 0.6,
               minWidth: compact ? 60 : 72,
-              paddingTop: 3,
-              flex: "0 0 auto",
             }}
           >
             {icon} {label}
           </span>
         </Tooltip>
-        <Space size={[4, 4]} wrap style={{ flex: 1 }}>
+        <div className="flex flex-wrap gap-1 flex-1">
           {items.map((it) => (
-            <Tag
+            <Badge
               key={`${label}-${it}`}
+              variant="subtle"
+              size="xs"
               style={{
-                fontSize: 11,
-                border: `1px solid ${color}40`,
-                background: `${color}14`,
-                color,
-                margin: 0,
+                background: `color-mix(in oklab, ${colorVar} 12%, transparent)`,
+                border: `1px solid color-mix(in oklab, ${colorVar} 25%, transparent)`,
+                color: colorVar,
                 fontWeight: 500,
               }}
             >
               {it}
-            </Tag>
+            </Badge>
           ))}
-        </Space>
+        </div>
       </div>
     );
   };
 
   return (
-    <Space vertical size={compact ? 4 : 6} style={{ width: "100%" }}>
-      {group("Personas", "◐", personas, token.colorInfo)}
-      {group("Lugares", "◈", lugares, token.colorSuccess)}
-      {group("Conceptos", "◇", conceptos, token.colorWarning)}
-    </Space>
+    <div
+      className="flex flex-col w-full"
+      style={{ gap: compact ? 4 : 6 }}
+    >
+      {group("Personas", "◐", personas, "var(--color-info-fg)")}
+      {group("Lugares", "◈", lugares, "var(--color-success-fg)")}
+      {group("Conceptos", "◇", conceptos, "var(--color-warning-fg)")}
+    </div>
   );
 }

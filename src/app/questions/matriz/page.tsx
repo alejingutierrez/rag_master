@@ -2,35 +2,31 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
-  Card,
-  Typography,
-  Tag,
-  Space,
-  Button,
-  Select,
-  theme,
-  App,
-  Empty,
-  Skeleton,
-  Checkbox,
-  Tooltip,
-  Tabs,
+  ArrowLeft,
+  Zap,
+  RotateCw,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Clock,
+  Table as TableIcon,
+} from "lucide-react";
+import {
   Badge,
-} from "antd";
-import {
-  ArrowLeftOutlined,
-  ThunderboltOutlined,
-  ReloadOutlined,
-  CheckCircleFilled,
-  CloseCircleFilled,
-  SyncOutlined,
-  ClockCircleOutlined,
-  TableOutlined,
-} from "@ant-design/icons";
-import { getPeriodColor, getCategoryColor } from "@/lib/theme";
-
-const { Title, Text, Paragraph } = Typography;
+  Button,
+  Card,
+  Checkbox,
+  Skeleton,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  Tooltip,
+} from "@/components/ui";
+import { PeriodBadge } from "@/components/domain/period-badge";
+import { CategoryChip } from "@/components/domain/category-chip";
+import { cn } from "@/lib/cn";
 
 type CellStatus = "PENDING" | "GENERATING" | "COMPLETE" | "ERROR" | null;
 
@@ -53,7 +49,10 @@ interface MatrixRow {
   documentFilename: string;
   completedCount: number;
   stateLabel: "complete" | "partial" | "pending";
-  byTemplate: Record<string, { deliverableId: string; status: CellStatus } | null>;
+  byTemplate: Record<
+    string,
+    { deliverableId: string; status: CellStatus } | null
+  >;
 }
 
 interface MatrixResponse {
@@ -65,18 +64,26 @@ interface MatrixResponse {
 
 export default function MatrixPage() {
   return (
-    <Suspense fallback={<div className="app-page"><Skeleton active /></div>}>
+    <Suspense
+      fallback={
+        <div className="app-page-wide">
+          <Skeleton variant="line" className="h-8 w-64 mb-4" />
+          <Skeleton variant="line" className="h-4 w-full mb-2" />
+          <Skeleton variant="line" className="h-4 w-3/4" />
+        </div>
+      }
+    >
       <MatrixContent />
     </Suspense>
   );
 }
 
 function MatrixContent() {
-  const { token } = theme.useToken();
-  const { message } = App.useApp();
   const [data, setData] = useState<MatrixResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [stateFilter, setStateFilter] = useState<"all" | "pending" | "partial" | "complete">("all");
+  const [stateFilter, setStateFilter] = useState<
+    "all" | "pending" | "partial" | "complete"
+  >("all");
   const [documentId, setDocumentId] = useState<string>("");
   const [docs, setDocs] = useState<Array<{ id: string; filename: string }>>([]);
   const [selectedQs, setSelectedQs] = useState<Set<string>>(new Set());
@@ -138,7 +145,8 @@ function MatrixContent() {
       if (!row) continue;
       for (const tId of selectedTpls) {
         const cell = row.byTemplate[tId];
-        if (!cell || cell.status === "PENDING" || cell.status === "ERROR") count++;
+        if (!cell || cell.status === "PENDING" || cell.status === "ERROR")
+          count++;
       }
     }
     return count;
@@ -157,7 +165,7 @@ function MatrixContent() {
         }),
       });
       if (!res.ok) throw new Error("HTTP error");
-      message.success(`Generación encolada (${cellsToGenerate} producciones)`);
+      toast.success(`Generación encolada (${cellsToGenerate} producciones)`);
       setSelectedQs(new Set());
       setSelectedTpls(new Set());
       // Polling progresivo durante 30s para mostrar progreso del batch
@@ -168,7 +176,7 @@ function MatrixContent() {
         if (attempts >= 10) clearInterval(poll);
       }, 3000);
     } catch {
-      message.error("Error al encolar producciones");
+      toast.error("Error al encolar producciones");
     } finally {
       setSubmitting(false);
     }
@@ -176,202 +184,330 @@ function MatrixContent() {
 
   const renderCell = (status: CellStatus) => {
     if (!status || status === "PENDING")
-      return <ClockCircleOutlined style={{ color: token.colorTextTertiary }} />;
+      return (
+        <Clock
+          className="size-4 inline-block"
+          style={{ color: "var(--fg-subtle)" }}
+        />
+      );
     if (status === "GENERATING")
-      return <SyncOutlined spin style={{ color: token.colorPrimary }} />;
+      return (
+        <Loader2
+          className="size-4 inline-block animate-spin"
+          style={{ color: "var(--accent)" }}
+        />
+      );
     if (status === "COMPLETE")
-      return <CheckCircleFilled style={{ color: token.colorSuccess }} />;
+      return (
+        <CheckCircle2
+          className="size-4 inline-block"
+          style={{ color: "var(--color-success-fg)" }}
+        />
+      );
     if (status === "ERROR")
-      return <CloseCircleFilled style={{ color: token.colorError }} />;
+      return (
+        <XCircle
+          className="size-4 inline-block"
+          style={{ color: "var(--color-danger-fg)" }}
+        />
+      );
     return null;
   };
 
   return (
     <div className="app-page-wide">
-      <Link href="/questions">
-        <Button type="text" icon={<ArrowLeftOutlined />} style={{ marginBottom: 12 }}>
-          Volver a preguntas
-        </Button>
+      <Link
+        href="/questions"
+        className={cn(
+          "inline-flex items-center gap-2 h-7 px-2.5 -ml-2.5 mb-3 text-xs font-medium rounded-md",
+          "bg-transparent text-[var(--fg-default)] hover:bg-[var(--bg-hover)]",
+          "transition-colors duration-[var(--duration-instant)]",
+        )}
+      >
+        <ArrowLeft className="size-4" />
+        Volver a preguntas
       </Link>
 
-      <Title level={2} className="serif-title" style={{ margin: 0 }}>
-        <TableOutlined /> Matriz de producción
-      </Title>
-      <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 24px", maxWidth: 800 }}>
-        Selecciona preguntas (filas) y templates (columnas) para generar producciones masivamente.
-        Cada celda muestra el estado de ese par pregunta×template.
-      </Paragraph>
+      <h1
+        className="serif-title text-[36px] leading-tight m-0 text-[var(--color-ink-1000)] inline-flex items-center gap-2"
+        style={{ fontWeight: 700 }}
+      >
+        <TableIcon className="size-7 text-[var(--fg-muted)]" />
+        Matriz de producción
+      </h1>
+      <p
+        className="text-[14px] text-[var(--fg-muted)] max-w-[800px]"
+        style={{ margin: "6px 0 24px" }}
+      >
+        Selecciona preguntas (filas) y templates (columnas) para generar
+        producciones masivamente. Cada celda muestra el estado de ese par
+        pregunta×template.
+      </p>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap size={12}>
-          <Select
-            allowClear
-            placeholder="Filtrar por documento"
+      {/* Filter toolbar */}
+      <Card variant="default" size="sm" className="mb-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            className={cn(
+              "h-9 px-3 text-sm rounded-md",
+              "bg-[var(--bg-page)] text-[var(--fg-default)]",
+              "border border-[var(--border-default)]",
+              "hover:border-[var(--border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--ring-focus)]",
+            )}
             style={{ width: 280 }}
-            value={documentId || undefined}
-            onChange={(v) => setDocumentId(v ?? "")}
-            showSearch
-            optionFilterProp="label"
-            options={docs.map((d) => ({ value: d.id, label: d.filename }))}
-          />
-          <Button icon={<ReloadOutlined />} onClick={fetchMatrix}>Recargar</Button>
+            value={documentId}
+            onChange={(e) => setDocumentId(e.target.value)}
+          >
+            <option value="">— Filtrar por documento (todos) —</option>
+            {docs.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.filename}
+              </option>
+            ))}
+          </select>
+          <Button variant="secondary" onClick={fetchMatrix}>
+            <RotateCw className="size-4" />
+            Recargar
+          </Button>
           {cellsToGenerate > 0 && (
-            <Badge count={cellsToGenerate} offset={[-6, 6]}>
+            <div className="relative">
               <Button
-                type="primary"
-                icon={<ThunderboltOutlined />}
-                loading={submitting}
+                variant="primary"
+                isLoading={submitting}
                 onClick={submit}
+                leadingIcon={!submitting ? <Zap className="size-4" /> : undefined}
               >
                 Producir {cellsToGenerate} producciones
               </Button>
-            </Badge>
+              <span
+                className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold text-[var(--fg-inverted)]"
+                style={{ background: "var(--color-danger-fg)" }}
+              >
+                {cellsToGenerate}
+              </span>
+            </div>
           )}
-        </Space>
+        </div>
       </Card>
 
+      {/* State tabs */}
       <Tabs
-        activeKey={stateFilter}
-        onChange={(k) => setStateFilter(k as typeof stateFilter)}
-        items={[
-          { key: "all", label: `Todas (${data?.counts.all ?? 0})` },
-          { key: "pending", label: `Sin producción (${data?.counts.pending ?? 0})` },
-          { key: "partial", label: `Parciales (${data?.counts.partial ?? 0})` },
-          { key: "complete", label: `Completas (${data?.counts.complete ?? 0})` },
-        ]}
-      />
+        value={stateFilter}
+        onValueChange={(k) => setStateFilter(k as typeof stateFilter)}
+        className="mb-4"
+      >
+        <TabsList variant="underline">
+          <TabsTrigger value="all">
+            Todas ({data?.counts.all ?? 0})
+          </TabsTrigger>
+          <TabsTrigger value="pending">
+            Sin producción ({data?.counts.pending ?? 0})
+          </TabsTrigger>
+          <TabsTrigger value="partial">
+            Parciales ({data?.counts.partial ?? 0})
+          </TabsTrigger>
+          <TabsTrigger value="complete">
+            Completas ({data?.counts.complete ?? 0})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {loading ? (
-        <Card><Skeleton active paragraph={{ rows: 12 }} /></Card>
+        <Card variant="default" size="md">
+          <div className="space-y-2">
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-9/12" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+            <Skeleton variant="line" className="h-4 w-full" />
+            <Skeleton variant="line" className="h-4 w-11/12" />
+            <Skeleton variant="line" className="h-4 w-9/12" />
+            <Skeleton variant="line" className="h-4 w-10/12" />
+          </div>
+        </Card>
       ) : !data || data.rows.length === 0 ? (
-        <Card>
-          <Empty description="Sin preguntas con estos filtros" />
+        <Card variant="default" size="md">
+          <div className="py-12 text-center">
+            <TableIcon className="size-10 text-[var(--fg-subtle)] mx-auto mb-3" />
+            <div className="text-[13px] text-[var(--fg-muted)]">
+              Sin preguntas con estos filtros
+            </div>
+          </div>
         </Card>
       ) : (
-        <Card styles={{ body: { padding: 0 } }}>
-          <div style={{ overflowX: "auto", position: "relative" }}>
-            <table style={{ minWidth: 800, width: "100%", borderCollapse: "collapse" }}>
+        <Card variant="default" size="sm" className="p-0 overflow-hidden">
+          <div className="overflow-x-auto relative">
+            <table
+              className="w-full"
+              style={{ minWidth: 800, borderCollapse: "collapse" }}
+            >
               <thead>
-                <tr style={{ background: token.colorFillQuaternary, borderBottom: `2px solid ${token.colorBorderSecondary}` }}>
+                <tr
+                  style={{
+                    background: "var(--bg-muted)",
+                    borderBottom: "2px solid var(--border-default)",
+                  }}
+                >
                   <th
+                    className="p-2.5 text-center text-[12px]"
                     style={{
-                      padding: "10px 8px",
-                      fontSize: 12,
-                      textAlign: "center",
-                      borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                      borderBottom: "1px solid var(--border-default)",
                       position: "sticky",
                       left: 0,
-                      background: token.colorFillQuaternary,
+                      background: "var(--bg-muted)",
                       zIndex: 2,
                     }}
                   >
                     <Checkbox
-                      checked={selectedQs.size === data.rows.length && data.rows.length > 0}
-                      indeterminate={selectedQs.size > 0 && selectedQs.size < data.rows.length}
-                      onChange={(e) => {
-                        if (e.target.checked) setSelectedQs(new Set(data.rows.map((r) => r.id)));
+                      checked={
+                        selectedQs.size === data.rows.length &&
+                        data.rows.length > 0
+                          ? true
+                          : selectedQs.size > 0 &&
+                              selectedQs.size < data.rows.length
+                            ? "indeterminate"
+                            : false
+                      }
+                      onCheckedChange={(c) => {
+                        if (c === true)
+                          setSelectedQs(
+                            new Set(data.rows.map((r) => r.id)),
+                          );
                         else setSelectedQs(new Set());
                       }}
                     />
                   </th>
                   <th
+                    className="p-2.5 text-left text-[12px] text-[var(--fg-muted)]"
                     style={{
-                      padding: "10px 8px",
-                      fontSize: 12,
                       width: "30%",
-                      textAlign: "left",
-                      color: token.colorTextSecondary,
                       position: "sticky",
                       left: 40,
-                      background: token.colorFillQuaternary,
+                      background: "var(--bg-muted)",
                       zIndex: 2,
                     }}
                   >
                     Pregunta
                   </th>
                   {data.templates.map((t) => (
-                    <th key={t.id} style={{ padding: "10px 8px", fontSize: 12, width: 90, textAlign: "center", color: token.colorTextSecondary }}>
-                      <Space vertical size={4}>
+                    <th
+                      key={t.id}
+                      className="p-2.5 text-center text-[12px] text-[var(--fg-muted)]"
+                      style={{ width: 90 }}
+                    >
+                      <div className="flex flex-col items-center gap-1">
                         <Checkbox
                           checked={selectedTpls.has(t.id)}
-                          onChange={() => togT(t.id)}
+                          onCheckedChange={() => togT(t.id)}
                         />
-                        <Tooltip title={t.name}>
-                          <div style={{ fontSize: 18 }}>{t.icon}</div>
+                        <Tooltip content={t.name}>
+                          <span className="text-[18px]">{t.icon}</span>
                         </Tooltip>
-                        <Text style={{ fontSize: 10, color: token.colorTextSecondary, display: "block", maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <span
+                          className="block text-[10px] text-[var(--fg-muted)] truncate"
+                          style={{ maxWidth: 80 }}
+                        >
                           {t.name}
-                        </Text>
-                      </Space>
+                        </span>
+                      </div>
                     </th>
                   ))}
-                  <th style={{ padding: "10px 8px", fontSize: 12, width: 80, textAlign: "center", color: token.colorTextSecondary }}>Total</th>
+                  <th
+                    className="p-2.5 text-center text-[12px] text-[var(--fg-muted)]"
+                    style={{ width: 80 }}
+                  >
+                    Total
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {data.rows.map((row) => {
-                  const periodColor = getPeriodColor(row.periodoCode);
-                  const categoryColor = getCategoryColor(row.categoriaCode);
                   const selected = selectedQs.has(row.id);
-                  const rowBg = selected ? `${token.colorPrimary}08` : token.colorBgContainer;
+                  const rowBg = selected
+                    ? "color-mix(in oklab, var(--accent) 6%, transparent)"
+                    : "var(--bg-page)";
                   return (
                     <tr
                       key={row.id}
                       style={{
                         background: rowBg,
-                        borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                        borderBottom: "1px solid var(--border-default)",
                       }}
                     >
                       <td
+                        className="p-2.5 text-center"
                         style={{
-                          padding: "10px 8px",
-                          textAlign: "center",
                           position: "sticky",
                           left: 0,
                           background: rowBg,
                           zIndex: 1,
                         }}
                       >
-                        <Checkbox checked={selected} onChange={() => togQ(row.id)} />
+                        <Checkbox
+                          checked={selected}
+                          onCheckedChange={() => togQ(row.id)}
+                        />
                       </td>
                       <td
+                        className="p-2.5"
                         style={{
-                          padding: "10px 8px",
                           position: "sticky",
                           left: 40,
                           background: rowBg,
                           zIndex: 1,
                         }}
                       >
-                        <Space vertical size={4} style={{ maxWidth: 480 }}>
-                          <Text style={{ fontSize: 13, lineHeight: 1.45 }}>{row.pregunta}</Text>
-                          <Space size={4} wrap>
-                            <Tag style={{ background: `${periodColor}1A`, border: "none", color: periodColor, fontSize: 10, margin: 0 }}>
-                              {row.periodoNombre}
-                            </Tag>
-                            <Tag style={{ background: `${categoryColor}1A`, border: "none", color: categoryColor, fontSize: 10, margin: 0 }}>
-                              {row.categoriaNombre}
-                            </Tag>
-                          </Space>
-                        </Space>
+                        <div
+                          className="flex flex-col gap-1"
+                          style={{ maxWidth: 480 }}
+                        >
+                          <span
+                            className="text-[var(--fg-default)]"
+                            style={{ fontSize: 13, lineHeight: 1.45 }}
+                          >
+                            {row.pregunta}
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            <PeriodBadge
+                              code={row.periodoCode}
+                              size="xs"
+                              variant="subtle"
+                            />
+                            <CategoryChip
+                              code={row.categoriaCode}
+                              size="xs"
+                              variant="subtle"
+                            />
+                          </div>
+                        </div>
                       </td>
                       {data.templates.map((t) => {
                         const cell = row.byTemplate[t.id];
                         const isProducible =
                           selected &&
                           selectedTpls.has(t.id) &&
-                          (!cell || cell.status === "PENDING" || cell.status === "ERROR");
+                          (!cell ||
+                            cell.status === "PENDING" ||
+                            cell.status === "ERROR");
                         return (
                           <td
                             key={t.id}
+                            className="p-2.5 text-center"
                             style={{
-                              padding: "10px 8px",
-                              textAlign: "center",
-                              background: isProducible ? `${token.colorPrimary}1A` : "transparent",
+                              background: isProducible
+                                ? "color-mix(in oklab, var(--accent) 10%, transparent)"
+                                : "transparent",
                             }}
                           >
-                            {cell?.deliverableId && cell.status === "COMPLETE" ? (
-                              <Link href={`/producciones/${cell.deliverableId}`}>
+                            {cell?.deliverableId &&
+                            cell.status === "COMPLETE" ? (
+                              <Link
+                                href={`/producciones/${cell.deliverableId}`}
+                              >
                                 {renderCell(cell.status)}
                               </Link>
                             ) : (
@@ -380,10 +516,18 @@ function MatrixContent() {
                           </td>
                         );
                       })}
-                      <td style={{ padding: "10px 8px", textAlign: "center" }}>
-                        <Text style={{ fontSize: 12, color: row.completedCount > 0 ? token.colorSuccess : token.colorTextTertiary }}>
+                      <td className="p-2.5 text-center">
+                        <span
+                          className="text-[12px] tabular-nums"
+                          style={{
+                            color:
+                              row.completedCount > 0
+                                ? "var(--color-success-fg)"
+                                : "var(--fg-subtle)",
+                          }}
+                        >
                           {row.completedCount}/{data.totalTemplates}
-                        </Text>
+                        </span>
                       </td>
                     </tr>
                   );
