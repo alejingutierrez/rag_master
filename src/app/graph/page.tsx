@@ -2,20 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  Card,
-  Typography,
-  Space,
-  Tag,
-  Skeleton,
-  theme,
-  Checkbox,
-  Empty,
-} from "antd";
-import { NodeIndexOutlined } from "@ant-design/icons";
+import { Network, ArrowRight } from "lucide-react";
+import { Card, Skeleton, Badge, Checkbox } from "@/components/ui";
 import { getPeriodColor, getCategoryColor } from "@/lib/theme";
-
-const { Title, Text, Paragraph } = Typography;
 
 interface GraphNode {
   id: string;
@@ -44,6 +33,14 @@ const TYPE_LABELS: Record<string, string> = {
   production: "Producciones",
   period: "Periodos",
   category: "Categorías",
+};
+
+const TYPE_BADGE_VARIANT: Record<string, "info" | "warning" | "tinta" | "success" | "subtle"> = {
+  document: "info",
+  question: "warning",
+  production: "tinta",
+  period: "success",
+  category: "subtle",
 };
 
 /**
@@ -107,7 +104,6 @@ function layoutNodes(nodes: GraphNode[], edges: GraphEdge[]) {
 }
 
 export default function GraphPage() {
-  const { token } = theme.useToken();
   const [data, setData] = useState<{ nodes: GraphNode[]; edges: GraphEdge[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [enabledTypes, setEnabledTypes] = useState<Set<string>>(
@@ -143,49 +139,88 @@ export default function GraphPage() {
   }, [hovered, filtered]);
 
   if (loading || !data) {
-    return <div className="app-page-wide"><Skeleton active /></div>;
+    return (
+      <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
+        <Skeleton variant="line" className="h-8 w-72 mb-3" />
+        <Skeleton variant="line" className="h-4 w-[480px] mb-6" />
+        <Skeleton variant="line" className="h-[700px] w-full" />
+      </div>
+    );
   }
 
-  return (
-    <div className="app-page-wide">
-      <Title level={2} className="serif-title" style={{ margin: 0 }}>
-        <NodeIndexOutlined /> Grafo de conexiones
-      </Title>
-      <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 16px" }}>
-        Red de relaciones entre documentos, preguntas, producciones y la taxonomía histórica.
-        Pasa el cursor sobre un nodo para ver sus conexiones.
-      </Paragraph>
+  const hoveredNode = hovered ? filtered.nodes.find((n) => n.id === hovered) : null;
 
-      <Card style={{ marginBottom: 12 }}>
-        <Space wrap size={16}>
-          <Text strong style={{ fontSize: 12 }}>Mostrar:</Text>
+  return (
+    <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
+      {/* Hero */}
+      <header className="mb-6">
+        <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
+          Red semántica
+        </div>
+        <h1
+          className="serif-title text-[36px] leading-tight mt-1.5 mb-2 text-[var(--color-ink-1000)] flex items-center gap-3"
+          style={{ fontWeight: 700 }}
+        >
+          <Network className="size-8 text-[var(--accent)]" />
+          Grafo de conexiones
+        </h1>
+        <p className="text-[15px] leading-relaxed text-[var(--fg-muted)] max-w-[720px]">
+          Red de relaciones entre documentos, preguntas, producciones y la taxonomía histórica.
+          Pasa el cursor sobre un nodo para ver sus conexiones.
+        </p>
+      </header>
+
+      {/* Filter controls */}
+      <Card variant="default" size="sm" className="mb-3">
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="text-[12px] font-semibold text-[var(--fg-default)] uppercase tracking-wide">
+            Mostrar
+          </span>
           {Object.entries(TYPE_LABELS).map(([key, label]) => (
-            <Checkbox
+            <label
               key={key}
-              checked={enabledTypes.has(key)}
-              onChange={(e) => {
-                const next = new Set(enabledTypes);
-                if (e.target.checked) next.add(key);
-                else next.delete(key);
-                setEnabledTypes(next);
-              }}
+              className="inline-flex items-center gap-2 cursor-pointer select-none"
             >
-              <Space size={4}>
-                <span style={{ width: 10, height: 10, borderRadius: 5, background: TYPE_COLORS[key], display: "inline-block" }} />
-                {label}
-              </Space>
-            </Checkbox>
+              <Checkbox
+                checked={enabledTypes.has(key)}
+                onCheckedChange={(checked) => {
+                  const next = new Set(enabledTypes);
+                  if (checked) next.add(key);
+                  else next.delete(key);
+                  setEnabledTypes(next);
+                }}
+              />
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  className="inline-block size-2.5 rounded-full"
+                  style={{ background: TYPE_COLORS[key] }}
+                />
+                <span className="text-[13px] text-[var(--fg-default)]">{label}</span>
+              </span>
+            </label>
           ))}
-        </Space>
+        </div>
       </Card>
 
-      <Card styles={{ body: { padding: 0 } }}>
+      {/* Graph canvas */}
+      <Card variant="default" size="md" className="p-0 overflow-hidden">
         {filtered.nodes.length === 0 ? (
-          <div style={{ padding: 60 }}><Empty description="Sin nodos visibles" /></div>
+          <div className="py-16 text-center">
+            <Network className="size-10 text-[var(--fg-subtle)] mx-auto mb-3" />
+            <div className="text-[14px] text-[var(--fg-muted)]">Sin nodos visibles</div>
+            <div className="text-[12px] text-[var(--fg-subtle)] mt-1">
+              Activa al menos una categoría arriba para visualizar la red.
+            </div>
+          </div>
         ) : (
           <svg
             viewBox="0 0 900 700"
-            style={{ width: "100%", height: 700, display: "block", background: token.colorFillQuaternary }}
+            style={{
+              width: "100%",
+              height: 700,
+              display: "block",
+              background: "var(--bg-muted)",
+            }}
             onMouseLeave={() => setHovered(null)}
           >
             {/* Edges */}
@@ -201,7 +236,7 @@ export default function GraphPage() {
                   y1={s.y}
                   x2={t.x}
                   y2={t.y}
-                  stroke={highlighted ? token.colorPrimary : token.colorBorder}
+                  stroke={highlighted ? "var(--accent)" : "var(--border-default)"}
                   strokeWidth={highlighted ? 1.8 : 0.5}
                   strokeOpacity={hovered ? (highlighted ? 0.9 : 0.05) : 0.3}
                 />
@@ -248,7 +283,7 @@ export default function GraphPage() {
                       y={radius + 14}
                       textAnchor="middle"
                       fontSize={n.type === "period" || n.type === "category" ? 10 : 9}
-                      fill={token.colorText}
+                      fill="var(--fg-default)"
                       fontWeight={n.type === "period" || n.type === "category" ? 600 : 400}
                       style={{ pointerEvents: "none" }}
                     >
@@ -262,29 +297,43 @@ export default function GraphPage() {
         )}
       </Card>
 
-      {hovered && (() => {
-        const node = filtered.nodes.find((n) => n.id === hovered);
-        if (!node) return null;
-        return (
-          <Card size="small" style={{ marginTop: 12 }}>
-            <Space vertical size={4}>
-              <Tag color={node.type === "document" ? "blue" : node.type === "question" ? "orange" : node.type === "production" ? "purple" : "default"}>
-                {TYPE_LABELS[node.type].slice(0, -1)}
-              </Tag>
-              <Text strong>{node.label}</Text>
-              {node.type === "document" && typeof node.metadata?.docId === "string" && (
-                <Link href={`/documents/${node.metadata.docId}`}><Text type="success">Abrir documento →</Text></Link>
-              )}
-              {node.type === "question" && typeof node.metadata?.questionId === "string" && (
-                <Link href={`/questions?focus=${node.metadata.questionId}`}><Text type="success">Ver pregunta →</Text></Link>
-              )}
-              {node.type === "production" && typeof node.metadata?.deliverableId === "string" && (
-                <Link href={`/producciones/${node.metadata.deliverableId}`}><Text type="success">Ver producción →</Text></Link>
-              )}
-            </Space>
-          </Card>
-        );
-      })()}
+      {/* Hover details */}
+      {hoveredNode && (
+        <Card variant="default" size="sm" className="mt-3">
+          <div className="flex flex-col gap-2">
+            <Badge variant={TYPE_BADGE_VARIANT[hoveredNode.type] ?? "subtle"} size="xs">
+              {TYPE_LABELS[hoveredNode.type].slice(0, -1)}
+            </Badge>
+            <div className="text-[14px] font-semibold text-[var(--fg-default)] leading-snug">
+              {hoveredNode.label}
+            </div>
+            {hoveredNode.type === "document" && typeof hoveredNode.metadata?.docId === "string" && (
+              <Link
+                href={`/documents/${hoveredNode.metadata.docId}`}
+                className="text-[13px] text-[var(--accent)] hover:underline inline-flex items-center gap-1 w-fit"
+              >
+                Abrir documento <ArrowRight className="size-3" />
+              </Link>
+            )}
+            {hoveredNode.type === "question" && typeof hoveredNode.metadata?.questionId === "string" && (
+              <Link
+                href={`/questions?focus=${hoveredNode.metadata.questionId}`}
+                className="text-[13px] text-[var(--accent)] hover:underline inline-flex items-center gap-1 w-fit"
+              >
+                Ver pregunta <ArrowRight className="size-3" />
+              </Link>
+            )}
+            {hoveredNode.type === "production" && typeof hoveredNode.metadata?.deliverableId === "string" && (
+              <Link
+                href={`/producciones/${hoveredNode.metadata.deliverableId}`}
+                className="text-[13px] text-[var(--accent)] hover:underline inline-flex items-center gap-1 w-fit"
+              >
+                Ver producción <ArrowRight className="size-3" />
+              </Link>
+            )}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

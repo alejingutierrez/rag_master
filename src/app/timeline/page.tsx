@@ -3,29 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Card,
-  Typography,
-  Space,
-  Tag,
-  Skeleton,
-  theme,
-  Row,
-  Col,
-  Tooltip,
-  Button,
-  Empty,
-} from "antd";
+  Radar,
+  FileText,
+  BookOpen,
+  LayoutGrid,
+  ArrowRight,
+} from "lucide-react";
 import {
-  RadarChartOutlined,
-  FileTextOutlined,
-  BookOutlined,
-  AppstoreOutlined,
-  ArrowRightOutlined,
-} from "@ant-design/icons";
+  Card,
+  Skeleton,
+  Tooltip,
+} from "@/components/ui";
+import { PeriodBadge } from "@/components/domain/period-badge";
 import { PERIOD_OPTIONS, PERIOD_YEAR_BOUNDS } from "@/lib/taxonomy";
 import { getPeriodColor, getCategoryColor } from "@/lib/theme";
-
-const { Title, Text, Paragraph } = Typography;
 
 interface TimelineData {
   questions: Array<{ periodoCode: string; periodoNombre: string; periodoRango: string; count: number }>;
@@ -34,7 +25,6 @@ interface TimelineData {
 }
 
 export default function TimelinePage() {
-  const { token } = theme.useToken();
   const [data, setData] = useState<TimelineData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
@@ -47,7 +37,13 @@ export default function TimelinePage() {
   }, []);
 
   if (loading || !data) {
-    return <div className="app-page-wide"><Skeleton active /></div>;
+    return (
+      <div className="app-page-wide">
+        <Skeleton variant="line" className="h-8 w-72 mb-3" />
+        <Skeleton variant="line" className="h-4 w-[480px] mb-6" />
+        <Skeleton variant="rect" className="h-[320px] w-full" />
+      </div>
+    );
   }
 
   const qByCode = Object.fromEntries(data.questions.map((q) => [q.periodoCode, q.count]));
@@ -62,20 +58,24 @@ export default function TimelinePage() {
 
   return (
     <div className="app-page-wide">
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2} className="serif-title" style={{ margin: 0 }}>
-          <RadarChartOutlined /> Línea de tiempo histórica
-        </Title>
-        <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0" }}>
+      <header className="mb-6">
+        <h2
+          className="serif-title text-[28px] leading-tight m-0 text-[var(--color-ink-1000)] inline-flex items-center gap-2"
+          style={{ fontWeight: 700 }}
+        >
+          <Radar className="size-6 text-[var(--accent)]" />
+          Línea de tiempo histórica
+        </h2>
+        <p className="text-[14px] leading-relaxed text-[var(--fg-muted)] mt-1.5 mb-0 max-w-[760px]">
           Recorrido cronológico por 14 períodos de la historia colombiana, desde lo prehispánico hasta el posconflicto.
           Cada barra muestra la densidad de preguntas; los anillos, documentos y producciones.
-        </Paragraph>
-      </div>
+        </p>
+      </header>
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card variant="default" size="md" className="mb-4">
         {/* Timeline horizontal */}
-        <div style={{ overflowX: "auto", paddingBottom: 12 }}>
-          <div style={{ minWidth: 1100, display: "flex", gap: 8, paddingTop: 32 }}>
+        <div className="overflow-x-auto pb-3">
+          <div className="flex gap-2 pt-8" style={{ minWidth: 1100 }}>
             {chronological.map((p) => {
               const qCount = qByCode[p.code] ?? 0;
               const docCount = docsByCode[p.code] ?? 0;
@@ -88,18 +88,12 @@ export default function TimelinePage() {
                 <div
                   key={p.code}
                   onClick={() => setSelected(isSelected ? null : p.code)}
-                  style={{
-                    flex: 1,
-                    minWidth: 72,
-                    cursor: "pointer",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
+                  className="flex-1 cursor-pointer flex flex-col items-center"
+                  style={{ minWidth: 72 }}
                 >
-                  <div style={{ height: 220, display: "flex", alignItems: "flex-end", width: "100%", position: "relative" }}>
+                  <div className="h-[220px] flex items-end w-full relative">
                     <Tooltip
-                      title={
+                      content={
                         <div>
                           <div style={{ fontWeight: 600 }}>{p.nombre}</div>
                           <div style={{ fontSize: 11, opacity: 0.85 }}>{p.rango}</div>
@@ -110,27 +104,21 @@ export default function TimelinePage() {
                       }
                     >
                       <div
+                        className="w-full rounded transition-all duration-200 relative"
                         style={{
-                          width: "100%",
                           minHeight: 4,
                           height: `${Math.max(4, heightPct)}%`,
                           background: `linear-gradient(to top, ${color}, ${color}88)`,
-                          borderRadius: 4,
                           opacity: isSelected ? 1 : 0.85,
                           border: isSelected ? `2px solid ${color}` : "none",
                           boxShadow: isSelected ? `0 0 0 4px ${color}33` : "none",
-                          transition: "all 0.2s",
-                          position: "relative",
                         }}
                       >
                         {qCount > 0 && heightPct > 15 && (
-                          <Text
+                          <span
+                            className="absolute left-0 right-0 text-center"
                             style={{
-                              position: "absolute",
                               top: 6,
-                              left: 0,
-                              right: 0,
-                              textAlign: "center",
                               fontSize: 14,
                               fontWeight: 700,
                               color: "#fff",
@@ -138,30 +126,32 @@ export default function TimelinePage() {
                             }}
                           >
                             {qCount}
-                          </Text>
+                          </span>
                         )}
                       </div>
                     </Tooltip>
                   </div>
 
-                  <div style={{ height: 1, background: color, width: "100%", margin: "8px 0" }} />
+                  <div className="my-2 w-full" style={{ height: 1, background: color }} />
 
-                  <Text style={{ fontSize: 10, color: token.colorTextTertiary, fontFamily: "var(--font-mono)" }}>
+                  <span
+                    className="text-[10px]"
+                    style={{ color: "var(--fg-subtle)", fontFamily: "var(--font-mono)" }}
+                  >
                     {p.rango}
-                  </Text>
-                  <Text
+                  </span>
+                  <span
+                    className="text-center mt-1"
                     style={{
                       fontSize: 11,
-                      color: isSelected ? color : token.colorText,
+                      color: isSelected ? color : "var(--fg-default)",
                       fontWeight: isSelected ? 600 : 500,
-                      textAlign: "center",
                       lineHeight: 1.25,
-                      marginTop: 4,
                       maxWidth: 90,
                     }}
                   >
                     {p.nombre.split(" ").slice(0, 3).join(" ")}
-                  </Text>
+                  </span>
                 </div>
               );
             })}
@@ -169,83 +159,96 @@ export default function TimelinePage() {
         </div>
 
         {/* Leyenda */}
-        <Space size={20} style={{ marginTop: 16 }}>
-          <Space size={6}>
-            <div style={{ width: 12, height: 12, background: token.colorPrimary, borderRadius: 2 }} />
-            <Text style={{ fontSize: 12, color: token.colorTextSecondary }}>Preguntas (altura)</Text>
-          </Space>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+        <div className="flex items-center gap-5 mt-4">
+          <div className="flex items-center gap-1.5">
+            <div
+              className="rounded-sm"
+              style={{ width: 12, height: 12, background: "var(--accent)" }}
+            />
+            <span className="text-xs text-[var(--fg-muted)]">Preguntas (altura)</span>
+          </div>
+          <span className="text-xs text-[var(--fg-subtle)]">
             Click en un período para explorar
-          </Text>
-        </Space>
+          </span>
+        </div>
       </Card>
 
       {/* Detalle del período seleccionado */}
       {selectedPeriod ? (
-        <Card
-          title={
-            <Space>
-              <Tag
-                style={{
-                  background: `${getPeriodColor(selectedPeriod.code)}1A`,
-                  border: "none",
-                  color: getPeriodColor(selectedPeriod.code),
-                  fontSize: 14,
-                  padding: "4px 10px",
-                }}
-              >
-                {selectedPeriod.nombre}
-              </Tag>
-              <Text type="secondary">{selectedPeriod.rango}</Text>
-            </Space>
-          }
-          extra={
-            <Space>
-              <Link href={`/questions?periodo=${selectedPeriod.code}`}>
-                <Button type="link" size="small">
-                  Ver preguntas <ArrowRightOutlined />
-                </Button>
-              </Link>
-            </Space>
-          }
-        >
-          <Row gutter={[16, 16]}>
-            <Col xs={24} md={8}>
-              <Card size="small">
-                <Space vertical size={4}>
-                  <BookOutlined style={{ fontSize: 20, color: getPeriodColor(selectedPeriod.code) }} />
-                  <Text type="secondary" style={{ fontSize: 12 }}>Preguntas</Text>
-                  <Text style={{ fontSize: 26, fontWeight: 600 }}>{qByCode[selectedPeriod.code] ?? 0}</Text>
-                </Space>
-              </Card>
-            </Col>
-            <Col xs={24} md={8}>
-              <Card size="small">
-                <Space vertical size={4}>
-                  <FileTextOutlined style={{ fontSize: 20, color: getPeriodColor(selectedPeriod.code) }} />
-                  <Text type="secondary" style={{ fontSize: 12 }}>Documentos</Text>
-                  <Text style={{ fontSize: 26, fontWeight: 600 }}>{docsByCode[selectedPeriod.code] ?? 0}</Text>
-                </Space>
-              </Card>
-            </Col>
-            <Col xs={24} md={8}>
-              <Card size="small">
-                <Space vertical size={4}>
-                  <AppstoreOutlined style={{ fontSize: 20, color: getPeriodColor(selectedPeriod.code) }} />
-                  <Text type="secondary" style={{ fontSize: 12 }}>Producciones</Text>
-                  <Text style={{ fontSize: 26, fontWeight: 600 }}>{delivsByCode[selectedPeriod.code] ?? 0}</Text>
-                </Space>
-              </Card>
-            </Col>
-          </Row>
+        <Card variant="default" size="md">
+          <header className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <PeriodBadge code={selectedPeriod.code} size="md" />
+              <span className="text-sm text-[var(--fg-muted)]">{selectedPeriod.rango}</span>
+            </div>
+            <Link
+              href={`/questions?periodo=${selectedPeriod.code}`}
+              className="text-[13px] text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+            >
+              Ver preguntas <ArrowRight className="size-3" />
+            </Link>
+          </header>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MiniStat
+              icon={BookOpen}
+              label="Preguntas"
+              value={qByCode[selectedPeriod.code] ?? 0}
+              color={getPeriodColor(selectedPeriod.code)}
+            />
+            <MiniStat
+              icon={FileText}
+              label="Documentos"
+              value={docsByCode[selectedPeriod.code] ?? 0}
+              color={getPeriodColor(selectedPeriod.code)}
+            />
+            <MiniStat
+              icon={LayoutGrid}
+              label="Producciones"
+              value={delivsByCode[selectedPeriod.code] ?? 0}
+              color={getPeriodColor(selectedPeriod.code)}
+            />
+          </div>
 
           {/* Timeline real por yearPrincipal dentro del período */}
           <InnerPeriodTimeline periodoCode={selectedPeriod.code} />
         </Card>
       ) : (
-        <Empty description="Selecciona un período para ver detalles" />
+        <Card variant="default" size="md">
+          <div className="py-10 text-center">
+            <div className="text-[13px] text-[var(--fg-subtle)]">
+              Selecciona un período para ver detalles
+            </div>
+          </div>
+        </Card>
       )}
     </div>
+  );
+}
+
+/* ─── MiniStat ────────────────────────────────────────────────────────────── */
+
+function MiniStat({
+  icon: Icon,
+  label,
+  value,
+  color,
+}: {
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <Card variant="outline" size="sm">
+      <div className="flex flex-col gap-1">
+        <Icon className="size-5" style={{ color }} />
+        <span className="text-xs text-[var(--fg-muted)]">{label}</span>
+        <span className="text-[26px] font-semibold text-[var(--fg-default)] tabular-nums">
+          {value}
+        </span>
+      </div>
+    </Card>
   );
 }
 
@@ -259,7 +262,6 @@ interface InnerQ {
 }
 
 function InnerPeriodTimeline({ periodoCode }: { periodoCode: string }) {
-  const { token } = theme.useToken();
   const [items, setItems] = useState<InnerQ[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -311,7 +313,12 @@ function InnerPeriodTimeline({ periodoCode }: { periodoCode: string }) {
   );
 
   if (loading) {
-    return <div style={{ marginTop: 16 }}><Skeleton active paragraph={{ rows: 2 }} /></div>;
+    return (
+      <div className="mt-4">
+        <Skeleton variant="line" className="h-4 w-64 mb-2" />
+        <Skeleton variant="rect" className="h-[160px] w-full" />
+      </div>
+    );
   }
 
   if (items.length === 0) {
@@ -343,37 +350,35 @@ function InnerPeriodTimeline({ periodoCode }: { periodoCode: string }) {
   });
 
   return (
-    <div style={{ marginTop: 20 }}>
-      <Space size={6} style={{ marginBottom: 10 }}>
-        <Text style={{ fontSize: 12, color: token.colorTextSecondary, fontWeight: 600 }}>
+    <div className="mt-5">
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <span className="text-xs font-semibold text-[var(--fg-muted)]">
           Cronología fina por año principal
-        </Text>
-        <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>
+        </span>
+        <span className="text-[11px] text-[var(--fg-subtle)]">
           {withYear.length} preguntas con año {withoutYear.length > 0 && `· ${withoutYear.length} sin año`}
-        </Text>
-      </Space>
+        </span>
+      </div>
 
       <div
+        className="relative overflow-hidden rounded-lg"
         style={{
-          position: "relative",
           height: 200,
-          background: token.colorFillTertiary,
-          borderRadius: 8,
+          background: "var(--bg-muted)",
           padding: "12px 12px 28px 12px",
-          overflow: "hidden",
         }}
       >
         {/* Tick lines */}
         {ticks.map((y) => (
           <div
             key={`tick-${y}`}
+            className="absolute"
             style={{
-              position: "absolute",
               left: `calc(12px + ${xPct(y)}% * (100% - 24px) / 100%)`,
               top: 12,
               bottom: 28,
               width: 1,
-              background: `${token.colorBorderSecondary}55`,
+              background: "color-mix(in oklab, var(--border-default) 55%, transparent)",
             }}
           />
         ))}
@@ -385,70 +390,71 @@ function InnerPeriodTimeline({ periodoCode }: { periodoCode: string }) {
           return (
             <Tooltip
               key={q.id}
-              title={
+              content={
                 <div style={{ maxWidth: 320 }}>
                   <div style={{ fontWeight: 600, fontFamily: "var(--font-mono)" }}>{q.yearPrincipal}</div>
-                  <div style={{ fontSize: 11, color: token.colorTextSecondary, marginTop: 2 }}>
+                  <div style={{ fontSize: 11, opacity: 0.85, marginTop: 2 }}>
                     {q.categoriaNombre}
                   </div>
-                  <div style={{ marginTop: 4, fontSize: 12 }}>{q.pregunta.slice(0, 200)}{q.pregunta.length > 200 ? "…" : ""}</div>
+                  <div style={{ marginTop: 4, fontSize: 12 }}>
+                    {q.pregunta.slice(0, 200)}
+                    {q.pregunta.length > 200 ? "…" : ""}
+                  </div>
                 </div>
               }
             >
-              <Link href={`/questions?focus=${q.id}`}>
-                <span
-                  style={{
-                    position: "absolute",
-                    left: `calc(12px + ${x}% * (100% - 24px) / 100%)`,
-                    top,
-                    transform: "translateX(-50%)",
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    background: color,
-                    border: `2px solid ${periodColor}`,
-                    boxShadow: `0 0 0 2px ${token.colorBgContainer}`,
-                    cursor: "pointer",
-                    display: "block",
-                  }}
-                />
-              </Link>
+              <Link
+                href={`/questions?focus=${q.id}`}
+                className="absolute block"
+                style={{
+                  left: `calc(12px + ${x}% * (100% - 24px) / 100%)`,
+                  top,
+                  transform: "translateX(-50%)",
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  background: color,
+                  border: `2px solid ${periodColor}`,
+                  boxShadow: "0 0 0 2px var(--bg-page)",
+                  cursor: "pointer",
+                }}
+              />
             </Tooltip>
           );
         })}
 
         {/* Eje x */}
         <div
+          className="absolute"
           style={{
-            position: "absolute",
             left: 12,
             right: 12,
             bottom: 18,
             height: 1,
-            background: token.colorBorder,
+            background: "var(--border-default)",
           }}
         />
         {ticks.map((y) => (
-          <Text
+          <span
             key={`label-${y}`}
+            className="absolute"
             style={{
-              position: "absolute",
               left: `calc(12px + ${xPct(y)}% * (100% - 24px) / 100%)`,
               bottom: 4,
               transform: "translateX(-50%)",
               fontSize: 10,
               fontFamily: "var(--font-mono)",
-              color: token.colorTextTertiary,
+              color: "var(--fg-subtle)",
             }}
           >
             {y}
-          </Text>
+          </span>
         ))}
       </div>
 
-      <Text style={{ fontSize: 10, color: token.colorTextTertiary, marginTop: 8, display: "block" }}>
+      <span className="block text-[10px] text-[var(--fg-subtle)] mt-2">
         Cada punto = una pregunta. Color = categoría. Hover para ver. Click para abrir.
-      </Text>
+      </span>
     </div>
   );
 }

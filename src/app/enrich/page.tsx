@@ -3,46 +3,42 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
-  Card,
-  Typography,
-  Tag,
-  Space,
+  Sparkles,
+  Loader2,
+  Save,
+  Zap,
+  CheckCircle2,
+  FileText,
+  Search,
+  Plus,
+  X,
+  BookOpen,
+  RotateCw,
+  ArrowLeft,
+  Rocket,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+import {
+  Badge,
   Button,
+  Card,
+  Chip,
+  FieldHelp,
+  FieldLabel,
+  IconButton,
   Input,
-  Select,
-  Progress,
-  Empty,
-  theme,
-  App,
-  Form,
-  Row,
-  Col,
-  Tabs,
-  Tooltip,
   Skeleton,
-  Collapse,
-  Alert,
-} from "antd";
-import {
-  ExperimentOutlined,
-  SaveOutlined,
-  ThunderboltOutlined,
-  CheckCircleFilled,
-  FileTextOutlined,
-  SearchOutlined,
-  PlusOutlined,
-  CloseOutlined,
-  BookOutlined,
-  ReloadOutlined,
-  ArrowLeftOutlined,
-  RocketOutlined,
-} from "@ant-design/icons";
+  Textarea,
+  Tooltip,
+} from "@/components/ui";
+import { PeriodBadge } from "@/components/domain";
+import { cn } from "@/lib/cn";
 import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
 import { PERIOD_OPTIONS, CATEGORY_OPTIONS } from "@/lib/taxonomy";
-import { getPeriodColor, getCategoryColor } from "@/lib/theme";
-
-const { Title, Text, Paragraph } = Typography;
+import { getPeriodColor } from "@/lib/theme";
 
 interface DocumentSummary {
   id: string;
@@ -57,9 +53,22 @@ interface DocumentDetail extends DocumentSummary {
   chunks: Array<{ id: string; content: string; pageNumber: number; chunkIndex: number }>;
 }
 
+type FilterValue = "all" | "enriched" | "pending";
+
 export default function EnrichPage() {
   return (
-    <Suspense fallback={<div className="app-page-wide"><Skeleton active /></div>}>
+    <Suspense
+      fallback={
+        <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
+          <Skeleton variant="line" className="h-8 w-72 mb-3" />
+          <Skeleton variant="line" className="h-4 w-96 mb-8" />
+          <div className="space-y-3">
+            <Skeleton variant="line" className="h-24" />
+            <Skeleton variant="line" className="h-64" />
+          </div>
+        </div>
+      }
+    >
       <EnrichContent />
     </Suspense>
   );
@@ -67,8 +76,6 @@ export default function EnrichPage() {
 
 function EnrichContent() {
   const params = useSearchParams();
-  const { token } = theme.useToken();
-  const { message } = App.useApp();
 
   const [docs, setDocs] = useState<DocumentSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +83,7 @@ function EnrichContent() {
   const [detail, setDetail] = useState<DocumentDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "enriched" | "pending">("all");
+  const [filter, setFilter] = useState<FilterValue>("all");
   const [batchRunning, setBatchRunning] = useState(false);
 
   const loadDocs = useCallback(async () => {
@@ -87,11 +94,11 @@ function EnrichContent() {
       setDocs(data.documents ?? []);
     } catch (e) {
       console.error(e);
-      message.error("Error al cargar documentos");
+      toast.error("Error al cargar documentos");
     } finally {
       setLoading(false);
     }
-  }, [message]);
+  }, []);
 
   useEffect(() => {
     loadDocs();
@@ -110,11 +117,11 @@ function EnrichContent() {
       const data = await res.json();
       setDetail(data.document);
     } catch {
-      message.error("Error al cargar documento");
+      toast.error("Error al cargar documento");
     } finally {
       setLoadingDetail(false);
     }
-  }, [message]);
+  }, []);
 
   useEffect(() => {
     if (selectedId) loadDetail(selectedId);
@@ -146,7 +153,7 @@ function EnrichContent() {
       setBatchRunning(false);
       return;
     }
-    message.info(`Enriqueciendo ${pending.length} documentos (paralelo 3)…`);
+    toast.info(`Enriqueciendo ${pending.length} documentos (paralelo 3)…`);
     const concurrency = 3;
     let success = 0;
     let errors = 0;
@@ -166,149 +173,218 @@ function EnrichContent() {
     });
     await Promise.all(workers);
     if (errors > 0) {
-      message.warning(`${success} enriquecidos · ${errors} con error`);
+      toast.warning(`${success} enriquecidos · ${errors} con error`);
     } else {
-      message.success(`${success} de ${pending.length} documentos enriquecidos`);
+      toast.success(`${success} de ${pending.length} documentos enriquecidos`);
     }
     setBatchRunning(false);
     loadDocs();
   };
 
-  return (
-    <div className="app-page-wide">
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2} className="serif-title" style={{ margin: 0 }}>
-          Enriquecer documentos
-        </Title>
-        <Paragraph style={{ color: token.colorTextSecondary, margin: "6px 0 0" }}>
-          Metadata bibliográfica, clasificación temporal/temática y resumen — con IA o manual.
-        </Paragraph>
-      </div>
+  const filterOptions: Array<{ value: FilterValue; label: string }> = [
+    { value: "all", label: `Todos (${docs.length})` },
+    { value: "pending", label: `Pendientes (${pendingCount})` },
+    { value: "enriched", label: `Enriquecidos (${enrichedCount})` },
+  ];
 
-      <Card style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 12]} align="middle">
-          <Col xs={24} md={10}>
-            <Space vertical size={4} style={{ width: "100%" }}>
-              <Text style={{ fontSize: 12, color: token.colorTextTertiary }}>
-                Cobertura de enriquecimiento
-              </Text>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <Text style={{ fontSize: 26, fontWeight: 600 }}>{enrichmentPct}%</Text>
-                <Text type="secondary">
-                  {enrichedCount} de {docs.length} documentos
-                </Text>
-              </div>
-              <Progress percent={enrichmentPct} showInfo={false} strokeColor={token.colorPrimary} />
-            </Space>
-          </Col>
-          <Col xs={24} md={14} style={{ textAlign: "right" }}>
-            <Space>
-              <Button icon={<ReloadOutlined />} onClick={loadDocs}>Recargar</Button>
-              <Button
-                type="primary"
-                icon={<ThunderboltOutlined />}
-                loading={batchRunning}
-                disabled={pendingCount === 0}
-                onClick={runBatchEnrich}
-              >
-                Enriquecer {pendingCount} con IA
-              </Button>
-            </Space>
-          </Col>
-        </Row>
+  return (
+    <div className="max-w-[var(--container-wide)] mx-auto px-8 py-8">
+      {/* Hero */}
+      <header className="mb-6">
+        <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
+          Curaduría del corpus
+        </div>
+        <h1
+          className="serif-title text-[36px] leading-tight mt-1.5 mb-2 text-[var(--color-ink-1000)]"
+          style={{ fontWeight: 700 }}
+        >
+          Enriquecer documentos
+        </h1>
+        <p className="text-[15px] leading-relaxed text-[var(--fg-muted)] max-w-[720px]">
+          Metadata bibliográfica, clasificación temporal/temática y resumen — con IA o manual.
+        </p>
+      </header>
+
+      {/* Coverage + bulk actions */}
+      <Card variant="default" size="md" className="mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          <div className="md:col-span-7 flex flex-col gap-1.5">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--fg-subtle)]">
+              Cobertura de enriquecimiento
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[26px] font-semibold text-[var(--fg-default)] tabular-nums">
+                {enrichmentPct}%
+              </span>
+              <span className="text-[13px] text-[var(--fg-muted)]">
+                {enrichedCount} de {docs.length} documentos
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-[var(--bg-muted)] overflow-hidden">
+              <div
+                className="h-full transition-all duration-500"
+                style={{
+                  width: `${enrichmentPct}%`,
+                  background: "var(--accent)",
+                }}
+              />
+            </div>
+          </div>
+          <div className="md:col-span-5 flex md:justify-end gap-2 flex-wrap">
+            <Button
+              variant="secondary"
+              size="md"
+              leadingIcon={<RotateCw className="size-4" />}
+              onClick={loadDocs}
+            >
+              Recargar
+            </Button>
+            <Button
+              variant="primary"
+              size="md"
+              leadingIcon={<Zap className="size-4" />}
+              isLoading={batchRunning}
+              disabled={pendingCount === 0}
+              onClick={runBatchEnrich}
+            >
+              Enriquecer {pendingCount} con IA
+            </Button>
+          </div>
+        </div>
       </Card>
 
-      <Row gutter={16}>
-        <Col xs={24} lg={selectedId ? 8 : 24}>
-          <Card
-            title={
-              <Space>
-                <FileTextOutlined />
-                <span>Documentos</span>
-                <Tag>{filtered.length}</Tag>
-              </Space>
-            }
-            styles={{ body: { padding: 0 } }}
-          >
-            <div style={{ padding: 12, borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
-              <Space vertical size={8} style={{ width: "100%" }}>
-                <Input
-                  allowClear
-                  prefix={<SearchOutlined />}
-                  placeholder="Buscar…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <Select
-                  style={{ width: "100%" }}
-                  value={filter}
-                  onChange={setFilter}
-                  options={[
-                    { value: "all", label: `Todos (${docs.length})` },
-                    { value: "pending", label: `Pendientes (${pendingCount})` },
-                    { value: "enriched", label: `Enriquecidos (${enrichedCount})` },
-                  ]}
-                />
-              </Space>
+      {/* List + Editor grid */}
+      <div className={cn("grid gap-4", selectedId ? "grid-cols-1 lg:grid-cols-12" : "grid-cols-1")}>
+        <div className={cn(selectedId ? "lg:col-span-4" : "lg:col-span-12")}>
+          <Card variant="default" size="md" className="overflow-hidden p-0">
+            <header className="flex items-center gap-2 px-4 pt-4">
+              <FileText className="size-4 text-[var(--fg-muted)]" />
+              <h3 className="text-[15px] font-semibold text-[var(--fg-default)]">Documentos</h3>
+              <Badge variant="subtle" size="xs">
+                {filtered.length}
+              </Badge>
+            </header>
+            <div className="px-4 py-3 border-b border-[var(--border-default)] mt-3 space-y-2">
+              <Input
+                leadingIcon={<Search className="size-4" />}
+                placeholder="Buscar…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                trailingIcon={
+                  search ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      aria-label="Limpiar búsqueda"
+                      className="text-[var(--fg-subtle)] hover:text-[var(--fg-default)]"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  ) : null
+                }
+              />
+              <div className="flex gap-1.5" role="tablist" aria-label="Filtrar documentos">
+                {filterOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={filter === opt.value}
+                    onClick={() => setFilter(opt.value)}
+                    className={cn(
+                      "flex-1 h-8 px-2 text-[12px] font-medium rounded-md",
+                      "transition-colors duration-[var(--duration-instant)]",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring-focus)]",
+                      filter === opt.value
+                        ? "bg-[var(--accent)] text-[var(--fg-inverted)]"
+                        : "bg-[var(--bg-muted)] text-[var(--fg-muted)] hover:bg-[var(--bg-hover)]",
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div style={{ maxHeight: 600, overflowY: "auto" }}>
+            <div className="max-h-[600px] overflow-y-auto">
               {loading ? (
-                <div style={{ padding: 16 }}><Skeleton active /></div>
+                <div className="p-4 space-y-2">
+                  <Skeleton variant="line" className="h-10" />
+                  <Skeleton variant="line" className="h-10" />
+                  <Skeleton variant="line" className="h-10" />
+                  <Skeleton variant="line" className="h-10" />
+                </div>
               ) : filtered.length === 0 ? (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Sin documentos" style={{ padding: 30 }} />
+                <div className="py-12 px-6 text-center">
+                  <FileText className="size-8 mx-auto text-[var(--fg-subtle)] mb-2" />
+                  <div className="text-[13px] text-[var(--fg-muted)]">Sin documentos</div>
+                </div>
               ) : (
                 filtered.map((doc) => {
                   const periodCode = doc.metadata?.primaryPeriod;
-                  const color = periodCode ? getPeriodColor(periodCode) : token.colorTextTertiary;
+                  const color = periodCode
+                    ? getPeriodColor(periodCode)
+                    : "var(--fg-subtle)";
                   const selected = doc.id === selectedId;
                   return (
-                    <div
+                    <button
                       key={doc.id}
+                      type="button"
                       onClick={() => setSelectedId(doc.id)}
+                      className={cn(
+                        "w-full text-left px-3.5 py-2.5",
+                        "border-b border-[var(--border-default)] last:border-b-0",
+                        "transition-colors duration-[var(--duration-instant)]",
+                        "focus-visible:outline-none focus-visible:bg-[var(--bg-hover)]",
+                        selected
+                          ? "bg-[var(--bg-subtle)]"
+                          : "hover:bg-[var(--bg-hover)]",
+                      )}
                       style={{
-                        padding: "10px 14px",
-                        cursor: "pointer",
-                        background: selected ? token.colorFillSecondary : "transparent",
                         borderLeft: `3px solid ${selected ? color : "transparent"}`,
-                        borderBottom: `1px solid ${token.colorBorderSecondary}`,
-                        transition: "background 0.15s",
                       }}
                     >
-                      <Space style={{ width: "100%", justifyContent: "space-between" }}>
-                        <Space size={10} style={{ minWidth: 0 }}>
-                          <FileTextOutlined style={{ color }} />
-                          <div style={{ minWidth: 0 }}>
-                            <Text
-                              strong
-                              ellipsis
-                              style={{ display: "block", fontSize: 13, color: token.colorText }}
-                            >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <FileText
+                            className="size-4 shrink-0"
+                            style={{ color }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[13px] font-medium text-[var(--fg-default)] truncate">
                               {getDocumentDisplayName(doc)}
-                            </Text>
-                            <Text style={{ fontSize: 11, color: token.colorTextTertiary }}>
+                            </div>
+                            <div className="text-[11px] text-[var(--fg-subtle)]">
                               {doc._count.chunks} chunks
-                            </Text>
+                            </div>
                           </div>
-                        </Space>
+                        </div>
                         {doc.enriched ? (
-                          <CheckCircleFilled style={{ color: token.colorSuccess, fontSize: 14 }} />
+                          <CheckCircle2 className="size-3.5 shrink-0 text-[var(--color-success-fg)]" />
                         ) : (
-                          <Tag style={{ fontSize: 10, margin: 0 }}>—</Tag>
+                          <Badge variant="outline" size="xs">
+                            —
+                          </Badge>
                         )}
-                      </Space>
-                    </div>
+                      </div>
+                    </button>
                   );
                 })
               )}
             </div>
           </Card>
-        </Col>
+        </div>
 
         {selectedId && (
-          <Col xs={24} lg={16}>
+          <div className="lg:col-span-8">
             {loadingDetail || !detail ? (
-              <Card><Skeleton active paragraph={{ rows: 8 }} /></Card>
+              <Card variant="default" size="md">
+                <Skeleton variant="line" className="h-6 w-1/2 mb-4" />
+                <Skeleton variant="line" className="h-20 mb-4" />
+                <Skeleton variant="line" className="h-12" />
+                <Skeleton variant="line" className="h-12 mt-2" />
+                <Skeleton variant="line" className="h-32 mt-2" />
+              </Card>
             ) : (
               <EnrichmentEditor
                 key={detail.id}
@@ -320,11 +396,45 @@ function EnrichContent() {
                 onClose={() => setSelectedId(null)}
               />
             )}
-          </Col>
+          </div>
         )}
-      </Row>
+      </div>
     </div>
   );
+}
+
+/* ─── Editor ──────────────────────────────────────────────────────────────── */
+
+interface EnrichmentFormState {
+  bookTitle: string;
+  author: string;
+  isbn: string;
+  pageCount: string;
+  publisher: string;
+  publicationYear: string;
+  edition: string;
+  summary: string;
+  primaryPeriod: string;
+  secondaryPeriod: string;
+  primaryCategory: string;
+  secondaryCategory: string;
+}
+
+function metadataToForm(m: EnrichmentMetadata | undefined): EnrichmentFormState {
+  return {
+    bookTitle: m?.bookTitle ?? "",
+    author: m?.author ?? "",
+    isbn: m?.isbn ?? "",
+    pageCount: m?.pageCount != null ? String(m.pageCount) : "",
+    publisher: m?.publisher ?? "",
+    publicationYear: m?.publicationYear != null ? String(m.publicationYear) : "",
+    edition: m?.edition ?? "",
+    summary: m?.summary ?? "",
+    primaryPeriod: m?.primaryPeriod ?? "",
+    secondaryPeriod: m?.secondaryPeriod ?? "",
+    primaryCategory: m?.primaryCategory ?? "",
+    secondaryCategory: m?.secondaryCategory ?? "",
+  };
 }
 
 function EnrichmentEditor({
@@ -336,48 +446,58 @@ function EnrichmentEditor({
   onSaved: () => void;
   onClose: () => void;
 }) {
-  const { token } = theme.useToken();
-  const { message } = App.useApp();
-  const [form] = Form.useForm();
+  const [form, setForm] = useState<EnrichmentFormState>(() => metadataToForm(doc.metadata));
   const [keywords, setKeywords] = useState<string[]>(doc.metadata?.keywords ?? []);
   const [newKw, setNewKw] = useState("");
   const [saving, setSaving] = useState(false);
   const [aiRunning, setAiRunning] = useState(false);
+  const [openSections, setOpenSections] = useState({
+    bibliography: true,
+    classification: true,
+    summary: true,
+  });
 
   useEffect(() => {
-    form.setFieldsValue({
-      bookTitle: doc.metadata?.bookTitle,
-      author: doc.metadata?.author,
-      isbn: doc.metadata?.isbn,
-      pageCount: doc.metadata?.pageCount,
-      publisher: doc.metadata?.publisher,
-      publicationYear: doc.metadata?.publicationYear,
-      edition: doc.metadata?.edition,
-      summary: doc.metadata?.summary,
-      primaryPeriod: doc.metadata?.primaryPeriod,
-      secondaryPeriod: doc.metadata?.secondaryPeriod,
-      primaryCategory: doc.metadata?.primaryCategory,
-      secondaryCategory: doc.metadata?.secondaryCategory,
-    });
+    setForm(metadataToForm(doc.metadata));
     setKeywords(doc.metadata?.keywords ?? []);
-  }, [doc.id, doc.metadata, form]);
+  }, [doc.id, doc.metadata]);
+
+  const updateField = <K extends keyof EnrichmentFormState>(
+    field: K,
+    value: EnrichmentFormState[K],
+  ) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSave = async () => {
     try {
-      const values = await form.validateFields();
       setSaving(true);
-      const payload = { ...values, keywords };
+      const payload = {
+        bookTitle: form.bookTitle || undefined,
+        author: form.author || undefined,
+        isbn: form.isbn || undefined,
+        pageCount: form.pageCount ? Number(form.pageCount) : undefined,
+        publisher: form.publisher || undefined,
+        publicationYear: form.publicationYear ? Number(form.publicationYear) : undefined,
+        edition: form.edition || undefined,
+        summary: form.summary || undefined,
+        primaryPeriod: form.primaryPeriod || undefined,
+        secondaryPeriod: form.secondaryPeriod || undefined,
+        primaryCategory: form.primaryCategory || undefined,
+        secondaryCategory: form.secondaryCategory || undefined,
+        keywords,
+      };
       const res = await fetch(`/api/documents/${doc.id}/enrich`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ metadata: payload }),
       });
       if (!res.ok) throw new Error("Save failed");
-      message.success("Metadata guardada");
+      toast.success("Metadata guardada");
       onSaved();
     } catch (e) {
       console.error(e);
-      message.error("Error al guardar");
+      toast.error("Error al guardar");
     } finally {
       setSaving(false);
     }
@@ -388,10 +508,10 @@ function EnrichmentEditor({
     try {
       const res = await fetch(`/api/documents/${doc.id}/enrich`, { method: "POST" });
       if (!res.ok) throw new Error("AI failed");
-      message.success("Documento enriquecido con IA");
+      toast.success("Documento enriquecido con IA");
       onSaved();
     } catch {
-      message.error("Error al enriquecer con IA");
+      toast.error("Error al enriquecer con IA");
     } finally {
       setAiRunning(false);
     }
@@ -405,180 +525,373 @@ function EnrichmentEditor({
     }
   };
 
+  const toggleSection = (key: keyof typeof openSections) =>
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+
   return (
-    <Card
-      title={
-        <Space>
-          <Button type="text" icon={<ArrowLeftOutlined />} size="small" onClick={onClose} />
-          <Space vertical size={0}>
-            <Text strong className="serif-title" style={{ fontSize: 16 }}>
+    <Card variant="default" size="md" className="p-0">
+      {/* Header */}
+      <div className="px-6 pt-5 pb-4 border-b border-[var(--border-default)] flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-start gap-2 min-w-0 flex-1">
+          <IconButton
+            size="sm"
+            variant="ghost"
+            aria-label="Volver"
+            onClick={onClose}
+          >
+            <ArrowLeft className="size-4" />
+          </IconButton>
+          <div className="min-w-0 flex-1">
+            <h2 className="serif-title text-[18px] font-semibold text-[var(--color-ink-1000)] leading-tight">
               {getDocumentDisplayName(doc)}
-            </Text>
-            {doc.enriched && <Tag color="purple" style={{ margin: 0, fontSize: 10 }}>✓ Enriquecido</Tag>}
-          </Space>
-        </Space>
-      }
-      extra={
-        <Space>
-          <Link href={`/documents/${doc.id}`}>
-            <Button icon={<FileTextOutlined />} size="small">Ver documento</Button>
-          </Link>
-          <Link href={`/questions/generate?documentId=${doc.id}`}>
-            <Button icon={<BookOutlined />} size="small">Generar preguntas</Button>
-          </Link>
-        </Space>
-      }
-    >
-      <Alert
-        type="info"
-        showIcon
-        message={
-          <Space>
-            <RocketOutlined />
-            <span>
-              Usa <strong>Enriquecer con IA</strong> para extraer automáticamente bibliografía, periodo, categoría y resumen desde los primeros chunks. Después puedes ajustar a mano.
-            </span>
-          </Space>
-        }
-        action={
-          <Button size="small" type="primary" icon={<ThunderboltOutlined />} loading={aiRunning} onClick={handleAI}>
+            </h2>
+            {doc.enriched && (
+              <div className="mt-1.5">
+                <Badge variant="tinta" size="xs">
+                  <CheckCircle2 className="size-3" />
+                  Enriquecido
+                </Badge>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="secondary" size="sm" asChild leadingIcon={<FileText className="size-3.5" />}>
+            <Link href={`/documents/${doc.id}`}>Ver documento</Link>
+          </Button>
+          <Button variant="secondary" size="sm" asChild leadingIcon={<BookOpen className="size-3.5" />}>
+            <Link href={`/questions/generate?documentId=${doc.id}`}>Generar preguntas</Link>
+          </Button>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {/* AI hint */}
+        <div
+          className={cn(
+            "mb-5 p-4 rounded-lg flex items-start gap-3 flex-wrap",
+            "border border-[var(--color-info-fg)]/30 bg-[var(--color-info-bg)]",
+          )}
+        >
+          <Rocket className="size-4 text-[var(--color-info-fg)] mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-[220px] text-[13px] leading-relaxed text-[var(--fg-default)]">
+            Usa <strong>Enriquecer con IA</strong> para extraer automáticamente bibliografía,
+            periodo, categoría y resumen desde los primeros chunks. Después puedes ajustar a mano.
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            leadingIcon={<Sparkles className="size-3.5" />}
+            isLoading={aiRunning}
+            onClick={handleAI}
+          >
             Enriquecer con IA
           </Button>
-        }
-        style={{ marginBottom: 16 }}
-      />
+        </div>
 
-      <Form form={form} layout="vertical">
-        <Collapse
-          defaultActiveKey={["bibliography", "classification", "summary"]}
-          ghost
-          items={[
-            {
-              key: "bibliography",
-              label: <Text strong>Bibliografía</Text>,
-              children: (
-                <Row gutter={12}>
-                  <Col xs={24}><Form.Item name="bookTitle" label="Título del libro"><Input /></Form.Item></Col>
-                  <Col xs={24} md={12}><Form.Item name="author" label="Autor"><Input /></Form.Item></Col>
-                  <Col xs={24} md={12}><Form.Item name="publisher" label="Editorial"><Input /></Form.Item></Col>
-                  <Col xs={8}><Form.Item name="publicationYear" label="Año"><Input type="number" /></Form.Item></Col>
-                  <Col xs={8}><Form.Item name="edition" label="Edición"><Input /></Form.Item></Col>
-                  <Col xs={8}><Form.Item name="isbn" label="ISBN"><Input /></Form.Item></Col>
-                  <Col xs={12}><Form.Item name="pageCount" label="Total de páginas"><Input type="number" /></Form.Item></Col>
-                </Row>
-              ),
-            },
-            {
-              key: "classification",
-              label: <Text strong>Clasificación histórica</Text>,
-              children: (
-                <Row gutter={12}>
-                  <Col xs={24} md={12}>
-                    <Form.Item name="primaryPeriod" label="Periodo primario">
-                      <Select
-                        allowClear
-                        placeholder="Selecciona periodo…"
-                        showSearch
-                        optionFilterProp="label"
-                        options={PERIOD_OPTIONS.map((p) => ({
-                          value: p.code,
-                          label: `${p.nombre} (${p.rango})`,
-                        }))}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <Form.Item name="secondaryPeriod" label="Periodo secundario (opcional)">
-                      <Select
-                        allowClear
-                        placeholder="Selecciona…"
-                        showSearch
-                        optionFilterProp="label"
-                        options={PERIOD_OPTIONS.map((p) => ({
-                          value: p.code,
-                          label: `${p.nombre} (${p.rango})`,
-                        }))}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <Form.Item name="primaryCategory" label="Categoría primaria">
-                      <Select
-                        allowClear
-                        placeholder="Selecciona categoría…"
-                        showSearch
-                        optionFilterProp="label"
-                        options={CATEGORY_OPTIONS.map((c) => ({ value: c.code, label: c.nombre }))}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <Form.Item name="secondaryCategory" label="Categoría secundaria (opcional)">
-                      <Select
-                        allowClear
-                        placeholder="Selecciona…"
-                        showSearch
-                        optionFilterProp="label"
-                        options={CATEGORY_OPTIONS.map((c) => ({ value: c.code, label: c.nombre }))}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-              ),
-            },
-            {
-              key: "summary",
-              label: <Text strong>Resumen y palabras clave</Text>,
-              children: (
-                <>
-                  <Form.Item name="summary" label="Resumen">
-                    <Input.TextArea
-                      rows={5}
-                      placeholder="Síntesis del contenido — periodo, tesis principal, enfoque metodológico, contexto."
-                      style={{ fontFamily: "var(--font-serif)", fontSize: 14 }}
-                    />
-                  </Form.Item>
-                  <Form.Item label="Palabras clave">
-                    <Space.Compact style={{ width: "100%", marginBottom: 8 }}>
-                      <Input
-                        placeholder="Añade una keyword…"
-                        value={newKw}
-                        onChange={(e) => setNewKw(e.target.value)}
-                        onPressEnter={(e) => { e.preventDefault(); addKw(); }}
-                      />
-                      <Button icon={<PlusOutlined />} onClick={addKw}>Añadir</Button>
-                    </Space.Compact>
-                    <Space wrap>
-                      {keywords.length === 0 ? (
-                        <Text type="secondary" style={{ fontSize: 12 }}>Sin keywords aún.</Text>
-                      ) : (
-                        keywords.map((k) => (
-                          <Tag
-                            key={k}
-                            closable
-                            onClose={() => setKeywords(keywords.filter((x) => x !== k))}
-                            closeIcon={<CloseOutlined />}
-                            style={{ padding: "2px 8px" }}
-                          >
-                            {k}
-                          </Tag>
-                        ))
-                      )}
-                    </Space>
-                  </Form.Item>
-                </>
-              ),
-            },
-          ]}
+        {/* Bibliography */}
+        <SectionHeader
+          title="Bibliografía"
+          open={openSections.bibliography}
+          onToggle={() => toggleSection("bibliography")}
         />
-      </Form>
+        {openSections.bibliography && (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-5">
+            <Field className="md:col-span-12" label="Título del libro" htmlFor="bookTitle">
+              <Input
+                id="bookTitle"
+                value={form.bookTitle}
+                onChange={(e) => updateField("bookTitle", e.target.value)}
+              />
+            </Field>
+            <Field className="md:col-span-6" label="Autor" htmlFor="author">
+              <Input
+                id="author"
+                value={form.author}
+                onChange={(e) => updateField("author", e.target.value)}
+              />
+            </Field>
+            <Field className="md:col-span-6" label="Editorial" htmlFor="publisher">
+              <Input
+                id="publisher"
+                value={form.publisher}
+                onChange={(e) => updateField("publisher", e.target.value)}
+              />
+            </Field>
+            <Field className="md:col-span-4" label="Año" htmlFor="publicationYear">
+              <Input
+                id="publicationYear"
+                type="number"
+                value={form.publicationYear}
+                onChange={(e) => updateField("publicationYear", e.target.value)}
+              />
+            </Field>
+            <Field className="md:col-span-4" label="Edición" htmlFor="edition">
+              <Input
+                id="edition"
+                value={form.edition}
+                onChange={(e) => updateField("edition", e.target.value)}
+              />
+            </Field>
+            <Field className="md:col-span-4" label="ISBN" htmlFor="isbn">
+              <Input
+                id="isbn"
+                value={form.isbn}
+                onChange={(e) => updateField("isbn", e.target.value)}
+              />
+            </Field>
+            <Field className="md:col-span-6" label="Total de páginas" htmlFor="pageCount">
+              <Input
+                id="pageCount"
+                type="number"
+                value={form.pageCount}
+                onChange={(e) => updateField("pageCount", e.target.value)}
+              />
+            </Field>
+          </div>
+        )}
 
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
-        <Button onClick={onClose}>Cancelar</Button>
-        <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={handleSave}>
-          Guardar
+        {/* Classification */}
+        <SectionHeader
+          title="Clasificación histórica"
+          open={openSections.classification}
+          onToggle={() => toggleSection("classification")}
+        />
+        {openSections.classification && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
+            <Field label="Periodo primario" htmlFor="primaryPeriod">
+              <NativeSelect
+                id="primaryPeriod"
+                value={form.primaryPeriod}
+                onChange={(v) => updateField("primaryPeriod", v)}
+                placeholder="Selecciona periodo…"
+                options={PERIOD_OPTIONS.map((p) => ({
+                  value: p.code,
+                  label: `${p.nombre} (${p.rango})`,
+                }))}
+              />
+              {form.primaryPeriod && (
+                <div className="mt-1.5">
+                  <PeriodBadge code={form.primaryPeriod} size="xs" />
+                </div>
+              )}
+            </Field>
+            <Field label="Periodo secundario (opcional)" htmlFor="secondaryPeriod">
+              <NativeSelect
+                id="secondaryPeriod"
+                value={form.secondaryPeriod}
+                onChange={(v) => updateField("secondaryPeriod", v)}
+                placeholder="Selecciona…"
+                options={PERIOD_OPTIONS.map((p) => ({
+                  value: p.code,
+                  label: `${p.nombre} (${p.rango})`,
+                }))}
+              />
+              {form.secondaryPeriod && (
+                <div className="mt-1.5">
+                  <PeriodBadge code={form.secondaryPeriod} size="xs" />
+                </div>
+              )}
+            </Field>
+            <Field label="Categoría primaria" htmlFor="primaryCategory">
+              <NativeSelect
+                id="primaryCategory"
+                value={form.primaryCategory}
+                onChange={(v) => updateField("primaryCategory", v)}
+                placeholder="Selecciona categoría…"
+                options={CATEGORY_OPTIONS.map((c) => ({ value: c.code, label: c.nombre }))}
+              />
+            </Field>
+            <Field label="Categoría secundaria (opcional)" htmlFor="secondaryCategory">
+              <NativeSelect
+                id="secondaryCategory"
+                value={form.secondaryCategory}
+                onChange={(v) => updateField("secondaryCategory", v)}
+                placeholder="Selecciona…"
+                options={CATEGORY_OPTIONS.map((c) => ({ value: c.code, label: c.nombre }))}
+              />
+            </Field>
+          </div>
+        )}
+
+        {/* Summary + keywords */}
+        <SectionHeader
+          title="Resumen y palabras clave"
+          open={openSections.summary}
+          onToggle={() => toggleSection("summary")}
+        />
+        {openSections.summary && (
+          <div className="space-y-4 mb-5">
+            <Field label="Resumen" htmlFor="summary">
+              <Textarea
+                id="summary"
+                rows={5}
+                value={form.summary}
+                onChange={(e) => updateField("summary", e.target.value)}
+                placeholder="Síntesis del contenido — periodo, tesis principal, enfoque metodológico, contexto."
+                style={{ fontFamily: "var(--font-serif)", fontSize: 14 }}
+              />
+            </Field>
+
+            <Field label="Palabras clave">
+              <div className="flex gap-2 mb-2">
+                <Input
+                  placeholder="Añade una keyword…"
+                  value={newKw}
+                  onChange={(e) => setNewKw(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addKw();
+                    }
+                  }}
+                />
+                <Button
+                  variant="secondary"
+                  size="md"
+                  leadingIcon={<Plus className="size-3.5" />}
+                  onClick={addKw}
+                  disabled={!newKw.trim()}
+                >
+                  Añadir
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {keywords.length === 0 ? (
+                  <FieldHelp>Sin keywords aún.</FieldHelp>
+                ) : (
+                  keywords.map((k) => (
+                    <Chip
+                      key={k}
+                      variant="subtle"
+                      size="sm"
+                      onRemove={() => setKeywords(keywords.filter((x) => x !== k))}
+                      removeLabel={`Remover ${k}`}
+                    >
+                      {k}
+                    </Chip>
+                  ))
+                )}
+              </div>
+            </Field>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-[var(--border-default)] flex justify-end gap-2">
+        <Button variant="secondary" size="md" onClick={onClose}>
+          Cancelar
         </Button>
+        <Tooltip content="Guardar metadata">
+          <Button
+            variant="primary"
+            size="md"
+            leadingIcon={saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+            isLoading={saving}
+            onClick={handleSave}
+          >
+            Guardar
+          </Button>
+        </Tooltip>
       </div>
     </Card>
+  );
+}
+
+/* ─── Helpers ─────────────────────────────────────────────────────────────── */
+
+function SectionHeader({
+  title,
+  open,
+  onToggle,
+}: {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className={cn(
+        "w-full flex items-center gap-2 mb-3",
+        "text-left text-[14px] font-semibold text-[var(--fg-default)]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring-focus)] rounded-md",
+      )}
+    >
+      {open ? (
+        <ChevronDown className="size-4 text-[var(--fg-muted)]" />
+      ) : (
+        <ChevronRight className="size-4 text-[var(--fg-muted)]" />
+      )}
+      <span className="serif-title">{title}</span>
+    </button>
+  );
+}
+
+function Field({
+  label,
+  htmlFor,
+  className,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={className}>
+      <FieldLabel htmlFor={htmlFor}>{label}</FieldLabel>
+      {children}
+    </div>
+  );
+}
+
+function NativeSelect({
+  id,
+  value,
+  onChange,
+  placeholder,
+  options,
+}: {
+  id?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative flex items-center w-full h-9",
+        "bg-[var(--bg-page)] text-[var(--fg-default)]",
+        "border border-[var(--border-default)] rounded-md",
+        "transition-colors duration-[var(--duration-fast)] ease-out",
+        "hover:border-[var(--border-strong)]",
+        "focus-within:border-[var(--color-tinta-500)] focus-within:ring-2 focus-within:ring-[var(--ring-focus)]",
+      )}
+    >
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(
+          "flex-1 min-w-0 appearance-none bg-transparent outline-none",
+          "px-3 pr-8 text-sm h-full",
+          value ? "text-[var(--fg-default)]" : "text-[var(--color-ink-400)]",
+        )}
+      >
+        <option value="">{placeholder ?? "Selecciona…"}</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-2.5 size-4 text-[var(--fg-subtle)] pointer-events-none" />
+    </div>
   );
 }
