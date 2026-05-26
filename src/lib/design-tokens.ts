@@ -107,3 +107,51 @@ export function periodCssVar(code: string): string {
 export function categoryCssVar(code: string): string {
   return `var(--color-category-${categorySlug(code)})`;
 }
+
+/* ============================================================================
+ * Hex colors crudos — para usar en SVG/inline donde CSS vars no funcionan
+ * (charts, gradientes con alpha calculado, etc.). Mantener sincronizados con
+ * los tokens de globals.css.
+ * ========================================================================== */
+
+const PERIOD_HEX_LIGHT: Record<string, string> = {
+  PRE: "#B45309",
+  CON: "#92400E",
+  COL: "#78350F",
+  PRE_IND: "#A16207",
+  IND: "#1E40AF",
+  NGR: "#1D4ED8",
+  EUC: "#2563EB",
+  REG: "#7C2D12",
+  REP_LIB: "#0F766E",
+  VIO: "#991B1B",
+  FN: "#4F46E5",
+  CNA: "#7C3AED",
+  C91: "#DB2777",
+  SDE: "#0891B2",
+  POS: "#059669",
+  TRANS: "#6B7280",
+};
+
+const CATEGORY_HEX_LIGHT: Record<string, string> = {
+  POL: "#1E40AF",
+  ECO: "#059669",
+  CON: "#DC2626",
+  SOC: "#D97706",
+  CUL: "#7C3AED",
+  REL: "#0891B2",
+  TER: "#65A30D",
+  MOV: "#DB2777",
+  INS: "#475569",
+  HIS: "#A855F7",
+};
+
+/** Hex de período (light mode). Para uso en SVG, gradientes inline o canvas. */
+export function getPeriodColor(code: string): string {
+  return PERIOD_HEX_LIGHT[code] ?? "#6B7280";
+}
+
+/** Hex de categoría (light mode). Para uso en SVG/gradientes/canvas. */
+export function getCategoryColor(code: string): string {
+  return CATEGORY_HEX_LIGHT[code] ?? "#6B7280";
+}

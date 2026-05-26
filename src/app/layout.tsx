@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Newsreader, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
-import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import "@/lib/dayjs-config";
@@ -39,11 +38,9 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
-        <AntdRegistry>
-          <ThemeProvider>
-            <AppShell>{children}</AppShell>
-          </ThemeProvider>
-        </AntdRegistry>
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );

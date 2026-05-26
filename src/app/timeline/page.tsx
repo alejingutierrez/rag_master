@@ -16,7 +16,7 @@ import {
 } from "@/components/ui";
 import { PeriodBadge } from "@/components/domain/period-badge";
 import { PERIOD_OPTIONS, PERIOD_YEAR_BOUNDS } from "@/lib/taxonomy";
-import { getPeriodColor, getCategoryColor } from "@/lib/theme";
+import { getPeriodColor, getCategoryColor } from "@/lib/design-tokens";
 
 interface TimelineData {
   questions: Array<{ periodoCode: string; periodoNombre: string; periodoRango: string; count: number }>;

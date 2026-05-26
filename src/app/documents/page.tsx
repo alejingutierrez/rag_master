@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Pagination } from "antd"; // Pagination Ant — sin equivalente DS, queda como excepción
 import {
   Button,
   IconButton,
@@ -24,6 +23,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  Pagination,
 } from "@/components/ui";
 import { PeriodBadge } from "@/components/domain/period-badge";
 import { toast } from "sonner";
@@ -373,21 +373,21 @@ function DocumentsContent() {
         )}
       </Card>
 
-      {/* Pagination Ant — sin equivalente DS por ahora */}
-      <div className="flex justify-center mt-6">
+      {/* Pagination — primitivo Crónica */}
+      <div className="flex items-center justify-between gap-3 mt-6">
+        <span className="text-[12px] text-[var(--fg-subtle)]">
+          {total.toLocaleString("es-CO")} documentos
+        </span>
         <Pagination
           current={page}
           pageSize={pageSize}
           total={total}
-          onChange={(p, s) => {
-            updateFilters({ page: String(p), pageSize: String(s) });
+          onChange={(p) => {
+            updateFilters({ page: String(p) });
             if (typeof window !== "undefined") {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }
           }}
-          showSizeChanger
-          showTotal={(t) => `${t} documentos`}
-          pageSizeOptions={["10", "20", "50", "100"]}
         />
       </div>
 

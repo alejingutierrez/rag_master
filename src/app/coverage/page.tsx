@@ -12,7 +12,7 @@ import {
   TabsTrigger,
 } from "@/components/ui";
 import { PERIOD_OPTIONS, CATEGORY_OPTIONS } from "@/lib/taxonomy";
-import { getPeriodColor, getCategoryColor } from "@/lib/theme";
+import { getPeriodColor, getCategoryColor } from "@/lib/design-tokens";
 
 interface CoverageData {
   questions: Array<{ periodoCode: string; categoriaCode: string; count: number }>;

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Network, ArrowRight } from "lucide-react";
 import { Card, Skeleton, Badge, Checkbox } from "@/components/ui";
-import { getPeriodColor, getCategoryColor } from "@/lib/theme";
+import { getPeriodColor, getCategoryColor } from "@/lib/design-tokens";
 
 interface GraphNode {
   id: string;

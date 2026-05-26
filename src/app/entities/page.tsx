@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-// NOTE: Crónica DS aún no tiene Pagination — mantenemos Ant aquí (mismo patrón
-// que /questions y /producciones).
-import { Pagination } from "antd";
 import Link from "next/link";
 import {
   User,
@@ -22,6 +19,7 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  Pagination,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
@@ -272,7 +270,10 @@ export default function EntitiesPage() {
       )}
 
       {filtered.length > PAGE_SIZE && (
-        <div className="flex justify-center mt-4">
+        <div className="flex items-center justify-between gap-3 mt-4">
+          <span className="text-[12px] text-[var(--fg-subtle)]">
+            {filtered.length.toLocaleString("es-CO")} entidades
+          </span>
           <Pagination
             current={page}
             pageSize={PAGE_SIZE}
@@ -281,8 +282,6 @@ export default function EntitiesPage() {
               setPage(p);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            showSizeChanger={false}
-            showTotal={(t) => `${t} entidades`}
           />
         </div>
       )}

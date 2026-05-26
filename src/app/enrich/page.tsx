@@ -38,7 +38,7 @@ import { PeriodBadge } from "@/components/domain";
 import { cn } from "@/lib/cn";
 import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
 import { PERIOD_OPTIONS, CATEGORY_OPTIONS } from "@/lib/taxonomy";
-import { getPeriodColor } from "@/lib/theme";
+import { getPeriodColor } from "@/lib/design-tokens";
 
 interface DocumentSummary {
   id: string;

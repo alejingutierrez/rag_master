@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useUrlFilters } from "@/lib/use-url-state";
-import { Pagination } from "antd";
 import {
   LayoutGrid,
   List as ListIcon,
@@ -36,6 +35,7 @@ import {
   FieldLabel,
   FieldHelp,
   Badge,
+  Pagination,
 } from "@/components/ui";
 import { PeriodBadge } from "@/components/domain/period-badge";
 import { CategoryChip } from "@/components/domain/category-chip";
@@ -301,7 +301,10 @@ function ProduccionesContent() {
         </div>
       )}
 
-      <div className="flex justify-center mt-6">
+      <div className="flex items-center justify-between gap-3 mt-6">
+        <span className="text-[12px] text-[var(--fg-subtle)]">
+          {total.toLocaleString("es-CO")} producciones
+        </span>
         <Pagination
           current={page}
           pageSize={LIMIT}
@@ -310,8 +313,6 @@ function ProduccionesContent() {
             updateFilters({ page: String(p) });
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          showSizeChanger={false}
-          showTotal={(t) => `${t} producciones`}
         />
       </div>
 

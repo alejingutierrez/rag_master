@@ -92,3 +92,5 @@ export { Checkbox } from "./checkbox";
 export type { CheckboxProps } from "./checkbox";
 export { RadioGroup, RadioGroupItem } from "./radio";
 export type { RadioGroupItemProps } from "./radio";
+export { Pagination } from "./pagination";
+export type { PaginationProps } from "./pagination";

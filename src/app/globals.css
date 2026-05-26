@@ -583,27 +583,3 @@
   }
 }
 
-/* ============================================================================
- * Compat layer — durante migración, Ant Design sigue funcionando
- * Mapea los CSS variables de Ant a nuestros tokens para que los componentes
- * Ant existentes se vean coherentes. Se elimina en F6 (cleanup Ant).
- * ========================================================================== */
-
-:root,
-.dark {
-  --ant-color-primary: var(--accent);
-  --ant-color-text: var(--fg-default);
-  --ant-color-text-secondary: var(--fg-muted);
-  --ant-color-text-tertiary: var(--fg-subtle);
-  --ant-color-bg-container: var(--bg-page);
-  --ant-color-bg-layout: var(--bg-subtle);
-  --ant-color-border: var(--border-default);
-  --ant-color-border-secondary: var(--border-default);
-  --ant-color-fill: var(--bg-hover);
-  --ant-color-fill-secondary: var(--bg-muted);
-  --ant-color-fill-tertiary: var(--bg-subtle);
-  --ant-color-fill-quaternary: var(--bg-subtle);
-  --ant-color-warning: var(--color-warning-fg);
-  --ant-color-success: var(--color-success-fg);
-  --ant-color-error: var(--color-danger-fg);
-}

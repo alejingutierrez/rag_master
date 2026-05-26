@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { theme, Skeleton, Tooltip, Typography } from "antd";
+import { Skeleton, Tooltip } from "@/components/ui";
 import { PERIOD_OPTIONS } from "@/lib/taxonomy";
-import { getPeriodColor } from "@/lib/theme";
-
-const { Text } = Typography;
+import { periodCssVar } from "@/lib/design-tokens";
 
 interface Props {
   data: Array<{ code: string; count: number }>;
@@ -17,10 +15,8 @@ interface Props {
  * a su número de preguntas. Click → /questions?periodo=CODE.
  */
 export function PeriodDistributionBar({ data, loading }: Props) {
-  const { token } = theme.useToken();
-
   if (loading) {
-    return <Skeleton.Input active style={{ width: "100%", height: 80 }} />;
+    return <Skeleton className="w-full h-20" />;
   }
 
   const counts = Object.fromEntries(data.map((d) => [d.code, d.count]));
@@ -29,16 +25,7 @@ export function PeriodDistributionBar({ data, loading }: Props) {
   return (
     <div>
       {/* Barra principal */}
-      <div
-        style={{
-          height: 28,
-          display: "flex",
-          borderRadius: 6,
-          overflow: "hidden",
-          background: token.colorFillQuaternary,
-          marginBottom: 16,
-        }}
-      >
+      <div className="h-7 flex rounded-md overflow-hidden bg-[var(--bg-muted)] mb-4">
         {PERIOD_OPTIONS.map((p) => {
           const count = counts[p.code] ?? 0;
           if (count === 0) return null;
@@ -46,25 +33,22 @@ export function PeriodDistributionBar({ data, loading }: Props) {
           return (
             <Tooltip
               key={p.code}
-              title={
+              content={
                 <div>
-                  <div style={{ fontWeight: 600 }}>{p.nombre}</div>
-                  <div style={{ fontSize: 11, opacity: 0.85 }}>{p.rango}</div>
-                  <div style={{ marginTop: 4 }}>{count} preguntas</div>
+                  <div className="font-semibold">{p.nombre}</div>
+                  <div className="text-[11px] opacity-85">{p.rango}</div>
+                  <div className="mt-1">{count} preguntas</div>
                 </div>
               }
             >
               <Link
                 href={`/questions?periodo=${p.code}`}
+                className="block opacity-85 hover:opacity-100 transition-opacity"
                 style={{
                   width: `${widthPct}%`,
-                  background: getPeriodColor(p.code),
-                  display: "block",
-                  transition: "opacity 0.15s",
-                  opacity: 0.85,
+                  background: periodCssVar(p.code),
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.85")}
+                aria-label={`${p.nombre}: ${count} preguntas`}
               />
             </Tooltip>
           );
@@ -72,45 +56,43 @@ export function PeriodDistributionBar({ data, loading }: Props) {
       </div>
 
       {/* Mini grid de cada período */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 8 }}>
+      <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))" }}>
         {PERIOD_OPTIONS.map((p) => {
           const count = counts[p.code] ?? 0;
-          const color = getPeriodColor(p.code);
+          const color = periodCssVar(p.code);
+          const hasContent = count > 0;
           return (
             <Link
               key={p.code}
               href={`/questions?periodo=${p.code}`}
+              className="flex items-center justify-between gap-1.5 px-2.5 py-2 rounded-md border transition-opacity hover:opacity-100"
               style={{
-                padding: "8px 10px",
-                borderRadius: 6,
-                background: count > 0 ? `${color}14` : token.colorFillQuaternary,
-                border: `1px solid ${count > 0 ? `${color}33` : token.colorBorderSecondary}`,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 6,
-                opacity: count > 0 ? 1 : 0.55,
+                background: hasContent
+                  ? `color-mix(in oklab, ${color} 8%, transparent)`
+                  : "var(--bg-muted)",
+                borderColor: hasContent
+                  ? `color-mix(in oklab, ${color} 20%, transparent)`
+                  : "var(--border-default)",
+                opacity: hasContent ? 1 : 0.55,
               }}
             >
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <Text
+              <div className="min-w-0 flex-1">
+                <div
+                  className="text-[11px] font-semibold truncate"
                   style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: count > 0 ? color : token.colorTextSecondary,
-                    display: "block",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    color: hasContent ? color : "var(--fg-muted)",
                   }}
                 >
                   {p.nombre}
-                </Text>
-                <Text style={{ fontSize: 10, color: token.colorTextTertiary }}>{p.rango}</Text>
+                </div>
+                <div className="text-[10px] text-[var(--fg-subtle)]">{p.rango}</div>
               </div>
-              <Text style={{ fontSize: 13, fontWeight: 600, color: count > 0 ? color : token.colorTextTertiary }}>
+              <span
+                className="text-[13px] font-semibold tabular-nums"
+                style={{ color: hasContent ? color : "var(--fg-subtle)" }}
+              >
                 {count}
-              </Text>
+              </span>
             </Link>
           );
         })}

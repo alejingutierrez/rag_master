@@ -1,9 +1,6 @@
 "use client";
 
-import { theme, Space, Typography } from "antd";
 import dayjs from "@/lib/dayjs-config";
-
-const { Text } = Typography;
 
 interface DayActivity {
   day: string;
@@ -21,12 +18,12 @@ interface Props {
  * sobre los últimos 14 días. Cero dependencias de charts pesados.
  */
 export function ActivitySparkline({ data }: Props) {
-  const { token } = theme.useToken();
-
   if (!data.length) {
     return (
-      <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Text type="secondary">Sin actividad reciente</Text>
+      <div className="h-[220px] flex items-center justify-center">
+        <span className="text-sm text-[var(--fg-subtle)]">
+          Sin actividad reciente
+        </span>
       </div>
     );
   }
@@ -53,50 +50,55 @@ export function ActivitySparkline({ data }: Props) {
   };
 
   const seriesArea = (key: "docs" | "questions" | "deliverables") => {
-    const path = data.map((d, i) => `${i === 0 ? "M" : "L"} ${xFor(i)} ${yFor(d[key])}`).join(" ");
+    const path = data
+      .map((d, i) => `${i === 0 ? "M" : "L"} ${xFor(i)} ${yFor(d[key])}`)
+      .join(" ");
     return `${path} L ${xFor(data.length - 1)} ${padY + innerH} L ${xFor(0)} ${padY + innerH} Z`;
   };
 
-  const COLORS = {
-    docs: token.colorPrimary,
-    questions: "#F59E0B",
-    deliverables: "#A855F7",
-  };
+  const SERIES = [
+    { key: "docs" as const, label: "Documentos", colorVar: "--accent" },
+    { key: "questions" as const, label: "Preguntas", colorVar: "--color-warning-fg" },
+    { key: "deliverables" as const, label: "Producciones", colorVar: "--color-category-cul" },
+  ];
 
   return (
     <div>
-      <Space size={20} style={{ marginBottom: 14, fontSize: 12 }}>
-        {(["docs", "questions", "deliverables"] as const).map((key) => {
-          const total = data.reduce((a, d) => a + d[key], 0);
-          const label = key === "docs" ? "Documentos" : key === "questions" ? "Preguntas" : "Producciones";
+      <div className="flex items-center gap-5 mb-3.5 text-xs">
+        {SERIES.map((s) => {
+          const total = data.reduce((a, d) => a + d[s.key], 0);
           return (
-            <Space key={key} size={6}>
+            <div key={s.key} className="inline-flex items-center gap-1.5">
               <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 2,
-                  background: COLORS[key],
-                  display: "inline-block",
-                }}
+                className="inline-block size-2 rounded-sm"
+                style={{ background: `var(${s.colorVar})` }}
               />
-              <Text style={{ fontSize: 12, color: token.colorTextSecondary }}>{label}</Text>
-              <Text style={{ fontSize: 12, fontWeight: 600 }}>{total}</Text>
-            </Space>
+              <span className="text-[var(--fg-muted)]">{s.label}</span>
+              <span className="font-semibold text-[var(--fg-default)] tabular-nums">
+                {total}
+              </span>
+            </div>
           );
         })}
-      </Space>
+      </div>
 
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        style={{ width: "100%", height: 200, display: "block" }}
+        className="w-full h-[200px] block"
         preserveAspectRatio="none"
       >
         <defs>
-          {(["docs", "questions", "deliverables"] as const).map((key) => (
-            <linearGradient key={key} id={`grad-${key}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={COLORS[key]} stopOpacity={0.18} />
-              <stop offset="100%" stopColor={COLORS[key]} stopOpacity={0} />
+          {SERIES.map((s) => (
+            <linearGradient
+              key={s.key}
+              id={`grad-${s.key}`}
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop offset="0%" stopColor={`var(${s.colorVar})`} stopOpacity={0.18} />
+              <stop offset="100%" stopColor={`var(${s.colorVar})`} stopOpacity={0} />
             </linearGradient>
           ))}
         </defs>
@@ -111,7 +113,7 @@ export function ActivitySparkline({ data }: Props) {
               x2={W - padX}
               y1={y}
               y2={y}
-              stroke={token.colorBorderSecondary}
+              stroke="var(--border-default)"
               strokeWidth={1}
               strokeDasharray="2 4"
             />
@@ -119,17 +121,21 @@ export function ActivitySparkline({ data }: Props) {
         })}
 
         {/* Areas */}
-        {(["docs", "questions", "deliverables"] as const).map((key) => (
-          <path key={`area-${key}`} d={seriesArea(key)} fill={`url(#grad-${key})`} />
+        {SERIES.map((s) => (
+          <path
+            key={`area-${s.key}`}
+            d={seriesArea(s.key)}
+            fill={`url(#grad-${s.key})`}
+          />
         ))}
 
         {/* Lines */}
-        {(["docs", "questions", "deliverables"] as const).map((key) => (
+        {SERIES.map((s) => (
           <path
-            key={`line-${key}`}
-            d={seriesPath(key)}
+            key={`line-${s.key}`}
+            d={seriesPath(s.key)}
             fill="none"
-            stroke={COLORS[key]}
+            stroke={`var(${s.colorVar})`}
             strokeWidth={2}
             strokeLinejoin="round"
             strokeLinecap="round"
@@ -146,7 +152,7 @@ export function ActivitySparkline({ data }: Props) {
               y={H - 4}
               textAnchor="middle"
               fontSize={10}
-              fill={token.colorTextTertiary}
+              fill="var(--fg-subtle)"
             >
               {dayjs(d.day).format("DD MMM")}
             </text>

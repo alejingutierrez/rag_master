@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useUrlFilters } from "@/lib/use-url-state";
-import { Pagination } from "antd";
 import {
   Search,
   Zap,
@@ -26,6 +25,7 @@ import {
   TabsList,
   TabsTrigger,
   Tooltip,
+  Pagination,
 } from "@/components/ui";
 import { PeriodBadge } from "@/components/domain/period-badge";
 import { CategoryChip } from "@/components/domain/category-chip";
@@ -640,8 +640,11 @@ function QuestionsContent() {
         </div>
       )}
 
-      {/* Pagination — sigue siendo Ant (no hay reemplazo aún) */}
-      <div className="flex justify-center mt-6">
+      {/* Pagination — primitivo Crónica */}
+      <div className="flex items-center justify-between gap-3 mt-6">
+        <span className="text-[12px] text-[var(--fg-subtle)]">
+          {total.toLocaleString("es-CO")} preguntas
+        </span>
         <Pagination
           current={page}
           pageSize={LIMIT}
@@ -650,8 +653,6 @@ function QuestionsContent() {
             updateFilters({ page: String(p) });
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          showSizeChanger={false}
-          showTotal={(t) => `${t} preguntas`}
         />
       </div>
     </div>
