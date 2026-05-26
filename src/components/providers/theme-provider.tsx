@@ -6,7 +6,9 @@ import {
   useTheme as useNextTheme,
 } from "next-themes";
 import { ConfigProvider, theme as antdTheme, App as AntdApp } from "antd";
+import { Toaster } from "sonner";
 import { lightTheme, darkTheme } from "@/lib/theme";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 /**
  * AntBridge — durante la migración, los componentes Ant todavía existen.
@@ -30,7 +32,23 @@ function AntBridge({ children }: { children: React.ReactNode }) {
 
   return (
     <ConfigProvider theme={{ ...activeTheme, algorithm }}>
-      <AntdApp notification={{ placement: "bottomRight" }}>{children}</AntdApp>
+      <AntdApp notification={{ placement: "bottomRight" }}>
+        <TooltipProvider>
+          {children}
+          <Toaster
+            position="bottom-right"
+            theme={isDark ? "dark" : "light"}
+            toastOptions={{
+              style: {
+                background: "var(--bg-page)",
+                color: "var(--fg-default)",
+                border: "1px solid var(--border-default)",
+                fontFamily: "var(--font-sans)",
+              },
+            }}
+          />
+        </TooltipProvider>
+      </AntdApp>
     </ConfigProvider>
   );
 }
