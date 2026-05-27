@@ -36,13 +36,21 @@ export {
   MIN_QUESTIONS_COUNT,
   MAX_QUESTIONS_COUNT,
   computeTargetCount,
+  TIPOS_PREGUNTA,
+  ESCALAS_GEOGRAFICAS,
+  TIPO_LABELS,
+  ESCALA_LABELS,
 } from "./questions-config";
+export type { TipoPregunta, EscalaGeografica } from "./questions-config";
 
 import {
   MIN_QUESTIONS_COUNT,
   MAX_QUESTIONS_COUNT,
   computeTargetCount,
+  TIPOS_PREGUNTA,
+  ESCALAS_GEOGRAFICAS,
 } from "./questions-config";
+import type { TipoPregunta, EscalaGeografica } from "./questions-config";
 import {
   PERIOD_YEAR_BOUNDS,
   periodForYear,
@@ -83,6 +91,11 @@ export interface QuestionData {
   entidadesPersonas: string[]; // 5
   entidadesLugares: string[];  // 3
   entidadesConceptos: string[]; // 4
+  // Metadata analítica (nullable — preguntas viejas no la tienen)
+  tipoPregunta: TipoPregunta | null;
+  clusterTematico: string | null;
+  hipotesisImplicita: string | null;
+  escalaGeografica: EscalaGeografica | null;
   justificacion: string;
 }
 
@@ -137,6 +150,47 @@ VERIFICACIÓN OBLIGATORIA antes de emitir cada pregunta:
 
 REGLA CRÍTICA: conteos ESTRICTOS — exactamente 5/3/4. No menos, no más.
 
+## METADATA ANALÍTICA (4 campos OBLIGATORIOS por pregunta)
+
+Cada pregunta DEBE incluir además los siguientes cuatro campos. Son los que permiten filtrar, agrupar y curar el archivo. Trátalos con el mismo rigor que la taxonomía de período/categoría.
+
+### \`tipo_pregunta\` (enum estricto)
+Elige UNO de estos seis valores según el enfoque analítico dominante de la pregunta:
+
+- **causal** — explora causas, mecanismos, encadenamientos. Pregunta cómo o por qué se produce un proceso. Ej: "¿Cómo se consolidó la hacienda cafetera antioqueña en pugna con la economía esclavista del Cauca?"
+- **contrafactual** — qué hubiera pasado si... Pregunta sobre caminos no tomados, decisiones alternativas. Ej: "Si Mosquera hubiera muerto antes de Rionegro, ¿qué federalismo habría emergido?"
+- **comparativa** — cruza el caso colombiano con otros países, regiones o épocas. Ej: "¿Por qué Colombia no produjo un populismo agrario tipo APRA como el peruano?"
+- **consecuencias_no_obvias** — rastrea efectos de largo plazo o de segundo orden. Ej: "¿Qué huella demográfica dejó la Violencia en la urbanización acelerada de los 60s?"
+- **historiografica** — debate sobre cómo se ha contado o interpretado el proceso. Categoría = HIS suele acompañar este tipo. Ej: "¿Por qué la nueva historia desplazó a la historia académica oficial sobre los Comuneros en los 80s?"
+- **tensiones_internas** — saca a la luz contradicciones, paradojas o ambigüedades del propio proceso. Ej: "¿Cómo conviven en el Estatuto de Seguridad de Turbay la retórica democrática y la práctica represiva?"
+
+Si dudas entre dos tipos, elige el que MEJOR refleje el verbo central de la pregunta. Una pregunta bien construida tiene un único tipo dominante.
+
+### \`cluster_tematico\` (5-8 palabras, sin nombres propios)
+Frase corta que identifica un EJE NARRATIVO del libro analizado y agrupa preguntas hermanas bajo un mismo cluster. Permite que el lector vea "todas las preguntas sobre X" dentro del corpus.
+
+- **Sí**: "Disputa por la frontera amazónica", "Catolicismo y proyecto liberal decimonónico", "Trabajo agrario y dependencia exportadora", "Memoria oficial vs memoria subalterna".
+- **No**: "Bolívar y la independencia" (nombre propio), "El siglo XIX" (demasiado vago), "Una pregunta sobre la economía cafetera del Quindío entre 1880 y 1930" (demasiado larga).
+
+Dos preguntas distintas pueden y deben compartir el mismo cluster cuando trabajan el mismo eje. Apunta a 3-6 clusters distintos por libro — no a un cluster único por pregunta.
+
+### \`hipotesis_implicita\` (1-2 líneas, 20-400 caracteres)
+Tesis o debate que la pregunta sostiene/cuestiona, sin reformular la pregunta. Responde a "¿qué postura asume quien plantea esto?". Permite al lector entender el "por qué importa" desde el primer vistazo.
+
+- **Sí**: "Sostiene que la modernización conservadora no fue solo proyecto político sino infraestructural, y por tanto pone en duda leer la Regeneración solo como restauración religiosa."
+- **No**: reformulaciones de la pregunta, datos factuales, citas largas del libro.
+
+### \`escala_geografica\` (enum estricto)
+Escala territorial DOMINANTE del proceso interrogado. Uno solo:
+
+- **local** — un lugar específico (un barrio, un municipio, una hacienda concreta). Ej: pregunta sobre la masacre de Trujillo.
+- **regional** — una región amplia o departamento (Cauca, Antioquia, Caribe, Pacífico, Llanos). Ej: pregunta sobre el régimen hacendario del Magdalena.
+- **nacional** — Colombia como tal, sin foco regional especial. Ej: pregunta sobre la Constitución del 91.
+- **latinoamericana** — comparación o conexión continental (Bolivariana, Andina, Cono Sur). Ej: pregunta sobre Colombia frente al APRA peruano.
+- **global** — conexión transatlántica o mundial (Guerra Fría, Atlántico negro, capital internacional). Ej: pregunta sobre Colombia y la doctrina Monroe.
+
+Si el proceso opera en varias escalas, elige la escala DEL DEBATE/PROCESO CENTRAL, no la del trasfondo.
+
 ## FORMATO DE SALIDA
 
 OBLIGATORIO: tu respuesta DEBE ser una llamada al tool \`generate_research_questions\`. No emitas texto explicativo en la respuesta — todo el output va vía el tool use. Si emites texto sin llamar al tool, la respuesta es inválida.
@@ -159,6 +213,10 @@ Estructura de cada pregunta dentro del tool input:
     "lugares": ["Bogotá", "Estados Unidos", "Argentina"],
     "conceptos": ["Poblamiento americano", "Nacionalismo científico", "Antropología física", "Arqueología nacional"]
   },
+  "tipo_pregunta": "historiografica",
+  "cluster_tematico": "Institucionalización de la antropología nacional",
+  "hipotesis_implicita": "Sostiene que la antropología colombiana del primer tercio del XX no fue mera importación de paradigmas extranjeros sino una reinterpretación que sirvió a un proyecto de nación particular, lo que cuestiona leer la disciplina como reflejo pasivo del debate metropolitano.",
+  "escala_geografica": "latinoamericana",
   "justificacion": "Pregunta clave: trazar cómo Colombia recibió y adaptó los grandes debates científicos sobre el origen americano permite leer la institucionalización de la antropología nacional como proyecto político-cultural."
 }
 \`\`\`
@@ -256,7 +314,10 @@ HIS.MAR (corrientes marxistas), HIS.ACA (academia/institucionalización), HIS.OF
 4. Al menos 3 conectan con procesos latinoamericanos/globales.
 5. Al menos 2 cuestionan narrativas o supuestos historiográficos.
 6. Ninguna requiere haber leído el documento.
-7. COHERENCIA CRONOLÓGICA: anio_principal DENTRO del rango del periodo_historico, salvo TRANS.`;
+7. COHERENCIA CRONOLÓGICA: anio_principal DENTRO del rango del periodo_historico, salvo TRANS.
+8. DIVERSIDAD DE TIPOS: el lote debe usar al menos 4 valores distintos de \`tipo_pregunta\`. No emitas un batch homogéneo (todas causales o todas historiográficas).
+9. CLUSTERING: idealmente 3-6 clusters temáticos distintos cubren todo el batch, con 4-10 preguntas hermanas por cluster. Si el libro es muy estrecho, 2 clusters es aceptable; si es muy amplio, hasta 8. Nunca un cluster por pregunta (eso anula el agrupamiento).
+10. HIPÓTESIS NO TRIVIAL: \`hipotesis_implicita\` debe revelar la tesis que la pregunta sostiene, no parafrasear la pregunta. Si te sale "la pregunta busca entender X", reescríbela.`;
 }
 
 // ─── Selección de chunks para la generación ──────────────────────────────────
@@ -363,6 +424,10 @@ function buildGenerateToolSpec(targetCount: number) {
                 "anio_principal",
                 "anios_secundarios",
                 "entidades",
+                "tipo_pregunta",
+                "cluster_tematico",
+                "hipotesis_implicita",
+                "escala_geografica",
                 "justificacion",
               ],
               properties: {
@@ -435,6 +500,32 @@ function buildGenerateToolSpec(targetCount: number) {
                       maxItems: 4,
                     },
                   },
+                },
+                tipo_pregunta: {
+                  type: "string",
+                  enum: [...TIPOS_PREGUNTA],
+                  description:
+                    "Clasificación analítica: causal (explora mecanismos), contrafactual (qué hubiera pasado), comparativa (cruza casos/épocas), consecuencias_no_obvias (efectos de largo plazo o de segundo orden), historiografica (debate sobre la interpretación), tensiones_internas (contradicciones o paradojas del proceso).",
+                },
+                cluster_tematico: {
+                  type: "string",
+                  minLength: 5,
+                  maxLength: 80,
+                  description:
+                    "Frase corta (5-8 palabras) que identifica un eje narrativo del libro y agrupa preguntas hermanas. Sin nombres propios. Ej: 'Disputa por la frontera amazónica', 'Catolicismo y proyecto liberal'.",
+                },
+                hipotesis_implicita: {
+                  type: "string",
+                  minLength: 20,
+                  maxLength: 400,
+                  description:
+                    "Tesis o debate que la pregunta sostiene/cuestiona, en 1-2 líneas. Explicita el 'por qué importa' sin reformular la pregunta.",
+                },
+                escala_geografica: {
+                  type: "string",
+                  enum: [...ESCALAS_GEOGRAFICAS],
+                  description:
+                    "Escala territorial dominante del proceso: local (un lugar específico), regional (región amplia), nacional (Colombia), latinoamericana (comparación continental), global (conexión transatlántica/mundial).",
                 },
                 justificacion: { type: "string", minLength: 10 },
               },
@@ -522,6 +613,34 @@ function normalizeQuestions(raw: unknown[]): QuestionData[] {
       }
     }
 
+    // Metadata analítica — tolerante: si el LLM falla un enum, queda null.
+    // Aceptamos minúsculas/snake_case; cualquier otra cosa se descarta.
+    const rawTipo = typeof item.tipo_pregunta === "string"
+      ? item.tipo_pregunta.toLowerCase().trim()
+      : null;
+    const tipoPregunta: TipoPregunta | null =
+      rawTipo && (TIPOS_PREGUNTA as readonly string[]).includes(rawTipo)
+        ? (rawTipo as TipoPregunta)
+        : null;
+
+    const rawEscala = typeof item.escala_geografica === "string"
+      ? item.escala_geografica.toLowerCase().trim()
+      : null;
+    const escalaGeografica: EscalaGeografica | null =
+      rawEscala && (ESCALAS_GEOGRAFICAS as readonly string[]).includes(rawEscala)
+        ? (rawEscala as EscalaGeografica)
+        : null;
+
+    const rawCluster = typeof item.cluster_tematico === "string"
+      ? item.cluster_tematico.trim()
+      : "";
+    const clusterTematico = rawCluster.length >= 5 ? rawCluster.slice(0, 80) : null;
+
+    const rawHipotesis = typeof item.hipotesis_implicita === "string"
+      ? item.hipotesis_implicita.trim()
+      : "";
+    const hipotesisImplicita = rawHipotesis.length >= 20 ? rawHipotesis.slice(0, 400) : null;
+
     return {
       questionNumber: (item.id as number) ?? i + 1,
       pregunta: (item.pregunta as string) ?? "",
@@ -539,6 +658,10 @@ function normalizeQuestions(raw: unknown[]): QuestionData[] {
       entidadesPersonas: cleanList(entidades.personas),
       entidadesLugares: cleanList(entidades.lugares),
       entidadesConceptos: cleanList(entidades.conceptos),
+      tipoPregunta,
+      clusterTematico,
+      hipotesisImplicita,
+      escalaGeografica,
       justificacion: (item.justificacion as string) ?? "",
     };
   });

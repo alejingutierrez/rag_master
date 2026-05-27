@@ -159,6 +159,22 @@ const MIGRATIONS = [
   `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "entidadesPersonas" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
   `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "entidadesLugares" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
   `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "entidadesConceptos" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
+
+  // 2026-05-27: metadata analítica generada por LLM en el mismo tool call.
+  // Cuatro campos nullable que enriquecen filtros y vista detalle. Las preguntas
+  // previas a este cambio quedan con NULL y la UI debe tolerarlo.
+  //   - tipoPregunta: enum causal/contrafactual/comparativa/consecuencias_no_obvias/
+  //     historiografica/tensiones_internas
+  //   - clusterTematico: frase corta (5-8 palabras) — agrupa preguntas hermanas
+  //   - hipotesisImplicita: tesis defendida/cuestionada (1-2 líneas)
+  //   - escalaGeografica: enum local/regional/nacional/latinoamericana/global
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "tipoPregunta" TEXT`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "clusterTematico" TEXT`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "hipotesisImplicita" TEXT`,
+  `ALTER TABLE questions ADD COLUMN IF NOT EXISTS "escalaGeografica" TEXT`,
+  `CREATE INDEX IF NOT EXISTS questions_tipoPregunta_idx ON questions ("tipoPregunta")`,
+  `CREATE INDEX IF NOT EXISTS questions_escalaGeografica_idx ON questions ("escalaGeografica")`,
+  `CREATE INDEX IF NOT EXISTS questions_documentId_clusterTematico_idx ON questions ("documentId", "clusterTematico")`,
 ];
 
 async function main() {

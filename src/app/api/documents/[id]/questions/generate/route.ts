@@ -156,6 +156,10 @@ export async function POST(
               entidadesPersonas: q.entidadesPersonas,
               entidadesLugares: q.entidadesLugares,
               entidadesConceptos: q.entidadesConceptos,
+              tipoPregunta: q.tipoPregunta,
+              clusterTematico: q.clusterTematico,
+              hipotesisImplicita: q.hipotesisImplicita,
+              escalaGeografica: q.escalaGeografica,
               justificacion: q.justificacion,
               batchId,
               targetCount,
@@ -180,6 +184,10 @@ export async function POST(
               entidadesPersonas: q.entidadesPersonas,
               entidadesLugares: q.entidadesLugares,
               entidadesConceptos: q.entidadesConceptos,
+              tipoPregunta: q.tipoPregunta,
+              clusterTematico: q.clusterTematico,
+              hipotesisImplicita: q.hipotesisImplicita,
+              escalaGeografica: q.escalaGeografica,
             },
           });
         }

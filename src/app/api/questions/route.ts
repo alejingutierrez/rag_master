@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { CHAT_TEMPLATES } from "@/lib/chat-templates";
+import { TIPOS_PREGUNTA, ESCALAS_GEOGRAFICAS } from "@/lib/questions-config";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,17 @@ export async function GET(request: NextRequest) {
   const categoriaCode = searchParams.get("categoria") || undefined;
   const subcategoriaCode = searchParams.get("subcategoria") || undefined;
   const search = searchParams.get("search") || undefined;
+  // Filtros de metadata analítica (validados contra enum del generador)
+  const tipoRaw = searchParams.get("tipoPregunta");
+  const tipoPregunta = tipoRaw && (TIPOS_PREGUNTA as readonly string[]).includes(tipoRaw)
+    ? tipoRaw
+    : undefined;
+  const escalaRaw = searchParams.get("escalaGeografica");
+  const escalaGeografica = escalaRaw && (ESCALAS_GEOGRAFICAS as readonly string[]).includes(escalaRaw)
+    ? escalaRaw
+    : undefined;
+  // clusterTematico: búsqueda exacta. Si en el futuro queremos LIKE, cambiar a contains.
+  const clusterTematico = searchParams.get("clusterTematico") || undefined;
   // Filtros nuevos
   const entity = searchParams.get("entity") || undefined; // texto contra cualquiera de las 3 listas
   const yearMinRaw = searchParams.get("yearMin");
@@ -82,6 +94,9 @@ export async function GET(request: NextRequest) {
       ...(periodoCode && { periodoCode }),
       ...(categoriaCode && { categoriaCode }),
       ...(subcategoriaCode && { subcategoriaCode: { contains: subcategoriaCode } }),
+      ...(tipoPregunta && { tipoPregunta }),
+      ...(escalaGeografica && { escalaGeografica }),
+      ...(clusterTematico && { clusterTematico }),
       ...(andClauses.length > 0 && { AND: andClauses }),
       ...yearFilter,
     };
@@ -119,18 +134,19 @@ export async function GET(request: NextRequest) {
 
     let stats = null;
     if (includeStats) {
-      const [byCategoria, byPeriodo, totalDocs] = await Promise.all([
+      const scopeWhere = documentId ? { documentId } : undefined;
+      const [byCategoria, byPeriodo, totalDocs, byTipo, byEscala, topClustersRaw] = await Promise.all([
         prisma.question.groupBy({
           by: ["categoriaCode", "categoriaNombre"],
           _count: { categoriaCode: true },
           orderBy: { _count: { categoriaCode: "desc" } },
-          where: documentId ? { documentId } : undefined,
+          where: scopeWhere,
         }),
         prisma.question.groupBy({
           by: ["periodoCode", "periodoNombre"],
           _count: { periodoCode: true },
           orderBy: { _count: { periodoCode: "desc" } },
-          where: documentId ? { documentId } : undefined,
+          where: scopeWhere,
         }),
         prisma.question
           .findMany({
@@ -138,6 +154,36 @@ export async function GET(request: NextRequest) {
             distinct: ["documentId"],
           })
           .then((r) => r.length),
+        // Metadata analítica — filtra NULL para excluir preguntas pre-2026-05-27.
+        prisma.question.groupBy({
+          by: ["tipoPregunta"],
+          _count: { tipoPregunta: true },
+          orderBy: { _count: { tipoPregunta: "desc" } },
+          where: {
+            ...(scopeWhere ?? {}),
+            tipoPregunta: { not: null },
+          },
+        }),
+        prisma.question.groupBy({
+          by: ["escalaGeografica"],
+          _count: { escalaGeografica: true },
+          orderBy: { _count: { escalaGeografica: "desc" } },
+          where: {
+            ...(scopeWhere ?? {}),
+            escalaGeografica: { not: null },
+          },
+        }),
+        // Top 12 clusters por count. Útil para el filtro UI (no enumeramos todos).
+        prisma.question.groupBy({
+          by: ["clusterTematico"],
+          _count: { clusterTematico: true },
+          orderBy: { _count: { clusterTematico: "desc" } },
+          where: {
+            ...(scopeWhere ?? {}),
+            clusterTematico: { not: null },
+          },
+          take: 12,
+        }),
       ]);
 
       const [pendingC, partialC, completeC, allC] = await Promise.all([
@@ -168,6 +214,24 @@ export async function GET(request: NextRequest) {
           nombre: p.periodoNombre,
           count: p._count.periodoCode,
         })),
+        byTipo: byTipo
+          .filter((t) => t.tipoPregunta != null)
+          .map((t) => ({
+            code: t.tipoPregunta as string,
+            count: t._count.tipoPregunta,
+          })),
+        byEscala: byEscala
+          .filter((e) => e.escalaGeografica != null)
+          .map((e) => ({
+            code: e.escalaGeografica as string,
+            count: e._count.escalaGeografica,
+          })),
+        topClusters: topClustersRaw
+          .filter((c) => c.clusterTematico != null)
+          .map((c) => ({
+            label: c.clusterTematico as string,
+            count: c._count.clusterTematico,
+          })),
         totalDocuments: totalDocs,
         totalQuestions: await prisma.question.count(),
         byState: {

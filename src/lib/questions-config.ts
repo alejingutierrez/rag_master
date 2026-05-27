@@ -5,6 +5,48 @@
 export const MIN_QUESTIONS_COUNT = 20;
 export const MAX_QUESTIONS_COUNT = 100;
 
+// ─── Metadata analítica (enums) ────────────────────────────────────────────
+// Compartidos entre el generador (validación tool schema) y la UI (filtros,
+// badges). Cambiar aquí requiere migration solo si rompes valores existentes;
+// añadir nuevos valores es retrocompatible.
+
+export const TIPOS_PREGUNTA = [
+  "causal",
+  "contrafactual",
+  "comparativa",
+  "consecuencias_no_obvias",
+  "historiografica",
+  "tensiones_internas",
+] as const;
+export type TipoPregunta = (typeof TIPOS_PREGUNTA)[number];
+
+export const ESCALAS_GEOGRAFICAS = [
+  "local",
+  "regional",
+  "nacional",
+  "latinoamericana",
+  "global",
+] as const;
+export type EscalaGeografica = (typeof ESCALAS_GEOGRAFICAS)[number];
+
+// Labels en español para mostrar en la UI (los códigos son snake_case para BD).
+export const TIPO_LABELS: Record<TipoPregunta, string> = {
+  causal: "Causal",
+  contrafactual: "Contrafactual",
+  comparativa: "Comparativa",
+  consecuencias_no_obvias: "Consecuencias no obvias",
+  historiografica: "Historiográfica",
+  tensiones_internas: "Tensiones internas",
+};
+
+export const ESCALA_LABELS: Record<EscalaGeografica, string> = {
+  local: "Local",
+  regional: "Regional",
+  nacional: "Nacional",
+  latinoamericana: "Latinoamericana",
+  global: "Global",
+};
+
 /**
  * Calcula cuántas preguntas generar para un libro según su número de chunks.
  *

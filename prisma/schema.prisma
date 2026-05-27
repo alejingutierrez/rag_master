@@ -100,6 +100,25 @@ model Question {
   // Sin este campo, ORDER BY periodoCode queda alfabético — POS antes que PRE, etc.
   periodoOrden           Int     @default(15)
 
+  // ─── Metadata analítica (generada por LLM en mismo tool call) ──────────────
+  // Opcionales: preguntas previas al 2026-05-27 no las tienen — la UI debe
+  // tolerar null. Se llenan en el momento de generación por questions-generator.
+  //
+  // tipoPregunta: clasificación analítica del enfoque de la pregunta.
+  //   Enum: causal | contrafactual | comparativa | consecuencias_no_obvias
+  //         | historiografica | tensiones_internas
+  tipoPregunta           String?
+  // clusterTematico: frase corta (5-8 palabras) que agrupa preguntas hermanas
+  //   del mismo libro bajo un eje narrativo. Útil para vista de detalle y
+  //   "preguntas relacionadas". Ej: "Disputa por la frontera amazónica".
+  clusterTematico        String?
+  // hipotesisImplicita: tesis o debate que la pregunta sostiene/cuestiona
+  //   (1-2 líneas). Útil para la vista detalle — explicita el "por qué importa".
+  hipotesisImplicita     String? @db.Text
+  // escalaGeografica: escala territorial dominante del proceso interrogado.
+  //   Enum: local | regional | nacional | latinoamericana | global
+  escalaGeografica       String?
+
   // NOTA: la columna `embedding vector(1536)` existe en BD (ver
   // scripts/apply-migrations.js) pero Prisma no soporta pgvector nativamente.
   // Se accede exclusivamente vía $queryRawUnsafe/$executeRawUnsafe desde
@@ -137,6 +156,9 @@ model Question {
   @@index([documentId, deliverableCount])
   @@index([periodoOrden, ordenPeriodo])
   @@index([documentId, periodoOrden, ordenPeriodo])
+  @@index([tipoPregunta])
+  @@index([escalaGeografica])
+  @@index([documentId, clusterTematico])
   @@map("questions")
 }
 
