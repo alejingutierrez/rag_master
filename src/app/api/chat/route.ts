@@ -152,7 +152,10 @@ async function handleChat(body: Record<string, unknown>) {
 
       const effectiveTable = v2Available ? "chunks_v2" : "chunks";
 
-      // 3b. Pipeline RAG (puede tardar 30-120s — ya no bloquea el HTTP response)
+      // 3b. Pipeline RAG (puede tardar 30-120s — ya no bloquea el HTTP response).
+      // finalTopK=50 alinea LLM ↔ BD ↔ UI: Claude ve exactamente los 50 que
+      // se persisten en chunksUsed y que el panel "Fuentes" muestra. Así
+      // toda cita inline [#N] siempre tiene un ChunkCard abrible.
       const ragResult = await runRagPipeline(question, {
         tableName: effectiveTable,
         useBM25: bm25Available,
@@ -160,6 +163,7 @@ async function handleChat(body: Record<string, unknown>) {
         useQueryExpansion: true,
         useParentExpansion: v2Available,
         documentIds: documentIds as string[] | undefined,
+        finalTopK: 50,
       });
 
       const chunks = ragResult.chunks;
@@ -179,8 +183,9 @@ async function handleChat(body: Record<string, unknown>) {
         return;
       }
 
-      // 3c. Persistir chunks para que el polling los muestre antes de la respuesta
-      const chunksMetadata = chunks.slice(0, 50).map((c) => ({
+      // 3c. Persistir chunks para que el polling los muestre antes de la respuesta.
+      // No hace falta slice aquí: el pipeline ya devuelve ≤50 (finalTopK).
+      const chunksMetadata = chunks.map((c) => ({
         id: c.id,
         documentId: c.documentId,
         documentFilename: c.documentFilename,

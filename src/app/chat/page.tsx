@@ -115,10 +115,14 @@ export default function ChatPage() {
           };
 
           // Arrancar reveal de chunks la primera vez que llegan.
+          // Mostramos todos los chunks que persistió el backend (hasta 50);
+          // así el panel "Fuentes" refleja exactamente lo que vio el LLM.
           if (!chunksRevealStarted && data.chunks && data.chunks.length > 0) {
             chunksRevealStarted = true;
-            visibleChunks = data.chunks.slice(0, 6);
+            visibleChunks = data.chunks;
             setChunks(visibleChunks);
+            // Reveal escalonado pero rápido: ~3-4s total para 50 cards.
+            const intervalMs = visibleChunks.length > 10 ? 80 : 200;
             let r = 0;
             revealTimerRef.current = setInterval(() => {
               r++;
@@ -127,7 +131,7 @@ export default function ChatPage() {
                 clearInterval(revealTimerRef.current);
                 revealTimerRef.current = null;
               }
-            }, 280);
+            }, intervalMs);
           }
 
           if (data.status === "COMPLETE" && data.answer) {
