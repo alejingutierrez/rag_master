@@ -8,8 +8,10 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { primaryBtn, ghostBtn } from "@/components/editorial";
+import { primaryBtn, ghostBtn, PeriodTag } from "@/components/editorial";
 import { Cita } from "@/components/editorial/cita";
+import { TIPO_LABELS, ESCALA_LABELS } from "@/lib/questions-config";
+import type { TipoPregunta, EscalaGeografica } from "@/lib/questions-config";
 
 interface ChunkCitation {
   id: string;
@@ -19,6 +21,29 @@ interface ChunkCitation {
   chunkIndex: number;
   similarity: number;
   content: string;
+}
+
+// Contexto analítico viajado desde /questions (drawer "Abrir en chat").
+// Se muestra como badges en el header y se envía al API para enriquecer el prompt.
+interface QuestionContext {
+  id?: string;
+  periodoCode?: string;
+  periodoNombre?: string;
+  periodoRango?: string;
+  categoriaCode?: string;
+  categoriaNombre?: string;
+  subcategoriaCode?: string;
+  subcategoriaNombre?: string;
+  tipoPregunta?: string;
+  escalaGeografica?: string;
+  clusterTematico?: string;
+  hipotesisImplicita?: string;
+  justificacion?: string;
+  yearPrincipal?: number | null;
+  yearsSecondary?: number[];
+  entidadesPersonas?: string[];
+  entidadesLugares?: string[];
+  entidadesConceptos?: string[];
 }
 
 type Phase = "intro" | "searching" | "streaming" | "done" | "error";
@@ -43,6 +68,7 @@ export default function ChatPage() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [question, setQuestion] = useState("");
   const [askedQ, setAskedQ] = useState("");
+  const [askedContext, setAskedContext] = useState<QuestionContext | null>(null);
   const [chunks, setChunks] = useState<ChunkCitation[]>([]);
   const [revealedChunks, setRevealedChunks] = useState(0);
   const [openChunk, setOpenChunk] = useState<number | null>(null);
@@ -61,12 +87,13 @@ export default function ChatPage() {
     };
   }, []);
 
-  const handleAsk = useCallback(async (q: string) => {
+  const handleAsk = useCallback(async (q: string, context?: QuestionContext) => {
     if (revealTimerRef.current) clearInterval(revealTimerRef.current);
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     if (typeTimerRef.current) clearInterval(typeTimerRef.current);
 
     setAskedQ(q);
+    setAskedContext(context ?? null);
     setQuestion("");
     setPhase("searching");
     setChunks([]);
@@ -83,6 +110,7 @@ export default function ChatPage() {
           question: q,
           topK: RAG_CONFIG.topK,
           similarityThreshold: RAG_CONFIG.similarityThreshold,
+          ...(context ? { questionContext: context } : {}),
         }),
       });
 
@@ -180,6 +208,65 @@ export default function ChatPage() {
     void handleAsk(q);
   };
 
+  // Deep-link desde /questions (drawer "Abrir en chat"):
+  //   /chat?q=texto              → autodispara con question text
+  //   /chat?questionId=ID        → fetch metadata + autodispara con contexto
+  //   /chat?questionId=ID&q=...  → ambos (questionId tiene prioridad para contexto)
+  // URL se lee solo una vez en mount; refrescos posteriores no re-disparan.
+  const autoFiredRef = useRef(false);
+  useEffect(() => {
+    if (autoFiredRef.current) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const qParam = params.get("q");
+    const idParam = params.get("questionId");
+    if (!qParam && !idParam) return;
+    autoFiredRef.current = true;
+
+    (async () => {
+      let context: QuestionContext | undefined;
+      let questionText = qParam ?? "";
+
+      if (idParam) {
+        try {
+          const r = await fetch(`/api/questions/${idParam}`);
+          if (r.ok) {
+            const data = (await r.json()) as { question?: QuestionContext & { pregunta?: string } };
+            const q = data.question;
+            if (q) {
+              if (q.pregunta && !questionText) questionText = q.pregunta;
+              context = {
+                id: q.id,
+                periodoCode: q.periodoCode,
+                periodoNombre: q.periodoNombre,
+                periodoRango: q.periodoRango,
+                categoriaCode: q.categoriaCode,
+                categoriaNombre: q.categoriaNombre,
+                subcategoriaCode: q.subcategoriaCode,
+                subcategoriaNombre: q.subcategoriaNombre,
+                tipoPregunta: q.tipoPregunta,
+                escalaGeografica: q.escalaGeografica,
+                clusterTematico: q.clusterTematico,
+                hipotesisImplicita: q.hipotesisImplicita,
+                justificacion: q.justificacion,
+                yearPrincipal: q.yearPrincipal,
+                yearsSecondary: q.yearsSecondary,
+                entidadesPersonas: q.entidadesPersonas,
+                entidadesLugares: q.entidadesLugares,
+                entidadesConceptos: q.entidadesConceptos,
+              };
+            }
+          }
+        } catch {
+          // Si falla el fetch de metadata, seguimos solo con el texto crudo.
+        }
+      }
+
+      if (!questionText) return;
+      void handleAsk(questionText, context);
+    })();
+  }, [handleAsk]);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -220,6 +307,7 @@ export default function ChatPage() {
           ) : (
             <ChatConversation
               question={askedQ}
+              context={askedContext}
               phase={phase}
               streamingText={visibleAnswer}
               revealedChunks={revealedChunks}
@@ -422,6 +510,7 @@ function ChatIntro({ onAsk }: { onAsk: (q: string) => void }) {
 
 function ChatConversation({
   question,
+  context,
   phase,
   streamingText,
   revealedChunks,
@@ -431,6 +520,7 @@ function ChatConversation({
   errorMessage,
 }: {
   question: string;
+  context: QuestionContext | null;
   phase: Phase;
   streamingText: string;
   revealedChunks: number;
@@ -444,11 +534,17 @@ function ChatConversation({
     month: "short",
     year: "numeric",
   });
+  const tipoLabel = context?.tipoPregunta
+    ? TIPO_LABELS[context.tipoPregunta as TipoPregunta] ?? context.tipoPregunta
+    : null;
+  const escalaLabel = context?.escalaGeografica
+    ? ESCALA_LABELS[context.escalaGeografica as EscalaGeografica] ?? context.escalaGeografica
+    : null;
   return (
     <div className="fade-up">
       <div style={{ marginBottom: 36 }}>
         <div className="label" style={{ marginBottom: 12 }}>
-          Consulta · {today}
+          {context?.id ? "Pregunta curada del corpus" : "Consulta"} · {today}
         </div>
         <h1
           className="display"
@@ -462,6 +558,47 @@ function ChatConversation({
         >
           {question}
         </h1>
+        {context && (tipoLabel || escalaLabel || context.periodoCode || context.clusterTematico) && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 18, alignItems: "center" }}>
+            {context.periodoCode && <PeriodTag code={context.periodoCode} size="md" showName />}
+            {tipoLabel && (
+              <span
+                className="mono"
+                style={{
+                  fontSize: 10.5,
+                  padding: "3px 8px",
+                  background: "var(--fg)",
+                  color: "var(--bg)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  borderRadius: 3,
+                }}
+              >
+                {tipoLabel}
+              </span>
+            )}
+            {escalaLabel && (
+              <span
+                className="mono"
+                style={{
+                  fontSize: 10.5,
+                  padding: "3px 8px",
+                  border: "1px solid var(--fg)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  borderRadius: 3,
+                }}
+              >
+                {escalaLabel}
+              </span>
+            )}
+            {context.clusterTematico && (
+              <span style={{ fontSize: 12.5, color: "var(--fg-muted)", fontStyle: "italic" }}>
+                {context.clusterTematico}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <hr className="hairline" style={{ margin: "0 0 36px" }} />

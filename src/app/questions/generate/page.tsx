@@ -70,6 +70,54 @@ function GenerateContent() {
   const [generated, setGenerated] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // ─── Generación masiva ─────────────────────────────────────────────────
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+  const [completedCount, setCompletedCount] = useState<number | null>(null);
+  const [batchPhase, setBatchPhase] = useState<"idle" | "starting" | "running" | "error">("idle");
+  const [batchMsg, setBatchMsg] = useState<string | null>(null);
+
+  const refreshBatchStatus = useCallback(async () => {
+    try {
+      const r = await fetch("/api/questions/generate-batch");
+      if (!r.ok) return;
+      const d = await r.json();
+      setPendingCount(typeof d.pendingCount === "number" ? d.pendingCount : null);
+      setCompletedCount(typeof d.completedCount === "number" ? d.completedCount : null);
+    } catch {
+      // silently
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshBatchStatus();
+    // Re-encuesta cada 15s cuando el batch está corriendo, así el usuario ve
+    // cómo baja el contador de pendientes sin recargar.
+    if (batchPhase === "running") {
+      const t = setInterval(refreshBatchStatus, 15_000);
+      return () => clearInterval(t);
+    }
+  }, [refreshBatchStatus, batchPhase]);
+
+  const handleBatchGenerate = async () => {
+    if (batchPhase === "starting" || batchPhase === "running") return;
+    setBatchPhase("starting");
+    setBatchMsg(null);
+    try {
+      const r = await fetch("/api/questions/generate-batch", { method: "POST" });
+      const d = await r.json();
+      if (!r.ok) {
+        setBatchPhase("error");
+        setBatchMsg(d.error ?? `HTTP ${r.status}`);
+        return;
+      }
+      setBatchPhase("running");
+      setBatchMsg(d.message ?? "Generación iniciada en background");
+    } catch (e) {
+      setBatchPhase("error");
+      setBatchMsg(e instanceof Error ? e.message : "Error desconocido");
+    }
+  };
+
   const loadDocs = useCallback(async () => {
     setLoading(true);
     try {
@@ -171,9 +219,116 @@ function GenerateContent() {
 
       <hr className="hairline" style={{ margin: "0 56px" }} />
 
+      {/* ─── Generación masiva (batch) ──────────────────────────────────── */}
+      <section style={{ padding: "32px 56px 24px", maxWidth: 1100 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 32,
+            flexWrap: "wrap",
+            padding: "20px 24px",
+            border: "1px solid var(--line-strong)",
+            background: "var(--bg-muted)",
+          }}
+        >
+          <div style={{ minWidth: 260 }}>
+            <div className="label" style={{ marginBottom: 6 }}>
+              Generación masiva
+            </div>
+            <div className="serif" style={{ fontSize: 18, color: "var(--fg)", lineHeight: 1.3, margin: "4px 0 6px" }}>
+              {pendingCount === null
+                ? "Calculando…"
+                : pendingCount === 0
+                  ? "Todos los libros READY ya tienen preguntas."
+                  : `${pendingCount} libro${pendingCount === 1 ? "" : "s"} sin preguntas`}
+            </div>
+            <div style={{ fontSize: 12.5, color: "var(--fg-muted)", lineHeight: 1.5 }}>
+              {completedCount !== null && (
+                <>
+                  {completedCount} ya generados ·{" "}
+                </>
+              )}
+              {pendingCount && pendingCount > 60
+                ? `procesa hasta 60 por corrida; vuelve a disparar para los ${pendingCount - 60} restantes.`
+                : "Procesa todos los pendientes en background (concurrencia 2)."}
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+            <button
+              type="button"
+              onClick={handleBatchGenerate}
+              disabled={batchPhase === "starting" || batchPhase === "running" || !pendingCount}
+              style={
+                pendingCount && batchPhase === "idle"
+                  ? primaryBtn
+                  : { ...primaryBtn, opacity: 0.4, cursor: "default" }
+              }
+            >
+              {batchPhase === "idle" && pendingCount ? `Generar para ${Math.min(pendingCount, 60)} libros →` : null}
+              {batchPhase === "idle" && !pendingCount ? "Nada pendiente" : null}
+              {batchPhase === "starting" && "Iniciando…"}
+              {batchPhase === "running" && "Procesando en background…"}
+              {batchPhase === "error" && "Reintentar"}
+            </button>
+            {batchPhase === "running" && (
+              <button
+                type="button"
+                onClick={refreshBatchStatus}
+                style={{ ...linkBtn, fontSize: 11 }}
+              >
+                Refrescar contador
+              </button>
+            )}
+          </div>
+        </div>
+        {batchMsg && batchPhase !== "error" && (
+          <div
+            className="fade-in"
+            style={{
+              marginTop: 10,
+              fontSize: 12.5,
+              color: "var(--fg-muted)",
+              fontStyle: "italic",
+            }}
+          >
+            {batchMsg}. El procesamiento continúa aunque cierres esta página. Refresca{" "}
+            <button
+              type="button"
+              onClick={() => router.push("/questions")}
+              style={{ ...linkBtn, fontSize: 12.5, padding: 0 }}
+            >
+              /questions
+            </button>{" "}
+            para ver las preguntas a medida que se generan.
+          </div>
+        )}
+        {batchPhase === "error" && batchMsg && (
+          <div
+            className="fade-in"
+            style={{ marginTop: 10, fontSize: 13, color: "var(--danger)" }}
+            role="alert"
+          >
+            {batchMsg}
+          </div>
+        )}
+      </section>
+
       <section
         style={{
-          padding: "44px 56px 96px",
+          padding: "12px 56px 24px",
+          maxWidth: 1100,
+        }}
+      >
+        <div className="label" style={{ color: "var(--fg-muted)" }}>
+          ó generar uno por uno
+        </div>
+      </section>
+
+      <section
+        style={{
+          padding: "12px 56px 96px",
           maxWidth: 1100,
           display: "grid",
           gridTemplateColumns: "1fr 1fr",

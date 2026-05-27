@@ -330,7 +330,7 @@ function DrawerContent({
         >
           <button
             type="button"
-            onClick={() => router.push(`/chat?q=${encodeURIComponent(q.pregunta)}`)}
+            onClick={() => router.push(`/chat?questionId=${encodeURIComponent(q.id)}`)}
             style={{
               appearance: "none",
               background: "var(--fg)",
@@ -343,6 +343,7 @@ function DrawerContent({
               cursor: "pointer",
               flex: 1,
             }}
+            title="Abre la pregunta en el chat con todo su contexto (período, categoría, tipo, escala, entidades, hipótesis) para que el LLM responda con esa información."
           >
             ABRIR EN CHAT →
           </button>
