@@ -93,39 +93,51 @@ export default function ChatPage() {
         return;
       }
 
-      const { id, chunks: returnedChunks } = (await res.json()) as {
-        id: string;
-        chunks: ChunkCitation[];
-      };
-      const visible: ChunkCitation[] = (returnedChunks ?? []).slice(0, 6);
-      setChunks(visible);
+      const { id } = (await res.json()) as { id: string };
 
-      // Anim de revelado uno por uno.
-      let r = 0;
-      revealTimerRef.current = setInterval(() => {
-        r++;
-        setRevealedChunks(Math.min(r, visible.length));
-        if (r >= visible.length && revealTimerRef.current) {
-          clearInterval(revealTimerRef.current);
-          revealTimerRef.current = null;
-        }
-      }, 280);
+      // Polling. El POST ya no devuelve chunks: el pipeline corre en background
+      // y los publica vía polling.
+      //   status="RETRIEVING" → aún buscando, mantener spinner.
+      //   status="GENERATING" → chunks listos, animar reveal mientras Claude redacta.
+      //   status="COMPLETE"   → arrancar typing del answer.
+      //   status="ERROR"      → mostrar mensaje.
+      let chunksRevealStarted = false;
+      let visibleChunks: ChunkCitation[] = [];
 
-      // Polling de respuesta.
       pollTimerRef.current = setInterval(async () => {
         try {
           const poll = await fetch(`/api/chat/${id}`);
           if (!poll.ok) return;
-          const data = (await poll.json()) as { status: string; answer?: string };
+          const data = (await poll.json()) as {
+            status: string;
+            answer?: string;
+            chunks?: ChunkCitation[];
+          };
+
+          // Arrancar reveal de chunks la primera vez que llegan.
+          if (!chunksRevealStarted && data.chunks && data.chunks.length > 0) {
+            chunksRevealStarted = true;
+            visibleChunks = data.chunks.slice(0, 6);
+            setChunks(visibleChunks);
+            let r = 0;
+            revealTimerRef.current = setInterval(() => {
+              r++;
+              setRevealedChunks(Math.min(r, visibleChunks.length));
+              if (r >= visibleChunks.length && revealTimerRef.current) {
+                clearInterval(revealTimerRef.current);
+                revealTimerRef.current = null;
+              }
+            }, 280);
+          }
+
           if (data.status === "COMPLETE" && data.answer) {
             if (pollTimerRef.current) clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
-            // Esperar a que termine la animación de reveal.
             if (revealTimerRef.current) {
               clearInterval(revealTimerRef.current);
               revealTimerRef.current = null;
             }
-            setRevealedChunks(visible.length);
+            setRevealedChunks(visibleChunks.length);
             startTyping(data.answer);
           } else if (data.status === "ERROR") {
             if (pollTimerRef.current) clearInterval(pollTimerRef.current);

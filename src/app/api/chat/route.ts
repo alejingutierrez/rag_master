@@ -10,12 +10,12 @@ import { getTemplateById, DEFAULT_TEMPLATE_ID } from "@/lib/chat-templates";
 const ENABLE_CITATION_VALIDATION =
   (process.env.ENABLE_CITATION_VALIDATION ?? "true").toLowerCase() === "true";
 
-// Subido de 60 a 300s porque el pipeline con reranker + query expansion puede tomar 30-60s
-// en el peor caso (top-100 candidates + Cohere Rerank + Haiku judge + parent expansion).
+// El response HTTP retorna en <2s porque TODO el pipeline (RAG + Claude) corre en after().
+// 300s sigue siendo el cap del background work para AppRunner.
 export const maxDuration = 300;
 
 // Prefijo que distingue un mensaje de error de una respuesta real.
-// No usar caracteres especiales que puedan aparecer en respuestas de Claude.
+// DEBE coincidir con el ERROR_PREFIX en /api/chat/[id]/route.ts (el endpoint de polling).
 const ERROR_PREFIX = "[[RAG_ERROR]] ";
 
 // POST /api/chat — RAG pipeline: embedding + search, crea registro, Claude corre en after().
@@ -31,32 +31,10 @@ export async function POST(request: NextRequest) {
   try {
     return await handleChat(body);
   } catch (error) {
+    // Aquí solo llegan errores del path síncrono (validación, lookup de config,
+    // creación inicial de los registros). El throttle/lentitud de Bedrock ahora
+    // vive en after() — el cliente lo recibe como status=ERROR vía polling.
     console.error("POST /api/chat error:", error);
-
-    // Throttle de Bedrock (cuota de embeddings o Claude saturada). Devolvemos
-    // 503 con Retry-After para que el frontend muestre un mensaje claro al
-    // usuario y pueda reintentar — no es un bug del servidor, es contención.
-    const isThrottled =
-      error instanceof Error &&
-      (error.name === "ThrottlingException" ||
-        error.message.includes("Too many tokens") ||
-        error.message.includes("throttl") ||
-        error.message.includes("Too many requests"));
-
-    if (isThrottled) {
-      return Response.json(
-        {
-          error:
-            "El sistema está procesando muchas solicitudes en este momento (indexación o carga alta). Por favor reintenta en unos segundos.",
-          retryable: true,
-        },
-        {
-          status: 503,
-          headers: { "Retry-After": "30" },
-        }
-      );
-    }
-
     return Response.json(
       { error: error instanceof Error ? error.message : "Error interno del servidor" },
       { status: 500 }
@@ -100,8 +78,7 @@ async function handleChat(body: Record<string, unknown>) {
     );
   }
 
-  // 1. Configuración. maxTokens queda undefined si no se pasa explícitamente —
-  // askClaude entonces toma el del template (mini-ensayo: 10000, ensayo-largo: 20000).
+  // 1. Resolver configuración. maxTokens undefined → askClaude usa template.
   let config: {
     topK: number;
     similarityThreshold: number;
@@ -124,63 +101,13 @@ async function handleChat(body: Record<string, unknown>) {
     }
   }
 
-  // 2. Detectar si BM25 / chunks_v2 están disponibles para activar pipeline mejorado
-  const v2Available = await prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
-    `SELECT COUNT(*) as c FROM chunks_v2 WHERE embedding IS NOT NULL LIMIT 1`
-  ).then((r) => Number(r[0]?.c || 0) > 0).catch(() => false);
-
-  const bm25Available = await prisma.$queryRawUnsafe<Array<{ exists: boolean }>>(
-    `SELECT EXISTS(
-       SELECT 1 FROM information_schema.columns
-       WHERE table_name = '${v2Available ? "chunks_v2" : "chunks"}' AND column_name = 'content_fts'
-     ) as exists`
-  ).then((r) => r[0]?.exists || false).catch(() => false);
-
-  const effectiveTable = v2Available ? "chunks_v2" : "chunks";
-
-  // 3. Ejecutar pipeline RAG (con todas las mejoras disponibles).
-  // NO especificamos finalTopK aquí: el default del pipeline (80) ya está pensado
-  // para Opus 4.7 con 1M tokens de contexto. Opus 4.7 hace la selección final consciente.
-  const ragResult = await runRagPipeline(question, {
-    tableName: effectiveTable,
-    useBM25: bm25Available,
-    useReranker: true,
-    useQueryExpansion: true,
-    useParentExpansion: v2Available, // solo si hay parents en chunks_v2
-    documentIds: documentIds as string[] | undefined,
-  });
-
-  const chunks = ragResult.chunks;
-
-  if (chunks.length === 0) {
-    return Response.json(
-      {
-        error:
-          "No se encontraron fragmentos relevantes. Intenta reformular la pregunta con más detalles específicos (nombres, fechas, lugares).",
-      },
-      { status: 404 }
-    );
-  }
-
-  // 4. Metadatos para el frontend
-  const chunksMetadata = chunks.slice(0, 50).map((c) => ({
-    id: c.id,
-    documentId: c.documentId,
-    documentFilename: c.documentFilename,
-    pageNumber: c.pageNumber,
-    chunkIndex: c.chunkIndex,
-    similarity: c.similarity,
-    content: c.content.slice(0, 400) + (c.content.length > 400 ? "…" : ""),
-  }));
-
+  // 2. Crear registros con status RETRIEVING (chunks aún vacíos).
+  // El response retorna inmediatamente con el id — el cliente hace polling.
+  // TODO el pipeline (RAG + Claude) corre en after() para evitar que AppRunner
+  // cancele la conexión a los 120s (causa raíz del 504 que rompía /api/chat).
   const modelUsed =
     process.env.BEDROCK_CLAUDE_MODEL_ID ||
     "us.anthropic.claude-opus-4-6-20250610-v1:0";
-
-  // 5. Crear registros en paralelo:
-  //    - Conversation (legacy, para histórico de chat)
-  //    - Deliverable (unificado en /producciones, fuente "chat")
-  //    status: GENERATING → COMPLETE | ERROR
   const effectiveTemplateId = (templateId as string) || DEFAULT_TEMPLATE_ID;
 
   const [conversation, deliverable] = await Promise.all([
@@ -190,29 +117,91 @@ async function handleChat(body: Record<string, unknown>) {
         answer: "",
         modelUsed,
         templateId: effectiveTemplateId,
-        chunksUsed: chunksMetadata,
+        chunksUsed: [],
         configurationId: (configurationId as string) || null,
       },
     }),
     prisma.deliverable.create({
       data: {
-        // questionId null para chat libre
         userQuestion: question,
         templateId: effectiveTemplateId,
         status: "GENERATING",
         answer: "",
         modelUsed,
-        chunksUsed: chunksMetadata,
+        chunksUsed: [],
         source: "chat",
-        batchId: `chat-${Date.now()}`, // único por request
+        batchId: `chat-${Date.now()}`,
       },
     }),
   ]);
 
-  // 6. Claude corre en background — después de que el HTTP response es enviado.
-  //    Puede tardar varios minutos sin ningún timeout de conexión activo.
+  // 3. RAG pipeline + Claude corren en background.
   after(async () => {
     try {
+      // 3a. Detectar tablas disponibles
+      const v2Available = await prisma.$queryRawUnsafe<Array<{ c: bigint }>>(
+        `SELECT COUNT(*) as c FROM chunks_v2 WHERE embedding IS NOT NULL LIMIT 1`
+      ).then((r) => Number(r[0]?.c || 0) > 0).catch(() => false);
+
+      const bm25Available = await prisma.$queryRawUnsafe<Array<{ exists: boolean }>>(
+        `SELECT EXISTS(
+           SELECT 1 FROM information_schema.columns
+           WHERE table_name = '${v2Available ? "chunks_v2" : "chunks"}' AND column_name = 'content_fts'
+         ) as exists`
+      ).then((r) => r[0]?.exists || false).catch(() => false);
+
+      const effectiveTable = v2Available ? "chunks_v2" : "chunks";
+
+      // 3b. Pipeline RAG (puede tardar 30-120s — ya no bloquea el HTTP response)
+      const ragResult = await runRagPipeline(question, {
+        tableName: effectiveTable,
+        useBM25: bm25Available,
+        useReranker: true,
+        useQueryExpansion: true,
+        useParentExpansion: v2Available,
+        documentIds: documentIds as string[] | undefined,
+      });
+
+      const chunks = ragResult.chunks;
+
+      if (chunks.length === 0) {
+        const msg = "No se encontraron fragmentos relevantes. Intenta reformular la pregunta con más detalles específicos (nombres, fechas, lugares).";
+        await Promise.all([
+          prisma.conversation.update({
+            where: { id: conversation.id },
+            data: { answer: ERROR_PREFIX + msg },
+          }),
+          prisma.deliverable.update({
+            where: { id: deliverable.id },
+            data: { status: "ERROR", answer: ERROR_PREFIX + msg },
+          }),
+        ]);
+        return;
+      }
+
+      // 3c. Persistir chunks para que el polling los muestre antes de la respuesta
+      const chunksMetadata = chunks.slice(0, 50).map((c) => ({
+        id: c.id,
+        documentId: c.documentId,
+        documentFilename: c.documentFilename,
+        pageNumber: c.pageNumber,
+        chunkIndex: c.chunkIndex,
+        similarity: c.similarity,
+        content: c.content.slice(0, 400) + (c.content.length > 400 ? "…" : ""),
+      }));
+
+      await Promise.all([
+        prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { chunksUsed: chunksMetadata },
+        }),
+        prisma.deliverable.update({
+          where: { id: deliverable.id },
+          data: { chunksUsed: chunksMetadata },
+        }),
+      ]);
+
+      // 3d. Claude
       const claudeStream = await askClaude(
         question,
         chunks,
@@ -294,13 +283,12 @@ async function handleChat(body: Record<string, unknown>) {
     }
   });
 
-  // 7. Devolver en < 5s — el cliente empieza a hacer polling con el id.
-  // Devolvemos AMBOS ids: el chat usa conversation.id para el polling (compat),
-  // y deliverable.id para redirigir a /producciones/[id].
+  // 4. Devolver en <1s — el cliente entra a fase "searching" y hace polling.
+  // chunks vacíos: GET /api/chat/[id] los devuelve cuando RAG termine.
   return Response.json({
     id: conversation.id,
     deliverableId: deliverable.id,
-    chunks: chunksMetadata,
-    totalChunksUsed: chunks.length,
+    chunks: [],
+    totalChunksUsed: 0,
   });
 }

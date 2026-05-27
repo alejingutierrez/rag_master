@@ -111,13 +111,40 @@ jobs:
               --query 'Service.Status' --output text)
             echo "Status: $STATUS"
             if [ "$STATUS" = "RUNNING" ]; then
-              echo "✅ Deployment successful!"
-              exit 0
+              echo "Deployment successful — App Runner RUNNING"
+              break
             elif [ "$STATUS" = "UPDATE_FAILED" ] || [ "$STATUS" = "CREATE_FAILED" ]; then
-              echo "❌ Deployment failed!"
+              echo "Deployment failed!"
               exit 1
             fi
             sleep 15
           done
-          echo "⏰ Timeout waiting for deployment"
-          exit 1
+          if [ "$STATUS" != "RUNNING" ]; then
+            echo "Timeout waiting for deployment"
+            exit 1
+          fi
+
+      - name: Setup Node for smoke test
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Smoke test — real /api/chat request
+        run: |
+          SERVICE_URL=$(aws apprunner describe-service \
+            --service-arn $APP_RUNNER_SERVICE_ARN \
+            --query 'Service.ServiceUrl' --output text)
+          echo "Target: https://$SERVICE_URL"
+
+          # Cold start: App Runner puede tardar ~30s en aceptar el primer request.
+          # Hacemos hasta 6 intentos de health check antes del smoke real.
+          for i in $(seq 1 6); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://$SERVICE_URL/" || echo "000")
+            echo "  warm-up $i: HTTP $CODE"
+            if [ "$CODE" = "200" ] || [ "$CODE" = "307" ] || [ "$CODE" = "308" ]; then
+              break
+            fi
+            sleep 10
+          done
+
+          npx --yes tsx scripts/smoke-test.mts --target="https://$SERVICE_URL" --timeout=120
