@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  PageHeader,
   SectionHeader,
   Stat,
   PeriodCoverageList,
@@ -243,7 +242,7 @@ export default function DashboardPage() {
           <SectionHeader
             index="01"
             title="Cobertura por época"
-            caption="Distribución del corpus entre los 15 períodos canónicos"
+            caption="Preguntas por período histórico — clic para ver las de cada etapa"
             action={
               <Link href="/timeline" style={{ ...linkBtn, textDecoration: "none" }}>
                 línea de tiempo →
@@ -251,10 +250,10 @@ export default function DashboardPage() {
             }
           />
           <PeriodCoverageList
-            data={data?.distribution.documentsByPeriod ?? []}
+            data={data?.distribution.questionsByPeriod ?? []}
             onPeriod={(code) => {
-              // Navegar al timeline con período preseleccionado.
-              window.location.href = `/timeline?p=${code}`;
+              // Navegar a las preguntas filtradas por ese período.
+              window.location.href = `/questions?periodo=${code}`;
             }}
           />
         </div>

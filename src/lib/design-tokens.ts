@@ -29,22 +29,23 @@ export interface PeriodInfo {
   yearRange: string;
 }
 
+// yearRange debe coincidir con los rangos canónicos de taxonomy.ts (fuente única).
 export const PERIODS: Record<PeriodCode, PeriodInfo> = {
-  PRE: { code: "PRE", slug: "pre", label: "Prehispánico", short: "PRE", yearRange: "antes 1500" },
-  CON: { code: "CON", slug: "con", label: "Conquista", short: "CON", yearRange: "1500–1550" },
-  COL: { code: "COL", slug: "col", label: "Colonia", short: "COL", yearRange: "1550–1810" },
-  PRE_IND: { code: "PRE_IND", slug: "pre-ind", label: "Pre-independencia", short: "P.IND", yearRange: "1781–1810" },
-  IND: { code: "IND", slug: "ind", label: "Independencia", short: "IND", yearRange: "1810–1830" },
-  NGR: { code: "NGR", slug: "ngr", label: "Nueva Granada", short: "NGR", yearRange: "1830–1858" },
-  EUC: { code: "EUC", slug: "euc", label: "Estados Unidos de Colombia", short: "EUC", yearRange: "1858–1886" },
-  REG: { code: "REG", slug: "reg", label: "Regeneración", short: "REG", yearRange: "1886–1903" },
+  PRE: { code: "PRE", slug: "pre", label: "Prehispánico", short: "PRE", yearRange: "antes de 1499" },
+  CON: { code: "CON", slug: "con", label: "Conquista", short: "CON", yearRange: "1499–1599" },
+  COL: { code: "COL", slug: "col", label: "Colonia", short: "COL", yearRange: "1600–1780" },
+  PRE_IND: { code: "PRE_IND", slug: "pre-ind", label: "Pre-independencia", short: "P.IND", yearRange: "1780–1809" },
+  IND: { code: "IND", slug: "ind", label: "Independencia", short: "IND", yearRange: "1810–1831" },
+  NGR: { code: "NGR", slug: "ngr", label: "Nueva Granada", short: "NGR", yearRange: "1831–1862" },
+  EUC: { code: "EUC", slug: "euc", label: "Estados Unidos de Colombia", short: "EUC", yearRange: "1863–1885" },
+  REG: { code: "REG", slug: "reg", label: "Regeneración", short: "REG", yearRange: "1886–1929" },
   REP_LIB: { code: "REP_LIB", slug: "rep-lib", label: "República Liberal", short: "R.LIB", yearRange: "1930–1946" },
-  VIO: { code: "VIO", slug: "vio", label: "La Violencia", short: "VIO", yearRange: "1946–1958" },
+  VIO: { code: "VIO", slug: "vio", label: "La Violencia", short: "VIO", yearRange: "1946–1957" },
   FN: { code: "FN", slug: "fn", label: "Frente Nacional", short: "FN", yearRange: "1958–1974" },
-  CNA: { code: "CNA", slug: "cna", label: "Crisis y narcotráfico", short: "C.N.", yearRange: "1974–1991" },
+  CNA: { code: "CNA", slug: "cna", label: "Crisis y narcotráfico", short: "C.N.", yearRange: "1974–1990" },
   C91: { code: "C91", slug: "c91", label: "Constitución de 1991", short: "C91", yearRange: "1991–2002" },
-  SDE: { code: "SDE", slug: "sde", label: "Seguridad Democrática", short: "S.D.", yearRange: "2002–2010" },
-  POS: { code: "POS", slug: "pos", label: "Posconflicto", short: "POS", yearRange: "2010–presente" },
+  SDE: { code: "SDE", slug: "sde", label: "Seguridad Democrática", short: "S.D.", yearRange: "2002–2016" },
+  POS: { code: "POS", slug: "pos", label: "Posconflicto", short: "POS", yearRange: "2016–presente" },
   TRANS: { code: "TRANS", slug: "trans", label: "Transversal", short: "TRA", yearRange: "—" },
 };
 

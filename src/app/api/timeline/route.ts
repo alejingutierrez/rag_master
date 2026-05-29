@@ -16,7 +16,7 @@ export async function GET() {
       },
     }),
     prisma.question.groupBy({
-      by: ["periodoCode", "periodoNombre", "periodoRango"],
+      by: ["periodoCode"],
       _count: true,
     }),
     prisma.deliverable.findMany({
@@ -54,8 +54,6 @@ export async function GET() {
   return NextResponse.json({
     questions: questions.map((q) => ({
       periodoCode: q.periodoCode,
-      periodoNombre: q.periodoNombre,
-      periodoRango: q.periodoRango,
       count: q._count,
     })),
     docsByPeriod: Array.from(docsByPeriod.entries()).map(([code, count]) => ({ code, count })),

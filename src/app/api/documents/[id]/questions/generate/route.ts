@@ -101,7 +101,7 @@ export async function POST(
         send({
           type: "progress",
           step: "calling_claude",
-          message: `Llamando a Claude Opus 4.7 para generar ${targetCount} preguntas...`,
+          message: `Generando ${targetCount} preguntas...`,
           targetCount,
         });
 

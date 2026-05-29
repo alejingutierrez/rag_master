@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
   if (questions.length === 0) {
     return NextResponse.json({
       entities: [],
+      counts: { all: 0, person: 0, place: 0, concept: 0 },
       totalSampled: 0,
       hint: "Aún no se han generado preguntas. Genera preguntas para extraer entidades.",
     });
@@ -81,8 +82,20 @@ export async function GET(req: NextRequest) {
     ingest("concept", q.entidadesConceptos, q.documentId, q.id);
   }
 
-  const entities = Array.from(map.values())
-    .filter((e) => e.mentions >= minMentions)
+  const aboveThreshold = Array.from(map.values()).filter(
+    (e) => e.mentions >= minMentions,
+  );
+
+  // Conteos por tipo sobre el conjunto completo — estables sin importar qué
+  // pestaña esté seleccionada. La lista (entities) sí se filtra por tipo.
+  const counts = {
+    all: aboveThreshold.length,
+    person: aboveThreshold.filter((e) => e.type === "person").length,
+    place: aboveThreshold.filter((e) => e.type === "place").length,
+    concept: aboveThreshold.filter((e) => e.type === "concept").length,
+  };
+
+  const entities = aboveThreshold
     .filter((e) => !typeFilter || e.type === typeFilter)
     .sort((a, b) => b.mentions - a.mentions)
     .slice(0, limit)
@@ -94,14 +107,9 @@ export async function GET(req: NextRequest) {
       type: e.type,
     }));
 
-  // Si filtran un tipo, la lista quedó ya filtrada. Si no, queremos ofrecer
-  // un mix balanceado entre persona/lugar/concepto.
-  if (!typeFilter && entities.length === limit) {
-    // ya está ordenado por mentions; OK
-  }
-
   return NextResponse.json({
     entities,
+    counts,
     totalSampled: questions.length,
     source: "questions", // distingue del regex viejo
   });

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   PageHeader,
   EmptyState,
-  primaryBtn,
 } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 
@@ -92,7 +91,7 @@ export default function WorkspacesPage() {
             const lastUpd = lastUpdByP.get(code);
             return {
               id: code,
-              name: `Tesis: ${p.label.toLowerCase()}`,
+              name: p.label,
               period: code,
               docs: docsByP.get(code) ?? 0,
               qs: qsByP.get(code) ?? 0,
@@ -118,18 +117,10 @@ export default function WorkspacesPage() {
   return (
     <div className="fade-up" data-screen-label="Workspaces">
       <PageHeader
-        label={`Investigación · ${workspaces.length} workspaces`}
+        label={`Investigación · ${workspaces.length} por época`}
         title="Workspaces"
-        subtitle="Colecciones de documentos, preguntas y producciones para una línea de trabajo. Pin documentos relevantes y mantén notas privadas."
-        action={
-          <button
-            type="button"
-            style={primaryBtn}
-            onClick={() => router.push("/chat")}
-          >
-            + Nuevo workspace
-          </button>
-        }
+        italic="por época"
+        subtitle="Vista derivada del corpus: documentos, preguntas y producciones agrupados por período histórico. Abre uno para explorar las preguntas de esa época."
       />
 
       <hr className="hairline" style={{ margin: "0 56px" }} />
@@ -181,16 +172,29 @@ export default function WorkspacesPage() {
                 onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-muted)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
-                <div
-                  className="display"
-                  style={{
-                    fontSize: 26,
-                    color: "var(--fg)",
-                    letterSpacing: "-0.01em",
-                    lineHeight: 1.1,
-                  }}
-                >
-                  {w.name}
+                <div>
+                  <div
+                    className="display"
+                    style={{
+                      fontSize: 26,
+                      color: "var(--fg)",
+                      letterSpacing: "-0.01em",
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {w.name}
+                  </div>
+                  <div
+                    className="mono"
+                    style={{
+                      fontSize: 11,
+                      color: "var(--fg-muted)",
+                      marginTop: 8,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    Explorar preguntas de la época →
+                  </div>
                 </div>
                 <WsCount label="Documentos" value={w.docs} />
                 <WsCount label="Preguntas" value={w.qs} />

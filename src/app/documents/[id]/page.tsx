@@ -11,7 +11,17 @@ import {
   linkBtn,
   ghostBtn,
 } from "@/components/editorial";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+} from "@/components/ui";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
+
+const CHUNKS_PER_PAGE = 30;
 
 interface Chunk {
   id: string;
@@ -80,6 +90,8 @@ export default function DocumentDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<Tab>("overview");
+  const [visibleCount, setVisibleCount] = useState(CHUNKS_PER_PAGE);
+  const [activeChunk, setActiveChunk] = useState<Chunk | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -120,7 +132,6 @@ export default function DocumentDetailPage() {
       ctrl.abort();
       if (tid) clearTimeout(tid);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, doc?.status]);
 
   const filteredChunks = useMemo(() => {
@@ -356,61 +367,95 @@ export default function DocumentDetailPage() {
           <div style={{ marginBottom: 24 }}>
             <SearchInput
               value={search}
-              onChange={setSearch}
+              onChange={(v) => {
+                setSearch(v);
+                setVisibleCount(CHUNKS_PER_PAGE);
+              }}
               placeholder="Buscar en fragmentos…"
               width={420}
             />
           </div>
           <div className="label" style={{ marginBottom: 18 }}>
-            Mostrando {filteredChunks.length.toLocaleString("es-CO")} de{" "}
-            {doc.chunks.length.toLocaleString("es-CO")} fragmentos
+            Mostrando {Math.min(visibleCount, filteredChunks.length).toLocaleString("es-CO")} de{" "}
+            {filteredChunks.length.toLocaleString("es-CO")}
+            {search ? " coincidencias" : " fragmentos"}
           </div>
-          {filteredChunks.slice(0, 30).map((c, i) => (
-            <div
-              key={c.id}
-              style={{
-                borderTop: i === 0 ? "1px solid var(--line-strong)" : "1px solid var(--line)",
-                padding: "24px 0",
-                display: "grid",
-                gridTemplateColumns: "120px 1fr",
-                gap: 48,
-                alignItems: "baseline",
-                maxWidth: 1100,
-              }}
-            >
-              <div>
-                <div
-                  className="display num"
-                  style={{ fontSize: 24, color: "var(--fg)", lineHeight: 1 }}
-                >
-                  p.{c.pageNumber}
+          {filteredChunks.slice(0, visibleCount).map((c, i) => {
+            const truncated = c.content.length > 600;
+            return (
+              <button
+                type="button"
+                key={c.id}
+                onClick={() => setActiveChunk(c)}
+                title="Ver fragmento completo"
+                style={{
+                  width: "100%",
+                  appearance: "none",
+                  background: "transparent",
+                  border: 0,
+                  borderTop:
+                    i === 0 ? "1px solid var(--line-strong)" : "1px solid var(--line)",
+                  padding: "24px 0",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  display: "grid",
+                  gridTemplateColumns: "120px 1fr",
+                  gap: 48,
+                  alignItems: "baseline",
+                  maxWidth: 1100,
+                  transition: "opacity 120ms var(--ease-out-custom)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.62")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                <div>
+                  <div
+                    className="display num"
+                    style={{ fontSize: 24, color: "var(--fg)", lineHeight: 1 }}
+                  >
+                    p.{c.pageNumber}
+                  </div>
+                  <div
+                    className="mono"
+                    style={{
+                      fontSize: 10,
+                      color: "var(--fg-faint)",
+                      marginTop: 6,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Fragmento {String(c.chunkIndex).padStart(4, "0")}
+                  </div>
                 </div>
                 <div
-                  className="mono"
+                  className="serif"
                   style={{
-                    fontSize: 10,
-                    color: "var(--fg-faint)",
-                    marginTop: 6,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
+                    fontSize: 17,
+                    lineHeight: 1.6,
+                    color: "var(--fg)",
                   }}
                 >
-                  Fragmento {String(c.chunkIndex).padStart(4, "0")}
+                  {c.content.slice(0, 600)}
+                  {truncated && (
+                    <span style={{ color: "var(--accent)" }}> … ver completo</span>
+                  )}
                 </div>
-              </div>
-              <div
-                className="serif"
-                style={{
-                  fontSize: 17,
-                  lineHeight: 1.6,
-                  color: "var(--fg)",
-                }}
+              </button>
+            );
+          })}
+
+          {visibleCount < filteredChunks.length && (
+            <div style={{ padding: "32px 0", borderTop: "1px solid var(--line)" }}>
+              <button
+                type="button"
+                style={ghostBtn}
+                onClick={() => setVisibleCount((n) => n + CHUNKS_PER_PAGE)}
               >
-                {c.content.slice(0, 600)}
-                {c.content.length > 600 && "…"}
-              </div>
+                Mostrar más fragmentos ({(filteredChunks.length - visibleCount).toLocaleString("es-CO")} restantes)
+              </button>
             </div>
-          ))}
+          )}
         </section>
       )}
 
@@ -431,6 +476,7 @@ export default function DocumentDetailPage() {
               ],
               ["Período secundario", m.secondaryPeriod ?? "—"],
               ["Categoría", m.primaryCategory ?? "—"],
+              ["Categoría secundaria", m.secondaryCategory ?? "—"],
               [
                 "Chunks",
                 `${doc.chunks.length.toLocaleString("es-CO")} fragmentos`,
@@ -465,6 +511,43 @@ export default function DocumentDetailPage() {
           </dl>
         </section>
       )}
+
+      <Dialog
+        open={!!activeChunk}
+        onOpenChange={(open) => {
+          if (!open) setActiveChunk(null);
+        }}
+      >
+        <DialogContent size="lg">
+          {activeChunk && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  p.{activeChunk.pageNumber} · Fragmento{" "}
+                  {String(activeChunk.chunkIndex).padStart(4, "0")}
+                </DialogTitle>
+                <DialogDescription>
+                  {activeChunk.content.length.toLocaleString("es-CO")} caracteres ·{" "}
+                  {activeChunk.strategy} · solape {activeChunk.overlap}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                <div
+                  className="serif"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    fontSize: 15,
+                    lineHeight: 1.7,
+                    color: "var(--fg)",
+                  }}
+                >
+                  {activeChunk.content}
+                </div>
+              </DialogBody>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

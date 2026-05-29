@@ -4,6 +4,14 @@ import { Fragment, use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PeriodTag, ghostBtn, linkBtn } from "@/components/editorial";
 import { Cita } from "@/components/editorial/cita";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+} from "@/components/ui";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { getTemplateById } from "@/lib/chat-templates";
 
@@ -67,6 +75,7 @@ export default function ProduccionDetailPage({
   const router = useRouter();
   const [data, setData] = useState<DeliverableDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeSource, setActiveSource] = useState<ChunkUsage | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -239,8 +248,7 @@ export default function ProduccionDetailPage({
               letterSpacing: "0.02em",
             }}
           >
-            Generado · {created} · {data.modelUsed ?? "Claude"} ·{" "}
-            {data.chunksUsed?.length ?? 0} fuentes
+            Alejandro Gutiérrez · {created} · {data.chunksUsed?.length ?? 0} fuentes
           </div>
         </header>
 
@@ -268,7 +276,11 @@ export default function ProduccionDetailPage({
 
         {!isGenerating && data.answer && (
           <div className="prose">
-            <AnswerRender markdown={data.answer} chunks={data.chunksUsed ?? []} />
+            <AnswerRender
+              markdown={data.answer}
+              chunks={data.chunksUsed ?? []}
+              onCite={setActiveSource}
+            />
           </div>
         )}
       </article>
@@ -302,16 +314,28 @@ export default function ProduccionDetailPage({
         </h3>
 
         {(data.chunksUsed ?? []).map((c, i) => (
-          <div
+          <button
+            type="button"
             key={c.id ?? i}
+            onClick={() => setActiveSource(c)}
+            title="Ver fuente completa"
             style={{
-              padding: "16px 0",
+              width: "100%",
+              appearance: "none",
+              background: "transparent",
+              border: 0,
               borderTop: "1px solid var(--line)",
+              padding: "16px 0",
+              cursor: "pointer",
+              textAlign: "left",
               display: "grid",
               gridTemplateColumns: "20px 1fr",
               gap: 12,
               alignItems: "baseline",
+              transition: "opacity 120ms var(--ease-out-custom)",
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
             <span
               className="mono"
@@ -338,7 +362,7 @@ export default function ProduccionDetailPage({
                 p. {c.pageNumber} · sim {(c.similarity * 100).toFixed(0)}%
               </div>
             </div>
-          </div>
+          </button>
         ))}
 
         <div
@@ -371,6 +395,40 @@ export default function ProduccionDetailPage({
           </button>
         </div>
       </aside>
+
+      <Dialog
+        open={!!activeSource}
+        onOpenChange={(open) => {
+          if (!open) setActiveSource(null);
+        }}
+      >
+        <DialogContent size="lg">
+          {activeSource && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{docLabel(activeSource)}</DialogTitle>
+                <DialogDescription>
+                  p. {activeSource.pageNumber} · fragmento #{activeSource.chunkIndex} · similitud{" "}
+                  {(activeSource.similarity * 100).toFixed(0)}%
+                </DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                <div
+                  className="serif"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    fontSize: 15,
+                    lineHeight: 1.7,
+                    color: "var(--fg)",
+                  }}
+                >
+                  {activeSource.content}
+                </div>
+              </DialogBody>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -378,9 +436,11 @@ export default function ProduccionDetailPage({
 function AnswerRender({
   markdown,
   chunks,
+  onCite,
 }: {
   markdown: string;
   chunks: ChunkUsage[];
+  onCite?: (chunk: ChunkUsage) => void;
 }) {
   const lines = markdown.split("\n");
   const blocks: React.ReactNode[] = [];
@@ -392,7 +452,7 @@ function AnswerRender({
         <blockquote key={`bq-${idx}`}>
           {blockquote.map((l, j) => (
             <p key={j} style={{ margin: 0 }}>
-              {renderInline(l, chunks)}
+              {renderInline(l, chunks, onCite)}
             </p>
           ))}
         </blockquote>,
@@ -409,21 +469,21 @@ function AnswerRender({
     flushBQ(idx);
 
     if (line.startsWith("# ")) {
-      blocks.push(<h1 key={idx}>{renderInline(line.slice(2), chunks)}</h1>);
+      blocks.push(<h1 key={idx}>{renderInline(line.slice(2), chunks, onCite)}</h1>);
       return;
     }
     if (line.startsWith("## ")) {
-      blocks.push(<h2 key={idx}>{renderInline(line.slice(3), chunks)}</h2>);
+      blocks.push(<h2 key={idx}>{renderInline(line.slice(3), chunks, onCite)}</h2>);
       return;
     }
     if (line.startsWith("### ")) {
-      blocks.push(<h3 key={idx}>{renderInline(line.slice(4), chunks)}</h3>);
+      blocks.push(<h3 key={idx}>{renderInline(line.slice(4), chunks, onCite)}</h3>);
       return;
     }
     if (line.startsWith("- ") || line.startsWith("* ")) {
       blocks.push(
         <li key={idx} style={{ marginLeft: 20 }}>
-          {renderInline(line.slice(2), chunks)}
+          {renderInline(line.slice(2), chunks, onCite)}
         </li>,
       );
       return;
@@ -431,7 +491,7 @@ function AnswerRender({
     if (/^\d+\.\s/.test(line)) {
       blocks.push(
         <li key={idx} style={{ marginLeft: 20 }}>
-          {renderInline(line.replace(/^\d+\.\s/, ""), chunks)}
+          {renderInline(line.replace(/^\d+\.\s/, ""), chunks, onCite)}
         </li>,
       );
       return;
@@ -440,7 +500,7 @@ function AnswerRender({
       blocks.push(<div key={idx} style={{ height: 6 }} />);
       return;
     }
-    blocks.push(<p key={idx}>{renderInline(line, chunks)}</p>);
+    blocks.push(<p key={idx}>{renderInline(line, chunks, onCite)}</p>);
   });
 
   flushBQ(lines.length);
@@ -448,7 +508,11 @@ function AnswerRender({
   return <>{blocks}</>;
 }
 
-function renderInline(text: string, chunks: ChunkUsage[]) {
+function renderInline(
+  text: string,
+  chunks: ChunkUsage[],
+  onCite?: (chunk: ChunkUsage) => void,
+) {
   const parts: React.ReactNode[] = [];
   let r = text;
   let k = 0;
@@ -465,6 +529,7 @@ function renderInline(text: string, chunks: ChunkUsage[]) {
           n={n}
           page={chunk?.pageNumber}
           doc={chunk ? docLabel(chunk) : undefined}
+          onClick={chunk && onCite ? () => onCite(chunk) : undefined}
         />,
       );
       r = r.slice(cMatch[0].length);

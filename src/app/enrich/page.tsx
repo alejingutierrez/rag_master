@@ -88,7 +88,7 @@ export default function EnrichPage() {
         label="Repositorio"
         title="Enriquecer"
         italic="metadata histórica"
-        subtitle={`${pending.length} documentos pendientes de enriquecimiento. Claude Opus 4.7 extrae período, categorías, entidades y geografía a partir del contenido completo.`}
+        subtitle={`${pending.length} documentos pendientes de enriquecimiento. Se extrae período, categorías, entidades y geografía a partir del contenido completo.`}
       />
 
       <hr className="hairline" style={{ margin: "0 56px" }} />

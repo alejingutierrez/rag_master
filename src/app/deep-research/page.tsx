@@ -80,7 +80,7 @@ interface DeepResearchData {
 }
 
 const STAGES: { key: Stage; label: string; desc: string }[] = [
-  { key: "planning", label: "Planificación", desc: "Claude Opus diseña el plan: entidades, sub-consultas, temporalidad." },
+  { key: "planning", label: "Planificación", desc: "Se diseña el plan: entidades, sub-consultas, temporalidad." },
   { key: "executing", label: "Ejecución", desc: "Se lanzan sub-consultas en paralelo contra el corpus." },
   { key: "fusing", label: "Fusión", desc: "Chunks deduplicados y rerankeados por relevancia agregada." },
   { key: "synthesizing", label: "Síntesis", desc: "Paper académico con citas inline obligatorias." },
@@ -207,7 +207,7 @@ function DeepResearchContent() {
       <PageHeader
         label="Investigación · Agente con thinking extendido"
         title="Deep Research"
-        subtitle="El agente planifica sub-consultas, ejecuta en paralelo, fusiona evidencia y escribe un paper académico. Tiempo típico: 90–180 segundos. Modelo: Claude Opus 4.7."
+        subtitle="El agente planifica sub-consultas, ejecuta en paralelo, fusiona evidencia y escribe un paper académico. Tiempo típico: 90–180 segundos."
       />
 
       <hr className="hairline" style={{ margin: "0 56px" }} />

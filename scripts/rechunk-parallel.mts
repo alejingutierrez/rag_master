@@ -122,6 +122,28 @@ async function getDocChunksSample(id: string) {
 }
 
 async function requestReprocess(id: string): Promise<{ newChunks: number; isNewCode: boolean }> {
+  // Retry con backoff exponencial para network errors transitorios (502/503/504/fetch failed)
+  const MAX_RETRIES = 6;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      return await requestReprocessOnce(id);
+    } catch (e) {
+      lastErr = e;
+      const msg = (e as Error).message || "";
+      const retryable = msg.includes("fetch failed") || msg.includes("502") || msg.includes("503") || msg.includes("504") || msg.includes("ECONNRESET") || msg.includes("ENOTFOUND");
+      if (retryable && attempt < MAX_RETRIES - 1) {
+        const delay = Math.pow(2, attempt) * 3000 + Math.random() * 2000;
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr;
+}
+
+async function requestReprocessOnce(id: string): Promise<{ newChunks: number; isNewCode: boolean }> {
   const res = await fetch(`${BASE_URL}/api/documents/${id}/reprocess`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

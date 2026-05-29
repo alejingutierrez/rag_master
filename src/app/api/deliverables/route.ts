@@ -15,9 +15,15 @@ export async function GET(request: NextRequest) {
     const where: Record<string, unknown> = {};
     if (questionId) where.questionId = questionId;
     if (templateId) where.templateId = templateId;
-    if (source && (source === "chat" || source === "batch")) where.source = source;
+    if (source && (source === "chat" || source === "batch" || source === "deep_research"))
+      where.source = source;
 
-    const [deliverables, total] = await Promise.all([
+    // Conteos estables: independientes de la pestaña/tipo seleccionado (solo
+    // acotados por questionId si viene). Evita que los números bailen al paginar
+    // o cambiar de filtro.
+    const countScope = questionId ? { questionId } : {};
+
+    const [deliverables, total, bySourceRaw, byTemplateRaw] = await Promise.all([
       prisma.deliverable.findMany({
         where,
         select: {
@@ -51,7 +57,15 @@ export async function GET(request: NextRequest) {
         take: limit,
       }),
       prisma.deliverable.count({ where }),
+      prisma.deliverable.groupBy({ by: ["source"], _count: true, where: countScope }),
+      prisma.deliverable.groupBy({ by: ["templateId"], _count: true, where: countScope }),
     ]);
+
+    const bySource: Record<string, number> = {};
+    for (const r of bySourceRaw) bySource[(r.source as string | null) ?? "unknown"] = r._count;
+    const byTemplate: Record<string, number> = {};
+    for (const r of byTemplateRaw) byTemplate[r.templateId] = r._count;
+    const countsAll = Object.values(bySource).reduce((a, b) => a + b, 0);
 
     // Cargar metadata de los docs referenciados por chunksUsed (para deliverables sin question).
     const chunkDocIds = new Set<string>();
@@ -106,6 +120,7 @@ export async function GET(request: NextRequest) {
         total,
         totalPages: Math.ceil(total / limit),
       },
+      counts: { all: countsAll, bySource, byTemplate },
     });
   } catch (error) {
     console.error("Error fetching deliverables:", error);

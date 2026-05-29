@@ -19,7 +19,7 @@ interface DocItem {
 const STEPS_DEF: { step: string; label: string }[] = [
   { step: "fetching_chunks", label: "Obteniendo fragmentos del documento" },
   { step: "selecting_chunks", label: "Preparando contexto completo" },
-  { step: "calling_claude", label: "Llamando a Claude Opus 4.7" },
+  { step: "calling_claude", label: "Generando preguntas" },
   { step: "parsing", label: "Procesando preguntas" },
   { step: "saving", label: "Guardando con taxonomía" },
 ];
@@ -214,7 +214,7 @@ function GenerateContent() {
         label="Investigación · Generación de preguntas"
         title="Generar"
         italic="preguntas guiadas"
-        subtitle="A partir de un documento READY, Claude Opus 4.7 genera 18–32 preguntas guiadas con taxonomía completa (período, categoría, entidades, año principal)."
+        subtitle="A partir de un documento READY, se generan 18–32 preguntas guiadas con taxonomía completa (período, categoría, entidades, año principal)."
       />
 
       <hr className="hairline" style={{ margin: "0 56px" }} />

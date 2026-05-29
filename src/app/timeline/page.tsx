@@ -9,8 +9,6 @@ import { PERIOD_EVENTS, type PeriodEvent } from "@/lib/period-events";
 interface TimelineData {
   questions: Array<{
     periodoCode: string;
-    periodoNombre: string;
-    periodoRango: string;
     count: number;
   }>;
   docsByPeriod: Array<{ code: string; count: number }>;
@@ -97,16 +95,9 @@ function TimelineContent() {
   }, [data]);
 
   const period = PERIODS[selected];
-  const events: PeriodEvent[] =
-    PERIOD_EVENTS[selected] ?? [
-      {
-        y: period.yearRange,
-        t: period.label,
-        note: "Eventos disponibles próximamente. Esta sección se enriquecerá con hitos historiográficos.",
-      },
-    ];
+  const events: PeriodEvent[] = PERIOD_EVENTS[selected] ?? [];
 
-  const start = 1499;
+  const start = 1480;
   const end = 2026;
   const span = end - start;
 
@@ -139,8 +130,29 @@ function TimelineContent() {
       <hr className="hairline" style={{ margin: "0 56px" }} />
 
       <section style={{ padding: "44px 56px 24px", maxWidth: 1320 }}>
-        <div className="label" style={{ marginBottom: 22 }}>
-          Períodos canónicos · seleccione uno
+        <div
+          style={{
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 16,
+            marginBottom: 22,
+            flexWrap: "wrap",
+          }}
+        >
+          <div className="label">Períodos canónicos · seleccione uno</div>
+          <div
+            className="mono"
+            style={{
+              fontSize: 12,
+              color: `var(--p-${period.slug})`,
+              letterSpacing: "0.04em",
+              fontWeight: 600,
+            }}
+          >
+            {String(ORDER.indexOf(selected) + 1).padStart(2, "0")} · {period.label} ·{" "}
+            {period.yearRange}
+          </div>
         </div>
 
         <div style={{ position: "relative", paddingTop: 20, paddingBottom: 40 }}>
@@ -198,41 +210,29 @@ function TimelineContent() {
                 key={code}
                 type="button"
                 onClick={() => setSelected(code)}
-                title={`${p.label} · ${p.yearRange}`}
+                title={`${n} · ${p.label} · ${p.yearRange}`}
+                aria-label={`${p.label}, ${p.yearRange}`}
                 style={{
                   position: "absolute",
                   left: `${left}%`,
                   top: 26,
                   width: `${width}%`,
-                  height: active ? 28 : 8,
+                  height: active ? 26 : 10,
                   background: active ? `var(--p-${p.slug})` : "var(--bg-muted)",
                   border: 0,
                   cursor: "pointer",
                   padding: 0,
+                  zIndex: active ? 2 : 1,
                   transition: "all 200ms var(--ease-out-custom)",
                   outline: "1px solid var(--bg)",
                 }}
-              >
-                {active && (
-                  <span
-                    className="mono"
-                    style={{
-                      position: "absolute",
-                      left: 6,
-                      top: 0,
-                      lineHeight: "28px",
-                      fontSize: 10,
-                      color: "var(--bg)",
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                      fontWeight: 500,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {n} · {p.label}
-                  </span>
-                )}
-              </button>
+                onMouseEnter={(e) => {
+                  if (!active) e.currentTarget.style.background = "var(--fg-faint)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) e.currentTarget.style.background = "var(--bg-muted)";
+                }}
+              />
             );
           })}
         </div>
@@ -348,9 +348,25 @@ function TimelineContent() {
           <SectionHeader
             index="◷"
             title="Eventos pivote"
-            caption="Hitos historiográficos del período"
+            caption="Hitos de referencia — curados, no derivados del corpus"
           />
 
+          {events.length === 0 && (
+            <p
+              className="serif"
+              style={{
+                fontSize: 16,
+                color: "var(--fg-muted)",
+                lineHeight: 1.55,
+                maxWidth: 560,
+              }}
+            >
+              Aún no hay hitos curados para este período. Esta sección reúne eventos
+              historiográficos de referencia; no se generan a partir del corpus.
+            </p>
+          )}
+
+          {events.length > 0 && (
           <ol style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {events.map((e, i) => (
               <li
@@ -403,6 +419,7 @@ function TimelineContent() {
               </li>
             ))}
           </ol>
+          )}
         </div>
       </section>
     </div>

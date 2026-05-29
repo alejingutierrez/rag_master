@@ -601,16 +601,15 @@ function normalizeQuestions(raw: unknown[]): QuestionData[] {
     const rawPeriodoCode = periodo.codigo ?? "TRANS";
     const rec = reconcilePeriodoYAnio(rawPeriodoCode, yearPrincipal);
     const finalPeriodoCode = rec.periodoCode;
-    let finalPeriodoNombre = periodo.nombre ?? "Transversal";
-    let finalPeriodoRango = periodo.rango_temporal ?? "";
+    // periodoNombre/periodoRango son derivables del code: la taxonomía canónica
+    // es la única fuente de verdad. No usar el glyph del LLM (mezcla "-" y "–"),
+    // que fragmenta los conteos por período en agregaciones aguas abajo.
+    const periodoMeta = getPeriodByCode(finalPeriodoCode);
+    const finalPeriodoNombre = periodoMeta?.nombre ?? periodo.nombre ?? "Transversal";
+    const finalPeriodoRango = periodoMeta?.rango ?? periodo.rango_temporal ?? "";
     if (rec.coerced) {
       coercions++;
       reasons.push(`Q${(item.id as number) ?? i + 1}: ${rec.reason}`);
-      const meta = getPeriodByCode(finalPeriodoCode);
-      if (meta) {
-        finalPeriodoNombre = meta.nombre;
-        finalPeriodoRango = meta.rango;
-      }
     }
 
     // Metadata analítica — tolerante: si el LLM falla un enum, queda null.

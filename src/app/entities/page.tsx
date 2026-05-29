@@ -22,18 +22,22 @@ interface Entity {
 export default function EntitiesPage() {
   const router = useRouter();
   const [entities, setEntities] = useState<Entity[]>([]);
+  const [counts, setCounts] = useState({ all: 0, person: 0, place: 0, concept: 0 });
   const [type, setType] = useState<TypeFilter>("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const ctrl = new AbortController();
-    setLoading(true);
     const p = new URLSearchParams({ limit: "200", minMentions: "2" });
     if (type !== "all") p.set("type", type);
     fetch(`/api/entities?${p}`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : { entities: [] }))
-      .then((data) => setEntities(data.entities ?? []))
+      .then((data) => {
+        setEntities(data.entities ?? []);
+        // Conteos estables desde el servidor (independientes de la pestaña).
+        if (data.counts) setCounts(data.counts);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
     return () => ctrl.abort();
@@ -47,16 +51,6 @@ export default function EntitiesPage() {
     return list.slice().sort((a, b) => b.mentions - a.mentions);
   }, [entities, search]);
 
-  const counts = useMemo(
-    () => ({
-      all: entities.length,
-      person: entities.filter((e) => e.type === "person").length,
-      place: entities.filter((e) => e.type === "place").length,
-      concept: entities.filter((e) => e.type === "concept").length,
-    }),
-    [entities],
-  );
-
   const max = useMemo(
     () => Math.max(1, ...entities.map((e) => e.mentions)),
     [entities],
@@ -68,7 +62,7 @@ export default function EntitiesPage() {
         label={`Exploración · ${counts.all} entidades`}
         title="Entidades"
         italic="del corpus"
-        subtitle="Personas, lugares y conceptos extraídos de las preguntas generadas. Tamaño = nº de menciones; clasificación por Claude Opus."
+        subtitle="Personas, lugares y conceptos extraídos de las preguntas generadas. Tamaño = nº de menciones."
       />
 
       <hr className="hairline" style={{ margin: "0 56px" }} />

@@ -12,9 +12,27 @@ import {
   ghostBtn,
 } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
-import { getTemplateById } from "@/lib/chat-templates";
+import { getTemplateById, CHAT_TEMPLATES } from "@/lib/chat-templates";
 
 type KindFilter = "all" | "chat" | "batch" | "deep_research";
+
+interface DeliverableCounts {
+  all: number;
+  bySource: Record<string, number>;
+  byTemplate: Record<string, number>;
+}
+
+const selectStyle: React.CSSProperties = {
+  appearance: "none",
+  background: "transparent",
+  border: "1px solid var(--line-strong)",
+  padding: "7px 12px",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  color: "var(--fg)",
+  cursor: "pointer",
+  borderRadius: 0,
+};
 
 interface DeliverableItem {
   id: string;
@@ -40,6 +58,7 @@ interface DeliverableItem {
 interface DeliverablesResp {
   deliverables: DeliverableItem[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
+  counts?: DeliverableCounts;
 }
 
 export default function ProduccionesPage() {
@@ -54,7 +73,9 @@ function ProduccionesContent() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [deliverables, setDeliverables] = useState<DeliverableItem[]>([]);
+  const [counts, setCounts] = useState<DeliverableCounts | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -69,6 +90,7 @@ function ProduccionesContent() {
           limit: "30",
         });
         if (kindFilter !== "all") p.set("source", kindFilter);
+        if (typeFilter !== "all") p.set("templateId", typeFilter);
         if (search) p.set("search", search);
         const res = await fetch(`/api/deliverables?${p}`, { signal: ctrl.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -76,6 +98,7 @@ function ProduccionesContent() {
         if (!mounted) return;
         setDeliverables(data.deliverables);
         setTotalPages(data.pagination.totalPages);
+        if (data.counts) setCounts(data.counts);
       } catch (e) {
         if ((e as Error).name !== "AbortError") console.error(e);
       } finally {
@@ -94,22 +117,24 @@ function ProduccionesContent() {
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, kindFilter, search]);
+  }, [page, kindFilter, typeFilter, search]);
 
-  const counts = useMemo(
-    () => ({
-      all: deliverables.length,
-      chat: deliverables.filter((d) => d.source === "chat").length,
-      batch: deliverables.filter((d) => d.source === "batch").length,
-      deep_research: deliverables.filter((d) => d.source === "deep_research").length,
-    }),
-    [deliverables],
-  );
+  // Conteos por pestaña desde el servidor (estables: no dependen de la página
+  // actual ni de la pestaña seleccionada).
+  const tabCounts = useMemo(() => {
+    const bs = counts?.bySource ?? {};
+    return {
+      all: counts?.all ?? 0,
+      chat: bs.chat ?? 0,
+      batch: bs.batch ?? 0,
+      deep_research: bs.deep_research ?? 0,
+    };
+  }, [counts]);
 
   return (
     <div className="fade-up" data-screen-label="Producciones">
       <PageHeader
-        label={`Producción · ${counts.all} piezas`}
+        label={`Producción · ${tabCounts.all} piezas`}
         title="Producciones"
         italic="académicas"
         subtitle="Ensayos, papers, análisis comparados, cronologías. Cada producción se construye a partir de una pregunta del corpus o de una consulta libre."
@@ -146,19 +171,41 @@ function ProduccionesContent() {
           flexWrap: "wrap",
         }}
       >
-        <FilterTabs<KindFilter>
-          value={kindFilter}
-          onChange={(v) => {
-            setKindFilter(v);
-            setPage(1);
-          }}
-          options={[
-            { value: "all", label: `Todas · ${counts.all}` },
-            { value: "chat", label: `Chat · ${counts.chat}` },
-            { value: "batch", label: `Batch · ${counts.batch}` },
-            { value: "deep_research", label: `Deep Research · ${counts.deep_research}` },
-          ]}
-        />
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          <FilterTabs<KindFilter>
+            value={kindFilter}
+            onChange={(v) => {
+              setKindFilter(v);
+              setPage(1);
+            }}
+            options={[
+              { value: "all", label: `Todas · ${tabCounts.all}` },
+              { value: "chat", label: `Chat · ${tabCounts.chat}` },
+              { value: "batch", label: `Batch · ${tabCounts.batch}` },
+              { value: "deep_research", label: `Deep Research · ${tabCounts.deep_research}` },
+            ]}
+          />
+          <select
+            value={typeFilter}
+            onChange={(e) => {
+              setTypeFilter(e.target.value);
+              setPage(1);
+            }}
+            style={selectStyle}
+            aria-label="Filtrar por tipo de producción"
+          >
+            <option value="all">Todos los tipos</option>
+            {CHAT_TEMPLATES.map((t) => {
+              const n = counts?.byTemplate?.[t.id];
+              return (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                  {n ? ` · ${n}` : ""}
+                </option>
+              );
+            })}
+          </select>
+        </div>
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar producción…" />
       </section>
 
@@ -224,7 +271,6 @@ function ProduccionesContent() {
                       }}
                     >
                       {tpl?.name ?? p.templateId}
-                      {p.modelUsed ? ` · ${p.modelUsed}` : ""}
                       {p.status === "GENERATING" ? " · generando" : ""}
                       {p.status === "ERROR" ? " · error" : ""}
                     </div>
@@ -235,6 +281,10 @@ function ProduccionesContent() {
                         color: "var(--fg)",
                         lineHeight: 1.25,
                         letterSpacing: "-0.005em",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
                       }}
                     >
                       {title}
