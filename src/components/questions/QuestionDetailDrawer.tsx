@@ -9,6 +9,7 @@ import {
   type TipoPregunta,
   type EscalaGeografica,
 } from "@/lib/questions-config";
+import { getTemplateById } from "@/lib/chat-templates";
 
 export interface QuestionDetail {
   id: string;
@@ -286,28 +287,42 @@ function DrawerContent({
                 {completeDeliv}/{totalDeliv} completas
               </div>
               {q.deliverables!.map((d) => (
-                <div
+                <button
                   key={d.id}
+                  type="button"
+                  onClick={() => router.push(`/producciones/${d.id}`)}
+                  title="Ver esta producción"
                   style={{
+                    appearance: "none",
+                    background: "transparent",
+                    border: 0,
+                    width: "100%",
                     display: "flex",
+                    alignItems: "center",
                     justifyContent: "space-between",
+                    gap: 12,
                     padding: "8px 0",
                     borderBottom: "1px solid var(--line)",
                     fontSize: 12.5,
+                    color: "var(--fg)",
+                    textAlign: "left",
+                    cursor: "pointer",
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "var(--fg)")}
                 >
-                  <span>{d.templateId}</span>
+                  <span>{getTemplateById(d.templateId)?.name ?? d.templateId} →</span>
                   <span
                     className="mono"
                     style={{
                       fontSize: 10.5,
-                      color: d.status === "COMPLETE" ? "var(--fg)" : "var(--fg-muted)",
+                      color: d.status === "COMPLETE" ? "var(--fg-muted)" : "var(--fg-faint)",
                       letterSpacing: "0.04em",
                     }}
                   >
                     {d.status}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           )}

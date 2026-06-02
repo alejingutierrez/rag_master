@@ -13,8 +13,9 @@ import {
 } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { getTemplateById, CHAT_TEMPLATES } from "@/lib/chat-templates";
+import { getAtelierFormat } from "@/lib/atelier-formats";
 
-type KindFilter = "all" | "chat" | "batch" | "deep_research";
+type KindFilter = "all" | "chat" | "batch" | "deep_research" | "atelier";
 
 interface DeliverableCounts {
   all: number;
@@ -33,6 +34,15 @@ const selectStyle: React.CSSProperties = {
   cursor: "pointer",
   borderRadius: 0,
 };
+
+/** Recorta a un título legible en el borde de palabra (el texto completo vive en el detalle). */
+function shortTitle(text: string, max = 96): string {
+  const t = text.trim().replace(/\s+/g, " ");
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd() + "…";
+}
 
 interface DeliverableItem {
   id: string;
@@ -128,13 +138,14 @@ function ProduccionesContent() {
       chat: bs.chat ?? 0,
       batch: bs.batch ?? 0,
       deep_research: bs.deep_research ?? 0,
+      atelier: bs.atelier ?? 0,
     };
   }, [counts]);
 
   return (
     <div className="fade-up" data-screen-label="Producciones">
       <PageHeader
-        label={`Producción · ${tabCounts.all} piezas`}
+        label={`Producción · ${tabCounts.all} piezas · Alejandro Gutiérrez`}
         title="Producciones"
         italic="académicas"
         subtitle="Ensayos, papers, análisis comparados, cronologías. Cada producción se construye a partir de una pregunta del corpus o de una consulta libre."
@@ -183,6 +194,7 @@ function ProduccionesContent() {
               { value: "chat", label: `Chat · ${tabCounts.chat}` },
               { value: "batch", label: `Batch · ${tabCounts.batch}` },
               { value: "deep_research", label: `Deep Research · ${tabCounts.deep_research}` },
+              { value: "atelier", label: `El Taller · ${tabCounts.atelier}` },
             ]}
           />
           <select
@@ -223,7 +235,9 @@ function ProduccionesContent() {
           )}
           {deliverables.map((p, i) => {
             const tpl = getTemplateById(p.templateId);
-            const title = p.question?.pregunta ?? p.userQuestion ?? "(producción)";
+            const tplName = tpl?.name ?? getAtelierFormat(p.templateId)?.name ?? p.templateId;
+            const fullTitle = p.question?.pregunta ?? p.userQuestion ?? "(producción)";
+            const title = shortTitle(fullTitle);
             const period = p.question?.periodoCode as PeriodCode | undefined;
             const date = new Date(p.createdAt).toLocaleDateString("es-CO", {
               day: "2-digit",
@@ -270,12 +284,13 @@ function ProduccionesContent() {
                         marginBottom: 6,
                       }}
                     >
-                      {tpl?.name ?? p.templateId}
+                      {tplName}
                       {p.status === "GENERATING" ? " · generando" : ""}
                       {p.status === "ERROR" ? " · error" : ""}
                     </div>
                     <div
                       className="serif"
+                      title={fullTitle}
                       style={{
                         fontSize: 22,
                         color: "var(--fg)",

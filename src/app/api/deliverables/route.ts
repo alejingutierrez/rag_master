@@ -15,7 +15,13 @@ export async function GET(request: NextRequest) {
     const where: Record<string, unknown> = {};
     if (questionId) where.questionId = questionId;
     if (templateId) where.templateId = templateId;
-    if (source && (source === "chat" || source === "batch" || source === "deep_research"))
+    if (
+      source &&
+      (source === "chat" ||
+        source === "batch" ||
+        source === "deep_research" ||
+        source === "atelier")
+    )
       where.source = source;
 
     // Conteos estables: independientes de la pestaña/tipo seleccionado (solo

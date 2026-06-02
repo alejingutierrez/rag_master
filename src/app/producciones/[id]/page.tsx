@@ -14,6 +14,7 @@ import {
 } from "@/components/ui";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { getTemplateById } from "@/lib/chat-templates";
+import { getAtelierFormat } from "@/lib/atelier-formats";
 
 interface ChunkUsage {
   id: string;
@@ -50,6 +51,24 @@ interface DeliverableDetail {
   metadata?: Record<string, unknown> | null;
 }
 
+interface AtelierConfidence {
+  score: number;
+  label: "alta" | "media" | "baja";
+  rationale?: string;
+  factors?: { name: string; value: number }[];
+  documentosUnicos?: number;
+}
+interface AtelierSection {
+  seccion: string;
+  sourceRefs: { chunkId: string; documentFilename?: string; pageNumber?: number }[];
+  claimIds?: string[];
+}
+interface AtelierMeta {
+  confidenceIndex?: AtelierConfidence;
+  criticalApparatus?: { fuentesPorSeccion?: AtelierSection[] };
+  degraded?: string[];
+}
+
 function docLabel(c: ChunkUsage): string {
   if (c.documentFilename) return c.documentFilename.replace(/\.pdf$/i, "");
   return c.documentId.slice(0, 8);
@@ -76,6 +95,8 @@ export default function ProduccionDetailPage({
   const [data, setData] = useState<DeliverableDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeSource, setActiveSource] = useState<ChunkUsage | null>(null);
+  const [sourceFull, setSourceFull] = useState<{ id: string; content: string } | null>(null);
+  const [sourceLoading, setSourceLoading] = useState(false);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -114,6 +135,28 @@ export default function ProduccionDetailPage({
     };
   }, [id]);
 
+  // El snippet en chunksUsed va recortado (~400 chars). Al abrir el modal,
+  // pedimos el contenido íntegro al endpoint read-only; si falla, queda el snippet.
+  useEffect(() => {
+    if (!activeSource?.id) {
+      setSourceFull(null);
+      return;
+    }
+    const ctrl = new AbortController();
+    setSourceLoading(true);
+    setSourceFull(null);
+    fetch(`/api/chunks/${activeSource.id}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c: { id: string; content: string } | null) => {
+        if (c?.content) setSourceFull({ id: c.id, content: c.content });
+      })
+      .catch(() => {
+        /* fallback al snippet almacenado */
+      })
+      .finally(() => setSourceLoading(false));
+    return () => ctrl.abort();
+  }, [activeSource?.id]);
+
   if (error) {
     return (
       <div className="fade-up" style={{ padding: "96px 56px", maxWidth: 760 }}>
@@ -147,6 +190,12 @@ export default function ProduccionDetailPage({
   const periodCode = data.question?.periodoCode as PeriodCode | undefined;
   const period = periodCode && periodCode in PERIODS ? PERIODS[periodCode] : null;
   const template = getTemplateById(data.templateId);
+  const isAtelier = data.source === "atelier";
+  const atelier = isAtelier
+    ? ((data.metadata as { atelier?: AtelierMeta } | null)?.atelier ?? null)
+    : null;
+  const formatLabel = template?.name ?? getAtelierFormat(data.templateId)?.name ?? data.templateId;
+  const hasSections = !!atelier?.criticalApparatus?.fuentesPorSeccion?.length;
   const title = data.question?.pregunta ?? data.userQuestion ?? "Producción";
   const words = wordCount(data.answer);
   const cites = citationCount(data.answer);
@@ -204,8 +253,10 @@ export default function ProduccionDetailPage({
                 textTransform: "uppercase",
               }}
             >
-              {template?.name ?? data.templateId} · {words.toLocaleString("es-CO")} palabras ·{" "}
-              {cites} citas
+              {formatLabel} · {words.toLocaleString("es-CO")} palabras
+              {isAtelier && atelier?.confidenceIndex
+                ? ` · confianza ${atelier.confidenceIndex.score} (${atelier.confidenceIndex.label})`
+                : ` · ${cites} citas`}
             </div>
           </div>
 
@@ -301,6 +352,10 @@ export default function ProduccionDetailPage({
         <div className="label" style={{ marginBottom: 8 }}>
           Aparato crítico
         </div>
+        {isAtelier && atelier?.confidenceIndex && (
+          <ConfidencePanel ci={atelier.confidenceIndex} degraded={atelier.degraded} />
+        )}
+
         <h3
           className="display"
           style={{
@@ -310,60 +365,20 @@ export default function ProduccionDetailPage({
             lineHeight: 1.1,
           }}
         >
-          Fuentes citadas
+          {hasSections ? "Fuentes por sección" : "Fuentes citadas"}
         </h3>
 
-        {(data.chunksUsed ?? []).map((c, i) => (
-          <button
-            type="button"
-            key={c.id ?? i}
-            onClick={() => setActiveSource(c)}
-            title="Ver fuente completa"
-            style={{
-              width: "100%",
-              appearance: "none",
-              background: "transparent",
-              border: 0,
-              borderTop: "1px solid var(--line)",
-              padding: "16px 0",
-              cursor: "pointer",
-              textAlign: "left",
-              display: "grid",
-              gridTemplateColumns: "20px 1fr",
-              gap: 12,
-              alignItems: "baseline",
-              transition: "opacity 120ms var(--ease-out-custom)",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          >
-            <span
-              className="mono"
-              style={{ fontSize: 11.5, color: "var(--accent)", fontWeight: 500 }}
-            >
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <div>
-              <div
-                className="serif"
-                style={{
-                  fontSize: 14.5,
-                  color: "var(--fg)",
-                  lineHeight: 1.3,
-                  letterSpacing: "-0.005em",
-                }}
-              >
-                {docLabel(c)}
-              </div>
-              <div
-                className="mono"
-                style={{ fontSize: 10.5, color: "var(--fg-subtle)", marginTop: 4 }}
-              >
-                p. {c.pageNumber} · sim {(c.similarity * 100).toFixed(0)}%
-              </div>
-            </div>
-          </button>
-        ))}
+        {hasSections ? (
+          <AtelierSections
+            sections={atelier!.criticalApparatus!.fuentesPorSeccion!}
+            chunks={data.chunksUsed ?? []}
+            onPick={setActiveSource}
+          />
+        ) : (
+          (data.chunksUsed ?? []).map((c, i) => (
+            <SourceButton key={c.id ?? i} c={c} index={i} onPick={setActiveSource} />
+          ))
+        )}
 
         <div
           style={{
@@ -413,6 +428,19 @@ export default function ProduccionDetailPage({
                 </DialogDescription>
               </DialogHeader>
               <DialogBody>
+                {sourceLoading && sourceFull?.id !== activeSource.id && (
+                  <div
+                    className="mono"
+                    style={{
+                      fontSize: 11,
+                      color: "var(--fg-faint)",
+                      marginBottom: 12,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    Cargando fragmento completo…
+                  </div>
+                )}
                 <div
                   className="serif"
                   style={{
@@ -422,7 +450,9 @@ export default function ProduccionDetailPage({
                     color: "var(--fg)",
                   }}
                 >
-                  {activeSource.content}
+                  {sourceFull?.id === activeSource.id
+                    ? sourceFull.content
+                    : activeSource.content}
                 </div>
               </DialogBody>
             </>
@@ -430,6 +460,141 @@ export default function ProduccionDetailPage({
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function SourceButton({
+  c,
+  index,
+  onPick,
+}: {
+  c: ChunkUsage;
+  index: number;
+  onPick: (c: ChunkUsage) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onPick(c)}
+      title="Ver fuente completa"
+      style={{
+        width: "100%",
+        appearance: "none",
+        background: "transparent",
+        border: 0,
+        borderTop: "1px solid var(--line)",
+        padding: "16px 0",
+        cursor: "pointer",
+        textAlign: "left",
+        display: "grid",
+        gridTemplateColumns: "20px 1fr",
+        gap: 12,
+        alignItems: "baseline",
+        transition: "opacity 120ms var(--ease-out-custom)",
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
+      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+    >
+      <span className="mono" style={{ fontSize: 11.5, color: "var(--accent)", fontWeight: 500 }}>
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <div>
+        <div
+          className="serif"
+          style={{ fontSize: 14.5, color: "var(--fg)", lineHeight: 1.3, letterSpacing: "-0.005em" }}
+        >
+          {docLabel(c)}
+        </div>
+        <div className="mono" style={{ fontSize: 10.5, color: "var(--fg-subtle)", marginTop: 4 }}>
+          p. {c.pageNumber} · sim {(c.similarity * 100).toFixed(0)}%
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function ConfidencePanel({ ci, degraded }: { ci: AtelierConfidence; degraded?: string[] }) {
+  const color =
+    ci.label === "alta" ? "var(--success)" : ci.label === "media" ? "var(--accent)" : "var(--danger)";
+  return (
+    <div style={{ marginBottom: 28, paddingBottom: 24, borderBottom: "1px solid var(--line)" }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 8 }}>
+        <span className="display" style={{ fontSize: 34, color }}>
+          {ci.score}
+        </span>
+        <span
+          className="mono"
+          style={{ fontSize: 11, color, textTransform: "uppercase", letterSpacing: "0.06em" }}
+        >
+          confianza {ci.label}
+        </span>
+      </div>
+      {ci.rationale && (
+        <p style={{ fontSize: 12.5, color: "var(--fg-muted)", lineHeight: 1.5, margin: 0 }}>
+          {ci.rationale}
+        </p>
+      )}
+      {ci.factors && ci.factors.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          {ci.factors.map((f) => (
+            <div key={f.name} style={{ marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>{f.name}</span>
+                <span className="mono" style={{ fontSize: 10, color: "var(--fg-subtle)" }}>
+                  {Math.round(f.value * 100)}%
+                </span>
+              </div>
+              <div style={{ height: 3, background: "var(--line)", borderRadius: 2 }}>
+                <div
+                  style={{
+                    width: `${Math.round(f.value * 100)}%`,
+                    height: "100%",
+                    background: "var(--accent)",
+                    borderRadius: 2,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {degraded && degraded.length > 0 && (
+        <div style={{ marginTop: 12, fontSize: 11, color: "var(--fg-faint)" }}>
+          {degraded.map((d, i) => (
+            <div key={i}>· {d}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AtelierSections({
+  sections,
+  chunks,
+  onPick,
+}: {
+  sections: AtelierSection[];
+  chunks: ChunkUsage[];
+  onPick: (c: ChunkUsage) => void;
+}) {
+  const byId = new Map(chunks.map((c) => [c.id, c]));
+  let running = 0;
+  return (
+    <>
+      {sections.map((sec, si) => (
+        <div key={si} style={{ marginBottom: 20 }}>
+          <div className="label" style={{ marginBottom: 4, color: "var(--fg-muted)" }}>
+            {sec.seccion}
+          </div>
+          {sec.sourceRefs.map((r) => {
+            const c = byId.get(r.chunkId);
+            if (!c) return null;
+            return <SourceButton key={r.chunkId} c={c} index={running++} onPick={onPick} />;
+          })}
+        </div>
+      ))}
+    </>
   );
 }
 

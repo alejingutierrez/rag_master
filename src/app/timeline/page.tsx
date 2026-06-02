@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SectionHeader, primaryBtn } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
@@ -97,10 +97,6 @@ function TimelineContent() {
   const period = PERIODS[selected];
   const events: PeriodEvent[] = PERIOD_EVENTS[selected] ?? [];
 
-  const start = 1480;
-  const end = 2026;
-  const span = end - start;
-
   const docCount = counts.docs.get(selected) ?? 0;
   const qCount = counts.qs.get(selected) ?? 0;
   const prodCount = counts.prods.get(selected) ?? 0;
@@ -155,86 +151,64 @@ function TimelineContent() {
           </div>
         </div>
 
-        <div style={{ position: "relative", paddingTop: 20, paddingBottom: 40 }}>
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              top: 20,
-              height: 1,
-              background: "var(--line-strong)",
-            }}
-          />
-
-          {[1500, 1600, 1700, 1800, 1900, 2000].map((y) => {
-            const pct = ((y - start) / span) * 100;
-            return (
-              <Fragment key={y}>
+        <div style={{ paddingTop: 20, paddingBottom: 40 }}>
+          {/* Etiquetas de año (inicio de cada período), alineadas a las barras */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+            {ORDER.map((code) => {
+              const [a] = YEAR_BOUNDS[code];
+              const active = code === selected;
+              return (
                 <div
+                  key={code}
+                  className="mono num"
                   style={{
-                    position: "absolute",
-                    left: `${pct}%`,
-                    top: 14,
-                    width: 1,
-                    height: 12,
-                    background: "var(--fg-faint)",
-                  }}
-                />
-                <div
-                  className="mono"
-                  style={{
-                    position: "absolute",
-                    left: `${pct}%`,
-                    top: 0,
-                    transform: "translateX(-50%)",
+                    flex: 1,
+                    textAlign: "center",
                     fontSize: 10,
-                    color: "var(--fg-subtle)",
+                    color: active
+                      ? `var(--p-${PERIODS[code].slug})`
+                      : "var(--fg-subtle)",
+                    fontWeight: active ? 600 : 400,
                   }}
                 >
-                  {y}
+                  {a}
                 </div>
-              </Fragment>
-            );
-          })}
+              );
+            })}
+          </div>
 
-          {ORDER.map((code, i) => {
-            const p = PERIODS[code];
-            const [a, b] = YEAR_BOUNDS[code];
-            const left = ((a - start) / span) * 100;
-            const width = ((b - a) / span) * 100;
-            const active = code === selected;
-            const n = String(i + 1).padStart(2, "0");
-            return (
-              <button
-                key={code}
-                type="button"
-                onClick={() => setSelected(code)}
-                title={`${n} · ${p.label} · ${p.yearRange}`}
-                aria-label={`${p.label}, ${p.yearRange}`}
-                style={{
-                  position: "absolute",
-                  left: `${left}%`,
-                  top: 26,
-                  width: `${width}%`,
-                  height: active ? 26 : 10,
-                  background: active ? `var(--p-${p.slug})` : "var(--bg-muted)",
-                  border: 0,
-                  cursor: "pointer",
-                  padding: 0,
-                  zIndex: active ? 2 : 1,
-                  transition: "all 200ms var(--ease-out-custom)",
-                  outline: "1px solid var(--bg)",
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.background = "var(--fg-faint)";
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) e.currentTarget.style.background = "var(--bg-muted)";
-                }}
-              />
-            );
-          })}
+          {/* Barras uniformes — una por período, todas clicables por igual */}
+          <div style={{ display: "flex", gap: 4, alignItems: "flex-start" }}>
+            {ORDER.map((code, i) => {
+              const p = PERIODS[code];
+              const active = code === selected;
+              const n = String(i + 1).padStart(2, "0");
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setSelected(code)}
+                  title={`${n} · ${p.label} · ${p.yearRange}`}
+                  aria-label={`${p.label}, ${p.yearRange}`}
+                  style={{
+                    flex: 1,
+                    height: active ? 28 : 12,
+                    background: active ? `var(--p-${p.slug})` : "var(--bg-muted)",
+                    border: 0,
+                    padding: 0,
+                    cursor: "pointer",
+                    transition: "all 200ms var(--ease-out-custom)",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) e.currentTarget.style.background = "var(--fg-faint)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) e.currentTarget.style.background = "var(--bg-muted)";
+                  }}
+                />
+              );
+            })}
+          </div>
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12 }}>

@@ -326,6 +326,27 @@ function DeepResearchContent() {
             >
               {data.userQuestion}
             </h2>
+            {phase === "done" && (
+              <div
+                className="mono"
+                style={{
+                  fontSize: 11,
+                  color: "var(--fg-muted)",
+                  letterSpacing: "0.04em",
+                  marginTop: 16,
+                }}
+              >
+                Alejandro Gutiérrez ·{" "}
+                {new Date(data.createdAt).toLocaleDateString("es-CO", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+                {data.chunksUsed?.length
+                  ? ` · ${data.chunksUsed.length} fuentes`
+                  : ""}
+              </div>
+            )}
           </section>
 
           <section style={{ padding: "32px 56px 0", maxWidth: 1320 }}>

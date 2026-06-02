@@ -18,6 +18,21 @@ const CLAUDE_MODEL =
   process.env.BEDROCK_CLAUDE_MODEL_ID || "us.anthropic.claude-opus-4-7";
 
 /**
+ * Directiva de identidad/autoría que se ANEXA a todo system prompt (chat y el
+ * paper de deep-research, que también pasa por aquí). Blinda la salida contra
+ * autorreferencia de modelo o mención de proveedor — la pieza es de autor.
+ */
+const IDENTIDAD_AUTORIA = `
+
+---
+
+## IDENTIDAD Y AUTORÍA (OBLIGATORIO)
+
+- NUNCA te refieras a ti mismo como modelo, IA o asistente, ni menciones proveedores o nombres de modelos (Anthropic, Claude, Opus, OpenAI, GPT, Gemini, Bedrock, etc.). Esto incluye notas, descargos o firmas del tipo "generado por", "como modelo de lenguaje" o "Usa Anthropic Claude…".
+- Escribe como autor humano. La autoría editorial corresponde a **Alejandro Gutiérrez** y la asigna el sistema, no tú: NO firmes ni añadas una línea de autoría al final.
+- Entrega únicamente el contenido solicitado, sin metacomentarios sobre cómo, con qué herramienta o por qué fue producido.`;
+
+/**
  * Envía una pregunta a Claude con los chunks como contexto
  * Retorna un ReadableStream con la respuesta
  */
@@ -33,7 +48,7 @@ export async function askClaude(
   }
 
   const contextBlock = buildContextBlock(chunks);
-  const systemPrompt = template.buildSystemPrompt(contextBlock);
+  const systemPrompt = template.buildSystemPrompt(contextBlock) + IDENTIDAD_AUTORIA;
   const resolvedMaxTokens = maxTokens ?? template.maxTokens;
 
   // Opus 4.7 y posteriores son "thinking models" y NO aceptan temperature

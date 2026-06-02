@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "smoke": "tsx scripts/smoke-test.mts"
+    "smoke": "tsx scripts/smoke-test.mts",
+    "test": "tsx scripts/test-atelier-units.mts",
+    "test:atelier": "tsx scripts/test-atelier-units.mts",
+    "test:prod-atelier": "tsx scripts/test-prod-atelier.mts"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1010.0",

@@ -12,6 +12,7 @@ import { primaryBtn, ghostBtn, PeriodTag } from "@/components/editorial";
 import { Cita } from "@/components/editorial/cita";
 import { TIPO_LABELS, ESCALA_LABELS } from "@/lib/questions-config";
 import type { TipoPregunta, EscalaGeografica } from "@/lib/questions-config";
+import { CHAT_TEMPLATES, DEFAULT_TEMPLATE_ID } from "@/lib/chat-templates";
 
 interface ChunkCitation {
   id: string;
@@ -74,6 +75,7 @@ export default function ChatPage() {
   const [openChunk, setOpenChunk] = useState<number | null>(null);
   const [streamingText, setStreamingText] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
 
   const revealTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -87,7 +89,7 @@ export default function ChatPage() {
     };
   }, []);
 
-  const handleAsk = useCallback(async (q: string, context?: QuestionContext) => {
+  const handleAsk = useCallback(async (q: string, context?: QuestionContext, tplId?: string) => {
     if (revealTimerRef.current) clearInterval(revealTimerRef.current);
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     if (typeTimerRef.current) clearInterval(typeTimerRef.current);
@@ -111,6 +113,7 @@ export default function ChatPage() {
           topK: RAG_CONFIG.topK,
           similarityThreshold: RAG_CONFIG.similarityThreshold,
           ...(context ? { questionContext: context } : {}),
+          ...(tplId ? { templateId: tplId } : {}),
         }),
       });
 
@@ -205,7 +208,7 @@ export default function ChatPage() {
   const submit = () => {
     const q = question.trim();
     if (!q || phase === "searching" || phase === "streaming") return;
-    void handleAsk(q);
+    void handleAsk(q, undefined, templateId);
   };
 
   // Deep-link desde /questions (drawer "Abrir en chat"):
@@ -336,6 +339,8 @@ export default function ChatPage() {
               onSubmit={submit}
               onKeyDown={handleKeyDown}
               disabled={phase === "searching" || phase === "streaming"}
+              templateId={templateId}
+              onTemplateChange={setTemplateId}
             />
           </div>
         </div>
@@ -656,6 +661,18 @@ function ChatConversation({
             borderTop: "1px solid var(--line)",
           }}
         >
+          <div
+            className="mono"
+            style={{
+              fontSize: 11,
+              color: "var(--fg-muted)",
+              letterSpacing: "0.04em",
+              marginBottom: 24,
+            }}
+          >
+            Alejandro Gutiérrez · {today}
+            {totalChunks > 0 ? ` · ${totalChunks} pasajes citados` : ""}
+          </div>
           <div className="label" style={{ marginBottom: 16 }}>
             Siguiente
           </div>
@@ -869,14 +886,29 @@ function ChatInput({
   onSubmit,
   onKeyDown,
   disabled,
+  templateId,
+  onTemplateChange,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
   onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
   disabled: boolean;
+  templateId: string;
+  onTemplateChange: (id: string) => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const current = CHAT_TEMPLATES.find((t) => t.id === templateId) ?? CHAT_TEMPLATES[0];
+
+  // Auto-resize: la caja crece con el texto hasta ~200px y luego hace scroll.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, [value]);
+
   return (
     <form
       onSubmit={(e) => {
@@ -890,6 +922,128 @@ function ChatInput({
         padding: "8px 0",
       }}
     >
+      {/* Selector compacto de tipo de salida — el feature de múltiples plantillas. */}
+      <div style={{ position: "relative", flexShrink: 0 }}>
+        {pickerOpen && (
+          <div
+            onClick={() => setPickerOpen(false)}
+            style={{ position: "fixed", inset: 0, zIndex: 20 }}
+            aria-hidden
+          />
+        )}
+        <button
+          type="button"
+          onClick={() => setPickerOpen((o) => !o)}
+          title={`Tipo de salida: ${current?.name ?? "—"}`}
+          aria-label={`Tipo de salida: ${current?.name ?? "—"}`}
+          style={{
+            appearance: "none",
+            background: "transparent",
+            border: "1px solid var(--line-strong)",
+            borderRadius: 6,
+            padding: "8px 10px",
+            display: "flex",
+            alignItems: "center",
+            gap: 7,
+            cursor: "pointer",
+            color: "var(--fg-muted)",
+            maxWidth: 170,
+          }}
+        >
+          <span style={{ fontSize: 15, lineHeight: 1 }}>{current?.icon ?? "✶"}</span>
+          <span
+            className="mono"
+            style={{
+              fontSize: 11,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {current?.name ?? "Tipo"}
+          </span>
+          <span style={{ fontSize: 9, color: "var(--fg-faint)" }}>▴</span>
+        </button>
+        {pickerOpen && (
+          <div
+            role="listbox"
+            aria-label="Tipo de salida"
+            style={{
+              position: "absolute",
+              bottom: "calc(100% + 8px)",
+              left: 0,
+              zIndex: 21,
+              width: 300,
+              maxHeight: 340,
+              overflowY: "auto",
+              background: "var(--bg)",
+              border: "1px solid var(--line-strong)",
+              borderRadius: 8,
+              boxShadow: "0 12px 40px -12px rgba(0,0,0,0.28)",
+              padding: 6,
+            }}
+          >
+            {CHAT_TEMPLATES.map((t) => {
+              const active = t.id === templateId;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => {
+                    onTemplateChange(t.id);
+                    setPickerOpen(false);
+                  }}
+                  style={{
+                    appearance: "none",
+                    background: active ? "var(--bg-muted)" : "transparent",
+                    border: 0,
+                    borderRadius: 6,
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "9px 10px",
+                    cursor: "pointer",
+                    display: "flex",
+                    gap: 10,
+                    alignItems: "flex-start",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-muted)")}
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = active ? "var(--bg-muted)" : "transparent")
+                  }
+                >
+                  <span style={{ fontSize: 16, lineHeight: 1.2 }}>{t.icon}</span>
+                  <span style={{ minWidth: 0 }}>
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: 13,
+                        color: "var(--fg)",
+                        fontWeight: active ? 600 : 400,
+                      }}
+                    >
+                      {t.name}
+                    </span>
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: 11,
+                        color: "var(--fg-muted)",
+                        lineHeight: 1.4,
+                        marginTop: 2,
+                      }}
+                    >
+                      {t.description}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <textarea
         ref={ref}
         value={value}
@@ -911,6 +1065,8 @@ function ChatInput({
           lineHeight: 1.45,
           padding: "6px 0",
           letterSpacing: "-0.005em",
+          maxHeight: 200,
+          overflowY: "auto",
         }}
       />
       <button

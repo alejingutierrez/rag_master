@@ -24,6 +24,7 @@ const NAV: NavGroup[] = [
       { href: "/questions", label: "Preguntas" },
       { href: "/hypothesis", label: "Hipótesis" },
       { href: "/deep-research", label: "Deep Research" },
+      { href: "/atelier", label: "El Taller" },
       { href: "/threads", label: "Hilos" },
       { href: "/workspaces", label: "Workspaces" },
     ],
