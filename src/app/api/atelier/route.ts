@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
   const intent = typeof body?.intent === "string" ? body.intent.trim() : "";
   const formatId = body?.formatId;
   const longitud = body?.longitud as LongitudId | undefined;
+  const questionId = typeof body?.questionId === "string" && body.questionId ? body.questionId : undefined;
 
   if (intent.length < 12) {
     return new Response(JSON.stringify({ error: "Intención requerida (≥12 caracteres)" }), {
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
       metadata: { atelier: initialMetadata } as unknown as object,
       source: "atelier",
       batchId,
+      questionId,
     },
   });
 
@@ -120,6 +122,7 @@ export async function POST(req: NextRequest) {
         phases: result.phases,
         confidenceIndex: result.confidenceIndex,
         criticalApparatus: result.criticalApparatus,
+        taxonomy: result.taxonomy,
         qualityScore: result.qualityScore,
         docCount: result.confidenceIndex.documentosUnicos,
         wordCount: result.answer.trim().split(/\s+/).length,

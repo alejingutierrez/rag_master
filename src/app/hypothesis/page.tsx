@@ -51,6 +51,29 @@ export default function HypothesisPage() {
     };
   }, []);
 
+  // Precarga desde una pregunta del corpus: ?q= y/o ?questionId= (no autodispara).
+  const preloadedRef = useRef(false);
+  useEffect(() => {
+    if (preloadedRef.current || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const qText = params.get("q");
+    const qid = params.get("questionId");
+    if (!qText && !qid) return;
+    preloadedRef.current = true;
+    if (qText) {
+      setHypothesis(qText);
+      return;
+    }
+    if (qid) {
+      fetch(`/api/questions/${qid}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { question?: { pregunta?: string } } | null) => {
+          if (d?.question?.pregunta) setHypothesis(d.question.pregunta);
+        })
+        .catch(() => {});
+    }
+  }, []);
+
   const runSide = async (
     setResult: (r: SideResult) => void,
     pollerRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>,

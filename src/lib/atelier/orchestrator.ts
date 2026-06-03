@@ -12,6 +12,8 @@ import { verificar } from "./phase4-verificacion";
 import { componer } from "./phase5-composicion";
 import { pulirYControlar } from "./phase6-edicion";
 import { deriveConfidenceIndex, buildCriticalApparatus, stripScaffolding } from "./aparato";
+import { classifyDeliverable } from "../deliverable-classifier";
+import type { DeliverableTaxonomy } from "../taxonomy";
 import type {
   AtelierInput,
   AtelierMetadata,
@@ -198,6 +200,19 @@ export async function runAtelier(
   const answer = stripScaffolding(edited);
   set("edicion", "done", undefined, `calidad ${qualityScore.toFixed(1)}/10`);
 
+  // ── Clasificación taxonómica (metadata analítica construida) ──
+  await emit("edicion", "Clasificando metadata analítica…");
+  let taxonomy: DeliverableTaxonomy | undefined;
+  try {
+    taxonomy = await classifyDeliverable({
+      texto: answer,
+      intent: input.intent,
+      entitiesHint: brief.entities,
+    });
+  } catch (e) {
+    console.warn(`[atelier] clasificación falló: ${(e as Error).message}`);
+  }
+
   // ── Aparato crítico + persistencia ──
   const confidenceIndex = deriveConfidenceIndex(verified.claims);
   const criticalApparatus = buildCriticalApparatus(verified.claims);
@@ -208,6 +223,7 @@ export async function runAtelier(
     qualityScore,
     confidenceIndex,
     criticalApparatus,
+    taxonomy,
     docCount: confidenceIndex.documentosUnicos,
     degraded,
   });
@@ -217,6 +233,7 @@ export async function runAtelier(
     chunksUsed,
     confidenceIndex,
     criticalApparatus,
+    taxonomy,
     qualityScore,
     degraded,
     brief,

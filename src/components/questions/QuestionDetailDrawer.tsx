@@ -334,37 +334,92 @@ function DrawerContent({
           </Section>
         )}
 
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            paddingTop: 8,
-            borderTop: "1px solid var(--line)",
-            marginTop: 4,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => router.push(`/chat?questionId=${encodeURIComponent(q.id)}`)}
+        <div style={{ paddingTop: 12, borderTop: "1px solid var(--line)", marginTop: 4 }}>
+          <h3
+            className="mono"
             style={{
-              appearance: "none",
-              background: "var(--fg)",
-              color: "var(--bg)",
-              border: "1px solid var(--fg)",
-              padding: "9px 16px",
-              fontSize: 12,
-              fontFamily: "var(--font-mono)",
-              letterSpacing: "0.04em",
-              cursor: "pointer",
-              flex: 1,
+              margin: "0 0 12px",
+              fontSize: 10,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--fg-faint)",
+              fontWeight: 500,
             }}
-            title="Abre la pregunta en el chat con todo su contexto (período, categoría, tipo, escala, entidades, hipótesis) para que el LLM responda con esa información."
           >
-            ABRIR EN CHAT →
-          </button>
+            Usar esta pregunta en
+          </h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <ActionBtn
+              label="Chat"
+              primary
+              onClick={() => router.push(`/chat?questionId=${encodeURIComponent(q.id)}`)}
+            />
+            <ActionBtn
+              label="El Taller"
+              onClick={() =>
+                router.push(
+                  `/atelier?questionId=${encodeURIComponent(q.id)}&intent=${encodeURIComponent(q.pregunta)}`
+                )
+              }
+            />
+            <ActionBtn
+              label="Deep Research"
+              onClick={() =>
+                router.push(
+                  `/deep-research?questionId=${encodeURIComponent(q.id)}&q=${encodeURIComponent(q.pregunta)}`
+                )
+              }
+            />
+            <ActionBtn
+              label="Hipótesis"
+              onClick={() =>
+                router.push(
+                  `/hypothesis?questionId=${encodeURIComponent(q.id)}&q=${encodeURIComponent(q.pregunta)}`
+                )
+              }
+            />
+          </div>
         </div>
       </div>
     </>
+  );
+}
+
+function ActionBtn({
+  label,
+  onClick,
+  primary,
+}: {
+  label: string;
+  onClick: () => void;
+  primary?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        appearance: "none",
+        background: primary ? "var(--fg)" : "transparent",
+        color: primary ? "var(--bg)" : "var(--fg)",
+        border: `1px solid ${primary ? "var(--fg)" : "var(--line-strong)"}`,
+        padding: "9px 14px",
+        fontSize: 12,
+        fontFamily: "var(--font-mono)",
+        letterSpacing: "0.04em",
+        cursor: "pointer",
+        textAlign: "left",
+        transition: "border-color 120ms var(--ease-out-custom)",
+      }}
+      onMouseEnter={(e) => {
+        if (!primary) e.currentTarget.style.borderColor = "var(--accent)";
+      }}
+      onMouseLeave={(e) => {
+        if (!primary) e.currentTarget.style.borderColor = "var(--line-strong)";
+      }}
+    >
+      {label} →
+    </button>
   );
 }
 

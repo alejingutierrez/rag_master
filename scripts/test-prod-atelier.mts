@@ -12,6 +12,7 @@ const INTENT =
   process.env.INTENT ||
   "Cuéntame la toma y la retoma del Palacio de Justicia en noviembre de 1985 desde la mirada de las víctimas.";
 const FORMAT = process.env.FORMAT || "cronica";
+const QUESTION_ID = process.env.QUESTION_ID || undefined;
 const MIN_DOCS = Number(process.env.MIN_DOCS || "3");
 const MAX_WAIT = Number(process.env.TIMEOUT || String(15 * 60)) * 1000;
 
@@ -51,6 +52,13 @@ interface AtelierMeta {
   criticalApparatus?: {
     fuentesPorSeccion?: { seccion: string; sourceRefs: { chunkId: string }[] }[];
   };
+  taxonomy?: {
+    periodoCode?: string;
+    categoriaCode?: string;
+    entidadesPersonas?: string[];
+    entidadesLugares?: string[];
+    entidadesConceptos?: string[];
+  };
   degraded?: string[];
 }
 interface Data {
@@ -76,7 +84,7 @@ async function main(): Promise<void> {
   const res = await fetch(`${URL}/api/atelier`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ intent: INTENT, formatId: FORMAT }),
+    body: JSON.stringify({ intent: INTENT, formatId: FORMAT, questionId: QUESTION_ID }),
   });
   if (!res.ok) fail(`POST HTTP ${res.status} — ${(await res.text()).slice(0, 300)}`);
   const { deliverableId } = (await res.json()) as { deliverableId?: string };
@@ -150,6 +158,17 @@ async function main(): Promise<void> {
         for (const ref of s.sourceRefs)
           if (!chunkIds.has(ref.chunkId)) fail(`ref colgante en aparato: ${ref.chunkId}`);
       ok(`aparato crítico: ${secciones.length} secciones, sin refs colgantes`);
+
+      // 7. Metadata analítica construida.
+      const tax = meta?.taxonomy;
+      if (!tax) fail("falta metadata.atelier.taxonomy");
+      if (!tax.periodoCode) fail("taxonomy sin periodoCode");
+      const numEnt =
+        (tax.entidadesPersonas?.length ?? 0) +
+        (tax.entidadesLugares?.length ?? 0) +
+        (tax.entidadesConceptos?.length ?? 0);
+      if (numEnt === 0) fail("taxonomy sin entidades construidas");
+      ok(`metadata analítica: período ${tax.periodoCode}/${tax.categoriaCode ?? "?"}, ${numEnt} entidades`);
 
       if (meta?.degraded?.length) {
         console.log(`\n  ⚠ degradaciones: ${meta.degraded.join("; ")}`);

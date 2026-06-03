@@ -11,6 +11,7 @@ import {
   buildCriticalApparatus,
   stripScaffolding,
 } from "../src/lib/atelier/aparato";
+import { normalizeTaxonomy, reconcilePeriodo } from "../src/lib/taxonomy";
 import type { SearchResult } from "../src/lib/vector-search";
 import type { VerifiedClaim } from "../src/lib/atelier/types";
 
@@ -233,6 +234,92 @@ test("un cuerpo ya limpio se mantiene", () => {
   const out = stripScaffolding(body);
   assert.ok(out.includes("# Título"));
   assert.ok(out.includes("párrafo normal"));
+});
+
+// ── 6. Taxonomía de entregables ──────────────────────────────────────
+group("reconcilePeriodo / normalizeTaxonomy");
+
+test("reconcilePeriodo: código válido y año coherente → mismo", () => {
+  assert.equal(reconcilePeriodo("REG", 1900), "REG");
+});
+test("reconcilePeriodo: año fuera de rango → recalcula desde el año", () => {
+  assert.equal(reconcilePeriodo("REG", 1700), "COL");
+});
+test("reconcilePeriodo: código inválido con año → período del año", () => {
+  assert.equal(reconcilePeriodo("ZZZ", 1985), "CNA");
+});
+test("reconcilePeriodo: código inválido sin año → TRANS", () => {
+  assert.equal(reconcilePeriodo("", null), "TRANS");
+});
+test("reconcilePeriodo: TRANS se respeta", () => {
+  assert.equal(reconcilePeriodo("TRANS", 1850), "TRANS");
+});
+
+test("normalizeTaxonomy: completo en camelCase", () => {
+  const t = normalizeTaxonomy({
+    periodoCode: "REG",
+    categoriaCode: "POL",
+    subcategoriaNombre: "Formación del Estado",
+    yearPrincipal: 1900,
+    yearsSecondary: [1886, 1910],
+    periodosRelacionados: ["EUC", "REG"],
+    entidades: { personas: ["Rafael Núñez"], lugares: ["Bogotá"], conceptos: ["Regeneración"] },
+    tipoPregunta: "causal",
+    clusterTematico: "hegemonía conservadora",
+    escalaGeografica: "nacional",
+  });
+  assert.equal(t.periodoCode, "REG");
+  assert.equal(t.periodoNombre, "Regeneración y Hegemonía Conservadora");
+  assert.equal(t.categoriaCode, "POL");
+  assert.equal(t.categoriaNombre, "Política y Estado");
+  assert.deepEqual(t.entidadesPersonas, ["Rafael Núñez"]);
+  assert.equal(t.tipoPregunta, "causal");
+  assert.equal(t.escalaGeografica, "nacional");
+  assert.deepEqual(t.periodosRelacionados, ["EUC"]); // se filtra el propio REG
+});
+
+test("normalizeTaxonomy: snake_case, año string y entidades planas", () => {
+  const t = normalizeTaxonomy({
+    periodo_code: "vio",
+    categoria_code: "con",
+    anio_principal: "1950",
+    anios_secundarios: ["1948"],
+    entidadesPersonas: ["Jorge Eliécer Gaitán"],
+    tipo_pregunta: "Causal",
+    escala_geografica: "NACIONAL",
+  });
+  assert.equal(t.periodoCode, "VIO");
+  assert.equal(t.yearPrincipal, 1950);
+  assert.deepEqual(t.yearsSecondary, [1948]);
+  assert.deepEqual(t.entidadesPersonas, ["Jorge Eliécer Gaitán"]);
+  assert.equal(t.tipoPregunta, "causal");
+  assert.equal(t.escalaGeografica, "nacional");
+});
+
+test("normalizeTaxonomy: período inválido + año → reconcilia", () => {
+  const t = normalizeTaxonomy({ periodoCode: "XXX", yearPrincipal: 1985, categoriaCode: "ECO" });
+  assert.equal(t.periodoCode, "CNA");
+});
+
+test("normalizeTaxonomy: año fuera del rango del período → reconcilia", () => {
+  const t = normalizeTaxonomy({ periodoCode: "REG", yearPrincipal: 1700 });
+  assert.equal(t.periodoCode, "COL");
+});
+
+test("normalizeTaxonomy: enums inválidos → null", () => {
+  const t = normalizeTaxonomy({
+    periodoCode: "TRANS",
+    categoriaCode: "POL",
+    tipoPregunta: "inventado",
+    escalaGeografica: "galactica",
+  });
+  assert.equal(t.tipoPregunta, null);
+  assert.equal(t.escalaGeografica, null);
+});
+
+test("normalizeTaxonomy: categoría inválida → fallback HIS", () => {
+  const t = normalizeTaxonomy({ periodoCode: "TRANS", categoriaCode: "NOPE" });
+  assert.equal(t.categoriaCode, "HIS");
 });
 
 // ── Resumen ──────────────────────────────────────────────────────────

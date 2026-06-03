@@ -1,6 +1,8 @@
 // ─── Taxonomía compartida: períodos históricos y categorías ──────────────────
 // Fuente única para questions-generator, question-filters, y enriquecimiento.
 
+import { TIPOS_PREGUNTA, ESCALAS_GEOGRAFICAS } from "./questions-config";
+
 export interface PeriodOption {
   code: string;
   nombre: string;
@@ -110,4 +112,120 @@ export function periodForYear(year: number): string {
 
 export function getCategoryByCode(code: string): CategoryOption | undefined {
   return CATEGORY_OPTIONS.find((c) => c.code === code);
+}
+
+// ─── Taxonomía analítica de entregables (construida o heredada) ───────────────
+
+export interface DeliverableTaxonomy {
+  periodoCode: string;
+  periodoNombre: string;
+  periodoRango: string;
+  categoriaCode: string;
+  categoriaNombre: string;
+  subcategoriaCode?: string;
+  subcategoriaNombre?: string;
+  yearPrincipal: number | null;
+  yearsSecondary: number[];
+  periodosRelacionados: string[];
+  entidadesPersonas: string[];
+  entidadesLugares: string[];
+  entidadesConceptos: string[];
+  tipoPregunta: string | null;
+  clusterTematico: string | null;
+  escalaGeografica: string | null;
+}
+
+/**
+ * Reconcilia el período con el año principal (mismo criterio que el generador de
+ * preguntas): si el código es inválido o el año cae >5 años fuera del rango del
+ * período, recalcula desde el año. TRANS y año nulo se respetan. Pura.
+ */
+export function reconcilePeriodo(periodoCode: string, yearPrincipal: number | null): string {
+  const code = (periodoCode || "").toUpperCase();
+  if (!PERIOD_CODES.includes(code)) {
+    return yearPrincipal != null ? periodForYear(yearPrincipal) : "TRANS";
+  }
+  if (code === "TRANS" || yearPrincipal == null) return code;
+  const b = PERIOD_YEAR_BOUNDS[code];
+  if (b && (yearPrincipal < b.start - 5 || yearPrincipal > b.end + 5)) {
+    return periodForYear(yearPrincipal);
+  }
+  return code;
+}
+
+function pickString(raw: Record<string, unknown>, ...keys: string[]): string | undefined {
+  for (const k of keys) {
+    const v = raw[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return undefined;
+}
+function toStrArray(v: unknown, max = 12): string[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+    .map((s) => s.trim())
+    .slice(0, max);
+}
+function toIntArray(v: unknown, max = 8): number[] {
+  if (!Array.isArray(v)) return [];
+  const out: number[] = [];
+  for (const x of v) {
+    const n = typeof x === "number" ? x : parseInt(String(x), 10);
+    if (Number.isInteger(n)) out.push(n);
+  }
+  return out.slice(0, max);
+}
+function normEnum(v: unknown, allowed: readonly string[]): string | null {
+  if (typeof v !== "string") return null;
+  const s = v.trim().toLowerCase().replace(/\s+/g, "_");
+  return allowed.includes(s) ? s : null;
+}
+
+/**
+ * Normaliza el JSON crudo de un clasificador a una `DeliverableTaxonomy` válida.
+ * Tolera camelCase y snake_case. Pura y testeable (sin red).
+ */
+export function normalizeTaxonomy(raw: Record<string, unknown>): DeliverableTaxonomy {
+  const yRaw = raw.yearPrincipal ?? raw.anio_principal ?? raw.year_principal;
+  let yearPrincipal: number | null = null;
+  if (typeof yRaw === "number" && Number.isInteger(yRaw)) yearPrincipal = yRaw;
+  else if (typeof yRaw === "string" && /^\d{3,4}$/.test(yRaw.trim())) yearPrincipal = parseInt(yRaw, 10);
+
+  const periodoInput = pickString(raw, "periodoCode", "periodo_code", "periodo") ?? "";
+  const periodoCode = reconcilePeriodo(periodoInput, yearPrincipal);
+  const period = getPeriodByCode(periodoCode);
+
+  let categoriaCode = (pickString(raw, "categoriaCode", "categoria_code", "categoria") ?? "").toUpperCase();
+  if (!CATEGORY_CODES.includes(categoriaCode)) {
+    const nombre = pickString(raw, "categoriaNombre", "categoria_nombre");
+    const byName = nombre
+      ? CATEGORY_OPTIONS.find((c) => c.nombre.toLowerCase() === nombre.toLowerCase())
+      : undefined;
+    categoriaCode = byName?.code ?? "HIS";
+  }
+  const category = getCategoryByCode(categoriaCode);
+
+  const ent = (raw.entidades ?? {}) as Record<string, unknown>;
+
+  return {
+    periodoCode,
+    periodoNombre: period?.nombre ?? "Transversal / Larga Duración",
+    periodoRango: period?.rango ?? "abarca 3+ períodos",
+    categoriaCode,
+    categoriaNombre: category?.nombre ?? categoriaCode,
+    subcategoriaCode: pickString(raw, "subcategoriaCode", "subcategoria_code"),
+    subcategoriaNombre: pickString(raw, "subcategoriaNombre", "subcategoria_nombre"),
+    yearPrincipal,
+    yearsSecondary: toIntArray(raw.yearsSecondary ?? raw.anios_secundarios),
+    periodosRelacionados: toStrArray(raw.periodosRelacionados ?? raw.periodos_relacionados)
+      .map((c) => c.toUpperCase())
+      .filter((c) => PERIOD_CODES.includes(c) && c !== periodoCode),
+    entidadesPersonas: toStrArray(ent.personas ?? raw.entidadesPersonas),
+    entidadesLugares: toStrArray(ent.lugares ?? raw.entidadesLugares),
+    entidadesConceptos: toStrArray(ent.conceptos ?? raw.entidadesConceptos),
+    tipoPregunta: normEnum(raw.tipoPregunta ?? raw.tipo_pregunta, TIPOS_PREGUNTA),
+    clusterTematico: pickString(raw, "clusterTematico", "cluster_tematico") ?? null,
+    escalaGeografica: normEnum(raw.escalaGeografica ?? raw.escala_geografica, ESCALAS_GEOGRAFICAS),
+  };
 }

@@ -18,6 +18,21 @@ interface DeliverableForResolve {
   questionId?: string | null;
   question?: { periodoCode: string; categoriaCode: string; documentId: string } | null;
   chunksUsed?: unknown;
+  metadata?: unknown;
+}
+
+/** Lee la taxonomía construida por el Taller en metadata.atelier.taxonomy. */
+function extractAtelierTaxonomy(metadata: unknown): ResolvedTaxonomy | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const atelier = (metadata as Record<string, unknown>).atelier;
+  if (!atelier || typeof atelier !== "object") return null;
+  const tax = (atelier as Record<string, unknown>).taxonomy;
+  if (!tax || typeof tax !== "object") return null;
+  const t = tax as Record<string, unknown>;
+  const periodoCode = typeof t.periodoCode === "string" ? t.periodoCode : undefined;
+  const categoriaCode = typeof t.categoriaCode === "string" ? t.categoriaCode : undefined;
+  if (!periodoCode && !categoriaCode) return null;
+  return { periodoCode, categoriaCode };
 }
 
 interface DocLookup {
@@ -43,6 +58,10 @@ export function resolveDeliverableTaxonomy(
       documentId: d.question.documentId,
     };
   }
+
+  // Entregables del Taller sin pregunta: taxonomía construida en metadata.
+  const atelierTax = extractAtelierTaxonomy(d.metadata);
+  if (atelierTax) return atelierTax;
 
   const chunks = Array.isArray(d.chunksUsed)
     ? (d.chunksUsed as Array<{ documentId?: string; documentFilename?: string }>)

@@ -124,6 +124,7 @@ async function handleChat(body: Record<string, unknown>) {
     configurationId,
     templateId,
     questionContext,
+    questionId,
   } = body as {
     question?: string;
     topK?: number;
@@ -133,6 +134,7 @@ async function handleChat(body: Record<string, unknown>) {
     configurationId?: string;
     templateId?: string;
     questionContext?: QuestionContext;
+    questionId?: string;
   };
 
   if (!question || typeof question !== "string" || !question.trim()) {
@@ -184,6 +186,14 @@ async function handleChat(body: Record<string, unknown>) {
     "us.anthropic.claude-opus-4-6-20250610-v1:0";
   const effectiveTemplateId = (templateId as string) || DEFAULT_TEMPLATE_ID;
 
+  // Linkeo a la pregunta: questionId explícito o el id embebido en questionContext.
+  const linkedQuestionId =
+    typeof questionId === "string" && questionId
+      ? questionId
+      : questionContext && typeof (questionContext as { id?: unknown }).id === "string"
+        ? (questionContext as { id: string }).id
+        : undefined;
+
   const [conversation, deliverable] = await Promise.all([
     prisma.conversation.create({
       data: {
@@ -205,6 +215,7 @@ async function handleChat(body: Record<string, unknown>) {
         chunksUsed: [],
         source: "chat",
         batchId: `chat-${Date.now()}`,
+        questionId: linkedQuestionId,
       },
     }),
   ]);

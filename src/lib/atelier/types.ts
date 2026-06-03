@@ -4,6 +4,7 @@
  */
 import type { SearchResult } from "../vector-search";
 import type { AtelierFormatId, LongitudId } from "../atelier-formats";
+import type { DeliverableTaxonomy } from "../taxonomy";
 
 // ── Entrada ──────────────────────────────────────────────────────────
 export interface AtelierInput {
@@ -164,6 +165,7 @@ export interface AtelierMetadata {
   brief?: AtelierBrief;
   confidenceIndex?: ConfidenceIndex;
   criticalApparatus?: CriticalApparatus;
+  taxonomy?: DeliverableTaxonomy;
   docCount?: number;
   wordCount?: number;
   qualityScore?: number;
@@ -190,6 +192,7 @@ export interface AtelierResult {
   chunksUsed: PersistedChunk[];
   confidenceIndex: ConfidenceIndex;
   criticalApparatus: CriticalApparatus;
+  taxonomy?: DeliverableTaxonomy;
   qualityScore?: number;
   degraded: string[];
   brief: AtelierBrief;

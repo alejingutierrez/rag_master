@@ -115,10 +115,12 @@ function DeepResearchContent() {
   const idFromUrl = params.get("id");
 
   const [question, setQuestion] = useState("");
+  const [linkedQuestionId, setLinkedQuestionId] = useState<string | null>(null);
   const [data, setData] = useState<DeepResearchData | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState<Tab>("paper");
   const pollerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const preloadedRef = useRef(false);
 
   const fetchData = useCallback(async (id: string) => {
     try {
@@ -162,6 +164,28 @@ function DeepResearchContent() {
     if (data?.userQuestion && !question) setQuestion(data.userQuestion);
   }, [data?.userQuestion]); // eslint-disable-line
 
+  // Precarga desde una pregunta del corpus: ?q= y/o ?questionId= (no autodispara).
+  useEffect(() => {
+    if (idFromUrl || preloadedRef.current) return;
+    const qid = params.get("questionId");
+    const qText = params.get("q");
+    if (!qid && !qText) return;
+    preloadedRef.current = true;
+    if (qid) setLinkedQuestionId(qid);
+    if (qText) {
+      setQuestion(qText);
+      return;
+    }
+    if (qid) {
+      fetch(`/api/questions/${qid}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { question?: { pregunta?: string } } | null) => {
+          if (d?.question?.pregunta) setQuestion(d.question.pregunta);
+        })
+        .catch(() => {});
+    }
+  }, [idFromUrl, params]);
+
   const submit = async () => {
     const q = question.trim();
     if (q.length < 12) {
@@ -176,7 +200,7 @@ function DeepResearchContent() {
       const res = await fetch("/api/deep-research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({ question: q, questionId: linkedQuestionId ?? undefined }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

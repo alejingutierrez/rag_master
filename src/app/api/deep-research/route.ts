@@ -54,7 +54,10 @@ interface DeepResearchMetadata {
 }
 
 export async function POST(req: NextRequest) {
-  const { question } = await req.json();
+  const body = await req.json();
+  const question = body?.question;
+  const questionId =
+    typeof body?.questionId === "string" && body.questionId ? body.questionId : undefined;
   if (!question || typeof question !== "string" || question.length < 12) {
     return new Response(
       JSON.stringify({ error: "Pregunta requerida (≥12 chars)" }),
@@ -82,6 +85,7 @@ export async function POST(req: NextRequest) {
       metadata: initialMetadata as unknown as object,
       source: "deep_research",
       batchId,
+      questionId,
     },
   });
 

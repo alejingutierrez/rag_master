@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
           status: true,
           answer: false,
           chunksUsed: true,
+          metadata: true,
           modelUsed: true,
           batchId: true,
           createdAt: true,

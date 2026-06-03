@@ -125,10 +125,12 @@ function AtelierContent() {
   const [intent, setIntent] = useState("");
   const [formatId, setFormatId] = useState<AtelierFormatId>("cronica");
   const [longitud, setLongitud] = useState<LongitudId>("media");
+  const [linkedQuestionId, setLinkedQuestionId] = useState<string | null>(null);
   const [data, setData] = useState<Data | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState<Tab>("pieza");
   const pollerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const preloadedRef = useRef(false);
 
   const fetchData = useCallback(async (id: string) => {
     try {
@@ -168,6 +170,28 @@ function AtelierContent() {
     };
   }, [idFromUrl, startPolling]);
 
+  // Precarga desde una pregunta del corpus: ?intent= y/o ?questionId=.
+  useEffect(() => {
+    if (idFromUrl || preloadedRef.current) return;
+    const qid = params.get("questionId");
+    const intentParam = params.get("intent");
+    if (!qid && !intentParam) return;
+    preloadedRef.current = true;
+    if (qid) setLinkedQuestionId(qid);
+    if (intentParam) {
+      setIntent(intentParam);
+      return;
+    }
+    if (qid) {
+      fetch(`/api/questions/${qid}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { question?: { pregunta?: string } } | null) => {
+          if (d?.question?.pregunta) setIntent(d.question.pregunta);
+        })
+        .catch(() => {});
+    }
+  }, [idFromUrl, params]);
+
   const submit = async () => {
     const q = intent.trim();
     if (q.length < 12) {
@@ -181,7 +205,7 @@ function AtelierContent() {
       const res = await fetch("/api/atelier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: q, formatId, longitud }),
+        body: JSON.stringify({ intent: q, formatId, longitud, questionId: linkedQuestionId ?? undefined }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -260,8 +284,31 @@ function AtelierContent() {
             })}
           </div>
 
-          <div className="label" style={{ marginBottom: 14 }}>
-            Intención
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 14,
+              flexWrap: "wrap",
+            }}
+          >
+            <span className="label">Intención</span>
+            {linkedQuestionId && (
+              <span
+                className="mono"
+                style={{
+                  fontSize: 10.5,
+                  color: "var(--accent)",
+                  border: "1px solid var(--accent)",
+                  borderRadius: 4,
+                  padding: "2px 8px",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                ↳ vinculado a una pregunta del corpus
+              </span>
+            )}
           </div>
           <textarea
             value={intent}

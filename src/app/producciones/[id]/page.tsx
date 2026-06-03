@@ -15,6 +15,7 @@ import {
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { getTemplateById } from "@/lib/chat-templates";
 import { getAtelierFormat } from "@/lib/atelier-formats";
+import { TIPO_LABELS, ESCALA_LABELS } from "@/lib/questions-config";
 
 interface ChunkUsage {
   id: string;
@@ -63,9 +64,24 @@ interface AtelierSection {
   sourceRefs: { chunkId: string; documentFilename?: string; pageNumber?: number }[];
   claimIds?: string[];
 }
+interface AtelierTaxonomy {
+  periodoCode?: string;
+  periodoNombre?: string;
+  categoriaNombre?: string;
+  subcategoriaNombre?: string;
+  yearPrincipal?: number | null;
+  yearsSecondary?: number[];
+  entidadesPersonas?: string[];
+  entidadesLugares?: string[];
+  entidadesConceptos?: string[];
+  tipoPregunta?: string | null;
+  escalaGeografica?: string | null;
+  clusterTematico?: string | null;
+}
 interface AtelierMeta {
   confidenceIndex?: AtelierConfidence;
   criticalApparatus?: { fuentesPorSeccion?: AtelierSection[] };
+  taxonomy?: AtelierTaxonomy;
   degraded?: string[];
 }
 
@@ -356,6 +372,8 @@ export default function ProduccionDetailPage({
           <ConfidencePanel ci={atelier.confidenceIndex} degraded={atelier.degraded} />
         )}
 
+        {isAtelier && atelier?.taxonomy && <TaxonomyPanel tax={atelier.taxonomy} />}
+
         <h3
           className="display"
           style={{
@@ -510,6 +528,115 @@ function SourceButton({
         </div>
       </div>
     </button>
+  );
+}
+
+function MiniTag({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      className="mono"
+      style={{
+        fontSize: 10,
+        letterSpacing: "0.05em",
+        textTransform: "uppercase",
+        padding: "3px 8px",
+        border: "1px solid var(--line-strong)",
+        borderRadius: 4,
+        color: "var(--fg-muted)",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function TaxEntities({ label, items }: { label: string; items?: string[] }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div
+        className="mono"
+        style={{
+          fontSize: 9.5,
+          color: "var(--fg-faint)",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          marginBottom: 4,
+        }}
+      >
+        {label} · {items.length}
+      </div>
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+        {items.map((it) => (
+          <span
+            key={it}
+            style={{
+              fontSize: 11.5,
+              color: "var(--fg)",
+              background: "var(--bg-muted)",
+              padding: "2px 7px",
+              borderRadius: 3,
+              border: "1px solid var(--line)",
+            }}
+          >
+            {it}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TaxonomyPanel({ tax }: { tax: AtelierTaxonomy }) {
+  const periodCode = tax.periodoCode as PeriodCode | undefined;
+  const hasPeriod = !!periodCode && periodCode in PERIODS;
+  const tipo = tax.tipoPregunta
+    ? (TIPO_LABELS as Record<string, string>)[tax.tipoPregunta] ?? tax.tipoPregunta
+    : null;
+  const escala = tax.escalaGeografica
+    ? (ESCALA_LABELS as Record<string, string>)[tax.escalaGeografica] ?? tax.escalaGeografica
+    : null;
+  const hasYears = tax.yearPrincipal != null || (tax.yearsSecondary?.length ?? 0) > 0;
+  return (
+    <div style={{ marginBottom: 28, paddingBottom: 24, borderBottom: "1px solid var(--line)" }}>
+      <div className="label" style={{ marginBottom: 12 }}>
+        Metadata analítica
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        {hasPeriod && <PeriodTag code={periodCode!} size="sm" showName />}
+        {tipo && <MiniTag>{tipo}</MiniTag>}
+        {escala && <MiniTag>{escala}</MiniTag>}
+      </div>
+
+      {(tax.categoriaNombre || tax.subcategoriaNombre) && (
+        <div style={{ fontSize: 12.5, color: "var(--fg)", marginBottom: 10 }}>
+          {tax.categoriaNombre}
+          {tax.subcategoriaNombre ? (
+            <span style={{ color: "var(--fg-muted)" }}> · {tax.subcategoriaNombre}</span>
+          ) : null}
+        </div>
+      )}
+
+      {hasYears && (
+        <div className="mono" style={{ fontSize: 11, color: "var(--fg-muted)", marginBottom: 12 }}>
+          {tax.yearPrincipal != null && (
+            <strong style={{ color: "var(--fg)" }}>{tax.yearPrincipal}</strong>
+          )}
+          {(tax.yearsSecondary?.length ?? 0) > 0 && ` · ${tax.yearsSecondary!.join(" · ")}`}
+        </div>
+      )}
+
+      <TaxEntities label="Personas" items={tax.entidadesPersonas} />
+      <TaxEntities label="Lugares" items={tax.entidadesLugares} />
+      <TaxEntities label="Conceptos" items={tax.entidadesConceptos} />
+
+      {tax.clusterTematico && (
+        <div style={{ fontSize: 12, color: "var(--fg-muted)", fontStyle: "italic", marginTop: 8 }}>
+          {tax.clusterTematico}
+        </div>
+      )}
+    </div>
   );
 }
 
