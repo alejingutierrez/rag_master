@@ -74,6 +74,14 @@ export async function POST(req: NextRequest) {
     message: "Descomponiendo la pregunta en sub-investigaciones…",
     startedAt: new Date().toISOString(),
   };
+  let safeQuestionId = questionId;
+  if (safeQuestionId) {
+    const exists = await prisma.question
+      .findUnique({ where: { id: safeQuestionId }, select: { id: true } })
+      .catch(() => null);
+    if (!exists) safeQuestionId = undefined;
+  }
+
   const deliverable = await prisma.deliverable.create({
     data: {
       userQuestion: question,
@@ -85,7 +93,7 @@ export async function POST(req: NextRequest) {
       metadata: initialMetadata as unknown as object,
       source: "deep_research",
       batchId,
-      questionId,
+      questionId: safeQuestionId,
     },
   });
 

@@ -12,6 +12,7 @@ import { verificar } from "./phase4-verificacion";
 import { componer } from "./phase5-composicion";
 import { pulirYControlar } from "./phase6-edicion";
 import { deriveConfidenceIndex, buildCriticalApparatus, stripScaffolding } from "./aparato";
+import { assessRelevance } from "./relevancia";
 import { classifyDeliverable } from "../deliverable-classifier";
 import type { DeliverableTaxonomy } from "../taxonomy";
 import type {
@@ -135,6 +136,23 @@ export async function runAtelier(
     `${acopio.chunks.length} fragmentos · ${acopio.uniqueDocuments} documentos`
   );
   await emit("acopio", "Evidencia reunida.", { docCount: acopio.uniqueDocuments });
+
+  // Guard de relevancia: evita el drift temático cuando el corpus es pobre en el
+  // tema pedido (el retrieval traería material adyacente y el Taller derivaría).
+  await emit("acopio", "Evaluando la relevancia de la evidencia…");
+  const relevancia = await assessRelevance(brief, acopio.chunks);
+  if (relevancia.cobertura === "nula") {
+    throw new Error(
+      `El corpus no contiene material suficiente sobre «${brief.scope || input.intent}». ` +
+        `La evidencia disponible ${relevancia.razon || "trata sobre otros temas"}. ` +
+        `Prueba con un tema mejor cubierto por el archivo, o parte de una pregunta del corpus.`
+    );
+  }
+  if (relevancia.cobertura === "parcial") {
+    degraded.push(
+      `Cobertura parcial del corpus${relevancia.razon ? `: ${relevancia.razon}` : ""}.`
+    );
+  }
 
   // ── 3. Triangulación ──
   set("triangulacion", "running", "Triangulando evidencia entre fuentes…");

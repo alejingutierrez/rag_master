@@ -194,6 +194,15 @@ async function handleChat(body: Record<string, unknown>) {
         ? (questionContext as { id: string }).id
         : undefined;
 
+  // Resiliencia: ignora un questionId inexistente en vez de fallar con 500.
+  let safeQuestionId = linkedQuestionId;
+  if (safeQuestionId) {
+    const exists = await prisma.question
+      .findUnique({ where: { id: safeQuestionId }, select: { id: true } })
+      .catch(() => null);
+    if (!exists) safeQuestionId = undefined;
+  }
+
   const [conversation, deliverable] = await Promise.all([
     prisma.conversation.create({
       data: {
@@ -215,7 +224,7 @@ async function handleChat(body: Record<string, unknown>) {
         chunksUsed: [],
         source: "chat",
         batchId: `chat-${Date.now()}`,
-        questionId: linkedQuestionId,
+        questionId: safeQuestionId,
       },
     }),
   ]);

@@ -49,6 +49,15 @@ export async function POST(req: NextRequest) {
     startedAt: new Date().toISOString(),
   };
 
+  // Resiliencia: ignora un questionId inexistente en vez de fallar con 500.
+  let safeQuestionId = questionId;
+  if (safeQuestionId) {
+    const exists = await prisma.question
+      .findUnique({ where: { id: safeQuestionId }, select: { id: true } })
+      .catch(() => null);
+    if (!exists) safeQuestionId = undefined;
+  }
+
   // 1. Crear Deliverable en GENERATING inmediatamente.
   const deliverable = await prisma.deliverable.create({
     data: {
@@ -61,7 +70,7 @@ export async function POST(req: NextRequest) {
       metadata: { atelier: initialMetadata } as unknown as object,
       source: "atelier",
       batchId,
-      questionId,
+      questionId: safeQuestionId,
     },
   });
 
