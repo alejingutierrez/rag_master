@@ -175,6 +175,64 @@ const MIGRATIONS = [
   `CREATE INDEX IF NOT EXISTS questions_tipoPregunta_idx ON questions ("tipoPregunta")`,
   `CREATE INDEX IF NOT EXISTS questions_escalaGeografica_idx ON questions ("escalaGeografica")`,
   `CREATE INDEX IF NOT EXISTS questions_documentId_clusterTematico_idx ON questions ("documentId", "clusterTematico")`,
+
+  // 2026-06-05: capa de preguntas-madre (consolidación cross-libro). Tablas NUEVAS,
+  // no-destructivo: `questions` NO se toca. Ver docs/consolidacion-preguntas-madre.md.
+  `CREATE TABLE IF NOT EXISTS master_questions (
+     id                   TEXT PRIMARY KEY,
+     "periodoCode"        TEXT NOT NULL,
+     "periodoOrden"       INTEGER NOT NULL DEFAULT 15,
+     "categoriaCode"      TEXT NOT NULL,
+     pregunta             TEXT NOT NULL,
+     "problemaSubyacente" TEXT NOT NULL,
+     "tesisEnTension"     JSONB NOT NULL DEFAULT '[]'::jsonb,
+     "tipoPregunta"       TEXT,
+     "escalaGeografica"   TEXT,
+     "gateScore"          INTEGER NOT NULL DEFAULT 0,
+     "gateReasons"        JSONB NOT NULL DEFAULT '{}'::jsonb,
+     cohesion             DOUBLE PRECISION,
+     status               TEXT NOT NULL DEFAULT 'DRAFT',
+     "reviewedBy"         TEXT,
+     "reviewedAt"         TIMESTAMP(3),
+     "humanEdited"        BOOLEAN NOT NULL DEFAULT false,
+     "supersededById"     TEXT,
+     "childCount"         INTEGER NOT NULL DEFAULT 0,
+     "bookCount"          INTEGER NOT NULL DEFAULT 0,
+     "runId"              TEXT,
+     "createdAt"          TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     "updatedAt"          TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+   )`,
+  `ALTER TABLE master_questions ADD COLUMN IF NOT EXISTS embedding vector(1536)`,
+  `CREATE INDEX IF NOT EXISTS master_questions_per_cat_idx ON master_questions ("periodoCode", "categoriaCode")`,
+  `CREATE INDEX IF NOT EXISTS master_questions_status_idx ON master_questions (status)`,
+  `CREATE INDEX IF NOT EXISTS "master_questions_periodoOrden_idx" ON master_questions ("periodoOrden")`,
+  `DO $$ BEGIN
+     IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'master_questions_embedding_hnsw_idx') THEN
+       EXECUTE 'CREATE INDEX master_questions_embedding_hnsw_idx ON master_questions USING hnsw (embedding vector_cosine_ops)';
+     END IF;
+   END $$`,
+  `CREATE TABLE IF NOT EXISTS question_master_links (
+     id           TEXT PRIMARY KEY,
+     "questionId" TEXT NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+     "masterId"   TEXT NOT NULL REFERENCES master_questions(id) ON DELETE CASCADE,
+     "isPrimary"  BOOLEAN NOT NULL DEFAULT false,
+     confidence   DOUBLE PRECISION NOT NULL DEFAULT 1,
+     rationale    TEXT,
+     "createdAt"  TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     UNIQUE ("questionId", "masterId")
+   )`,
+  `CREATE INDEX IF NOT EXISTS "question_master_links_questionId_idx" ON question_master_links ("questionId")`,
+  `CREATE INDEX IF NOT EXISTS question_master_links_master_primary_idx ON question_master_links ("masterId", "isPrimary")`,
+  `CREATE TABLE IF NOT EXISTS consolidation_runs (
+     id              TEXT PRIMARY KEY,
+     "periodoCode"   TEXT NOT NULL,
+     "categoriaCode" TEXT NOT NULL,
+     mode            TEXT NOT NULL DEFAULT 'preview',
+     params          JSONB NOT NULL DEFAULT '{}'::jsonb,
+     stats           JSONB NOT NULL DEFAULT '{}'::jsonb,
+     "createdAt"     TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+   )`,
+  `CREATE INDEX IF NOT EXISTS consolidation_runs_per_cat_idx ON consolidation_runs ("periodoCode", "categoriaCode")`,
 ];
 
 async function main() {

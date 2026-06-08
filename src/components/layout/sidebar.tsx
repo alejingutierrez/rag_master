@@ -22,6 +22,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/chat", label: "Consultar" },
       { href: "/questions", label: "Preguntas" },
+      { href: "/preguntas-madre", label: "Preguntas madre" },
       { href: "/hypothesis", label: "Hipótesis" },
       { href: "/deep-research", label: "Deep Research" },
       { href: "/atelier", label: "El Taller" },

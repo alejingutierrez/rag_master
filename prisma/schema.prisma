@@ -141,6 +141,7 @@ model Question {
   lastDeliveredAt        DateTime?
 
   deliverables           Deliverable[]
+  masterLinks            QuestionMasterLink[]
 
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
@@ -245,4 +246,89 @@ model Deliverable {
   @@index([source])
   @@index([createdAt])
   @@map("deliverables")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Consolidación: capa de "preguntas-madre" por encima de `questions`.
+// No-destructivo: `questions` es el substrato congelado; estas tablas se suman.
+// Ver docs/consolidacion-preguntas-madre.md.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum MasterStatus {
+  DRAFT      // generada por el pipeline, sin curar
+  REVIEW     // marcada para auditoría (borderline / gate 3-4)
+  APPROVED   // curada — entra a navegación y producción
+  REJECTED   // descartada (las hijas quedan libres / reasignables)
+  MERGED     // fusionada en otra (ver supersededById)
+}
+
+model MasterQuestion {
+  id                 String   @id @default(cuid())
+  periodoCode        String
+  periodoOrden       Int      @default(15)
+  categoriaCode      String
+
+  // Núcleo sintetizado
+  pregunta           String   @db.Text
+  problemaSubyacente String   @db.Text
+  tesisEnTension     Json     @default("[]") // [{tesis, questionId, libro}]
+  tipoPregunta       String?
+  escalaGeografica   String?
+
+  // Compuerta (rúbrica 5 tests)
+  gateScore          Int      @default(0)
+  gateReasons        Json     @default("{}")
+  cohesion           Float?
+
+  // Estado y curación
+  status             MasterStatus @default(DRAFT)
+  reviewedBy         String?
+  reviewedAt         DateTime?
+  humanEdited        Boolean  @default(false)
+  supersededById     String?
+
+  // Denormalizado
+  childCount         Int      @default(0)
+  bookCount          Int      @default(0)
+  runId              String?
+  // embedding vector(1536) vive en BD vía SQL manual (pgvector).
+
+  links              QuestionMasterLink[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([periodoCode, categoriaCode])
+  @@index([periodoOrden])
+  @@index([status])
+  @@map("master_questions")
+}
+
+model QuestionMasterLink {
+  id          String         @id @default(cuid())
+  questionId  String
+  question    Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  masterId    String
+  master      MasterQuestion @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  isPrimary   Boolean        @default(false)
+  confidence  Float          @default(1)
+  rationale   String?        @db.Text
+  createdAt   DateTime       @default(now())
+
+  @@unique([questionId, masterId])
+  @@index([questionId])
+  @@index([masterId, isPrimary])
+  @@map("question_master_links")
+}
+
+model ConsolidationRun {
+  id            String   @id @default(cuid())
+  periodoCode   String
+  categoriaCode String
+  mode          String   @default("preview") // preview | full | incremental
+  params        Json     @default("{}")
+  stats         Json     @default("{}")
+  createdAt     DateTime @default(now())
+
+  @@index([periodoCode, categoriaCode])
+  @@map("consolidation_runs")
 }
