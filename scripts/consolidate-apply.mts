@@ -47,8 +47,9 @@ async function main() {
     const spec: BlockSpec = { period: b.period, cat: b.cat, n: b.n, k: b.k };
     const childMeta = new Map<string, { libro?: string | null }>();
     const gByI = new Map(b.gate.map((g) => [g.i, g]));
+    const skipEmbedding = process.env.SKIP_EMBED === "1";
     for (let i = 0; i < b.masters.length; i++) {
-      await persistMaster(b.masters[i], gByI.get(i), spec, b.periodoOrden, runId, childMeta);
+      await persistMaster(b.masters[i], gByI.get(i), spec, b.periodoOrden, runId, childMeta, { skipEmbedding });
       written++;
     }
     console.log(`  ${b.period}×${b.cat}: +${b.masters.length} (${written}/${totalMasters})`);

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   const where: Prisma.MasterQuestionWhereInput = {
     ...(periodo ? { periodoCode: periodo } : {}),
     ...(categoria ? { categoriaCode: categoria } : {}),
-    ...(status ? { status: status as Prisma.MasterQuestionWhereInput["status"] } : {}),
+    ...(status ? { status } : {}),
     ...(search
       ? {
           OR: [

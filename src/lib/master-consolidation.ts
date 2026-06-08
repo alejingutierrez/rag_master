@@ -175,7 +175,8 @@ export async function persistMaster(
   b: BlockSpec,
   periodoOrden: number,
   runId: string,
-  childMeta: Map<string, { libro?: string | null }>
+  childMeta: Map<string, { libro?: string | null }>,
+  opts?: { skipEmbedding?: boolean }
 ): Promise<string> {
   const books = new Set(
     m.childIds.map((id) => childMeta.get(id)?.libro).filter(Boolean)
@@ -201,15 +202,18 @@ export async function persistMaster(
   });
 
   // Embedding de la madre (pgvector vía SQL crudo; Prisma no lo soporta).
-  try {
-    const emb = await generateEmbedding(m.pregunta, "search_document");
-    await prisma.$executeRawUnsafe(
-      `UPDATE master_questions SET embedding = $1::vector WHERE id = $2`,
-      `[${emb.join(",")}]`,
-      created.id
-    );
-  } catch {
-    /* embedding opcional; no bloquea */
+  // Opcional: se puede saltar en carga masiva y backfillear después.
+  if (!opts?.skipEmbedding) {
+    try {
+      const emb = await generateEmbedding(m.pregunta, "search_document");
+      await prisma.$executeRawUnsafe(
+        `UPDATE master_questions SET embedding = $1::vector WHERE id = $2`,
+        `[${emb.join(",")}]`,
+        created.id
+      );
+    } catch {
+      /* embedding opcional; no bloquea */
+    }
   }
 
   // Links m:n. isPrimary lo decide el caller (por ahora todos primary=true para

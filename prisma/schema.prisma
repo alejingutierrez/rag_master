@@ -254,13 +254,7 @@ model Deliverable {
 // Ver docs/consolidacion-preguntas-madre.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
-enum MasterStatus {
-  DRAFT      // generada por el pipeline, sin curar
-  REVIEW     // marcada para auditoría (borderline / gate 3-4)
-  APPROVED   // curada — entra a navegación y producción
-  REJECTED   // descartada (las hijas quedan libres / reasignables)
-  MERGED     // fusionada en otra (ver supersededById)
-}
+// status: DRAFT | REVIEW | APPROVED | REJECTED | MERGED (texto, columna TEXT en BD)
 
 model MasterQuestion {
   id                 String   @id @default(cuid())
@@ -281,7 +275,7 @@ model MasterQuestion {
   cohesion           Float?
 
   // Estado y curación
-  status             MasterStatus @default(DRAFT)
+  status             String   @default("DRAFT")
   reviewedBy         String?
   reviewedAt         DateTime?
   humanEdited        Boolean  @default(false)
