@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Fragment } from "react";
 import Link from "next/link";
 import {
   PageHeader,
@@ -125,8 +125,19 @@ export default function PreguntasMadrePage() {
 
         {!loading && items.length > 0 && (
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {items.map((m) => (
-              <li key={m.id} style={{ borderBottom: "1px solid var(--line)", padding: "18px 0" }}>
+            {items.map((m, idx) => {
+              const showHeader = idx === 0 || items[idx - 1].periodoCode !== m.periodoCode;
+              const pInfo = PERIODS[m.periodoCode];
+              return (
+              <Fragment key={m.id}>
+              {showHeader && (
+                <li style={{ listStyle: "none", padding: "30px 0 6px", display: "flex", alignItems: "baseline", gap: 12, borderTop: idx === 0 ? "none" : "1px solid var(--line-strong)" }}>
+                  <span style={{ width: 9, height: 9, borderRadius: 999, background: `var(--p-${pInfo?.slug})`, display: "inline-block", alignSelf: "center" }} />
+                  <span className="display-italic" style={{ fontSize: 22, color: "var(--fg)" }}>{pInfo?.label ?? m.periodoCode}</span>
+                  <span style={{ fontSize: 13, color: "var(--fg-muted)" }}>{pInfo?.yearRange}</span>
+                </li>
+              )}
+              <li style={{ borderBottom: "1px solid var(--line)", padding: "18px 0" }}>
                 <div style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
                   <button
                     onClick={() => setOpenId(openId === m.id ? null : m.id)}
@@ -150,7 +161,9 @@ export default function PreguntasMadrePage() {
 
                 {openId === m.id && <MasterDetail id={m.id} />}
               </li>
-            ))}
+              </Fragment>
+              );
+            })}
           </ul>
         )}
 
