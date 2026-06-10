@@ -13,7 +13,6 @@ import {
   DialogBody,
 } from "@/components/ui";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
-import { getTemplateById } from "@/lib/chat-templates";
 import { getAtelierFormat } from "@/lib/atelier-formats";
 import { TIPO_LABELS, ESCALA_LABELS } from "@/lib/questions-config";
 
@@ -205,12 +204,11 @@ export default function ProduccionDetailPage({
 
   const periodCode = data.question?.periodoCode as PeriodCode | undefined;
   const period = periodCode && periodCode in PERIODS ? PERIODS[periodCode] : null;
-  const template = getTemplateById(data.templateId);
   const isAtelier = data.source === "atelier";
   const atelier = isAtelier
     ? ((data.metadata as { atelier?: AtelierMeta } | null)?.atelier ?? null)
     : null;
-  const formatLabel = template?.name ?? getAtelierFormat(data.templateId)?.name ?? data.templateId;
+  const formatLabel = getAtelierFormat(data.templateId)?.name ?? data.templateId;
   const hasSections = !!atelier?.criticalApparatus?.fuentesPorSeccion?.length;
   const title = data.question?.pregunta ?? data.userQuestion ?? "Producción";
   const words = wordCount(data.answer);

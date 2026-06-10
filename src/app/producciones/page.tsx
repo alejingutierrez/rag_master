@@ -12,8 +12,7 @@ import {
   ghostBtn,
 } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
-import { getTemplateById, CHAT_TEMPLATES } from "@/lib/chat-templates";
-import { getAtelierFormat } from "@/lib/atelier-formats";
+import { getAtelierFormat, ATELIER_FORMAT_LIST } from "@/lib/atelier-formats";
 
 type KindFilter = "all" | "chat" | "batch" | "deep_research" | "atelier";
 
@@ -161,9 +160,9 @@ function ProduccionesContent() {
             <button
               type="button"
               style={primaryBtn}
-              onClick={() => router.push("/deep-research")}
+              onClick={() => router.push("/atelier")}
             >
-              Deep Research →
+              El Taller →
             </button>
           </div>
         }
@@ -207,11 +206,11 @@ function ProduccionesContent() {
             aria-label="Filtrar por tipo de producción"
           >
             <option value="all">Todos los tipos</option>
-            {CHAT_TEMPLATES.map((t) => {
-              const n = counts?.byTemplate?.[t.id];
+            {ATELIER_FORMAT_LIST.map((f) => {
+              const n = counts?.byTemplate?.[f.id];
               return (
-                <option key={t.id} value={t.id}>
-                  {t.name}
+                <option key={f.id} value={f.id}>
+                  {f.name}
                   {n ? ` · ${n}` : ""}
                 </option>
               );
@@ -234,8 +233,7 @@ function ProduccionesContent() {
             </>
           )}
           {deliverables.map((p, i) => {
-            const tpl = getTemplateById(p.templateId);
-            const tplName = tpl?.name ?? getAtelierFormat(p.templateId)?.name ?? p.templateId;
+            const tplName = getAtelierFormat(p.templateId)?.name ?? p.templateId;
             const fullTitle = p.question?.pregunta ?? p.userQuestion ?? "(producción)";
             const title = shortTitle(fullTitle);
             const period = p.question?.periodoCode as PeriodCode | undefined;

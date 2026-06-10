@@ -23,18 +23,13 @@ const NAV: NavGroup[] = [
       { href: "/chat", label: "Consultar" },
       { href: "/questions", label: "Preguntas" },
       { href: "/preguntas-madre", label: "Preguntas madre" },
-      { href: "/hypothesis", label: "Hipótesis" },
-      { href: "/deep-research", label: "Deep Research" },
       { href: "/atelier", label: "El Taller" },
-      { href: "/threads", label: "Hilos" },
-      { href: "/workspaces", label: "Workspaces" },
     ],
   },
   {
     label: "Producción",
     items: [
       { href: "/producciones", label: "Producciones" },
-      { href: "/compare", label: "Comparador" },
       { href: "/bibliography", label: "Bibliografía" },
     ],
   },

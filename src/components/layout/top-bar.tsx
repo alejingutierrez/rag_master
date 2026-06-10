@@ -15,13 +15,8 @@ const ROUTE_TRAIL: Record<string, string[]> = {
   "/questions": ["Archivo", "Investigación", "Preguntas"],
   "/questions/matriz": ["Archivo", "Investigación", "Preguntas", "Matriz"],
   "/questions/generate": ["Archivo", "Investigación", "Preguntas", "Generar"],
-  "/hypothesis": ["Archivo", "Investigación", "Hipótesis"],
-  "/deep-research": ["Archivo", "Investigación", "Deep Research"],
-  "/compare": ["Archivo", "Producción", "Comparador"],
   "/producciones": ["Archivo", "Producción", "Producciones"],
   "/bibliography": ["Archivo", "Producción", "Bibliografía"],
-  "/threads": ["Archivo", "Investigación", "Hilos"],
-  "/workspaces": ["Archivo", "Investigación", "Workspaces"],
   "/entities": ["Archivo", "Exploración", "Entidades"],
   "/graph": ["Archivo", "Exploración", "Grafo"],
 };
@@ -29,8 +24,6 @@ const ROUTE_TRAIL: Record<string, string[]> = {
 const DYNAMIC_PARENTS: Record<string, string[]> = {
   "/documents": ["Archivo", "Repositorio", "Documentos", "Detalle"],
   "/producciones": ["Archivo", "Producción", "Producciones", "Detalle"],
-  "/threads": ["Archivo", "Investigación", "Hilos", "Detalle"],
-  "/workspaces": ["Archivo", "Investigación", "Workspaces", "Detalle"],
 };
 
 export interface TopBarProps {

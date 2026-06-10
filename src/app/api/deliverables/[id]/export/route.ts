@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getTemplateById } from "@/lib/chat-templates";
+import { getAtelierFormat } from "@/lib/atelier-formats";
 
 // GET /api/deliverables/[id]/export?format=md|docx|pdf
 // Devuelve el entregable como archivo descargable.
@@ -33,7 +33,7 @@ export async function GET(
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
-  const template = getTemplateById(deliverable.templateId);
+  const template = getAtelierFormat(deliverable.templateId);
   const questionText = deliverable.question?.pregunta || deliverable.userQuestion || "(sin pregunta)";
   const title = extractTitle(deliverable.answer) || questionText.slice(0, 80);
   const filename = `${slugify(title)}.${format}`;

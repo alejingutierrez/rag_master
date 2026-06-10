@@ -12,7 +12,7 @@ import {
   linkBtn,
 } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
-import { getTemplateById } from "@/lib/chat-templates";
+import { getAtelierFormat } from "@/lib/atelier-formats";
 
 interface DashboardData {
   stats: {
@@ -354,7 +354,7 @@ export default function DashboardPage() {
                 </li>
               ) : (
                 data.recentDeliverables.slice(0, 4).map((p, i) => {
-                  const tpl = getTemplateById(p.templateId);
+                  const tpl = getAtelierFormat(p.templateId);
                   const title =
                     p.question?.pregunta ?? p.userQuestion ?? "(producción)";
                   const period = p.question?.periodoCode as PeriodCode | undefined;

@@ -9,7 +9,7 @@ import {
   type TipoPregunta,
   type EscalaGeografica,
 } from "@/lib/questions-config";
-import { getTemplateById } from "@/lib/chat-templates";
+import { getAtelierFormat } from "@/lib/atelier-formats";
 
 export interface QuestionDetail {
   id: string;
@@ -311,7 +311,7 @@ function DrawerContent({
                   onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "var(--fg)")}
                 >
-                  <span>{getTemplateById(d.templateId)?.name ?? d.templateId} →</span>
+                  <span>{getAtelierFormat(d.templateId)?.name ?? d.templateId} →</span>
                   <span
                     className="mono"
                     style={{
@@ -359,22 +359,6 @@ function DrawerContent({
               onClick={() =>
                 router.push(
                   `/atelier?questionId=${encodeURIComponent(q.id)}&intent=${encodeURIComponent(q.pregunta)}`
-                )
-              }
-            />
-            <ActionBtn
-              label="Deep Research"
-              onClick={() =>
-                router.push(
-                  `/deep-research?questionId=${encodeURIComponent(q.id)}&q=${encodeURIComponent(q.pregunta)}`
-                )
-              }
-            />
-            <ActionBtn
-              label="Hipótesis"
-              onClick={() =>
-                router.push(
-                  `/hypothesis?questionId=${encodeURIComponent(q.id)}&q=${encodeURIComponent(q.pregunta)}`
                 )
               }
             />
