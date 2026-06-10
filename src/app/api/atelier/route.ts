@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { runAtelier } from "@/lib/atelier/orchestrator";
 import { isValidFormatId, type LongitudId } from "@/lib/atelier-formats";
 import type { AtelierMetadata, AtelierQuestionMeta } from "@/lib/atelier/types";
+import { syncQuestionStats } from "@/lib/question-stats-sync";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 900; // 15 min en after(), independiente del HTTP response
@@ -184,6 +185,15 @@ export async function POST(req: NextRequest) {
         },
       });
       console.log(`[atelier ${deliverable.id}] DONE · ${finalMeta.wordCount} palabras · confianza ${result.confidenceIndex.score}`);
+
+      // Si el encargo vino de una pregunta del corpus, refresca sus conteos
+      // denormalizados (deliverableCount / completedTemplateIds / lastDeliveredAt)
+      // para que los badges de /questions reflejen la producción del Taller.
+      if (safeQuestionId) {
+        await syncQuestionStats(safeQuestionId).catch((e) =>
+          console.warn(`[atelier ${deliverable.id}] syncQuestionStats:`, (e as Error).message)
+        );
+      }
     } catch (err) {
       console.error(`[atelier ${deliverable.id}] FAILED:`, err);
       const msg = err instanceof Error ? err.message : "Error desconocido";

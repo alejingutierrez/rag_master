@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { CHAT_TEMPLATES } from "@/lib/chat-templates";
+import { ATELIER_FORMAT_LIST } from "@/lib/atelier-formats";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/questions/matrix?documentId=...&periodo=...&categoria=...
-// Devuelve la matriz preguntas × templates para la vista /questions/matriz.
-// El cliente arma la grilla; aquí solo aplanamos lo que necesita.
+// Devuelve la matriz preguntas × formatos del Taller para la vista /questions/matriz.
+// El estado de cada celda se computa directo de los Deliverables (templateId =
+// formatId para los del Taller), sin depender de completedTemplateIds.
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const documentId = searchParams.get("documentId") || undefined;
@@ -51,22 +52,21 @@ export async function GET(request: NextRequest) {
       ],
     });
 
-    const totalTemplates = CHAT_TEMPLATES.length;
+    const totalFormats = ATELIER_FORMAT_LIST.length;
 
-    // Por pregunta: estado por template (null | PENDING | GENERATING | COMPLETE | ERROR)
+    // Por pregunta: estado por formato. Se computa directo de los Deliverables
+    // (un entregable del Taller lleva templateId = formatId), no de los conteos
+    // denormalizados — así no depende de syncQuestionStats.
     const rows = questions.map((q) => {
-      const byTemplate: Record<string, { deliverableId: string; status: string } | null> = {};
-      for (const t of CHAT_TEMPLATES) {
-        const d = q.deliverables.find((dd) => dd.templateId === t.id);
-        byTemplate[t.id] = d ? { deliverableId: d.id, status: d.status } : null;
+      const byFormat: Record<string, { deliverableId: string; status: string } | null> = {};
+      let completedCount = 0;
+      for (const f of ATELIER_FORMAT_LIST) {
+        const d = q.deliverables.find((dd) => dd.templateId === f.id);
+        byFormat[f.id] = d ? { deliverableId: d.id, status: d.status } : null;
+        if (d?.status === "COMPLETE") completedCount++;
       }
-      const completedCount = q.completedTemplateIds.length;
       const stateLabel: "complete" | "partial" | "pending" =
-        completedCount >= totalTemplates
-          ? "complete"
-          : completedCount > 0
-          ? "partial"
-          : "pending";
+        completedCount >= totalFormats ? "complete" : completedCount > 0 ? "partial" : "pending";
       return {
         id: q.id,
         pregunta: q.pregunta,
@@ -79,22 +79,19 @@ export async function GET(request: NextRequest) {
         documentFilename: q.document.filename,
         completedCount,
         stateLabel,
-        byTemplate,
+        byFormat,
       };
     });
 
-    const filtered = status
-      ? rows.filter((r) => r.stateLabel === status)
-      : rows;
+    const filtered = status ? rows.filter((r) => r.stateLabel === status) : rows;
 
     return NextResponse.json({
-      templates: CHAT_TEMPLATES.map((t) => ({
-        id: t.id,
-        name: t.name,
-        category: t.category,
-        icon: t.icon,
+      formats: ATELIER_FORMAT_LIST.map((f) => ({
+        id: f.id,
+        name: f.name,
+        defaultWords: f.defaultWords,
       })),
-      totalTemplates,
+      totalFormats,
       rows: filtered,
       counts: {
         all: rows.length,

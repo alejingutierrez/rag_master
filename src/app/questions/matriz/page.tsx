@@ -1,17 +1,17 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import {
-  PageHeader,
-  PeriodTag,
-  primaryBtn,
-  linkBtn,
-} from "@/components/editorial";
-import { CHAT_TEMPLATES } from "@/lib/chat-templates";
+import { PageHeader, PeriodTag, linkBtn } from "@/components/editorial";
+import { ATELIER_FORMAT_LIST } from "@/lib/atelier-formats";
 
 type CellStatus = "PENDING" | "GENERATING" | "COMPLETE" | "ERROR" | null;
+
+interface Cell {
+  deliverableId: string;
+  status: string;
+}
 
 interface MatrixRow {
   id: string;
@@ -19,14 +19,16 @@ interface MatrixRow {
   periodoCode: string;
   periodoNombre: string;
   categoriaCode: string;
-  byTemplate: Record<string, { deliverableId: string; status: string } | null>;
+  byFormat: Record<string, Cell | null>;
   completedCount: number;
 }
 
 interface MatrixResp {
   rows: MatrixRow[];
-  totalTemplates: number;
+  totalFormats: number;
 }
+
+const FORMATS = ATELIER_FORMAT_LIST;
 
 export default function MatrizPage() {
   return (
@@ -42,62 +44,127 @@ function MatrizContent() {
 
   const [rows, setRows] = useState<MatrixRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedQs, setSelectedQs] = useState<Set<string>>(new Set());
-  const [selectedTpls, setSelectedTpls] = useState<Set<string>>(new Set());
-  const [generating, setGenerating] = useState(false);
+  // Celdas disparadas localmente (qid::formatId) para feedback inmediato antes
+  // de que el polling confirme el estado GENERATING desde la BD.
+  const [pending, setPending] = useState<Set<string>>(new Set());
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+  const documentId = params.get("documentId");
+
+  const fetchMatrix = useCallback(
+    async (signal?: AbortSignal) => {
+      const p = new URLSearchParams();
+      if (documentId) p.set("documentId", documentId);
+      const r = await fetch(`/api/questions/matrix?${p}`, { signal }).catch(() => null);
+      if (!r || !r.ok) return;
+      const data = (await r.json()) as MatrixResp;
+      setRows(data.rows ?? []);
+    },
+    [documentId]
+  );
 
   useEffect(() => {
     const ctrl = new AbortController();
     setLoading(true);
-    const p = new URLSearchParams();
-    const documentId = params.get("documentId");
-    if (documentId) p.set("documentId", documentId);
-    fetch(`/api/questions/matrix?${p}`, { signal: ctrl.signal })
-      .then((r) => (r.ok ? r.json() : { rows: [], totalTemplates: 0 }))
-      .then((data: MatrixResp) => setRows(data.rows ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    fetchMatrix(ctrl.signal).finally(() => setLoading(false));
     return () => ctrl.abort();
-  }, [params]);
+  }, [fetchMatrix]);
 
-  const toGen = selectedQs.size * selectedTpls.size;
-
-  const handleGenerate = async () => {
-    if (toGen === 0) return;
-    setGenerating(true);
-    try {
-      const res = await fetch("/api/deliverables/bulk-generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          questionIds: Array.from(selectedQs),
-          templateIds: Array.from(selectedTpls),
-        }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      toast.success(`${toGen} producciones encoladas para generación`);
-      setSelectedQs(new Set());
-      setSelectedTpls(new Set());
-      setTimeout(() => {
-        fetch("/api/questions/matrix")
-          .then((r) => r.json())
-          .then((data: MatrixResp) => setRows(data.rows ?? []));
-      }, 1500);
-    } catch (e) {
-      console.error(e);
-      toast.error("Error al iniciar generación");
-    } finally {
-      setGenerating(false);
+  // Polling mientras haya alguna celda en curso (GENERATING/PENDING o disparada local).
+  useEffect(() => {
+    const anyGenerating =
+      pending.size > 0 ||
+      rows.some((q) =>
+        FORMATS.some((f) => {
+          const s = q.byFormat[f.id]?.status;
+          return s === "GENERATING" || s === "PENDING";
+        })
+      );
+    if (!anyGenerating) {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+      return;
     }
-  };
+    if (pollRef.current) return;
+    pollRef.current = setInterval(() => {
+      void fetchMatrix();
+      // Limpia los pending locales que ya se reflejan en la BD.
+      setPending((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set(prev);
+        for (const q of rows) {
+          for (const f of FORMATS) {
+            const s = q.byFormat[f.id]?.status;
+            if (s === "GENERATING" || s === "COMPLETE") next.delete(`${q.id}::${f.id}`);
+          }
+        }
+        return next;
+      });
+    }, 6000);
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [rows, pending, fetchMatrix]);
+
+  useEffect(() => () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+  }, []);
+
+  const produce = useCallback(
+    async (q: MatrixRow, formatId: string) => {
+      const key = `${q.id}::${formatId}`;
+      setPending((prev) => new Set(prev).add(key));
+      try {
+        const res = await fetch("/api/atelier", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ intent: q.pregunta, formatId, questionId: q.id }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`);
+        }
+      } catch (e) {
+        setPending((prev) => {
+          const n = new Set(prev);
+          n.delete(key);
+          return n;
+        });
+        toast.error(`No se pudo producir: ${(e as Error).message}`);
+      }
+    },
+    []
+  );
+
+  // Produce todos los formatos faltantes (sin entregable o en ERROR) de una pregunta.
+  const produceRow = useCallback(
+    (q: MatrixRow) => {
+      const faltantes = FORMATS.filter((f) => {
+        const s = q.byFormat[f.id]?.status;
+        return s !== "COMPLETE" && s !== "GENERATING" && s !== "PENDING";
+      });
+      if (faltantes.length === 0) {
+        toast.info("Esta pregunta ya tiene los 4 formatos en curso o listos.");
+        return;
+      }
+      faltantes.forEach((f) => void produce(q, f.id));
+      toast.success(`${faltantes.length} formato(s) encolado(s) en el Taller.`);
+    },
+    [produce]
+  );
 
   return (
     <div className="fade-up" data-screen-label="QuestionsMatriz">
       <PageHeader
-        label="Investigación · Matriz Q×T"
-        title="Generación"
-        italic="por lotes"
-        subtitle="Selecciona preguntas (filas) y plantillas (columnas) para generar producciones en bloque. Cada celda llena ya tiene una producción asociada."
+        label="Investigación · Matriz Q×Formato"
+        title="Producción"
+        italic="por el Taller"
+        subtitle="Cada celda es una pregunta × un formato del Taller. Haz clic en una celda vacía para producirla (corre el motor agéntico completo, ~6-9 min). Una celda llena abre la producción."
       />
 
       <hr className="hairline" style={{ margin: "0 56px" }} />
@@ -105,7 +172,7 @@ function MatrizContent() {
       <section
         style={{
           padding: "18px 56px",
-          maxWidth: 1320,
+          maxWidth: 1100,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -123,49 +190,18 @@ function MatrizContent() {
           </button>
           <span style={{ color: "var(--fg-dim)" }}>·</span>
           <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>
-            {rows.length} preguntas × {CHAT_TEMPLATES.length} plantillas
+            {rows.length} preguntas × {FORMATS.length} formatos
           </span>
-        </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          {toGen > 0 && (
-            <span
-              className="mono"
-              style={{
-                fontSize: 11.5,
-                color: "var(--accent)",
-                letterSpacing: "0.04em",
-              }}
-            >
-              {toGen} celdas seleccionadas
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={toGen === 0 || generating}
-            style={
-              toGen > 0 && !generating
-                ? primaryBtn
-                : { ...primaryBtn, opacity: 0.4, cursor: "default" }
-            }
-          >
-            {generating ? "Encolando…" : `Generar ${toGen > 0 ? toGen + " celdas " : ""}→`}
-          </button>
         </div>
       </section>
 
-      <section
-        style={{
-          padding: "20px 56px 96px",
-          maxWidth: 1320,
-          overflowX: "auto",
-        }}
-      >
-        <div style={{ minWidth: 1100, border: "1px solid var(--line)" }}>
+      <section style={{ padding: "20px 56px 96px", maxWidth: 1100, overflowX: "auto" }}>
+        <div style={{ minWidth: 900, border: "1px solid var(--line)" }}>
+          {/* Header */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: `380px repeat(${CHAT_TEMPLATES.length}, 1fr)`,
+              gridTemplateColumns: `360px repeat(${FORMATS.length}, 1fr) 120px`,
               background: "var(--bg-subtle)",
               borderBottom: "1px solid var(--line)",
             }}
@@ -173,41 +209,17 @@ function MatrizContent() {
             <div style={{ padding: "14px 16px" }}>
               <div className="label">Pregunta</div>
             </div>
-            {CHAT_TEMPLATES.map((t) => {
-              const active = selectedTpls.has(t.id);
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedTpls((s) => {
-                      const n = new Set(s);
-                      if (n.has(t.id)) n.delete(t.id);
-                      else n.add(t.id);
-                      return n;
-                    });
-                  }}
-                  style={{
-                    appearance: "none",
-                    background: active ? "var(--fg)" : "transparent",
-                    color: active ? "var(--bg)" : "var(--fg-muted)",
-                    border: 0,
-                    borderLeft: "1px solid var(--line)",
-                    padding: "14px 12px",
-                    cursor: "pointer",
-                    textAlign: "left",
-                  }}
-                >
-                  <div style={{ fontSize: 12, fontWeight: 500 }}>{t.name}</div>
-                  <div
-                    className="mono"
-                    style={{ fontSize: 10, opacity: 0.7, marginTop: 3 }}
-                  >
-                    ≈{t.maxTokens.toLocaleString()} tk
-                  </div>
-                </button>
-              );
-            })}
+            {FORMATS.map((f) => (
+              <div key={f.id} style={{ padding: "14px 12px", borderLeft: "1px solid var(--line)" }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: "var(--fg)" }}>{f.name}</div>
+                <div className="mono" style={{ fontSize: 10, opacity: 0.6, marginTop: 3 }}>
+                  ~{f.defaultWords.toLocaleString()} pal.
+                </div>
+              </div>
+            ))}
+            <div style={{ padding: "14px 12px", borderLeft: "1px solid var(--line)" }}>
+              <div className="label">Acción</div>
+            </div>
           </div>
 
           {loading && (
@@ -215,129 +227,113 @@ function MatrizContent() {
               <div className="shimmer-line" style={{ height: 14, width: "50%" }} />
             </div>
           )}
+
           {!loading &&
-            rows.map((q, qi) => {
-              const active = selectedQs.has(q.id);
-              return (
+            rows.map((q, qi) => (
+              <div
+                key={q.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `360px repeat(${FORMATS.length}, 1fr) 120px`,
+                  borderBottom: qi === rows.length - 1 ? 0 : "1px solid var(--line)",
+                }}
+              >
+                <div style={{ padding: "14px 16px" }}>
+                  <div style={{ fontSize: 13, color: "var(--fg)", lineHeight: 1.35, marginBottom: 6 }}>
+                    {q.pregunta}
+                  </div>
+                  <PeriodTag code={q.periodoCode} size="sm" />
+                </div>
+                {FORMATS.map((f) => {
+                  const cell = q.byFormat[f.id];
+                  const localPending = pending.has(`${q.id}::${f.id}`);
+                  const status: CellStatus = localPending
+                    ? "GENERATING"
+                    : ((cell?.status as CellStatus) ?? null);
+                  return (
+                    <MatrixCell
+                      key={f.id}
+                      status={status}
+                      onClick={() => {
+                        if (status === "COMPLETE" && cell) {
+                          router.push(`/producciones/${cell.deliverableId}`);
+                        } else if (status === "GENERATING" || status === "PENDING") {
+                          /* en curso: no-op */
+                        } else {
+                          void produce(q, f.id);
+                        }
+                      }}
+                    />
+                  );
+                })}
                 <div
-                  key={q.id}
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: `380px repeat(${CHAT_TEMPLATES.length}, 1fr)`,
-                    borderBottom:
-                      qi === rows.length - 1 ? 0 : "1px solid var(--line)",
-                    background: active ? "var(--accent-soft)" : "transparent",
+                    borderLeft: "1px solid var(--line)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "10px 8px",
                   }}
                 >
                   <button
                     type="button"
-                    onClick={() => {
-                      setSelectedQs((s) => {
-                        const n = new Set(s);
-                        if (n.has(q.id)) n.delete(q.id);
-                        else n.add(q.id);
-                        return n;
-                      });
-                    }}
-                    style={{
-                      appearance: "none",
-                      background: "transparent",
-                      border: 0,
-                      padding: "14px 16px",
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
+                    onClick={() => produceRow(q)}
+                    title="Producir los formatos faltantes de esta pregunta"
+                    style={{ ...linkBtn, fontSize: 11 }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 10,
-                        alignItems: "baseline",
-                        marginBottom: 4,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 12,
-                          height: 12,
-                          border: `1px solid ${active ? "var(--accent)" : "var(--line-strong)"}`,
-                          background: active ? "var(--accent)" : "transparent",
-                          display: "inline-block",
-                          flexShrink: 0,
-                          position: "relative",
-                          top: 2,
-                          color: "var(--bg)",
-                          fontSize: 9,
-                          textAlign: "center",
-                          lineHeight: "10px",
-                        }}
-                      >
-                        {active && "✓"}
-                      </span>
-                      <span
-                        style={{ fontSize: 13, color: "var(--fg)", lineHeight: 1.35 }}
-                      >
-                        {q.pregunta}
-                      </span>
-                    </div>
-                    <div style={{ marginLeft: 22 }}>
-                      <PeriodTag code={q.periodoCode} size="sm" />
-                    </div>
+                    Faltantes →
                   </button>
-                  {CHAT_TEMPLATES.map((t) => {
-                    const cell = q.byTemplate[t.id];
-                    return (
-                      <MatrixCell
-                        key={t.id}
-                        status={(cell?.status as CellStatus) ?? null}
-                      />
-                    );
-                  })}
                 </div>
-              );
-            })}
+              </div>
+            ))}
         </div>
       </section>
     </div>
   );
 }
 
-function MatrixCell({ status }: { status: CellStatus }) {
+function MatrixCell({ status, onClick }: { status: CellStatus; onClick: () => void }) {
   const config: Record<
-    "complete" | "generating" | "pending" | "empty",
-    { bg: string; glyph: string; color: string }
+    "complete" | "generating" | "error" | "empty",
+    { bg: string; glyph: string; color: string; title: string }
   > = {
-    complete: { bg: "var(--bg-subtle)", glyph: "●", color: "var(--success)" },
-    generating: { bg: "transparent", glyph: "◐", color: "var(--accent)" },
-    pending: { bg: "transparent", glyph: "○", color: "var(--fg-faint)" },
-    empty: { bg: "transparent", glyph: "·", color: "var(--fg-dim)" },
+    complete: { bg: "var(--bg-subtle)", glyph: "●", color: "var(--success)", title: "Listo — abrir producción" },
+    generating: { bg: "transparent", glyph: "◐", color: "var(--accent)", title: "En curso…" },
+    error: { bg: "transparent", glyph: "✕", color: "var(--danger)", title: "Falló — clic para reintentar" },
+    empty: { bg: "transparent", glyph: "+", color: "var(--fg-faint)", title: "Producir este formato" },
   };
-
   const key: keyof typeof config =
     status === "COMPLETE"
       ? "complete"
       : status === "GENERATING" || status === "PENDING"
         ? "generating"
         : status === "ERROR"
-          ? "pending"
+          ? "error"
           : "empty";
-
   const c = config[key];
+  const interactive = key !== "generating";
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
+      title={c.title}
+      disabled={!interactive}
       style={{
+        appearance: "none",
         borderLeft: "1px solid var(--line)",
+        borderTop: 0,
+        borderRight: 0,
+        borderBottom: 0,
         background: c.bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: "12px 8px",
+        cursor: interactive ? "pointer" : "default",
       }}
     >
-      <span style={{ color: c.color, fontSize: 12, fontFamily: "var(--font-mono)" }}>
-        {c.glyph}
-      </span>
-    </div>
+      <span style={{ color: c.color, fontSize: 13, fontFamily: "var(--font-mono)" }}>{c.glyph}</span>
+    </button>
   );
 }

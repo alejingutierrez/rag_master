@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { CHAT_TEMPLATES } from "@/lib/chat-templates";
+import { ATELIER_FORMAT_LIST } from "@/lib/atelier-formats";
 import { TIPOS_PREGUNTA, ESCALAS_GEOGRAFICAS } from "@/lib/questions-config";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   const includeDeliverables = searchParams.get("includeDeliverables") === "true";
   const sortBy = searchParams.get("sortBy") || "default";
 
-  const totalTemplates = CHAT_TEMPLATES.length;
+  const totalTemplates = ATELIER_FORMAT_LIST.length;
 
   try {
     const stateFilter =

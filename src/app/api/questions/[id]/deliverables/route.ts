@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { CHAT_TEMPLATES } from "@/lib/chat-templates";
+import { ATELIER_FORMAT_LIST } from "@/lib/atelier-formats";
 
 export const dynamic = "force-dynamic";
 
@@ -48,9 +48,9 @@ export async function GET(
       updatedAt: Date;
     } | null> = {};
 
-    for (const t of CHAT_TEMPLATES) {
-      const d = question.deliverables.find((d) => d.templateId === t.id);
-      byTemplate[t.id] = d
+    for (const f of ATELIER_FORMAT_LIST) {
+      const d = question.deliverables.find((d) => d.templateId === f.id);
+      byTemplate[f.id] = d
         ? {
             deliverableId: d.id,
             status: d.status,
@@ -63,10 +63,10 @@ export async function GET(
     const completedCount = Object.values(byTemplate).filter(
       (s) => s?.status === "COMPLETE"
     ).length;
-    const totalTemplates = CHAT_TEMPLATES.length;
-    const missingTemplateIds = CHAT_TEMPLATES.filter(
-      (t) => byTemplate[t.id]?.status !== "COMPLETE"
-    ).map((t) => t.id);
+    const totalTemplates = ATELIER_FORMAT_LIST.length;
+    const missingTemplateIds = ATELIER_FORMAT_LIST.filter(
+      (f) => byTemplate[f.id]?.status !== "COMPLETE"
+    ).map((f) => f.id);
 
     return NextResponse.json({
       question: {
