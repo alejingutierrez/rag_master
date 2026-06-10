@@ -69,12 +69,6 @@ const PHASES: Phase[] = [
     estimatedMin: 25,
   },
   {
-    id: "f8",
-    label: "F8: Factualidad (con Claude Opus)",
-    cmd: ["npx", "tsx", "eval/run-answer-eval.mts", "--tag", "f8-factuality", "--table", "chunks"],
-    estimatedMin: 30,
-  },
-  {
     id: "f9-determ",
     label: "F9.1: Determinismo (5 runs por pregunta)",
     cmd: ["npx", "tsx", "eval/run-consistency-eval.mts", "--determinism", "5", "--table", "chunks"],
