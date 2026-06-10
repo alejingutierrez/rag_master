@@ -109,8 +109,12 @@ export async function generateEmbedding(
       const isThrottled =
         error instanceof Error &&
         (error.name === "ThrottlingException" ||
+          error.name === "UnrecognizedClientException" ||
+          error.name === "InvalidSignatureException" ||
+          error.name === "ExpiredTokenException" ||
           error.message.includes("Too many tokens") ||
-          error.message.includes("throttl"));
+          error.message.includes("throttl") ||
+          /security token|InvalidClientTokenId|Signature expired|ExpiredToken/i.test(error.message));
 
       if (isThrottled && attempt < MAX_RETRIES - 1) {
         // Backoff exponencial con cap: 5s, 10s, 20s, 40s, 60s, 60s… + jitter
@@ -236,8 +240,12 @@ export async function generateEmbeddings(
         const isThrottled =
           error instanceof Error &&
           (error.name === "ThrottlingException" ||
+            error.name === "UnrecognizedClientException" ||
+            error.name === "InvalidSignatureException" ||
+            error.name === "ExpiredTokenException" ||
             error.message.includes("Too many tokens") ||
-            error.message.includes("throttl"));
+            error.message.includes("throttl") ||
+            /security token|InvalidClientTokenId|Signature expired|ExpiredToken/i.test(error.message));
         if (isThrottled && attempt < MAX_RETRIES - 1) {
           const delay = Math.pow(2, attempt) * 4000 + Math.random() * 2000;
           console.log(
