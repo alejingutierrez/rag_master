@@ -12,7 +12,6 @@ import { primaryBtn, ghostBtn, PeriodTag } from "@/components/editorial";
 import { Cita } from "@/components/editorial/cita";
 import { TIPO_LABELS, ESCALA_LABELS } from "@/lib/questions-config";
 import type { TipoPregunta, EscalaGeografica } from "@/lib/questions-config";
-import { CHAT_TEMPLATES, DEFAULT_TEMPLATE_ID } from "@/lib/chat-templates";
 
 interface ChunkCitation {
   id: string;
@@ -56,8 +55,6 @@ const STARTERS = [
   "Explica las causas estructurales de la Guerra de los Mil Días.",
 ];
 
-const RAG_CONFIG = { topK: 100, similarityThreshold: 0.25 };
-
 function citationDocLabel(c: ChunkCitation): string {
   if (c.documentFilename) {
     return c.documentFilename.replace(/\.pdf$/i, "");
@@ -75,24 +72,33 @@ export default function ChatPage() {
   const [openChunk, setOpenChunk] = useState<number | null>(null);
   const [streamingText, setStreamingText] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [templateId, setTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
 
   const revealTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const typeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return () => {
       if (revealTimerRef.current) clearInterval(revealTimerRef.current);
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-      if (typeTimerRef.current) clearInterval(typeTimerRef.current);
     };
   }, []);
 
-  const handleAsk = useCallback(async (q: string, context?: QuestionContext, tplId?: string) => {
+  // Revelado escalonado pero rápido de las cards de "Fuentes" cuando llegan.
+  const animateReveal = useCallback((total: number) => {
     if (revealTimerRef.current) clearInterval(revealTimerRef.current);
-    if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-    if (typeTimerRef.current) clearInterval(typeTimerRef.current);
+    if (total <= 0) return;
+    const intervalMs = total > 10 ? 60 : 140;
+    let r = 0;
+    revealTimerRef.current = setInterval(() => {
+      r++;
+      setRevealedChunks(Math.min(r, total));
+      if (r >= total && revealTimerRef.current) {
+        clearInterval(revealTimerRef.current);
+        revealTimerRef.current = null;
+      }
+    }, intervalMs);
+  }, []);
+
+  const handleAsk = useCallback(async (q: string, context?: QuestionContext) => {
+    if (revealTimerRef.current) clearInterval(revealTimerRef.current);
 
     setAskedQ(q);
     setAskedContext(context ?? null);
@@ -105,110 +111,91 @@ export default function ChatPage() {
     setErrorMessage(null);
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: q,
-          topK: RAG_CONFIG.topK,
-          similarityThreshold: RAG_CONFIG.similarityThreshold,
           ...(context ? { questionContext: context } : {}),
-          ...(tplId ? { templateId: tplId } : {}),
         }),
       });
 
-      if (!res.ok) {
+      if (!res.ok || !res.body) {
         const err = await res.json().catch(() => ({}));
         setPhase("error");
         setErrorMessage((err as { error?: string }).error ?? `HTTP ${res.status}`);
         return;
       }
 
-      const { id } = (await res.json()) as { id: string };
+      // Consumo del SSE en vivo. Eventos:
+      //   meta   → id de la conversación
+      //   chunks → pasajes recuperados (panel Fuentes)
+      //   delta  → token(s) de la respuesta (se anexan en tiempo real)
+      //   done   → fin
+      //   error  → fallo
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let streamingStarted = false;
 
-      // Polling. El POST ya no devuelve chunks: el pipeline corre en background
-      // y los publica vía polling.
-      //   status="RETRIEVING" → aún buscando, mantener spinner.
-      //   status="GENERATING" → chunks listos, animar reveal mientras Claude redacta.
-      //   status="COMPLETE"   → arrancar typing del answer.
-      //   status="ERROR"      → mostrar mensaje.
-      let chunksRevealStarted = false;
-      let visibleChunks: ChunkCitation[] = [];
-
-      pollTimerRef.current = setInterval(async () => {
-        try {
-          const poll = await fetch(`/api/chat/${id}`);
-          if (!poll.ok) return;
-          const data = (await poll.json()) as {
-            status: string;
-            answer?: string;
-            chunks?: ChunkCitation[];
-          };
-
-          // Arrancar reveal de chunks la primera vez que llegan.
-          // Mostramos todos los chunks que persistió el backend (hasta 50);
-          // así el panel "Fuentes" refleja exactamente lo que vio el LLM.
-          if (!chunksRevealStarted && data.chunks && data.chunks.length > 0) {
-            chunksRevealStarted = true;
-            visibleChunks = data.chunks;
-            setChunks(visibleChunks);
-            // Reveal escalonado pero rápido: ~3-4s total para 50 cards.
-            const intervalMs = visibleChunks.length > 10 ? 80 : 200;
-            let r = 0;
-            revealTimerRef.current = setInterval(() => {
-              r++;
-              setRevealedChunks(Math.min(r, visibleChunks.length));
-              if (r >= visibleChunks.length && revealTimerRef.current) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const events = buf.split("\n\n");
+        buf = events.pop() ?? "";
+        for (const ev of events) {
+          for (const line of ev.split("\n")) {
+            if (!line.startsWith("data: ")) continue;
+            let data: Record<string, unknown>;
+            try {
+              data = JSON.parse(line.slice(6));
+            } catch {
+              continue;
+            }
+            if (data.type === "chunks") {
+              const cks = (data.chunks as ChunkCitation[]) ?? [];
+              setChunks(cks);
+              animateReveal(cks.length);
+            } else if (data.type === "delta") {
+              if (!streamingStarted) {
+                streamingStarted = true;
+                setPhase("streaming");
+              }
+              const text = data.text as string;
+              setStreamingText((prev) => prev + text);
+            } else if (data.type === "done") {
+              setPhase("done");
+              if (revealTimerRef.current) {
                 clearInterval(revealTimerRef.current);
                 revealTimerRef.current = null;
               }
-            }, intervalMs);
-          }
-
-          if (data.status === "COMPLETE" && data.answer) {
-            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-            if (revealTimerRef.current) {
-              clearInterval(revealTimerRef.current);
-              revealTimerRef.current = null;
+              setChunks((cks) => {
+                setRevealedChunks(cks.length);
+                return cks;
+              });
+            } else if (data.type === "error") {
+              setPhase("error");
+              setErrorMessage((data.message as string) ?? "Error al generar respuesta.");
             }
-            setRevealedChunks(visibleChunks.length);
-            startTyping(data.answer);
-          } else if (data.status === "ERROR") {
-            if (pollTimerRef.current) clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
-            setPhase("error");
-            setErrorMessage(data.answer ?? "Error al generar respuesta.");
           }
-        } catch {
-          /* retry next tick */
         }
-      }, 2000);
+      }
+
+      // Si el stream cerró sin un "done" explícito pero alcanzamos a recibir
+      // texto, lo damos por terminado.
+      setPhase((p) => (p === "streaming" ? "done" : p));
     } catch (err) {
       console.error(err);
       setPhase("error");
       setErrorMessage("Error de conexión.");
     }
-  }, []);
-
-  function startTyping(full: string) {
-    setPhase("streaming");
-    let i = 0;
-    typeTimerRef.current = setInterval(() => {
-      i = Math.min(i + 30, full.length);
-      setStreamingText(full.slice(0, i));
-      if (i >= full.length && typeTimerRef.current) {
-        clearInterval(typeTimerRef.current);
-        typeTimerRef.current = null;
-        setPhase("done");
-      }
-    }, 22);
-  }
+  }, [animateReveal]);
 
   const submit = () => {
     const q = question.trim();
     if (!q || phase === "searching" || phase === "streaming") return;
-    void handleAsk(q, undefined, templateId);
+    void handleAsk(q);
   };
 
   // Deep-link desde /questions (drawer "Abrir en chat"):
@@ -339,8 +326,6 @@ export default function ChatPage() {
               onSubmit={submit}
               onKeyDown={handleKeyDown}
               disabled={phase === "searching" || phase === "streaming"}
-              templateId={templateId}
-              onTemplateChange={setTemplateId}
             />
           </div>
         </div>
@@ -886,20 +871,14 @@ function ChatInput({
   onSubmit,
   onKeyDown,
   disabled,
-  templateId,
-  onTemplateChange,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
   onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
   disabled: boolean;
-  templateId: string;
-  onTemplateChange: (id: string) => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const current = CHAT_TEMPLATES.find((t) => t.id === templateId) ?? CHAT_TEMPLATES[0];
 
   // Auto-resize: la caja crece con el texto hasta ~200px y luego hace scroll.
   useEffect(() => {
@@ -922,128 +901,6 @@ function ChatInput({
         padding: "8px 0",
       }}
     >
-      {/* Selector compacto de tipo de salida — el feature de múltiples plantillas. */}
-      <div style={{ position: "relative", flexShrink: 0 }}>
-        {pickerOpen && (
-          <div
-            onClick={() => setPickerOpen(false)}
-            style={{ position: "fixed", inset: 0, zIndex: 20 }}
-            aria-hidden
-          />
-        )}
-        <button
-          type="button"
-          onClick={() => setPickerOpen((o) => !o)}
-          title={`Tipo de salida: ${current?.name ?? "—"}`}
-          aria-label={`Tipo de salida: ${current?.name ?? "—"}`}
-          style={{
-            appearance: "none",
-            background: "transparent",
-            border: "1px solid var(--line-strong)",
-            borderRadius: 6,
-            padding: "8px 10px",
-            display: "flex",
-            alignItems: "center",
-            gap: 7,
-            cursor: "pointer",
-            color: "var(--fg-muted)",
-            maxWidth: 170,
-          }}
-        >
-          <span style={{ fontSize: 15, lineHeight: 1 }}>{current?.icon ?? "✶"}</span>
-          <span
-            className="mono"
-            style={{
-              fontSize: 11,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {current?.name ?? "Tipo"}
-          </span>
-          <span style={{ fontSize: 9, color: "var(--fg-faint)" }}>▴</span>
-        </button>
-        {pickerOpen && (
-          <div
-            role="listbox"
-            aria-label="Tipo de salida"
-            style={{
-              position: "absolute",
-              bottom: "calc(100% + 8px)",
-              left: 0,
-              zIndex: 21,
-              width: 300,
-              maxHeight: 340,
-              overflowY: "auto",
-              background: "var(--bg)",
-              border: "1px solid var(--line-strong)",
-              borderRadius: 8,
-              boxShadow: "0 12px 40px -12px rgba(0,0,0,0.28)",
-              padding: 6,
-            }}
-          >
-            {CHAT_TEMPLATES.map((t) => {
-              const active = t.id === templateId;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  onClick={() => {
-                    onTemplateChange(t.id);
-                    setPickerOpen(false);
-                  }}
-                  style={{
-                    appearance: "none",
-                    background: active ? "var(--bg-muted)" : "transparent",
-                    border: 0,
-                    borderRadius: 6,
-                    width: "100%",
-                    textAlign: "left",
-                    padding: "9px 10px",
-                    cursor: "pointer",
-                    display: "flex",
-                    gap: 10,
-                    alignItems: "flex-start",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-muted)")}
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = active ? "var(--bg-muted)" : "transparent")
-                  }
-                >
-                  <span style={{ fontSize: 16, lineHeight: 1.2 }}>{t.icon}</span>
-                  <span style={{ minWidth: 0 }}>
-                    <span
-                      style={{
-                        display: "block",
-                        fontSize: 13,
-                        color: "var(--fg)",
-                        fontWeight: active ? 600 : 400,
-                      }}
-                    >
-                      {t.name}
-                    </span>
-                    <span
-                      style={{
-                        display: "block",
-                        fontSize: 11,
-                        color: "var(--fg-muted)",
-                        lineHeight: 1.4,
-                        marginTop: 2,
-                      }}
-                    >
-                      {t.description}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
       <textarea
         ref={ref}
         value={value}
