@@ -261,6 +261,16 @@ export async function enrichDocument(
 
 ${context}`;
 
+  // Opus 4.7+ son "thinking models" y NO aceptan `temperature` en inferenceConfig
+  // (Bedrock lanza ValidationException: "temperature is deprecated for this model").
+  const isThinkingModel = /claude-(opus|sonnet)-(4-7|4-8|5)/.test(CLAUDE_MODEL);
+  const inferenceConfig: { maxTokens: number; temperature?: number } = {
+    maxTokens: 4000,
+  };
+  if (!isThinkingModel) {
+    inferenceConfig.temperature = 0.3;
+  }
+
   const command = new ConverseCommand({
     modelId: CLAUDE_MODEL,
     system: [{ text: ENRICHMENT_SYSTEM_PROMPT }],
@@ -274,10 +284,7 @@ ${context}`;
       tools: [{ toolSpec: ENRICH_TOOL_SPEC }],
       toolChoice: { tool: { name: ENRICH_TOOL_NAME } },
     },
-    inferenceConfig: {
-      maxTokens: 4000,
-      temperature: 0.3,
-    },
+    inferenceConfig,
   });
 
   const response = await bedrock.send(command);
