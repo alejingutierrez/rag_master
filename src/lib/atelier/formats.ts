@@ -65,11 +65,24 @@ function briefBlock(brief: AtelierBrief): string {
   ]
     .filter(Boolean)
     .join(" · ");
-  return `## ENCARGO
+  const base = `## ENCARGO
 
 - **Intención que vertebra la pieza** (guía interna, NO la cites ni la conviertas en tesis explícita a defender): ${brief.tesisTentativa}
 - **Alcance**: ${brief.scope}${ents ? `\n- **Coordenadas**: ${ents}` : ""}
 - **Voz**: ${brief.ficha.voz}`;
+
+  // Espina argumental (fase de hipótesis): la pieza la sostiene integrándola en
+  // la prosa, jamás como un esquema "tesis/antítesis" visible.
+  const h = brief.hipotesis;
+  if (h && (h.tesis || h.sintesis)) {
+    const partes = [
+      h.tesis ? `- **Tesis**: ${h.tesis}` : "",
+      h.antitesis ? `- **Tensión a no ignorar**: ${h.antitesis}` : "",
+      h.sintesis ? `- **Posición a sostener**: ${h.sintesis}` : "",
+    ].filter(Boolean);
+    return `${base}\n\n## ESPINA ARGUMENTAL (guía interna — intégrala en la prosa, no como esquema)\n\n${partes.join("\n")}`;
+  }
+  return base;
 }
 
 function materialBlock(verifiedContext: string): string {

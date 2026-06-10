@@ -2,7 +2,7 @@ import { NextRequest, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { runAtelier } from "@/lib/atelier/orchestrator";
 import { isValidFormatId, type LongitudId } from "@/lib/atelier-formats";
-import type { AtelierMetadata } from "@/lib/atelier/types";
+import type { AtelierMetadata, AtelierQuestionMeta } from "@/lib/atelier/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 900; // 15 min en after(), independiente del HTTP response
@@ -49,13 +49,47 @@ export async function POST(req: NextRequest) {
     startedAt: new Date().toISOString(),
   };
 
-  // Resiliencia: ignora un questionId inexistente en vez de fallar con 500.
+  // Carga la metadata curada de la pregunta (si el encargo viene de una) para
+  // alimentar el encuadre. Resiliencia: ignora un questionId inexistente.
   let safeQuestionId = questionId;
+  let questionMeta: AtelierQuestionMeta | undefined;
   if (safeQuestionId) {
-    const exists = await prisma.question
-      .findUnique({ where: { id: safeQuestionId }, select: { id: true } })
+    const q = await prisma.question
+      .findUnique({
+        where: { id: safeQuestionId },
+        select: {
+          id: true,
+          pregunta: true,
+          hipotesisImplicita: true,
+          entidadesPersonas: true,
+          entidadesLugares: true,
+          entidadesConceptos: true,
+          periodoNombre: true,
+          periodoRango: true,
+          categoriaNombre: true,
+          yearPrincipal: true,
+          clusterTematico: true,
+          escalaGeografica: true,
+        },
+      })
       .catch(() => null);
-    if (!exists) safeQuestionId = undefined;
+    if (q) {
+      questionMeta = {
+        pregunta: q.pregunta,
+        hipotesisImplicita: q.hipotesisImplicita ?? undefined,
+        entidadesPersonas: q.entidadesPersonas,
+        entidadesLugares: q.entidadesLugares,
+        entidadesConceptos: q.entidadesConceptos,
+        periodoNombre: q.periodoNombre,
+        periodoRango: q.periodoRango,
+        categoriaNombre: q.categoriaNombre,
+        yearPrincipal: q.yearPrincipal,
+        clusterTematico: q.clusterTematico ?? undefined,
+        escalaGeografica: q.escalaGeografica ?? undefined,
+      };
+    } else {
+      safeQuestionId = undefined;
+    }
   }
 
   // 1. Crear Deliverable en GENERATING inmediatamente.
@@ -112,6 +146,7 @@ export async function POST(req: NextRequest) {
           intent,
           formatId,
           longitud,
+          questionMeta,
           tableName: effectiveTable,
           useParentExpansion: v2Available,
         },

@@ -7,10 +7,35 @@ import type { AtelierFormatId, LongitudId } from "../atelier-formats";
 import type { DeliverableTaxonomy } from "../taxonomy";
 
 // ── Entrada ──────────────────────────────────────────────────────────
+
+/**
+ * Metadata curada de una pregunta (normal o madre) que alimenta el encuadre.
+ * Todos los campos son opcionales: el Taller los usa como pistas de arranque
+ * (entidades, anclaje temporal, hipótesis implícita) en vez de re-derivarlo todo.
+ */
+export interface AtelierQuestionMeta {
+  pregunta?: string;
+  hipotesisImplicita?: string;
+  /** Tesis en tensión (de una pregunta-madre): debate cross-libro a sostener. */
+  tesisEnTension?: string[];
+  problemaSubyacente?: string;
+  entidadesPersonas?: string[];
+  entidadesLugares?: string[];
+  entidadesConceptos?: string[];
+  periodoNombre?: string;
+  periodoRango?: string;
+  categoriaNombre?: string;
+  yearPrincipal?: number | null;
+  clusterTematico?: string;
+  escalaGeografica?: string;
+}
+
 export interface AtelierInput {
   intent: string;
   formatId: AtelierFormatId;
   longitud?: LongitudId;
+  /** Pistas curadas de la pregunta de origen (si el encargo viene de una). */
+  questionMeta?: AtelierQuestionMeta;
   /** Tabla efectiva resuelta por el endpoint (chunks_v2 vacío ⇒ "chunks"). */
   tableName: "chunks" | "chunks_v2";
   useParentExpansion: boolean;
@@ -25,6 +50,20 @@ export interface AtelierEntities {
   temporalidad: string;
 }
 
+/**
+ * Hipótesis dialéctica del encargo, fundada en la evidencia verificada.
+ * Absorbe la lógica de la vieja superficie /hypothesis: da espina argumental a
+ * la pieza. INTERNA: no se muestra verbatim al lector.
+ */
+export interface AtelierHipotesis {
+  /** La tesis central que la evidencia mejor sostiene. */
+  tesis: string;
+  /** El contraargumento o la tensión más fuerte que el material revela. */
+  antitesis: string;
+  /** La posición matizada a sostener en la pieza. */
+  sintesis: string;
+}
+
 export interface AtelierBrief {
   thinking: string;
   /** Intuición que vertebra la indagación. INTERNA: no se muestra al lector. */
@@ -32,6 +71,8 @@ export interface AtelierBrief {
   ejes: string[];
   scope: string;
   entities: AtelierEntities;
+  /** Hipótesis dialéctica (fase de hipótesis, tras la verificación). */
+  hipotesis?: AtelierHipotesis;
   ficha: {
     formato: AtelierFormatId;
     voz: string;
@@ -144,6 +185,7 @@ export type AtelierStage =
   | "acopio"
   | "triangulacion"
   | "verificacion"
+  | "hipotesis"
   | "composicion"
   | "edicion"
   | "complete"

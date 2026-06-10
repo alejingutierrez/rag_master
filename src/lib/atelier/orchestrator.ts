@@ -9,6 +9,7 @@ import { buildBrief } from "./phase1-encuadre";
 import { acopiar } from "./phase2-acopio";
 import { triangular } from "./phase3-triangulacion";
 import { verificar } from "./phase4-verificacion";
+import { formularHipotesis } from "./phase-hipotesis";
 import { componer } from "./phase5-composicion";
 import { pulirYControlar } from "./phase6-edicion";
 import { deriveConfidenceIndex, buildCriticalApparatus, stripScaffolding } from "./aparato";
@@ -73,6 +74,7 @@ export async function runAtelier(
     "acopio",
     "triangulacion",
     "verificacion",
+    "hipotesis",
     "composicion",
     "edicion",
   ];
@@ -102,6 +104,7 @@ export async function runAtelier(
     intent: input.intent,
     formatId: input.formatId,
     extensionTarget,
+    questionMeta: input.questionMeta,
   });
   set("encuadre", "done", undefined, `${brief.ejes.length} ejes`);
   await emit("encuadre", "Encargo encuadrado.", { brief });
@@ -188,7 +191,22 @@ export async function runAtelier(
   );
   await emit("verificacion", "Afirmaciones verificadas.");
 
-  // ── 5. Composición ──
+  // ── 5. Hipótesis ──
+  // Fija la espina argumental (tesis/antítesis/síntesis) sobre la evidencia ya
+  // verificada, antes de redactar. Absorbe la vieja superficie /hypothesis.
+  set("hipotesis", "running", "Fijando la hipótesis de la pieza…");
+  await emit("hipotesis", "Fijando la hipótesis de la pieza…");
+  try {
+    brief.hipotesis = await formularHipotesis({ brief, verified });
+    set("hipotesis", "done", undefined, "tesis · antítesis · síntesis");
+  } catch (e) {
+    set("hipotesis", "done", undefined, "omitida");
+    degraded.push("No se pudo formular la hipótesis; se compone sin espina explícita.");
+    console.warn(`[atelier] hipótesis falló: ${(e as Error).message}`);
+  }
+  await emit("hipotesis", "Hipótesis fijada.", { brief });
+
+  // ── 6. Composición ──
   set("composicion", "running", "Componiendo la pieza…");
   await emit("composicion", "Componiendo la pieza…");
   const { texto: composed, format } = await componer({
@@ -205,7 +223,7 @@ export async function runAtelier(
   set("composicion", "done", undefined, `${countWords(composed)} palabras`);
   await emit("composicion", "Pieza compuesta.", { wordCount: countWords(composed) });
 
-  // ── 6. Edición + control de calidad ──
+  // ── 7. Edición + control de calidad ──
   set("edicion", "running", "Puliendo y controlando calidad…");
   await emit("edicion", "Puliendo y controlando calidad…");
   const allowRevision = Date.now() - t0 < TIME_GUARD_MS;

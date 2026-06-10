@@ -2,7 +2,7 @@ import { NextRequest, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { runAtelier } from "@/lib/atelier/orchestrator";
 import { isValidFormatId, type LongitudId } from "@/lib/atelier-formats";
-import type { AtelierMetadata } from "@/lib/atelier/types";
+import type { AtelierMetadata, AtelierQuestionMeta } from "@/lib/atelier/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 900; // El Taller en after(), igual que /api/atelier
@@ -42,6 +42,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const intent =
     `${master.pregunta}\n\nProblema histórico de fondo: ${master.problemaSubyacente}` +
     (tesisTxt ? `\n\nSostén y confronta explícitamente estas tesis en tensión:\n${tesisTxt}` : "");
+
+  // Metadata curada de la pregunta-madre para alimentar el encuadre.
+  const questionMeta: AtelierQuestionMeta = {
+    pregunta: master.pregunta,
+    problemaSubyacente: master.problemaSubyacente,
+    tesisEnTension: tesis
+      .map((t) => (typeof t === "string" ? t : t.tesis ?? ""))
+      .filter((s) => s.trim().length > 3),
+  };
 
   const modelUsed = process.env.BEDROCK_CLAUDE_MODEL_ID || "us.anthropic.claude-opus-4-7";
   const batchId = `mq-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -95,7 +104,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const effectiveTable: "chunks" | "chunks_v2" = v2Available ? "chunks_v2" : "chunks";
 
       const result = await runAtelier(
-        { intent, formatId, longitud, tableName: effectiveTable, useParentExpansion: v2Available },
+        { intent, formatId, longitud, questionMeta, tableName: effectiveTable, useParentExpansion: v2Available },
         { onProgress: updateMetadata }
       );
 

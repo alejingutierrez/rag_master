@@ -4,11 +4,39 @@
  * entidades y la voz afinada. Opus. Adapta planResearch (deep-research-planner.ts).
  */
 import { callClaudeJson, OPUS_MODEL } from "./bedrock-json";
-import type { AtelierBrief, AtelierEntities } from "./types";
+import type { AtelierBrief, AtelierEntities, AtelierQuestionMeta } from "./types";
 import type { AtelierFormatId } from "../atelier-formats";
 import { getAtelierFormat } from "../atelier-formats";
 
 const MAX_EJES = Number(process.env.ATELIER_MAX_EJES ?? "8");
+
+const uniq = (xs: string[]): string[] => Array.from(new Set(xs.map((s) => s.trim()).filter(Boolean)));
+
+/** Renderiza la metadata curada de la pregunta como pistas para el encuadre. */
+function buildQuestionHints(m: AtelierQuestionMeta): string {
+  const lines: string[] = [];
+  const periodo = `${m.periodoNombre ?? ""}${m.periodoRango ? ` (${m.periodoRango})` : ""}`.trim();
+  if (periodo) lines.push(`- Período: ${periodo}`);
+  if (m.categoriaNombre) lines.push(`- Categoría: ${m.categoriaNombre}`);
+  if (m.yearPrincipal) lines.push(`- Año principal: ${m.yearPrincipal}`);
+  if (m.escalaGeografica) lines.push(`- Escala geográfica: ${m.escalaGeografica}`);
+  const ents = [
+    m.entidadesPersonas?.length ? `Personas: ${m.entidadesPersonas.join(", ")}` : "",
+    m.entidadesLugares?.length ? `Lugares: ${m.entidadesLugares.join(", ")}` : "",
+    m.entidadesConceptos?.length ? `Conceptos: ${m.entidadesConceptos.join(", ")}` : "",
+  ].filter(Boolean);
+  if (ents.length) lines.push(`- Entidades ya identificadas en el corpus: ${ents.join(" · ")}`);
+  if (m.clusterTematico) lines.push(`- Eje narrativo del corpus: "${m.clusterTematico}"`);
+  if (m.hipotesisImplicita) lines.push(`- Hipótesis implícita de la pregunta: ${m.hipotesisImplicita}`);
+  if (m.problemaSubyacente) lines.push(`- Problema histórico de fondo: ${m.problemaSubyacente}`);
+  if (m.tesisEnTension?.length) {
+    lines.push(
+      `- Tesis en tensión a sostener y confrontar:\n${m.tesisEnTension.map((t, i) => `    ${i + 1}) ${t}`).join("\n")}`
+    );
+  }
+  if (lines.length === 0) return "";
+  return `PISTAS CURADAS DEL CORPUS (esta pregunta ya fue analizada; úsalas como punto de partida para afinar los ejes, las entidades y la temporalidad — no las ignores ni re-derives todo desde cero):\n${lines.join("\n")}`;
+}
 
 const ENCUADRE_SYSTEM = `Eres el director editorial de un taller de escritura histórica sobre Colombia y América Latina. Recibes la INTENCIÓN de un autor y el FORMATO elegido, y produces un brief de encargo que guiará (1) una investigación sobre un corpus documental y (2) la redacción posterior de una pieza pulida.
 
@@ -66,6 +94,7 @@ export async function buildBrief(args: {
   intent: string;
   formatId: AtelierFormatId;
   extensionTarget: number;
+  questionMeta?: AtelierQuestionMeta;
 }): Promise<AtelierBrief> {
   const meta = getAtelierFormat(args.formatId);
   const system = ENCUADRE_SYSTEM.replace("{FORMAT_NAME}", meta?.name ?? args.formatId).replace(
@@ -73,10 +102,13 @@ export async function buildBrief(args: {
     meta?.description ?? ""
   );
 
+  const hints = args.questionMeta ? buildQuestionHints(args.questionMeta) : "";
+  const user = `INTENCIÓN DEL AUTOR:\n${args.intent}${hints ? `\n\n${hints}` : ""}\n\nJSON:`;
+
   const raw = await callClaudeJson<EncuadreRaw>({
     model: OPUS_MODEL,
     system,
-    user: `INTENCIÓN DEL AUTOR:\n${args.intent}\n\nJSON:`,
+    user,
     maxTokens: 6000,
     validate: (parsed) => {
       if (!parsed || typeof parsed !== "object") throw new Error("brief no es objeto");
@@ -91,11 +123,22 @@ export async function buildBrief(args: {
   if (ejes.length === 0) ejes = [args.intent];
   ejes = ejes.slice(0, MAX_EJES);
 
+  // Funde las entidades curadas de la pregunta con las que derivó el modelo:
+  // no se pierde lo que el corpus ya sabía.
+  const entities = normEntities(raw.entities);
+  const qm = args.questionMeta;
+  if (qm) {
+    entities.personas = uniq([...entities.personas, ...(qm.entidadesPersonas ?? [])]);
+    entities.lugares = uniq([...entities.lugares, ...(qm.entidadesLugares ?? [])]);
+    entities.conceptos = uniq([...entities.conceptos, ...(qm.entidadesConceptos ?? [])]);
+    if (!entities.temporalidad && qm.periodoRango) entities.temporalidad = qm.periodoRango;
+  }
+
   return {
     thinking: raw.thinking ?? "",
-    tesisTentativa: raw.tesisTentativa ?? "",
+    tesisTentativa: raw.tesisTentativa?.trim() || qm?.hipotesisImplicita || "",
     scope: raw.scope ?? "",
-    entities: normEntities(raw.entities),
+    entities,
     ejes,
     ficha: {
       formato: args.formatId,

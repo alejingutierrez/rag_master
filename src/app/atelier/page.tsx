@@ -28,6 +28,7 @@ type Stage =
   | "acopio"
   | "triangulacion"
   | "verificacion"
+  | "hipotesis"
   | "composicion"
   | "edicion"
   | "complete"
@@ -85,6 +86,7 @@ const STAGES: { key: Stage; label: string; desc: string }[] = [
   { key: "acopio", label: "Acopio", desc: "Se cruzan fuentes del corpus por cada eje de indagación." },
   { key: "triangulacion", label: "Triangulación", desc: "Se cotejan fuentes: concordancias y contradicciones resueltas." },
   { key: "verificacion", label: "Verificación", desc: "Un verificador refuta cada afirmación contra sus fuentes." },
+  { key: "hipotesis", label: "Hipótesis", desc: "Se fija la espina argumental: tesis, antítesis y síntesis sobre la evidencia." },
   { key: "composicion", label: "Composición", desc: "Se redacta la pieza solo con el material verificado." },
   { key: "edicion", label: "Edición", desc: "Pulido de estilo y control de calidad." },
   { key: "complete", label: "Listo", desc: "Entregable terminado." },
@@ -95,9 +97,10 @@ const STAGE_INDEX: Record<Stage, number> = {
   acopio: 1,
   triangulacion: 2,
   verificacion: 3,
-  composicion: 4,
-  edicion: 5,
-  complete: 6,
+  hipotesis: 4,
+  composicion: 5,
+  edicion: 6,
+  complete: 7,
   error: 0,
 };
 
