@@ -46,14 +46,6 @@ interface PostResponse {
   error?: string;
 }
 
-interface PollResponse {
-  status?: "RETRIEVING" | "GENERATING" | "COMPLETE" | "ERROR";
-  answer?: string;
-  chunks?: unknown[];
-  isDone?: boolean;
-  error?: string;
-}
-
 function log(step: string, msg: string): void {
   const t = new Date().toISOString().slice(11, 19);
   console.log(`[${t}] ${step.padEnd(8)} ${msg}`);
@@ -77,65 +69,75 @@ async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise
   }
 }
 
-// ── Suite: /api/chat ─────────────────────────────────────────────────
+// ── Suite: /api/chat/stream (Consultar — SSE en vivo) ────────────────
+// Consultar streamea: POST devuelve un text/event-stream con eventos
+// meta / chunks / delta / done. Validamos que lleguen pasajes y respuesta.
 async function smokeChat(): Promise<void> {
   log("CHAT", `target=${TARGET}`);
   log("CHAT", `question="${QUESTION}"`);
 
   const postStart = Date.now();
-  let postRes: Response;
+  let res: Response;
   try {
-    postRes = await withTimeout(
-      fetch(`${TARGET}/api/chat`, {
+    res = await withTimeout(
+      fetch(`${TARGET}/api/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: QUESTION }),
       }),
-      POST_DEADLINE_MS,
-      "POST /api/chat"
+      TOTAL_DEADLINE_MS,
+      "POST /api/chat/stream"
     );
   } catch (e) {
-    fail(`POST /api/chat — ${(e as Error).message}`);
+    fail(`POST /api/chat/stream — ${(e as Error).message}`);
   }
-  log("POST", `${postRes.status} en ${Date.now() - postStart}ms`);
-  if (!postRes.ok) fail(`POST status ${postRes.status} — ${(await postRes.text()).slice(0, 300)}`);
+  log("POST", `${res.status} en ${Date.now() - postStart}ms`);
+  if (!res.ok || !res.body) {
+    fail(`POST status ${res.status} — ${(await res.text().catch(() => "")).slice(0, 300)}`);
+  }
 
-  const { id, error } = (await postRes.json()) as PostResponse;
-  if (error) fail(`POST devolvió error: ${error}`);
-  if (!id) fail("POST no devolvió id");
-  log("POST", `id=${id}`);
-
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let answer = "";
+  let chunkCount = 0;
+  let done = false;
   const deadlineAt = Date.now() + TOTAL_DEADLINE_MS;
-  let lastStatus = "";
+
   while (Date.now() < deadlineAt) {
-    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-    let pollRes: Response;
-    try {
-      pollRes = await withTimeout(fetch(`${TARGET}/api/chat/${id}`), 10_000, "GET /api/chat/[id]");
-    } catch (e) {
-      log("POLL", `error: ${(e as Error).message} — reintentando`);
-      continue;
+    const { done: streamDone, value } = await reader.read();
+    if (streamDone) break;
+    buf += decoder.decode(value, { stream: true });
+    const events = buf.split("\n\n");
+    buf = events.pop() ?? "";
+    for (const ev of events) {
+      for (const line of ev.split("\n")) {
+        if (!line.startsWith("data: ")) continue;
+        let d: { type?: string; chunks?: unknown[]; text?: string; message?: string };
+        try {
+          d = JSON.parse(line.slice(6));
+        } catch {
+          continue;
+        }
+        if (d.type === "chunks") {
+          chunkCount = (d.chunks ?? []).length;
+          log("SSE", `chunks=${chunkCount}`);
+        } else if (d.type === "delta") {
+          answer += d.text ?? "";
+        } else if (d.type === "done") {
+          done = true;
+        } else if (d.type === "error") {
+          fail(`stream error: ${d.message ?? "(sin mensaje)"}`);
+        }
+      }
     }
-    if (!pollRes.ok) {
-      log("POLL", `status ${pollRes.status} — reintentando`);
-      continue;
-    }
-    const data = (await pollRes.json()) as PollResponse;
-    if (data.status !== lastStatus) {
-      lastStatus = data.status || "";
-      log("POLL", `status=${data.status} chunks=${data.chunks?.length ?? 0}`);
-    }
-    if (data.status === "COMPLETE") {
-      const chunks = data.chunks ?? [];
-      const answer = data.answer ?? "";
-      if (chunks.length === 0) fail("COMPLETE sin chunks");
-      if (answer.length < 100) fail(`answer demasiado corto (${answer.length} chars)`);
-      log("CHAT", `OK chunks=${chunks.length} answer.len=${answer.length}`);
-      return;
-    }
-    if (data.status === "ERROR") fail(`chat status=ERROR: ${data.answer || data.error || "(sin mensaje)"}`);
+    if (done) break;
   }
-  fail(`Timeout chat ${TOTAL_DEADLINE_MS}ms (último status=${lastStatus})`);
+
+  if (!done) fail(`stream no emitió 'done' (chunks=${chunkCount}, answer.len=${answer.length})`);
+  if (chunkCount === 0) fail("stream terminó sin pasajes (chunks=0)");
+  if (answer.length < 100) fail(`answer demasiado corto (${answer.length} chars)`);
+  log("CHAT", `OK chunks=${chunkCount} answer.len=${answer.length}`);
 }
 
 // ── Suite: /api/atelier ──────────────────────────────────────────────
