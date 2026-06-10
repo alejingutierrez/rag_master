@@ -6,7 +6,7 @@ import type { AtelierMetadata, AtelierQuestionMeta } from "@/lib/atelier/types";
 import { syncQuestionStats } from "@/lib/question-stats-sync";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 900; // 15 min en after(), independiente del HTTP response
+export const maxDuration = 1800; // 30 min en after() — capítulo/extensa es pesado (crónica/normal ya ~14 min)
 
 /**
  * El Taller — motor agéntico de entregables pulidos.

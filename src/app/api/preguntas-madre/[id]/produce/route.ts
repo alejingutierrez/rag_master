@@ -5,7 +5,7 @@ import { isValidFormatId, type LongitudId } from "@/lib/atelier-formats";
 import type { AtelierMetadata, AtelierQuestionMeta } from "@/lib/atelier/types";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 900; // El Taller en after(), igual que /api/atelier
+export const maxDuration = 1800; // El Taller en after(), igual que /api/atelier (capítulo/extensa es pesado)
 
 /**
  * POST /api/preguntas-madre/[id]/produce
