@@ -98,8 +98,13 @@ export async function askClaudeAtelier(
             "ModelTimeoutException",
             "ServiceUnavailableException",
             "InternalServerException",
+            "UnrecognizedClientException",
+            "InvalidSignatureException",
+            "ExpiredTokenException",
           ].includes(e.name) ||
-          /throttl|Too many requests|timeout|ECONNRESET|socket hang up/i.test(e.message);
+          /throttl|Too many requests|timeout|ECONNRESET|socket hang up|security token|InvalidClientTokenId|Signature expired|ExpiredToken/i.test(
+            e.message
+          );
         if (!retryable || attempt === MAX_RETRIES) throw err;
         const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
         console.warn(`[atelier] writer ${e.name}, retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`);

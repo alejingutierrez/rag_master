@@ -84,11 +84,15 @@ export async function* consultaDeltas(
             err.name === "ModelTimeoutException" ||
             err.name === "ServiceUnavailableException" ||
             err.name === "InternalServerException" ||
+            err.name === "UnrecognizedClientException" ||
+            err.name === "InvalidSignatureException" ||
+            err.name === "ExpiredTokenException" ||
             err.message.includes("throttl") ||
             err.message.includes("Too many requests") ||
             err.message.includes("timeout") ||
             err.message.includes("ECONNRESET") ||
-            err.message.includes("socket hang up"));
+            err.message.includes("socket hang up") ||
+            /security token|InvalidClientTokenId|Signature expired|ExpiredToken/i.test(err.message));
         if (!isRetryable || attempt === MAX_RETRIES) throw err;
         const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
         console.warn(

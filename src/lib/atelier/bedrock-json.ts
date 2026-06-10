@@ -50,8 +50,16 @@ function isRetryable(err: unknown): boolean {
       "ServiceUnavailableException",
       "InternalServerException",
       "ModelStreamErrorException",
+      // Errores de credencial/firma que AWS devuelve de forma TRANSITORIA bajo
+      // alta concurrencia o durante un rollout de App Runner. Reintentar con
+      // backoff los recupera; si la llave está realmente mal, falla tras 3 intentos.
+      "UnrecognizedClientException",
+      "InvalidSignatureException",
+      "ExpiredTokenException",
     ].includes(err.name) ||
-    /throttl|Too many requests|timeout|ECONNRESET|socket hang up/i.test(err.message)
+    /throttl|Too many requests|timeout|ECONNRESET|socket hang up|security token|InvalidClientTokenId|Signature expired|ExpiredToken/i.test(
+      err.message
+    )
   );
 }
 
