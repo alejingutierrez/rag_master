@@ -12,7 +12,7 @@
 import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
 import { awsConfig } from "./aws-config";
 import { withBedrockSemaphore } from "./bedrock-semaphore";
-import { buildContextBlock } from "./chat-templates";
+import { buildContextBlock } from "./rag-context";
 import type { SearchResult } from "./vector-search";
 
 const bedrock = new BedrockRuntimeClient(awsConfig);

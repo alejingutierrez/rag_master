@@ -137,8 +137,15 @@ export async function componer(args: {
   const system = format.buildWriterSystemPrompt({ brief: args.brief, verifiedContext });
   const user = `ENCARGO DEL AUTOR:\n${args.intent}\n\nEscribe ahora la pieza completa, siguiendo todas las reglas. Empieza directamente por el título en \`#\`.`;
 
+  // El capítulo es el formato más profesional y caro: puede apuntar a un modelo
+  // dedicado (env), cayendo a OPUS_MODEL por defecto.
+  const model =
+    format.id === "capitulo"
+      ? process.env.BEDROCK_ATELIER_CAPITULO_MODEL_ID || OPUS_MODEL
+      : OPUS_MODEL;
+
   const texto = await askClaudeAtelier(
-    { system, user, maxTokens: format.maxTokens, model: OPUS_MODEL },
+    { system, user, maxTokens: format.maxTokens, model },
     args.onProgress
   );
   return { texto, format };

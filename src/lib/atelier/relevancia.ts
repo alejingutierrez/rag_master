@@ -5,7 +5,7 @@
  * derivaría hacia otro tema. Si la cobertura es nula, el orquestador aborta con un
  * mensaje honesto en vez de componer una pieza desviada.
  */
-import { buildContextBlock } from "../chat-templates";
+import { buildContextBlock } from "../rag-context";
 import { callClaudeJson, SONNET_MODEL } from "./bedrock-json";
 import type { SearchResult } from "../vector-search";
 import type { AtelierBrief } from "./types";

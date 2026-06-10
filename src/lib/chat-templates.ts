@@ -1,5 +1,5 @@
-import type { SearchResult } from "./vector-search";
-import { buildReferencesSection } from "./apa-citations";
+// El context-builder y la sección APA viven en ./rag-context (módulo neutro);
+// se re-exportan más abajo para los consumidores legacy (claude.ts).
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -26,34 +26,10 @@ export interface ChatTemplate {
   usesInlineCitations?: boolean;
 }
 
-// ─── Context Builder (shared by all templates) ───────────────────────
-
-// Opus 4.7 soporta hasta 1M tokens (~3-4M chars). 400K chars ≈ 100K tokens (1/10 del límite).
-const MAX_CONTEXT_CHARS = 400_000;
-const MAX_CHUNK_CHARS = 3500;
-
-export function buildContextBlock(chunks: SearchResult[]): string {
-  let totalChars = 0;
-  const parts: string[] = [];
-
-  for (let i = 0; i < chunks.length; i++) {
-    const c = chunks[i];
-    const truncated =
-      c.content.length > MAX_CHUNK_CHARS
-        ? c.content.slice(0, MAX_CHUNK_CHARS) + "..."
-        : c.content;
-    const part = `[${i + 1}] (${c.documentFilename}, p.${c.pageNumber})\n${truncated}`;
-
-    if (totalChars + part.length > MAX_CONTEXT_CHARS) break;
-    parts.push(part);
-    totalChars += part.length;
-  }
-
-  return parts.join("\n\n---\n\n");
-}
-
-// Re-export para que el chat endpoint pueda inyectar APA al final
-export { buildReferencesSection };
+// ─── Context Builder (movido a ./rag-context) ────────────────────────
+// Re-export para consumidores legacy (claude.ts). El Taller y deep-research
+// importan directo de ./rag-context para no depender de este módulo (Fase 4).
+export { buildContextBlock, buildReferencesSection } from "./rag-context";
 
 // ─── Category Labels ─────────────────────────────────────────────────
 

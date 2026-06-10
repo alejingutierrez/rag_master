@@ -8,7 +8,7 @@ import type { AtelierBrief, AtelierEntities } from "./types";
 import type { AtelierFormatId } from "../atelier-formats";
 import { getAtelierFormat } from "../atelier-formats";
 
-const MAX_EJES = Number(process.env.ATELIER_MAX_EJES ?? "6");
+const MAX_EJES = Number(process.env.ATELIER_MAX_EJES ?? "8");
 
 const ENCUADRE_SYSTEM = `Eres el director editorial de un taller de escritura histórica sobre Colombia y América Latina. Recibes la INTENCIÓN de un autor y el FORMATO elegido, y produces un brief de encargo que guiará (1) una investigación sobre un corpus documental y (2) la redacción posterior de una pieza pulida.
 
@@ -17,7 +17,7 @@ Tu tarea:
 1. Identifica la temporalidad, las entidades nombradas (personas, instituciones, lugares), los conceptos clave y la geografía implícitos o explícitos en la intención.
 2. Formula una TESIS TENTATIVA: la intuición o el ángulo que vertebrará la pieza. Es una guía INTERNA para enfocar la indagación — NO una conclusión a defender, NO algo que el lector verá enunciado.
 3. Delimita el SCOPE en 1-2 frases (qué entra y qué no).
-4. Genera de 4 a 6 EJES de indagación: sub-preguntas concretas, con nombres/fechas/conceptos, ejecutables como búsqueda en un corpus histórico. Que cubran ángulos complementarios (contexto, actores e instituciones, causas, eventos y cronología, consecuencias, miradas en disputa) PERO siempre específicas al tema — nunca genéricas como "¿cuál es el contexto?".
+4. Genera de 6 a 8 EJES de indagación: sub-preguntas concretas, con nombres/fechas/conceptos, ejecutables como búsqueda en un corpus histórico. Que cubran ángulos complementarios y NO redundantes (contexto y antecedentes, actores e instituciones, causas estructurales, eventos y cronología, consecuencias de corto y largo plazo, miradas y tesis en disputa, dimensión geográfica/territorial) PERO siempre específicas al tema — nunca genéricas como "¿cuál es el contexto?". Más ejes = más cobertura; aprovéchalos para abrir el tema en profundidad.
 5. Afina la VOZ para este encargo concreto, dentro del registro del formato.
 
 Formato elegido: {FORMAT_NAME} — {FORMAT_DESC}
@@ -77,7 +77,7 @@ export async function buildBrief(args: {
     model: OPUS_MODEL,
     system,
     user: `INTENCIÓN DEL AUTOR:\n${args.intent}\n\nJSON:`,
-    maxTokens: 4000,
+    maxTokens: 6000,
     validate: (parsed) => {
       if (!parsed || typeof parsed !== "object") throw new Error("brief no es objeto");
       return parsed as EncuadreRaw;

@@ -4,7 +4,7 @@
  * su grado de concordancia y sus contradicciones YA RESUELTAS. Sonnet, paralelo
  * por núcleo (Promise.allSettled tolerante a fallos).
  */
-import { buildContextBlock } from "../chat-templates";
+import { buildContextBlock } from "../rag-context";
 import { callClaudeJson, SONNET_MODEL } from "./bedrock-json";
 import type { SearchResult } from "../vector-search";
 import type {
@@ -17,9 +17,9 @@ import type {
   ThematicCore,
 } from "./types";
 
-const MAX_NUCLEOS = Number(process.env.ATELIER_MAX_NUCLEOS ?? "5");
+const MAX_NUCLEOS = Number(process.env.ATELIER_MAX_NUCLEOS ?? "7");
 
-const NUCLEOS_SYSTEM = `Eres un investigador organizando evidencia documental sobre historia de Colombia y América Latina. Recibes fragmentos numerados [N], cada uno de un documento. Agrúpalos en 3 a 6 NÚCLEOS TEMÁTICOS coherentes para el encargo.
+const NUCLEOS_SYSTEM = `Eres un investigador organizando evidencia documental sobre historia de Colombia y América Latina. Recibes fragmentos numerados [N], cada uno de un documento. Agrúpalos en 4 a 7 NÚCLEOS TEMÁTICOS coherentes para el encargo.
 
 ENCARGO: {SCOPE}
 
@@ -140,7 +140,7 @@ async function distillClaims(
     model: SONNET_MODEL,
     system: CLAIMS_SYSTEM.replace("{TITULO}", core.titulo).replace("{RESUMEN}", core.resumen),
     user: `FRAGMENTOS:\n\n${context}\n\nJSON:`,
-    maxTokens: 8000,
+    maxTokens: 12000,
     validate: (p) => p as ClaimsRaw,
   });
 

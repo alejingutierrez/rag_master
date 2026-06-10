@@ -52,10 +52,28 @@ export function getAtelierFormat(id: string): AtelierFormatMeta | undefined {
   return ATELIER_FORMATS[id as AtelierFormatId];
 }
 
-/** Escala de longitud → multiplicador sobre defaultWords. */
-export type LongitudId = "breve" | "media" | "extensa";
-export function longitudFactor(l: LongitudId | undefined): number {
-  if (l === "breve") return 0.6;
-  if (l === "extensa") return 1.4;
-  return 1;
+/** Modo de longitud del Taller. */
+export type LongitudId = "compacta" | "normal" | "extensa";
+
+/**
+ * Palabras objetivo ABSOLUTAS por formato × modo (no un multiplicador).
+ *
+ * - Los tres modos son sustanciosos: incluso "compacta" supera al viejo "breve".
+ * - En modo "extensa", los formatos generales llegan a ~5000 palabras.
+ * - El CAPÍTULO es el más largo de todos (hasta ~10.000): pieza de libro.
+ *
+ * Override fino por env no aplica aquí (es contenido editorial, no infra).
+ */
+const WORD_TARGETS: Record<AtelierFormatId, Record<LongitudId, number>> = {
+  cronica: { compacta: 1500, normal: 3000, extensa: 5000 },
+  "ensayo-autor": { compacta: 1800, normal: 3200, extensa: 5000 },
+  reportaje: { compacta: 2000, normal: 3500, extensa: 5000 },
+  capitulo: { compacta: 4000, normal: 7000, extensa: 10000 },
+};
+
+/** Palabras objetivo para un formato y modo dados (modo por defecto: "normal"). */
+export function targetWords(formatId: AtelierFormatId, longitud: LongitudId | undefined): number {
+  // Normaliza valores desconocidos o legacy ("breve"/"media") a "normal".
+  const key: LongitudId = longitud === "compacta" || longitud === "extensa" ? longitud : "normal";
+  return (WORD_TARGETS[formatId] ?? WORD_TARGETS.cronica)[key];
 }

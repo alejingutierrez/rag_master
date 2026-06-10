@@ -5,13 +5,20 @@
  */
 import { runRagPipeline } from "../rag-pipeline";
 import type { SearchResult } from "../vector-search";
+import type { AtelierFormatId } from "../atelier-formats";
 import { rebalanceByDiversity, countUniqueDocuments } from "./diversity";
 import type { AtelierBrief, AcopioResult } from "./types";
 
 const RRF_K = 60;
 const SUBQUERY_CONCURRENCY = 2;
-const POOL_TARGET = Number(process.env.ATELIER_POOL_TARGET ?? "80");
+
+// Tamaño del pool de evidencia. El capítulo es el único formato autorizado a
+// cruzar hasta 200 fuentes (el más profundo y caro); el resto, 100.
+const POOL_TARGET = Number(process.env.ATELIER_POOL_TARGET ?? "100");
+const POOL_TARGET_CAPITULO = Number(process.env.ATELIER_POOL_TARGET_CAPITULO ?? "200");
 const CAP_PER_DOC = Number(process.env.ATELIER_CAP_PER_DOC ?? "6");
+// Con 200 fuentes hace falta más techo por documento para poder llenar el pool.
+const CAP_PER_DOC_CAPITULO = Number(process.env.ATELIER_CAP_PER_DOC_CAPITULO ?? "10");
 
 export interface EjeProgress {
   eje: string;
@@ -22,6 +29,7 @@ export interface EjeProgress {
 
 export async function acopiar(args: {
   brief: AtelierBrief;
+  formatId: AtelierFormatId;
   tableName: "chunks" | "chunks_v2";
   useParentExpansion: boolean;
   report?: (perEje: EjeProgress[]) => void | Promise<void>;
@@ -29,6 +37,13 @@ export async function acopiar(args: {
   const ejes = args.brief.ejes;
   const progress: EjeProgress[] = ejes.map((eje) => ({ eje, status: "pending" }));
   const perEjeChunks: SearchResult[][] = ejes.map(() => []);
+
+  // El capítulo cruza más fuentes y trae más por eje para poder llenar su pool.
+  const isCapitulo = args.formatId === "capitulo";
+  const poolTarget = isCapitulo ? POOL_TARGET_CAPITULO : POOL_TARGET;
+  const capPerDoc = isCapitulo ? CAP_PER_DOC_CAPITULO : CAP_PER_DOC;
+  const perEjeCandidates = isCapitulo ? 150 : 100;
+  const perEjeTopK = isCapitulo ? 60 : 40;
 
   for (let i = 0; i < ejes.length; i += SUBQUERY_CONCURRENCY) {
     const batchIdx: number[] = [];
@@ -42,8 +57,8 @@ export async function acopiar(args: {
           const r = await runRagPipeline(ejes[idx], {
             tableName: args.tableName,
             useParentExpansion: args.useParentExpansion,
-            retrievalCandidates: 100,
-            finalTopK: 40,
+            retrievalCandidates: perEjeCandidates,
+            finalTopK: perEjeTopK,
           });
           perEjeChunks[idx] = r.chunks;
           progress[idx].status = "done";
@@ -75,8 +90,8 @@ export async function acopiar(args: {
 
   // Rebalanceo por diversidad: maximiza nº de documentos distintos.
   const chunks = rebalanceByDiversity(fused, {
-    targetSize: POOL_TARGET,
-    capPerDoc: CAP_PER_DOC,
+    targetSize: poolTarget,
+    capPerDoc,
   });
   const uniqueDocuments = countUniqueDocuments(chunks);
   const chunkMap = new Map(chunks.map((c) => [c.id, c]));

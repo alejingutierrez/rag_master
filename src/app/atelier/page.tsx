@@ -102,8 +102,8 @@ const STAGE_INDEX: Record<Stage, number> = {
 };
 
 const LONGITUDES: { value: LongitudId; label: string }[] = [
-  { value: "breve", label: "Breve" },
-  { value: "media", label: "Media" },
+  { value: "compacta", label: "Compacta" },
+  { value: "normal", label: "Normal" },
   { value: "extensa", label: "Extensa" },
 ];
 
@@ -124,7 +124,7 @@ function AtelierContent() {
 
   const [intent, setIntent] = useState("");
   const [formatId, setFormatId] = useState<AtelierFormatId>("cronica");
-  const [longitud, setLongitud] = useState<LongitudId>("media");
+  const [longitud, setLongitud] = useState<LongitudId>("normal");
   const [linkedQuestionId, setLinkedQuestionId] = useState<string | null>(null);
   const [data, setData] = useState<Data | null>(null);
   const [submitting, setSubmitting] = useState(false);

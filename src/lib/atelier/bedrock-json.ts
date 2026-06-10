@@ -17,11 +17,18 @@ function client(): BedrockRuntimeClient {
   return (_client ??= new BedrockRuntimeClient(awsConfig));
 }
 
-/** Modelo pesado (razonamiento, composición). */
+/**
+ * Modelo pesado del Taller (razonamiento, composición). `BEDROCK_ATELIER_MODEL_ID`
+ * tiene precedencia para poder moverlo a Opus 4.8 SIN tocar el chat (que lee
+ * BEDROCK_CLAUDE_MODEL_ID). Para activarlo en prod: setear ese env en App Runner
+ * tras confirmar que el modelo está habilitado en tu Bedrock. El regex de
+ * thinking-models ya cubre 4-8.
+ */
 export const OPUS_MODEL =
+  process.env.BEDROCK_ATELIER_MODEL_ID ||
   process.env.BEDROCK_PLANNER_MODEL_ID ||
   process.env.BEDROCK_CLAUDE_MODEL_ID ||
-  "us.anthropic.claude-opus-4-7";
+  "us.anthropic.claude-opus-4-8";
 
 /** Modelo barato (extracción estructurada, verificación, crítica). */
 export const SONNET_MODEL =

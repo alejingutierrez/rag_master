@@ -4,7 +4,7 @@ import {
 } from "@aws-sdk/client-bedrock-runtime";
 import { awsConfig } from "./aws-config";
 import type { SearchResult } from "./vector-search";
-import { buildContextBlock } from "./chat-templates";
+import { buildContextBlock } from "./rag-context";
 import { withBedrockSemaphore } from "./bedrock-semaphore";
 
 const bedrock = new BedrockRuntimeClient(awsConfig);

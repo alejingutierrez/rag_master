@@ -4,7 +4,7 @@
  * Lo invoca el endpoint /api/atelier dentro de after().
  */
 import type { SearchResult } from "../vector-search";
-import { getAtelierFormat, longitudFactor } from "../atelier-formats";
+import { targetWords } from "../atelier-formats";
 import { buildBrief } from "./phase1-encuadre";
 import { acopiar } from "./phase2-acopio";
 import { triangular } from "./phase3-triangulacion";
@@ -97,8 +97,7 @@ export async function runAtelier(
   // ── 1. Encuadre ──
   set("encuadre", "running", "Encuadrando el encargo…");
   await emit("encuadre", "Encuadrando el encargo…");
-  const meta = getAtelierFormat(input.formatId);
-  const extensionTarget = Math.round((meta?.defaultWords ?? 1800) * longitudFactor(input.longitud));
+  const extensionTarget = targetWords(input.formatId, input.longitud);
   const brief = await buildBrief({
     intent: input.intent,
     formatId: input.formatId,
@@ -112,6 +111,7 @@ export async function runAtelier(
   await emit("acopio", "Cruzando fuentes en el corpus…");
   const { result: acopio, chunkMap } = await acopiar({
     brief,
+    formatId: input.formatId,
     tableName: input.tableName,
     useParentExpansion: input.useParentExpansion,
     report: async (perEje) => {
