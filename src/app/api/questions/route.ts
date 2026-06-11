@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
     : undefined;
   // clusterTematico: búsqueda exacta. Si en el futuro queremos LIKE, cambiar a contains.
   const clusterTematico = searchParams.get("clusterTematico") || undefined;
+  // ids: lista explícita de preguntas (CSV). Usado por la línea de tiempo para
+  // cargar las preguntas-evidencia de un evento. Cap de 30 para acotar la query.
+  const ids = searchParams.get("ids")?.split(",").filter(Boolean).slice(0, 30);
   // Filtros nuevos
   const entity = searchParams.get("entity") || undefined; // texto contra cualquiera de las 3 listas
   const yearMinRaw = searchParams.get("yearMin");
@@ -90,6 +93,7 @@ export async function GET(request: NextRequest) {
 
     const where = {
       ...stateFilter,
+      ...(ids?.length && { id: { in: ids } }),
       ...(documentId && { documentId }),
       ...(periodoCode && { periodoCode }),
       ...(categoriaCode && { categoriaCode }),

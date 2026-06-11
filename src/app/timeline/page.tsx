@@ -5,6 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { SectionHeader, primaryBtn } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { PERIOD_EVENTS, type PeriodEvent } from "@/lib/period-events";
+import {
+  TimelineEventDrawer,
+  fmtYearSpan,
+  type TimelineEventData,
+  type TimelinePeriodData,
+} from "@/components/timeline/TimelineEventDrawer";
+import { TimelineDensityStrip } from "@/components/timeline/TimelineDensityStrip";
 
 interface TimelineData {
   questions: Array<{
@@ -70,6 +77,11 @@ function TimelineContent() {
     ORDER.includes(initial) ? initial : "REG",
   );
   const [data, setData] = useState<TimelineData | null>(null);
+  // Eventos minados del corpus, por período (cache en memoria de la sesión).
+  const [minedByPeriod, setMinedByPeriod] = useState<
+    Record<string, TimelinePeriodData | null>
+  >({});
+  const [selectedEvent, setSelectedEvent] = useState<TimelineEventData | null>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -81,6 +93,20 @@ function TimelineContent() {
       });
     return () => ctrl.abort();
   }, []);
+
+  useEffect(() => {
+    if (minedByPeriod[selected] !== undefined) return;
+    const ctrl = new AbortController();
+    fetch(`/api/timeline/events?periodo=${selected}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: TimelinePeriodData | null) =>
+        setMinedByPeriod((prev) => ({ ...prev, [selected]: d })),
+      )
+      .catch(() => {
+        /* ignore — degrada a hitos curados */
+      });
+    return () => ctrl.abort();
+  }, [selected, minedByPeriod]);
 
   const counts = useMemo(() => {
     const docs = new Map(data?.docsByPeriod.map((d) => [d.code, d.count]) ?? []);
@@ -95,12 +121,18 @@ function TimelineContent() {
   }, [data]);
 
   const period = PERIODS[selected];
-  const events: PeriodEvent[] = PERIOD_EVENTS[selected] ?? [];
+  const mined = minedByPeriod[selected] ?? null;
+  const fallbackEvents: PeriodEvent[] = PERIOD_EVENTS[selected] ?? [];
 
   const docCount = counts.docs.get(selected) ?? 0;
   const qCount = counts.qs.get(selected) ?? 0;
   const prodCount = counts.prods.get(selected) ?? 0;
   const fragmentCount = counts.chunks.get(selected) ?? 0;
+
+  const selectPeriod = (code: PeriodCode) => {
+    setSelected(code);
+    setSelectedEvent(null);
+  };
 
   return (
     <div className="fade-up" data-screen-label="Timeline">
@@ -187,7 +219,7 @@ function TimelineContent() {
                 <button
                   key={code}
                   type="button"
-                  onClick={() => setSelected(code)}
+                  onClick={() => selectPeriod(code)}
                   title={`${n} · ${p.label} · ${p.yearRange}`}
                   aria-label={`${p.label}, ${p.yearRange}`}
                   style={{
@@ -219,7 +251,7 @@ function TimelineContent() {
               <button
                 key={code}
                 type="button"
-                onClick={() => setSelected(code)}
+                onClick={() => selectPeriod(code)}
                 style={{
                   appearance: "none",
                   background: active ? "var(--fg)" : "transparent",
@@ -319,83 +351,230 @@ function TimelineContent() {
         </aside>
 
         <div>
-          <SectionHeader
-            index="◷"
-            title="Eventos pivote"
-            caption="Hitos de referencia — curados, no derivados del corpus"
-          />
+          {mined && mined.events.length > 0 ? (
+            <>
+              <SectionHeader
+                index="◷"
+                title="Eventos pivote"
+                caption="Derivados del corpus — calibrados por la atención de las preguntas y las obras"
+              />
 
-          {events.length === 0 && (
-            <p
-              className="serif"
-              style={{
-                fontSize: 16,
-                color: "var(--fg-muted)",
-                lineHeight: 1.55,
-                maxWidth: 560,
-              }}
-            >
-              Aún no hay hitos curados para este período. Esta sección reúne eventos
-              historiográficos de referencia; no se generan a partir del corpus.
-            </p>
-          )}
-
-          {events.length > 0 && (
-          <ol style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {events.map((e, i) => (
-              <li
-                key={i}
-                style={{
-                  borderTop: i === 0 ? 0 : "1px solid var(--line)",
-                  padding: "24px 0",
-                  display: "grid",
-                  gridTemplateColumns: "100px 1fr",
-                  gap: 32,
-                  alignItems: "baseline",
-                }}
-              >
+              <div style={{ margin: "8px 0 28px" }}>
+                <TimelineDensityStrip
+                  histogram={mined.yearHistogram}
+                  events={mined.events}
+                  periodoCode={selected}
+                  selectedEventId={selectedEvent?.id ?? null}
+                  onSelectEvent={setSelectedEvent}
+                />
                 <div
-                  className="display num"
+                  className="mono"
                   style={{
-                    fontSize: 32,
-                    color: `var(--p-${period.slug})`,
-                    lineHeight: 1,
-                    letterSpacing: "-0.02em",
+                    fontSize: 10.5,
+                    color: "var(--fg-faint)",
+                    letterSpacing: "0.04em",
+                    marginTop: 6,
                   }}
                 >
-                  {e.y}
+                  Barras: preguntas ancladas por año · Círculos: eventos, dimensionados
+                  por peso en el corpus
                 </div>
-                <div>
-                  <h4
-                    className="display"
-                    style={{
-                      fontSize: 26,
-                      margin: "0 0 8px",
-                      color: "var(--fg)",
-                      lineHeight: 1.1,
-                    }}
-                  >
-                    {e.t}
-                  </h4>
-                  <p
-                    className="serif"
-                    style={{
-                      fontSize: 16,
-                      color: "var(--fg-muted)",
-                      margin: 0,
-                      lineHeight: 1.55,
-                      maxWidth: 560,
-                    }}
-                  >
-                    {e.note}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+              </div>
+
+              <ol style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                {mined.events.map((e, i) => (
+                  <li key={e.id} style={{ borderTop: i === 0 ? 0 : "1px solid var(--line)" }}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEvent(e)}
+                      title="Ver detalle del evento"
+                      style={{
+                        appearance: "none",
+                        background:
+                          selectedEvent?.id === e.id ? "var(--bg-muted)" : "transparent",
+                        border: 0,
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "24px 12px",
+                        margin: "0 -12px",
+                        cursor: "pointer",
+                        display: "grid",
+                        gridTemplateColumns: "120px 1fr",
+                        gap: 32,
+                        alignItems: "baseline",
+                        transition: "background 140ms var(--ease-out-custom)",
+                      }}
+                      onMouseEnter={(ev) => {
+                        if (selectedEvent?.id !== e.id)
+                          ev.currentTarget.style.background = "var(--bg-muted)";
+                      }}
+                      onMouseLeave={(ev) => {
+                        if (selectedEvent?.id !== e.id)
+                          ev.currentTarget.style.background = "transparent";
+                      }}
+                    >
+                      <div>
+                        <div
+                          className="display num"
+                          style={{
+                            fontSize: e.anioFin !== e.anioInicio ? 24 : 32,
+                            color: `var(--p-${period.slug})`,
+                            lineHeight: 1.1,
+                            letterSpacing: "-0.02em",
+                          }}
+                        >
+                          {fmtYearSpan(e.anioInicio, e.anioFin)}
+                        </div>
+                      </div>
+                      <div>
+                        <h4
+                          className="display"
+                          style={{
+                            fontSize: 26,
+                            margin: "0 0 8px",
+                            color: "var(--fg)",
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          {e.titulo}
+                        </h4>
+                        <p
+                          className="serif"
+                          style={{
+                            fontSize: 16,
+                            color: "var(--fg-muted)",
+                            margin: "0 0 12px",
+                            lineHeight: 1.55,
+                            maxWidth: 560,
+                          }}
+                        >
+                          {e.resumen}
+                        </p>
+                        <div
+                          style={{ display: "flex", alignItems: "center", gap: 14 }}
+                        >
+                          <span
+                            style={{
+                              width: 120,
+                              height: 3,
+                              background: "var(--bg-muted)",
+                              position: "relative",
+                              display: "inline-block",
+                            }}
+                          >
+                            <span
+                              style={{
+                                position: "absolute",
+                                inset: 0,
+                                width: `${e.evidencia.peso}%`,
+                                background: `var(--p-${period.slug})`,
+                              }}
+                            />
+                          </span>
+                          <span
+                            className="mono num"
+                            style={{
+                              fontSize: 11,
+                              color: "var(--fg-muted)",
+                              letterSpacing: "0.03em",
+                            }}
+                          >
+                            {e.evidencia.nPreguntas.toLocaleString("es-CO")} preguntas ·{" "}
+                            {e.evidencia.nLibros.toLocaleString("es-CO")} obras
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : (
+            <>
+              <SectionHeader
+                index="◷"
+                title="Eventos pivote"
+                caption="Hitos de referencia — curados, no derivados del corpus"
+              />
+
+              {fallbackEvents.length === 0 && (
+                <p
+                  className="serif"
+                  style={{
+                    fontSize: 16,
+                    color: "var(--fg-muted)",
+                    lineHeight: 1.55,
+                    maxWidth: 560,
+                  }}
+                >
+                  Aún no hay hitos para este período.
+                </p>
+              )}
+
+              {fallbackEvents.length > 0 && (
+                <ol style={{ listStyle: "none", padding: 0, margin: 0 }}>
+                  {fallbackEvents.map((e, i) => (
+                    <li
+                      key={i}
+                      style={{
+                        borderTop: i === 0 ? 0 : "1px solid var(--line)",
+                        padding: "24px 0",
+                        display: "grid",
+                        gridTemplateColumns: "100px 1fr",
+                        gap: 32,
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <div
+                        className="display num"
+                        style={{
+                          fontSize: 32,
+                          color: `var(--p-${period.slug})`,
+                          lineHeight: 1,
+                          letterSpacing: "-0.02em",
+                        }}
+                      >
+                        {e.y}
+                      </div>
+                      <div>
+                        <h4
+                          className="display"
+                          style={{
+                            fontSize: 26,
+                            margin: "0 0 8px",
+                            color: "var(--fg)",
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          {e.t}
+                        </h4>
+                        <p
+                          className="serif"
+                          style={{
+                            fontSize: 16,
+                            color: "var(--fg-muted)",
+                            margin: 0,
+                            lineHeight: 1.55,
+                            maxWidth: 560,
+                          }}
+                        >
+                          {e.note}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </>
           )}
         </div>
       </section>
+
+      <TimelineEventDrawer
+        event={selectedEvent}
+        periodoCode={selected}
+        onClose={() => setSelectedEvent(null)}
+      />
     </div>
   );
 }

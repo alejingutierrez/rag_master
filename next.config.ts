@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
     "/api/deliverables": [
       "./node_modules/pdfkit/**/*",
     ],
+    // Eventos minados de la línea de tiempo: el route handler los lee de disco
+    // en runtime y el build standalone no los detecta solo.
+    "/api/timeline/events": [
+      "./src/data/**/*",
+    ],
   },
 };
 
