@@ -121,7 +121,11 @@ export default function EntitiesPage() {
                 <button
                   key={e.name}
                   type="button"
-                  onClick={() => router.push(`/questions?entity=${encodeURIComponent(e.name)}`)}
+                  onClick={() =>
+                    router.push(
+                      `/questions?entity=${encodeURIComponent(e.name)}&entityType=${e.type}`,
+                    )
+                  }
                   style={{
                     appearance: "none",
                     background: "transparent",

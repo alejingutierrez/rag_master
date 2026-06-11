@@ -66,11 +66,20 @@ export default function QuestionsPage() {
 
 function QuestionsContent() {
   const router = useRouter();
-  // URL params se leen solo en cliente, post-mount, para evitar mismatch SSR/CSR.
+  // URL params: el initializer cubre la carga completa; la navegación cliente
+  // (router.push desde /entities) se corrige en el efecto de sincronización
+  // de abajo, porque window.location aún apunta a la URL anterior durante el
+  // primer render. (useSearchParams+Suspense bloqueaba la hidratación aquí.)
   const [initialParams] = useState(() => {
-    if (typeof window === "undefined") return { periodo: "", detail: "" };
+    if (typeof window === "undefined")
+      return { periodo: "", detail: "", entity: "", entityType: "" };
     const p = new URLSearchParams(window.location.search);
-    return { periodo: p.get("periodo") ?? "", detail: p.get("detail") ?? "" };
+    return {
+      periodo: p.get("periodo") ?? "",
+      detail: p.get("detail") ?? "",
+      entity: p.get("entity") ?? "",
+      entityType: p.get("entityType") ?? "",
+    };
   });
   const periodoParam = initialParams.periodo;
   const detailParam = initialParams.detail;
@@ -82,6 +91,11 @@ function QuestionsContent() {
   const [tipoFilter, setTipoFilter] = useState<TipoPregunta | "">("");
   const [escalaFilter, setEscalaFilter] = useState<EscalaGeografica | "">("");
   const [clusterFilter, setClusterFilter] = useState<string>("");
+  // Filtro de entidad — llega desde la nube de /entities. entityType acota a
+  // la lista correcta (persona/lugar/concepto) para que el total coincida
+  // con el número mostrado en la nube.
+  const [entityFilter, setEntityFilter] = useState<string>(initialParams.entity);
+  const [entityTypeFilter, setEntityTypeFilter] = useState<string>(initialParams.entityType);
   const [search, setSearch] = useState("");
   // Orden + vista
   const [sortBy, setSortBy] = useState<SortBy>("cronologico");
@@ -94,6 +108,9 @@ function QuestionsContent() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  // Total filtrado real (pagination.total) — se muestra en el chip de entidad
+  // para que el número de la nube de /entities se confirme al aterrizar.
+  const [filteredTotal, setFilteredTotal] = useState<number | null>(null);
 
   // Drawer
   const [selectedId, setSelectedId] = useState<string | null>(detailParam || null);
@@ -102,7 +119,23 @@ function QuestionsContent() {
     [questions, selectedId]
   );
 
+  // Re-lee la URL post-mount: en navegación cliente el initializer vio la URL
+  // anterior. Los updaters funcionales evitan re-render si ya coincide (carga
+  // completa). urlSynced ataja el fetch hasta tener los filtros correctos.
+  const [urlSynced, setUrlSynced] = useState(false);
   useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const ent = p.get("entity") ?? "";
+    const entType = p.get("entityType") ?? "";
+    const per = p.get("periodo") ?? "";
+    setEntityFilter((cur) => (cur === ent ? cur : ent));
+    setEntityTypeFilter((cur) => (cur === entType ? cur : entType));
+    setPeriodFilter((cur) => (cur === per ? cur : per));
+    setUrlSynced(true);
+  }, []);
+
+  useEffect(() => {
+    if (!urlSynced) return;
     let cancelled = false;
     setLoading(true);
     const p = new URLSearchParams({
@@ -117,6 +150,10 @@ function QuestionsContent() {
     if (tipoFilter) p.set("tipoPregunta", tipoFilter);
     if (escalaFilter) p.set("escalaGeografica", escalaFilter);
     if (clusterFilter) p.set("clusterTematico", clusterFilter);
+    if (entityFilter) {
+      p.set("entity", entityFilter);
+      if (entityTypeFilter) p.set("entityType", entityTypeFilter);
+    }
     if (search) p.set("search", search);
     if (stateFilter !== "all") p.set("state", stateFilter);
 
@@ -131,6 +168,7 @@ function QuestionsContent() {
         setQuestions(data.questions ?? []);
         setStats(data.stats ?? null);
         setTotalPages(data.pagination?.totalPages ?? 1);
+        setFilteredTotal(data.pagination?.total ?? null);
       } catch {
         // ignored
       } finally {
@@ -141,7 +179,7 @@ function QuestionsContent() {
     return () => {
       cancelled = true;
     };
-  }, [page, periodFilter, categoriaFilter, tipoFilter, escalaFilter, clusterFilter, search, stateFilter, sortBy, viewMode]);
+  }, [urlSynced, page, periodFilter, categoriaFilter, tipoFilter, escalaFilter, clusterFilter, entityFilter, entityTypeFilter, search, stateFilter, sortBy, viewMode]);
 
   const counts = useMemo(() => {
     const total = stats?.totalQuestions ?? questions.length;
@@ -251,6 +289,19 @@ function QuestionsContent() {
 
         {/* Períodos (siempre visibles, son el filtro estructural primario) */}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 18, alignItems: "center" }}>
+          {entityFilter && (
+            <Pill
+              active
+              onClick={() => {
+                setEntityFilter("");
+                setEntityTypeFilter("");
+                setPage(1);
+              }}
+            >
+              Entidad: {entityFilter}
+              {filteredTotal != null ? ` · ${filteredTotal}` : ""} ✕
+            </Pill>
+          )}
           <Pill active={periodFilter === ""} onClick={() => setPeriodFilter("")}>
             Todos los períodos
           </Pill>

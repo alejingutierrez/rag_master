@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ATELIER_FORMAT_LIST } from "@/lib/atelier-formats";
 import { TIPOS_PREGUNTA, ESCALAS_GEOGRAFICAS } from "@/lib/questions-config";
@@ -30,6 +31,12 @@ export async function GET(request: NextRequest) {
   const ids = searchParams.get("ids")?.split(",").filter(Boolean).slice(0, 30);
   // Filtros nuevos
   const entity = searchParams.get("entity") || undefined; // texto contra cualquiera de las 3 listas
+  // entityType acota a una sola lista — así el conteo coincide exacto con la
+  // nube de /entities, que agrega por (tipo, nombre).
+  const entityTypeRaw = searchParams.get("entityType");
+  const entityType = entityTypeRaw && ["person", "place", "concept"].includes(entityTypeRaw)
+    ? (entityTypeRaw as "person" | "place" | "concept")
+    : undefined;
   const yearMinRaw = searchParams.get("yearMin");
   const yearMaxRaw = searchParams.get("yearMax");
   const yearMin = yearMinRaw ? parseInt(yearMinRaw, 10) : undefined;
@@ -69,14 +76,25 @@ export async function GET(request: NextRequest) {
       });
     }
     if (entity) {
-      // pg arrays — `has` requiere coincidencia exacta del nombre canónico.
-      andClauses.push({
-        OR: [
-          { entidadesPersonas: { has: entity } },
-          { entidadesLugares: { has: entity } },
-          { entidadesConceptos: { has: entity } },
-        ],
-      });
+      // Coincidencia caseless+trim, igual que la clave de agregación de
+      // /api/entities — si no, el conteo de la nube no cuadra con la lista
+      // al hacer clic ("Magdalena Medio" vs "Magdalena medio").
+      const arrayExpr =
+        entityType === "person"
+          ? Prisma.raw(`"entidadesPersonas"`)
+          : entityType === "place"
+          ? Prisma.raw(`"entidadesLugares"`)
+          : entityType === "concept"
+          ? Prisma.raw(`"entidadesConceptos"`)
+          : Prisma.raw(`"entidadesPersonas" || "entidadesLugares" || "entidadesConceptos"`);
+      const matches = await prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
+        SELECT id FROM questions
+        WHERE EXISTS (
+          SELECT 1 FROM unnest(${arrayExpr}) AS e
+          WHERE lower(trim(e)) = lower(trim(${entity}))
+        )
+      `);
+      andClauses.push({ id: { in: matches.map((m) => m.id) } });
     }
 
     // Filtro de años: ventana [yearMin, yearMax] sobre yearPrincipal.

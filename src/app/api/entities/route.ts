@@ -47,6 +47,9 @@ export async function GET(req: NextRequest) {
     questionIds: Set<string>;
     docIds: Set<string>;
     type: "person" | "place" | "concept";
+    // Conteo por variante de escritura ("INCORA" vs "Incora") — el nombre
+    // mostrado es la variante más frecuente en el corpus, no la primera vista.
+    variants: Map<string, number>;
   };
 
   const map = new Map<string, Bucket>();
@@ -64,13 +67,15 @@ export async function GET(req: NextRequest) {
         existing.questionIds.add(qid);
         existing.docIds.add(docId);
         existing.mentions = existing.questionIds.size;
+        existing.variants.set(name, (existing.variants.get(name) ?? 0) + 1);
       } else {
         map.set(k, {
-          name, // primer casing visto = nombre canónico
+          name,
           mentions: 1,
           questionIds: new Set([qid]),
           docIds: new Set([docId]),
           type,
+          variants: new Map([[name, 1]]),
         });
       }
     }
@@ -99,13 +104,23 @@ export async function GET(req: NextRequest) {
     .filter((e) => !typeFilter || e.type === typeFilter)
     .sort((a, b) => b.mentions - a.mentions)
     .slice(0, limit)
-    .map((e) => ({
-      name: e.name,
-      mentions: e.mentions,
-      docCount: e.docIds.size,
-      questionCount: e.questionIds.size,
-      type: e.type,
-    }));
+    .map((e) => {
+      let best = e.name;
+      let bestCount = 0;
+      for (const [variant, count] of e.variants) {
+        if (count > bestCount) {
+          best = variant;
+          bestCount = count;
+        }
+      }
+      return {
+        name: best,
+        mentions: e.mentions,
+        docCount: e.docIds.size,
+        questionCount: e.questionIds.size,
+        type: e.type,
+      };
+    });
 
   return NextResponse.json({
     entities,
