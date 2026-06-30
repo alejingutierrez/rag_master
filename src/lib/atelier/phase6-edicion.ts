@@ -5,13 +5,11 @@
  */
 import { callClaudeJson, SONNET_MODEL } from "./bedrock-json";
 import { askClaudeAtelier } from "./phase5-composicion";
+import { getFormatConfig } from "./format-config";
 import type { AtelierFormat } from "./formats";
 import type { AtelierBrief } from "./types";
 
-const UMBRAL = Number(process.env.ATELIER_QUALITY_THRESHOLD ?? "7.5");
-const MAX_REVISIONS = Number(process.env.ATELIER_MAX_REVISIONS ?? "1");
-
-const EDIT_SYSTEM_BASE = `Eres un editor literario riguroso. Recibes una pieza terminada y la mejoras SIN cambiar su contenido factual.
+const EDIT_SYSTEM_BASE = `Eres un editor literario riguroso, de los que leen con el lápiz afilado y devuelven el texto más limpio y más vivo de lo que llegó, sin tocar un solo hecho. Recibes una pieza terminada y la mejoras SIN cambiar su contenido factual.
 
 Reglas:
 - NO añadas ni elimines hechos (fechas, cifras, nombres, lugares, atribuciones). Solo mejoras la forma.
@@ -65,7 +63,8 @@ function num(v: unknown, fallback: number): number {
 async function criticar(
   texto: string,
   format: AtelierFormat,
-  extensionTarget: number
+  extensionTarget: number,
+  threshold: number
 ): Promise<{ scoreGlobal: number; problemas: string[] }> {
   try {
     const raw = await callClaudeJson<CritRaw>({
@@ -88,7 +87,7 @@ async function criticar(
     return { scoreGlobal, problemas };
   } catch {
     // Si el crítico falla, no bloquear: aceptar la pieza con score neutro.
-    return { scoreGlobal: UMBRAL, problemas: [] };
+    return { scoreGlobal: threshold, problemas: [] };
   }
 }
 
@@ -98,19 +97,23 @@ export async function pulirYControlar(args: {
   format: AtelierFormat;
   allowRevision: boolean;
 }): Promise<{ texto: string; qualityScore: number }> {
+  // Exigencia por formato: el capítulo se mide más duro; todos pasan hasta dos
+  // revisiones dirigidas si no alcanzan el umbral (ver format-config.ts).
+  const { qualityThreshold, maxRevisions } = getFormatConfig(args.format.id);
+
   let texto = await editPass(args.texto, args.brief, args.format, PULIDO_INSTR);
-  let crit = await criticar(texto, args.format, args.brief.ficha.extensionTarget);
+  let crit = await criticar(texto, args.format, args.brief.ficha.extensionTarget, qualityThreshold);
 
   let revisions = 0;
   while (
-    crit.scoreGlobal < UMBRAL &&
+    crit.scoreGlobal < qualityThreshold &&
     args.allowRevision &&
-    revisions < MAX_REVISIONS &&
+    revisions < maxRevisions &&
     crit.problemas.length > 0
   ) {
     const fixes = `Corrige específicamente estos problemas, sin alterar el resto ni cambiar los hechos:\n- ${crit.problemas.join("\n- ")}`;
     texto = await editPass(texto, args.brief, args.format, fixes);
-    crit = await criticar(texto, args.format, args.brief.ficha.extensionTarget);
+    crit = await criticar(texto, args.format, args.brief.ficha.extensionTarget, qualityThreshold);
     revisions++;
   }
 

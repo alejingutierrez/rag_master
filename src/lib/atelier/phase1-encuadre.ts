@@ -7,8 +7,7 @@ import { callClaudeJson, OPUS_MODEL } from "./bedrock-json";
 import type { AtelierBrief, AtelierEntities, AtelierQuestionMeta } from "./types";
 import type { AtelierFormatId } from "../atelier-formats";
 import { getAtelierFormat } from "../atelier-formats";
-
-const MAX_EJES = Number(process.env.ATELIER_MAX_EJES ?? "8");
+import { getFormatConfig } from "./format-config";
 
 const uniq = (xs: string[]): string[] => Array.from(new Set(xs.map((s) => s.trim()).filter(Boolean)));
 
@@ -38,14 +37,14 @@ function buildQuestionHints(m: AtelierQuestionMeta): string {
   return `PISTAS CURADAS DEL CORPUS (esta pregunta ya fue analizada; úsalas como punto de partida para afinar los ejes, las entidades y la temporalidad — no las ignores ni re-derives todo desde cero):\n${lines.join("\n")}`;
 }
 
-const ENCUADRE_SYSTEM = `Eres el director editorial de un taller de escritura histórica sobre Colombia y América Latina. Recibes la INTENCIÓN de un autor y el FORMATO elegido, y produces un brief de encargo que guiará (1) una investigación sobre un corpus documental y (2) la redacción posterior de una pieza pulida.
+const ENCUADRE_SYSTEM = `Eres el director editorial de un taller de escritura histórica sobre Colombia y América Latina: el que huele un buen tema, sabe dónde está enterrado en el archivo y manda al investigador a desenterrarlo por los flancos correctos. Recibes la INTENCIÓN de un autor y el FORMATO elegido, y produces un brief de encargo que guiará (1) una investigación sobre un corpus documental y (2) la redacción posterior de una pieza pulida.
 
 Tu tarea:
 
-1. Identifica la temporalidad, las entidades nombradas (personas, instituciones, lugares), los conceptos clave y la geografía implícitos o explícitos en la intención.
+1. Identifica la temporalidad, las entidades nombradas (personas, instituciones, lugares), los conceptos clave y la geografía implícitos o explícitos en la intención. Sé generoso: nombra a todos los actores y lugares que el tema arrastra, no solo los obvios — cada entidad es una puerta de entrada al corpus.
 2. Formula una TESIS TENTATIVA: la intuición o el ángulo que vertebrará la pieza. Es una guía INTERNA para enfocar la indagación — NO una conclusión a defender, NO algo que el lector verá enunciado.
 3. Delimita el SCOPE en 1-2 frases (qué entra y qué no).
-4. Genera de 6 a 8 EJES de indagación: sub-preguntas concretas, con nombres/fechas/conceptos, ejecutables como búsqueda en un corpus histórico. Que cubran ángulos complementarios y NO redundantes (contexto y antecedentes, actores e instituciones, causas estructurales, eventos y cronología, consecuencias de corto y largo plazo, miradas y tesis en disputa, dimensión geográfica/territorial) PERO siempre específicas al tema — nunca genéricas como "¿cuál es el contexto?". Más ejes = más cobertura; aprovéchalos para abrir el tema en profundidad.
+4. Genera de {MIN_EJES} a {MAX_EJES} EJES de indagación: sub-preguntas concretas, con nombres/fechas/conceptos, ejecutables como búsqueda en un corpus histórico. Cada eje debe MORDER UN ÁNGULO DISTINTO para que la investigación cruce fuentes de verdad y no traiga cinco veces el mismo fragmento. Reparte la cobertura entre: contexto y antecedentes, actores e instituciones, causas estructurales, detonantes coyunturales, eventos y cronología, consecuencias de corto y largo plazo, voces y tesis en disputa, dimensión geográfica/territorial, y vida material/cotidiana. Cada eje SIEMPRE específico al tema — nunca genérico como "¿cuál es el contexto?". Más ejes y más diversos = más documentos distintos en la mesa de triangulación; exprímelos.
 5. Afina la VOZ para este encargo concreto, dentro del registro del formato.
 
 Formato elegido: {FORMAT_NAME} — {FORMAT_DESC}
@@ -97,10 +96,11 @@ export async function buildBrief(args: {
   questionMeta?: AtelierQuestionMeta;
 }): Promise<AtelierBrief> {
   const meta = getAtelierFormat(args.formatId);
-  const system = ENCUADRE_SYSTEM.replace("{FORMAT_NAME}", meta?.name ?? args.formatId).replace(
-    "{FORMAT_DESC}",
-    meta?.description ?? ""
-  );
+  const cfg = getFormatConfig(args.formatId);
+  const system = ENCUADRE_SYSTEM.replace("{FORMAT_NAME}", meta?.name ?? args.formatId)
+    .replace("{FORMAT_DESC}", meta?.description ?? "")
+    .replace("{MIN_EJES}", String(cfg.minEjes))
+    .replace("{MAX_EJES}", String(cfg.maxEjes));
 
   const hints = args.questionMeta ? buildQuestionHints(args.questionMeta) : "";
   const user = `INTENCIÓN DEL AUTOR:\n${args.intent}${hints ? `\n\n${hints}` : ""}\n\nJSON:`;
@@ -121,7 +121,7 @@ export async function buildBrief(args: {
     : [];
   // Degradación: si el modelo no produjo ejes, indagar la intención cruda.
   if (ejes.length === 0) ejes = [args.intent];
-  ejes = ejes.slice(0, MAX_EJES);
+  ejes = ejes.slice(0, cfg.maxEjes);
 
   // Funde las entidades curadas de la pregunta con las que derivó el modelo:
   // no se pierde lo que el corpus ya sabía.

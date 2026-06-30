@@ -7,18 +7,13 @@ import { runRagPipeline } from "../rag-pipeline";
 import type { SearchResult } from "../vector-search";
 import type { AtelierFormatId } from "../atelier-formats";
 import { rebalanceByDiversity, countUniqueDocuments } from "./diversity";
+import { getFormatConfig } from "./format-config";
 import type { AtelierBrief, AcopioResult } from "./types";
 
 const RRF_K = 60;
-const SUBQUERY_CONCURRENCY = 2;
-
-// Tamaño del pool de evidencia. El capítulo es el único formato autorizado a
-// cruzar hasta 200 fuentes (el más profundo y caro); el resto, 100.
-const POOL_TARGET = Number(process.env.ATELIER_POOL_TARGET ?? "100");
-const POOL_TARGET_CAPITULO = Number(process.env.ATELIER_POOL_TARGET_CAPITULO ?? "200");
-const CAP_PER_DOC = Number(process.env.ATELIER_CAP_PER_DOC ?? "6");
-// Con 200 fuentes hace falta más techo por documento para poder llenar el pool.
-const CAP_PER_DOC_CAPITULO = Number(process.env.ATELIER_CAP_PER_DOC_CAPITULO ?? "10");
+// Más ejes por formato ⇒ subimos la concurrencia de recuperación para que el
+// acopio no se alargue en serie (el cuello real de Bedrock lo regula su semáforo).
+const SUBQUERY_CONCURRENCY = Number(process.env.ATELIER_SUBQUERY_CONCURRENCY ?? "3");
 
 export interface EjeProgress {
   eje: string;
@@ -38,12 +33,10 @@ export async function acopiar(args: {
   const progress: EjeProgress[] = ejes.map((eje) => ({ eje, status: "pending" }));
   const perEjeChunks: SearchResult[][] = ejes.map(() => []);
 
-  // El capítulo cruza más fuentes y trae más por eje para poder llenar su pool.
-  const isCapitulo = args.formatId === "capitulo";
-  const poolTarget = isCapitulo ? POOL_TARGET_CAPITULO : POOL_TARGET;
-  const capPerDoc = isCapitulo ? CAP_PER_DOC_CAPITULO : CAP_PER_DOC;
-  const perEjeCandidates = isCapitulo ? 150 : 100;
-  const perEjeTopK = isCapitulo ? 60 : 40;
+  // Cada formato cruza su propia densidad de fuentes (ver format-config.ts):
+  // el capítulo es el más exhaustivo; la crónica, fina y a ras de suelo.
+  const cfg = getFormatConfig(args.formatId);
+  const { poolTarget, capPerDoc, perEjeCandidates, perEjeTopK } = cfg;
 
   for (let i = 0; i < ejes.length; i += SUBQUERY_CONCURRENCY) {
     const batchIdx: number[] = [];

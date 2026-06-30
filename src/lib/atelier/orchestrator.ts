@@ -29,7 +29,10 @@ import type {
 
 export type AtelierProgress = (patch: Partial<AtelierMetadata>) => void | Promise<void>;
 
-const TIME_GUARD_MS = 700_000; // sobre 900s de maxDuration: salta la revisión opcional
+// Sobre 3600s de maxDuration: si a los ~50 min aún no llegamos a la edición,
+// se saltan las revisiones opcionales y se entrega la mejor versión disponible,
+// dejando ~10 min de colchón para pulido final + clasificación + persistencia.
+const TIME_GUARD_MS = 3_000_000;
 
 function countWords(s: string): number {
   return s.trim().split(/\s+/).filter(Boolean).length;
@@ -172,7 +175,7 @@ export async function runAtelier(
   // ── 4. Verificación ──
   set("verificacion", "running", "Contrastando cada afirmación con sus fuentes…");
   await emit("verificacion", "Contrastando cada afirmación con sus fuentes…");
-  let verified: VerifiedDossier = await verificar(dossier.claims, chunkMap);
+  let verified: VerifiedDossier = await verificar(dossier.claims, chunkMap, input.formatId);
   if (verified.claims.length === 0 && dossier.claims.length > 0) {
     degraded.push("La verificación no confirmó afirmaciones; se usa el dossier sin verificar.");
     verified = {

@@ -62,6 +62,12 @@ export interface AtelierHipotesis {
   antitesis: string;
   /** La posición matizada a sostener en la pieza. */
   sintesis: string;
+  /**
+   * Otras tesis candidatas que la evidencia también sostiene (minadas y
+   * descartadas como columna principal, pero útiles como tensiones a tejer).
+   * INTERNA: alimenta la riqueza argumental, no se enuncia como esquema.
+   */
+  tesisAlternas?: string[];
 }
 
 export interface AtelierBrief {

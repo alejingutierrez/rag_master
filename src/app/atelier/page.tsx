@@ -236,7 +236,7 @@ function AtelierContent() {
       <PageHeader
         label="Producción · Motor agéntico"
         title="El Taller"
-        subtitle="Cruza fuentes, verifica cada afirmación y compone una pieza pulida en el formato que elijas. El rigor queda en el aparato crítico; el texto, limpio. Tiempo típico: 6–9 minutos."
+        subtitle="Cruza fuentes, verifica cada afirmación y compone una pieza pulida en el formato que elijas. El rigor queda en el aparato crítico; el texto, limpio. Cuanto más hondo el formato, más tarda: de unos minutos la crónica a bastante más el capítulo."
       />
 
       <hr className="hairline" style={{ margin: "0 56px" }} />

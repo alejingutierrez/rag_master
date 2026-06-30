@@ -13,24 +13,35 @@ import type { SearchResult } from "./vector-search";
 const MAX_CONTEXT_CHARS = 400_000;
 const MAX_CHUNK_CHARS = 3500;
 
+export interface ContextBlockOpts {
+  /** Tope de caracteres por chunk (default 3500). Bájalo para que entren más
+   *  fragmentos cuando solo necesitas el TEMA de cada uno (p. ej. agrupar en
+   *  núcleos un pool grande), no su texto íntegro. */
+  maxChunkChars?: number;
+  /** Tope total de caracteres del bloque (default 400K ≈ 100K tokens). */
+  maxContextChars?: number;
+}
+
 /**
  * Empaqueta los chunks como un bloque numerado `[N] (archivo, p.X)\n<texto>`
  * para inyectar en el system prompt. Trunca por chunk y por total para no
  * exceder el presupuesto de contexto.
  */
-export function buildContextBlock(chunks: SearchResult[]): string {
+export function buildContextBlock(chunks: SearchResult[], opts?: ContextBlockOpts): string {
+  const maxChunkChars = opts?.maxChunkChars ?? MAX_CHUNK_CHARS;
+  const maxContextChars = opts?.maxContextChars ?? MAX_CONTEXT_CHARS;
   let totalChars = 0;
   const parts: string[] = [];
 
   for (let i = 0; i < chunks.length; i++) {
     const c = chunks[i];
     const truncated =
-      c.content.length > MAX_CHUNK_CHARS
-        ? c.content.slice(0, MAX_CHUNK_CHARS) + "..."
+      c.content.length > maxChunkChars
+        ? c.content.slice(0, maxChunkChars) + "..."
         : c.content;
     const part = `[${i + 1}] (${c.documentFilename}, p.${c.pageNumber})\n${truncated}`;
 
-    if (totalChars + part.length > MAX_CONTEXT_CHARS) break;
+    if (totalChars + part.length > maxContextChars) break;
     parts.push(part);
     totalChars += part.length;
   }

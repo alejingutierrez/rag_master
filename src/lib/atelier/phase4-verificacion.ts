@@ -5,13 +5,14 @@
  * Aquí se gana la confiabilidad.
  */
 import { callClaudeJson, SONNET_MODEL } from "./bedrock-json";
+import { getFormatConfig } from "./format-config";
+import type { AtelierFormatId } from "../atelier-formats";
 import type { SearchResult } from "../vector-search";
 import type { Claim, Veredicto, VerifiedClaim, VerifiedDossier } from "./types";
 
-const BATCH_SIZE = Number(process.env.ATELIER_VERIFY_BATCH ?? "8");
-const SNIPPET = 600;
+const SNIPPET = 900;
 
-const VERIFY_SYSTEM = `Eres un verificador escéptico de afirmaciones históricas. Para cada AFIRMACIÓN te doy SUS fuentes (texto literal de los fragmentos que supuestamente la respaldan). Tu trabajo es intentar REFUTARLA: ¿las fuentes la sostienen de verdad, o la afirmación extrapola, infiere o exagera?
+const VERIFY_SYSTEM = `Eres un verificador escéptico de afirmaciones históricas: un abogado del diablo del archivo, que parte de la sospecha de que la afirmación dice más de lo que la fuente aguanta. Para cada AFIRMACIÓN te doy SUS fuentes (texto literal de los fragmentos que supuestamente la respaldan). Tu trabajo es intentar REFUTARLA: ¿las fuentes la sostienen de verdad, o la afirmación extrapola, infiere, generaliza o exagera la causalidad?
 
 Devuelve JSON puro (sin markdown):
 { "verificaciones": [ {
@@ -96,13 +97,15 @@ async function verifyBatch(
 
 export async function verificar(
   claims: Claim[],
-  chunkMap: Map<string, SearchResult>
+  chunkMap: Map<string, SearchResult>,
+  formatId?: AtelierFormatId
 ): Promise<VerifiedDossier> {
   if (claims.length === 0) return { claims: [], descartados: 0, atenuados: 0 };
 
+  const batchSize = formatId ? getFormatConfig(formatId).verifyBatch : 8;
   const batches: Claim[][] = [];
-  for (let i = 0; i < claims.length; i += BATCH_SIZE) {
-    batches.push(claims.slice(i, i + BATCH_SIZE));
+  for (let i = 0; i < claims.length; i += batchSize) {
+    batches.push(claims.slice(i, i + batchSize));
   }
 
   const settled = await Promise.allSettled(batches.map((b) => verifyBatch(b, chunkMap)));

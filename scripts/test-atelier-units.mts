@@ -12,8 +12,11 @@ import {
   stripScaffolding,
 } from "../src/lib/atelier/aparato";
 import { normalizeTaxonomy, reconcilePeriodo } from "../src/lib/taxonomy";
+import { ATELIER_FORMAT_LIST, isValidFormatId } from "../src/lib/atelier-formats";
+import { getFormatConfig } from "../src/lib/atelier/format-config";
+import { getFormatPrompt } from "../src/lib/atelier/formats";
 import type { SearchResult } from "../src/lib/vector-search";
-import type { VerifiedClaim } from "../src/lib/atelier/types";
+import type { VerifiedClaim, AtelierBrief } from "../src/lib/atelier/types";
 
 let pass = 0;
 let fail = 0;
@@ -320,6 +323,74 @@ test("normalizeTaxonomy: enums inválidos → null", () => {
 test("normalizeTaxonomy: categoría inválida → fallback HIS", () => {
   const t = normalizeTaxonomy({ periodoCode: "TRANS", categoriaCode: "NOPE" });
   assert.equal(t.categoriaCode, "HIS");
+});
+
+// ── 7. Contrato de formatos del Taller ───────────────────────────────
+group("formatos: cobertura de config + prompt (incl. podcast)");
+
+function fakeBrief(formato: AtelierBrief["ficha"]["formato"]): AtelierBrief {
+  return {
+    thinking: "",
+    tesisTentativa: "tesis interna de prueba",
+    ejes: ["eje 1", "eje 2"],
+    scope: "alcance de prueba",
+    entities: {
+      personas: ["Jorge Eliécer Gaitán"],
+      instituciones: ["Partido Liberal"],
+      lugares: ["Bogotá"],
+      conceptos: ["populismo"],
+      temporalidad: "1948",
+    },
+    hipotesis: {
+      tesis: "T",
+      antitesis: "A",
+      sintesis: "S",
+      tesisAlternas: ["otra lectura plausible"],
+    },
+    ficha: { formato, voz: "voz de prueba", extensionTarget: 2000 },
+  };
+}
+
+test("el set de formatos incluye podcast y todos son válidos", () => {
+  const ids = ATELIER_FORMAT_LIST.map((f) => f.id);
+  assert.ok(ids.includes("podcast"), "falta el formato podcast");
+  assert.equal(ids.length, 5);
+  for (const id of ids) assert.ok(isValidFormatId(id), `formato inválido: ${id}`);
+});
+
+test("cada formato tiene config con parámetros subidos (más fuentes/triangulación)", () => {
+  for (const { id } of ATELIER_FORMAT_LIST) {
+    const c = getFormatConfig(id);
+    // Suelo mínimo: por encima de los viejos defaults globales (pool 100, ejes 8).
+    assert.ok(c.poolTarget >= 120, `${id}: poolTarget bajo (${c.poolTarget})`);
+    assert.ok(c.maxEjes >= 9, `${id}: maxEjes bajo (${c.maxEjes})`);
+    assert.ok(c.maxRevisions >= 2, `${id}: maxRevisions bajo (${c.maxRevisions})`);
+    assert.ok(c.hipotesisCandidatas >= 3, `${id}: pocas hipótesis (${c.hipotesisCandidatas})`);
+    assert.ok(c.minNucleos <= c.maxNucleos && c.claimsMin <= c.claimsMax, `${id}: rangos invertidos`);
+  }
+});
+
+test("el capítulo es el formato más exhaustivo (más fuentes que el resto)", () => {
+  const cap = getFormatConfig("capitulo");
+  for (const { id } of ATELIER_FORMAT_LIST) {
+    if (id === "capitulo") continue;
+    assert.ok(cap.poolTarget >= getFormatConfig(id).poolTarget, `capítulo no domina a ${id}`);
+  }
+});
+
+test("cada formato construye un writer prompt no vacío y con # H1", () => {
+  for (const { id } of ATELIER_FORMAT_LIST) {
+    const fmt = getFormatPrompt(id);
+    const sys = fmt.buildWriterSystemPrompt({
+      brief: fakeBrief(id),
+      verifiedContext: "### Núcleo\n- un hecho cotejado",
+    });
+    assert.ok(sys.length > 800, `${id}: prompt sospechosamente corto`);
+    assert.ok(sys.includes("# H1") || /`# H1`/.test(sys), `${id}: no exige título # H1`);
+    assert.ok(fmt.maxTokens > 0, `${id}: maxTokens inválido`);
+    // La espina argumental con tesis alternas debe filtrarse al prompt.
+    assert.ok(sys.includes("otra lectura plausible"), `${id}: no integra tesisAlternas`);
+  }
 });
 
 // ── Resumen ──────────────────────────────────────────────────────────

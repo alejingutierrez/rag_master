@@ -38,6 +38,7 @@ const FORMATS = [
   { id: "ensayo-autor", label: "Ensayo de autor" },
   { id: "reportaje", label: "Reportaje" },
   { id: "capitulo", label: "Capítulo" },
+  { id: "podcast", label: "Podcast monólogo" },
 ];
 
 const PERIOD_CODES = Object.keys(PERIODS) as PeriodCode[];

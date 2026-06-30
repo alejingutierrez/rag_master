@@ -5,7 +5,12 @@
  * cada formato viven en `src/lib/atelier/formats.ts` (server-side).
  */
 
-export type AtelierFormatId = "cronica" | "ensayo-autor" | "reportaje" | "capitulo";
+export type AtelierFormatId =
+  | "cronica"
+  | "ensayo-autor"
+  | "reportaje"
+  | "capitulo"
+  | "podcast";
 
 export interface AtelierFormatMeta {
   id: AtelierFormatId;
@@ -40,6 +45,12 @@ export const ATELIER_FORMATS: Record<AtelierFormatId, AtelierFormatMeta> = {
     description: "Pieza extensa de libro: profundidad y arco sostenido.",
     defaultWords: 5000,
   },
+  podcast: {
+    id: "podcast",
+    name: "Podcast monólogo",
+    description: "Guion hablado para una sola voz: íntimo, escénico, dicho al oído.",
+    defaultWords: 2400,
+  },
 };
 
 export const ATELIER_FORMAT_LIST: AtelierFormatMeta[] = Object.values(ATELIER_FORMATS);
@@ -65,10 +76,12 @@ export type LongitudId = "compacta" | "normal" | "extensa";
  * Override fino por env no aplica aquí (es contenido editorial, no infra).
  */
 const WORD_TARGETS: Record<AtelierFormatId, Record<LongitudId, number>> = {
-  cronica: { compacta: 1500, normal: 3000, extensa: 5000 },
-  "ensayo-autor": { compacta: 1800, normal: 3200, extensa: 5000 },
-  reportaje: { compacta: 2000, normal: 3500, extensa: 5000 },
-  capitulo: { compacta: 4000, normal: 7000, extensa: 10000 },
+  cronica: { compacta: 1600, normal: 3200, extensa: 6000 },
+  "ensayo-autor": { compacta: 1900, normal: 3600, extensa: 6000 },
+  reportaje: { compacta: 2200, normal: 4000, extensa: 6500 },
+  capitulo: { compacta: 4500, normal: 8000, extensa: 12000 },
+  // Monólogo hablado: medido en minutos al oído (≈150 palabras/min ⇒ ~12/20/32 min).
+  podcast: { compacta: 1700, normal: 3000, extensa: 4800 },
 };
 
 /** Palabras objetivo para un formato y modo dados (modo por defecto: "normal"). */
