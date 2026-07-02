@@ -311,7 +311,7 @@ function DrawerContent({
                     type="button"
                     onClick={() =>
                       router.push(
-                        `/atelier?questionId=${encodeURIComponent(q.id)}&intent=${encodeURIComponent(q.pregunta)}`
+                        `/admin/atelier?questionId=${encodeURIComponent(q.id)}&intent=${encodeURIComponent(q.pregunta)}`
                       )
                     }
                     title="Trabajar esta pregunta en el Taller"
@@ -391,11 +391,11 @@ function DrawerContent({
             <ActionBtn
               label="El Taller"
               primary
-              onClick={() => router.push(`/atelier?intent=${encodeURIComponent(tallerIntent)}`)}
+              onClick={() => router.push(`/admin/atelier?intent=${encodeURIComponent(tallerIntent)}`)}
             />
             <ActionBtn
               label="Archivo del período"
-              onClick={() => router.push(`/questions?periodo=${periodoCode}`)}
+              onClick={() => router.push(`/admin/questions?periodo=${periodoCode}`)}
             />
           </div>
         </div>

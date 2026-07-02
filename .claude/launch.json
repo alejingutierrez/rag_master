@@ -4,9 +4,15 @@
     {
       "name": "dev",
       "runtimeExecutable": "/bin/sh",
-      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/alegut/MyApps/rag_master && exec npx next dev --port \"$PORT\""],
+      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/alegut/MyApps/rag_master/.claude/worktrees/gallant-mirzakhani-d6ce05 && exec npx next dev --port \"$PORT\""],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "scratch-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4599", "--directory", "/private/tmp/claude-501/-Users-alegut-MyApps-rag-master--claude-worktrees-gallant-mirzakhani-d6ce05/bc7ed0cd-2b56-4482-81f6-962ed01d5722/scratchpad"],
+      "port": 4599
     }
   ]
 }

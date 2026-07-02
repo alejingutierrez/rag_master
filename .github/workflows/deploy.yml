@@ -82,6 +82,7 @@ jobs:
                   \"StartCommand\": \"sh scripts/start.sh\",
                   \"RuntimeEnvironmentVariables\": {
                     \"DATABASE_URL\": \"${{ secrets.DATABASE_URL }}\",
+                    \"ADMIN_ACCESS_TOKEN\": \"${{ secrets.ADMIN_ACCESS_TOKEN }}\",
                     \"S3_BUCKET_NAME\": \"${{ secrets.S3_BUCKET_NAME }}\",
                     \"AWS_REGION\": \"${{ env.AWS_REGION }}\",
                     \"AWS_ACCESS_KEY_ID\": \"${{ secrets.APP_AWS_ACCESS_KEY_ID }}\",
@@ -130,6 +131,8 @@ jobs:
           node-version: '20'
 
       - name: Smoke test — real /api/chat request
+        env:
+          ADMIN_ACCESS_TOKEN: ${{ secrets.ADMIN_ACCESS_TOKEN }}
         run: |
           SERVICE_URL=$(aws apprunner describe-service \
             --service-arn $APP_RUNNER_SERVICE_ARN \

@@ -9,6 +9,19 @@ import { KeyboardHelp } from "./keyboard-help";
 
 const SIDEBAR_WIDTH = 220;
 
+// Prefijos de rutas del sitio público (chrome propio, sin sidebar del admin).
+const PUBLIC_PREFIXES = [
+  "/ensayos",
+  "/entidades",
+  "/epocas",
+  "/hechos",
+  "/preguntas",
+  "/linea-de-tiempo",
+  "/acerca",
+  "/archivo",
+  "/colecciones",
+];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobile, setMobile] = useState(false);
@@ -17,6 +30,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Bypass para páginas de desarrollo del nuevo design system (si se conservan).
   const isDevPath = pathname.startsWith("/dev");
+
+  // El sitio público tiene su propio chrome (PublicShell), no el del admin.
+  const isPublicPath =
+    pathname === "/" ||
+    PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
   useEffect(() => {
     const check = () => setMobile(window.innerWidth < 768);
@@ -56,13 +74,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       if (lastKey === "g" && now - lastTime < 800) {
         const map: Record<string, string> = {
-          h: "/",
-          d: "/documents",
-          c: "/chat",
-          q: "/questions",
-          p: "/producciones",
-          t: "/timeline",
-          u: "/upload",
+          h: "/admin",
+          d: "/admin/documents",
+          c: "/admin/chat",
+          q: "/admin/questions",
+          p: "/admin/producciones",
+          t: "/admin/timeline",
+          u: "/admin/upload",
         };
         if (map[k]) {
           e.preventDefault();
@@ -82,7 +100,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handler);
   }, [router]);
 
-  if (isDevPath) {
+  if (isDevPath || isPublicPath) {
     return <>{children}</>;
   }
 

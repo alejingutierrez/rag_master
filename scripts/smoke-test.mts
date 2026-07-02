@@ -40,6 +40,12 @@ const TOTAL_DEADLINE_MS = Number(args.timeout || "90") * 1_000;
 const ATELIER_DEADLINE_MS = Number(args.atelierTimeout || "900") * 1_000;
 const POLL_INTERVAL_MS = 2_000;
 
+// El candado del middleware gatea /api/*; el smoke se autentica con el token.
+const ADMIN_TOKEN = process.env.ADMIN_ACCESS_TOKEN;
+const AUTH: Record<string, string> = ADMIN_TOKEN
+  ? { Authorization: `Bearer ${ADMIN_TOKEN}` }
+  : {};
+
 interface PostResponse {
   id?: string;
   deliverableId?: string;
@@ -82,7 +88,7 @@ async function smokeChat(): Promise<void> {
     res = await withTimeout(
       fetch(`${TARGET}/api/chat/stream`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...AUTH },
         body: JSON.stringify({ question: QUESTION }),
       }),
       TOTAL_DEADLINE_MS,
@@ -158,7 +164,7 @@ async function smokeAtelier(): Promise<void> {
     postRes = await withTimeout(
       fetch(`${TARGET}/api/atelier`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...AUTH },
         body: JSON.stringify({ intent: ATELIER_INTENT, formatId: ATELIER_FORMAT }),
       }),
       POST_DEADLINE_MS,
@@ -183,7 +189,7 @@ async function smokeAtelier(): Promise<void> {
     let pollRes: Response;
     try {
       pollRes = await withTimeout(
-        fetch(`${TARGET}/api/deliverables/${id}`),
+        fetch(`${TARGET}/api/deliverables/${id}`, { headers: AUTH }),
         10_000,
         "GET /api/deliverables/[id]"
       );

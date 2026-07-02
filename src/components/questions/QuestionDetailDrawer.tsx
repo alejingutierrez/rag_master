@@ -290,7 +290,7 @@ function DrawerContent({
                 <button
                   key={d.id}
                   type="button"
-                  onClick={() => router.push(`/producciones/${d.id}`)}
+                  onClick={() => router.push(`/admin/producciones/${d.id}`)}
                   title="Ver esta producción"
                   style={{
                     appearance: "none",
@@ -352,13 +352,13 @@ function DrawerContent({
             <ActionBtn
               label="Chat"
               primary
-              onClick={() => router.push(`/chat?questionId=${encodeURIComponent(q.id)}`)}
+              onClick={() => router.push(`/admin/chat?questionId=${encodeURIComponent(q.id)}`)}
             />
             <ActionBtn
               label="El Taller"
               onClick={() =>
                 router.push(
-                  `/atelier?questionId=${encodeURIComponent(q.id)}&intent=${encodeURIComponent(q.pregunta)}`
+                  `/admin/atelier?questionId=${encodeURIComponent(q.id)}&intent=${encodeURIComponent(q.pregunta)}`
                 )
               }
             />
