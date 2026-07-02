@@ -7,23 +7,23 @@ import { ThemeToggle } from "./theme-toggle";
 
 const ROUTE_TRAIL: Record<string, string[]> = {
   "/": ["Archivo", "Inicio"],
-  "/chat": ["Archivo", "Investigación", "Consultar"],
-  "/timeline": ["Archivo", "Exploración", "Línea de tiempo"],
-  "/documents": ["Archivo", "Repositorio", "Documentos"],
-  "/upload": ["Archivo", "Repositorio", "Cargar"],
-  "/enrich": ["Archivo", "Repositorio", "Enriquecer"],
-  "/questions": ["Archivo", "Investigación", "Preguntas"],
-  "/questions/matriz": ["Archivo", "Investigación", "Preguntas", "Matriz"],
-  "/questions/generate": ["Archivo", "Investigación", "Preguntas", "Generar"],
-  "/producciones": ["Archivo", "Producción", "Producciones"],
-  "/bibliography": ["Archivo", "Producción", "Bibliografía"],
-  "/entities": ["Archivo", "Exploración", "Entidades"],
-  "/graph": ["Archivo", "Exploración", "Grafo"],
+  "/admin/chat": ["Archivo", "Investigación", "Consultar"],
+  "/admin/timeline": ["Archivo", "Exploración", "Línea de tiempo"],
+  "/admin/documents": ["Archivo", "Repositorio", "Documentos"],
+  "/admin/upload": ["Archivo", "Repositorio", "Cargar"],
+  "/admin/enrich": ["Archivo", "Repositorio", "Enriquecer"],
+  "/admin/questions": ["Archivo", "Investigación", "Preguntas"],
+  "/admin/questions/matriz": ["Archivo", "Investigación", "Preguntas", "Matriz"],
+  "/admin/questions/generate": ["Archivo", "Investigación", "Preguntas", "Generar"],
+  "/admin/producciones": ["Archivo", "Producción", "Producciones"],
+  "/admin/bibliography": ["Archivo", "Producción", "Bibliografía"],
+  "/admin/entities": ["Archivo", "Exploración", "Entidades"],
+  "/admin/graph": ["Archivo", "Exploración", "Grafo"],
 };
 
 const DYNAMIC_PARENTS: Record<string, string[]> = {
-  "/documents": ["Archivo", "Repositorio", "Documentos", "Detalle"],
-  "/producciones": ["Archivo", "Producción", "Producciones", "Detalle"],
+  "/admin/documents": ["Archivo", "Repositorio", "Documentos", "Detalle"],
+  "/admin/producciones": ["Archivo", "Producción", "Producciones", "Detalle"],
 };
 
 export interface TopBarProps {

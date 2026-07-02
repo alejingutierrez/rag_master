@@ -11,34 +11,34 @@ const NAV: NavGroup[] = [
   {
     label: "Repositorio",
     items: [
-      { href: "/", label: "Inicio" },
-      { href: "/documents", label: "Documentos" },
-      { href: "/upload", label: "Cargar" },
-      { href: "/enrich", label: "Enriquecer" },
+      { href: "/admin", label: "Inicio" },
+      { href: "/admin/documents", label: "Documentos" },
+      { href: "/admin/upload", label: "Cargar" },
+      { href: "/admin/enrich", label: "Enriquecer" },
     ],
   },
   {
     label: "Investigación",
     items: [
-      { href: "/chat", label: "Consultar" },
-      { href: "/questions", label: "Preguntas" },
-      { href: "/preguntas-madre", label: "Preguntas madre" },
-      { href: "/atelier", label: "El Taller" },
+      { href: "/admin/chat", label: "Consultar" },
+      { href: "/admin/questions", label: "Preguntas" },
+      { href: "/admin/preguntas-madre", label: "Preguntas madre" },
+      { href: "/admin/atelier", label: "El Taller" },
     ],
   },
   {
     label: "Producción",
     items: [
-      { href: "/producciones", label: "Producciones" },
-      { href: "/bibliography", label: "Bibliografía" },
+      { href: "/admin/producciones", label: "Producciones" },
+      { href: "/admin/bibliography", label: "Bibliografía" },
     ],
   },
   {
     label: "Exploración",
     items: [
-      { href: "/timeline", label: "Línea de tiempo" },
-      { href: "/graph", label: "Grafo" },
-      { href: "/entities", label: "Entidades" },
+      { href: "/admin/timeline", label: "Línea de tiempo" },
+      { href: "/admin/graph", label: "Grafo" },
+      { href: "/admin/entities", label: "Entidades" },
     ],
   },
 ];
@@ -48,8 +48,8 @@ const ALL_ROUTES = NAV.flatMap((g) => g.items.map((i) => i.href)).sort(
 );
 
 const SUB_ROUTE_PARENT: Record<string, string> = {
-  "/questions/matriz": "/questions",
-  "/questions/generate": "/questions",
+  "/admin/questions/matriz": "/admin/questions",
+  "/admin/questions/generate": "/admin/questions",
 };
 
 export interface SidebarProps {
@@ -90,7 +90,7 @@ export function Sidebar({ versionText = "0.4.2 · Archivo Vivo" }: SidebarProps)
       {/* Brand */}
       <div style={{ padding: "0 24px 28px" }}>
         <Link
-          href="/"
+          href="/admin"
           aria-label="Inicio"
           style={{ display: "block", textDecoration: "none" }}
         >

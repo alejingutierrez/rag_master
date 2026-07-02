@@ -37,17 +37,17 @@ type Item = {
 
 const STATIC_ITEMS: Item[] = [
   { id: "nav-home", label: "Inicio", href: "/", icon: Home, group: "Navegar" },
-  { id: "nav-upload", label: "Cargar PDFs", href: "/upload", icon: Upload, group: "Navegar" },
-  { id: "nav-docs", label: "Documentos", href: "/documents", icon: FileText, group: "Navegar" },
-  { id: "nav-enrich", label: "Enriquecer", href: "/enrich", icon: FlaskConical, group: "Navegar" },
-  { id: "nav-chat", label: "Consultar", href: "/chat", icon: MessageCircle, group: "Navegar" },
-  { id: "nav-atelier", label: "El Taller", href: "/atelier", icon: Hammer, group: "Navegar" },
-  { id: "nav-q", label: "Preguntas", href: "/questions", icon: BookOpen, group: "Navegar" },
-  { id: "nav-prod", label: "Producciones", href: "/producciones", icon: LayoutGrid, group: "Navegar" },
-  { id: "nav-bib", label: "Bibliografía", href: "/bibliography", icon: Library, group: "Navegar" },
-  { id: "nav-time", label: "Línea de tiempo", href: "/timeline", icon: Activity, group: "Navegar" },
-  { id: "nav-graph", label: "Grafo de conexiones", href: "/graph", icon: GitBranch, group: "Navegar" },
-  { id: "nav-ent", label: "Entidades", href: "/entities", icon: Users, group: "Navegar" },
+  { id: "nav-upload", label: "Cargar PDFs", href: "/admin/upload", icon: Upload, group: "Navegar" },
+  { id: "nav-docs", label: "Documentos", href: "/admin/documents", icon: FileText, group: "Navegar" },
+  { id: "nav-enrich", label: "Enriquecer", href: "/admin/enrich", icon: FlaskConical, group: "Navegar" },
+  { id: "nav-chat", label: "Consultar", href: "/admin/chat", icon: MessageCircle, group: "Navegar" },
+  { id: "nav-atelier", label: "El Taller", href: "/admin/atelier", icon: Hammer, group: "Navegar" },
+  { id: "nav-q", label: "Preguntas", href: "/admin/questions", icon: BookOpen, group: "Navegar" },
+  { id: "nav-prod", label: "Producciones", href: "/admin/producciones", icon: LayoutGrid, group: "Navegar" },
+  { id: "nav-bib", label: "Bibliografía", href: "/admin/bibliography", icon: Library, group: "Navegar" },
+  { id: "nav-time", label: "Línea de tiempo", href: "/admin/timeline", icon: Activity, group: "Navegar" },
+  { id: "nav-graph", label: "Grafo de conexiones", href: "/admin/graph", icon: GitBranch, group: "Navegar" },
+  { id: "nav-ent", label: "Entidades", href: "/admin/entities", icon: Users, group: "Navegar" },
 ];
 
 interface Props {
@@ -96,7 +96,7 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
             id: `doc-${d.id}`,
             label: d.title || d.filename,
             hint: `${d.pageCount ?? 0} pp · documento`,
-            href: `/documents/${d.id}`,
+            href: `/admin/documents/${d.id}`,
             icon: FileText,
             group: "Documentos",
           });
@@ -106,7 +106,7 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
             id: `q-${q.id}`,
             label: q.pregunta,
             hint: q.periodoNombre,
-            href: `/questions?focus=${q.id}`,
+            href: `/admin/questions?focus=${q.id}`,
             icon: BookOpen,
             group: "Preguntas",
           });
@@ -116,7 +116,7 @@ export function CommandPalette({ open, onClose, onNavigate }: Props) {
             id: `p-${p.id}`,
             label: p.title,
             hint: p.templateName,
-            href: `/producciones/${p.id}`,
+            href: `/admin/producciones/${p.id}`,
             icon: LayoutGrid,
             group: "Producciones",
           });
