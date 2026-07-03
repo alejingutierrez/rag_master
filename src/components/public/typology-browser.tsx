@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { SearchInput } from "@/components/editorial";
 import { getPeriodColor } from "@/lib/design-tokens";
-import { PeriodFilter } from "@/components/public/period-filter";
+import { PeriodSelector } from "@/components/public/period-selector";
 import type { TypologyCard } from "@/lib/public-data";
 
 function norm(s: string): string {
@@ -66,7 +66,7 @@ export function TypologyBrowser({
       {showFilters && (
         <div className="tix-filters">
           {periods.length >= 2 && (
-            <PeriodFilter periods={periods} active={periodo} onSelect={setPeriodo} />
+            <PeriodSelector present={new Set(periods)} selected={periodo} onSelect={setPeriodo} />
           )}
           <div className="tix-searchrow">
             <SearchInput value={q} onChange={setQ} placeholder="Buscar por nombre, entidad…" width={260} />
