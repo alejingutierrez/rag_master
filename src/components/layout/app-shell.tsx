@@ -6,21 +6,9 @@ import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { CommandPalette } from "./command-palette";
 import { KeyboardHelp } from "./keyboard-help";
+import { isPublicPath } from "@/lib/public-routes";
 
 const SIDEBAR_WIDTH = 220;
-
-// Prefijos de rutas del sitio público (chrome propio, sin sidebar del admin).
-const PUBLIC_PREFIXES = [
-  "/ensayos",
-  "/entidades",
-  "/epocas",
-  "/hechos",
-  "/preguntas",
-  "/linea-de-tiempo",
-  "/acerca",
-  "/archivo",
-  "/colecciones",
-];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -33,10 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // El sitio público tiene su propio chrome (PublicShell), no el del admin.
   // `/login` también va sin chrome del admin (pantalla propia).
-  const isPublicPath =
-    pathname === "/" ||
-    pathname === "/login" ||
-    PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  const publicPath = isPublicPath(pathname);
 
   useEffect(() => {
     const check = () => setMobile(window.innerWidth < 768);
@@ -102,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handler);
   }, [router]);
 
-  if (isDevPath || isPublicPath) {
+  if (isDevPath || publicPath) {
     return <>{children}</>;
   }
 

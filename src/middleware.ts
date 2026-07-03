@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth-edge";
+import { isPublicPath } from "@/lib/public-routes";
 
 /**
  * Candado de producción — SEPARA público de admin.
@@ -21,21 +22,6 @@ import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth-edge";
  * bcrypt ni Prisma aquí.
  */
 
-const PUBLIC_PAGE_PREFIXES = [
-  "/archivo",
-  "/ensayos",
-  "/epocas",
-  "/entidades",
-  "/personas",
-  "/lugares",
-  "/ideas",
-  "/preguntas",
-  "/hechos",
-  "/linea-de-tiempo",
-  "/acerca",
-  "/colecciones",
-];
-
 const PUBLIC_API = new Set([
   "/api/health",
   "/api/login",
@@ -44,13 +30,6 @@ const PUBLIC_API = new Set([
 
 // Prefijos de API públicos (streaming de imágenes de piezas publicadas).
 const PUBLIC_API_PREFIXES = ["/api/public-image/"];
-
-function isPublicPage(pathname: string): boolean {
-  if (pathname === "/" || pathname === "/login") return true;
-  return PUBLIC_PAGE_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(p + "/"),
-  );
-}
 
 function isPublicApi(pathname: string): boolean {
   if (PUBLIC_API.has(pathname)) return true;
@@ -79,7 +58,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Superficie pública de lectura → pasa sin candado.
-  if (isPublicPage(pathname) || isPublicApi(pathname)) {
+  if (isPublicPath(pathname) || isPublicApi(pathname)) {
     return NextResponse.next();
   }
 
