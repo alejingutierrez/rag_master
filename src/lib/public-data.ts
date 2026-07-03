@@ -1137,22 +1137,22 @@ function corpusToPublic(e: CorpusEntity, fichas: Map<string, string>): PublicEnt
   };
 }
 
-const entityByChrono = (a: PublicEntity, b: PublicEntity) =>
-  a.periodoOrden - b.periodoOrden ||
-  (a.anio ?? periodStartYear(a.periods[0] ?? null) ?? 9999) -
-    (b.anio ?? periodStartYear(b.periods[0] ?? null) ?? 9999) ||
-  b.mentions - a.mentions ||
-  a.name.localeCompare(b.name, "es");
+/** El corpus tiene miles de entidades; el índice muestra las más referenciadas. */
+export const ENTITY_DISPLAY_CAP = 300;
 
-/** Índice público de entidades de un tipo, DESDE EL REGISTRO DEL CORPUS. */
+/**
+ * Índice público de entidades de un tipo, DESDE EL REGISTRO DEL CORPUS.
+ * Devuelve las `ENTITY_DISPLAY_CAP` más mencionadas (prominencia); el filtro de
+ * época y el buscador navegan dentro de ellas. El conteo total va en getEntityCounts.
+ */
 export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[]> {
   try {
     const [{ byKey }, pieces] = await Promise.all([loadCorpusEntityIndex(), loadAnchoredPieces()]);
     const fichas = fichaMapFrom(pieces);
     const list: PublicEntity[] = [];
     for (const e of byKey.values()) if (e.type === type) list.push(corpusToPublic(e, fichas));
-    list.sort(entityByChrono);
-    return list;
+    list.sort((a, b) => b.mentions - a.mentions || a.name.localeCompare(b.name, "es"));
+    return list.slice(0, ENTITY_DISPLAY_CAP);
   } catch (err) {
     console.error(`[public-data] getEntityUniverse(${type}) falló:`, err);
     return [];

@@ -1,6 +1,6 @@
 import { PublicShell } from "@/components/public/public-shell";
 import { EntityBrowser } from "@/components/public/entity-index";
-import { getEntityUniverse, ENTITY_TYPE_META } from "@/lib/public-data";
+import { getEntityUniverse, getEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
 import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -17,16 +17,17 @@ export const metadata = buildMetadata({
 });
 
 export default async function PersonasPage() {
-  const entities = await getEntityUniverse("persona");
+  const [entities, counts] = await Promise.all([getEntityUniverse("persona"), getEntityCounts()]);
   const m = ENTITY_TYPE_META.persona;
   return (
     <PublicShell>
       <EntityBrowser
         entities={entities}
+        total={counts.persona}
         kicker="Quién hizo la historia"
         title="Personas"
-        intro="Las figuras que habitan estas piezas — con dónde aparecen y con quién se relacionan."
-        emptyNote="Aún no hay personas. Aparecerán a medida que se publiquen piezas desde el taller."
+        intro="Las figuras detectadas en el corpus — con dónde aparecen y con quién se relacionan."
+        emptyNote="Aún no hay personas en el corpus."
         typeLabel={m.singular}
         color={m.color}
       />

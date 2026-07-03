@@ -1,6 +1,6 @@
 import { PublicShell } from "@/components/public/public-shell";
 import { EntityBrowser } from "@/components/public/entity-index";
-import { getEntityUniverse, ENTITY_TYPE_META } from "@/lib/public-data";
+import { getEntityUniverse, getEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
 import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -17,16 +17,17 @@ export const metadata = buildMetadata({
 });
 
 export default async function IdeasPage() {
-  const entities = await getEntityUniverse("idea");
+  const [entities, counts] = await Promise.all([getEntityUniverse("idea"), getEntityCounts()]);
   const m = ENTITY_TYPE_META.idea;
   return (
     <PublicShell>
       <EntityBrowser
         entities={entities}
+        total={counts.idea}
         kicker="Qué estaba en juego"
         title="Ideas"
-        intro="Los procesos, las ideologías y las instituciones que estructuran esta historia — y las piezas que las piensan."
-        emptyNote="Aún no hay ideas. Aparecerán a medida que se publiquen piezas desde el taller."
+        intro="Los procesos, las ideologías y las instituciones del corpus — y las piezas que las piensan."
+        emptyNote="Aún no hay ideas en el corpus."
         typeLabel={m.singular}
         color={m.color}
       />

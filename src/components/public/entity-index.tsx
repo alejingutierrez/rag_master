@@ -22,6 +22,7 @@ export function EntityBrowser({
   emptyNote,
   typeLabel,
   color,
+  total,
 }: {
   entities: PublicEntity[];
   kicker: string;
@@ -30,6 +31,8 @@ export function EntityBrowser({
   emptyNote: string;
   typeLabel: string;
   color: string;
+  /** Tamaño total del registro del corpus (para "N de total"). */
+  total?: number;
 }) {
   const [periodo, setPeriodo] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -82,7 +85,9 @@ export function EntityBrowser({
 
       <div className="tix-count">
         {filtered.length === entities.length
-          ? `${entities.length} ${entities.length === 1 ? "registrada" : "registradas"}`
+          ? total && total > entities.length
+            ? `${entities.length.toLocaleString("es-CO")} más referenciadas · ${total.toLocaleString("es-CO")} en el corpus`
+            : `${entities.length} ${entities.length === 1 ? "registrada" : "registradas"}`
           : `${filtered.length} de ${entities.length}`}
       </div>
 
