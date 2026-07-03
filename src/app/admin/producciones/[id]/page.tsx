@@ -49,6 +49,40 @@ interface DeliverableDetail {
     document?: { id: string; filename: string };
   } | null;
   metadata?: Record<string, unknown> | null;
+  structuredData?: StructuredLite | null;
+  publishedAt?: string | null;
+  publishedBy?: string | null;
+  imageUrl?: string | null;
+  imageKey?: string | null;
+}
+
+interface StructuredLite {
+  typology?: "hecho" | "epoca" | "entidad" | "pregunta";
+  slug?: string;
+  titulo?: string;
+  tipo?: string;
+}
+
+const TYPOLOGY_SEG: Record<string, string> = {
+  hecho: "hechos",
+  epoca: "epocas",
+  entidad: "entidades",
+  pregunta: "preguntas",
+};
+const TYPOLOGY_LABEL: Record<string, string> = {
+  hecho: "Hecho",
+  epoca: "Época",
+  entidad: "Entidad",
+  pregunta: "Pregunta",
+};
+
+/** Ruta pública de una pieza: ficha de tipología o ensayo. */
+function publicHref(d: DeliverableDetail): string {
+  const s = d.structuredData;
+  if (s?.typology && s.slug && TYPOLOGY_SEG[s.typology]) {
+    return `/${TYPOLOGY_SEG[s.typology]}/${s.slug}`;
+  }
+  return `/ensayos/${d.id}`;
 }
 
 interface AtelierConfidence {
@@ -112,7 +146,52 @@ export default function ProduccionDetailPage({
   const [activeSource, setActiveSource] = useState<ChunkUsage | null>(null);
   const [sourceFull, setSourceFull] = useState<{ id: string; content: string } | null>(null);
   const [sourceLoading, setSourceLoading] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [imaging, setImaging] = useState(false);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+  async function togglePublish() {
+    if (!data) return;
+    setPublishing(true);
+    try {
+      const res = await fetch(`/api/deliverables/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: !data.publishedAt }),
+      });
+      if (res.ok) {
+        const { deliverable } = (await res.json()) as {
+          deliverable: { publishedAt: string | null; publishedBy: string | null; structuredData: StructuredLite | null };
+        };
+        setData((d) =>
+          d
+            ? {
+                ...d,
+                publishedAt: deliverable.publishedAt,
+                publishedBy: deliverable.publishedBy,
+                structuredData: deliverable.structuredData ?? d.structuredData,
+              }
+            : d,
+        );
+      }
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function generateImage() {
+    if (!data) return;
+    setImaging(true);
+    try {
+      const res = await fetch(`/api/deliverables/${id}/generate-image`, { method: "POST" });
+      if (res.ok) {
+        const { imageUrl } = (await res.json()) as { imageUrl?: string };
+        if (imageUrl) setData((d) => (d ? { ...d, imageUrl } : d));
+      }
+    } finally {
+      setImaging(false);
+    }
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -363,6 +442,16 @@ export default function ProduccionDetailPage({
         }}
         aria-label="Aparato crítico"
       >
+        {isAtelier && !isGenerating && (
+          <PublishPanel
+            data={data}
+            publishing={publishing}
+            imaging={imaging}
+            onToggle={togglePublish}
+            onGenerateImage={generateImage}
+          />
+        )}
+
         <div className="label" style={{ marginBottom: 8 }}>
           Aparato crítico
         </div>
@@ -475,6 +564,132 @@ export default function ProduccionDetailPage({
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function PublishPanel({
+  data,
+  publishing,
+  imaging,
+  onToggle,
+  onGenerateImage,
+}: {
+  data: DeliverableDetail;
+  publishing: boolean;
+  imaging: boolean;
+  onToggle: () => void;
+  onGenerateImage: () => void;
+}) {
+  const published = !!data.publishedAt;
+  const s = data.structuredData;
+  const typLabel = s?.typology ? TYPOLOGY_LABEL[s.typology] : null;
+  const href = publicHref(data);
+  const pubDate = data.publishedAt
+    ? new Date(data.publishedAt).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })
+    : null;
+
+  return (
+    <div
+      style={{
+        marginBottom: 28,
+        paddingBottom: 24,
+        borderBottom: "1px solid var(--line)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: published ? "var(--success)" : "var(--fg-dim)",
+          }}
+        />
+        <span
+          className="mono"
+          style={{
+            fontSize: 11,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: published ? "var(--success)" : "var(--fg-muted)",
+          }}
+        >
+          {published ? "Publicado" : "Borrador"}
+        </span>
+      </div>
+
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
+        <MiniTag>{typLabel ?? "Ensayo"}</MiniTag>
+        {s?.slug && <MiniTag>/{s.slug}</MiniTag>}
+      </div>
+
+      {data.imageUrl && (
+        <div style={{ marginBottom: 14 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={data.imageUrl}
+            alt=""
+            style={{
+              width: "100%",
+              aspectRatio: s?.typology === "entidad" ? "9 / 16" : "16 / 9",
+              objectFit: "cover",
+              filter: "grayscale(1)",
+              border: "1px solid var(--line)",
+              maxHeight: 220,
+            }}
+          />
+        </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <button
+          type="button"
+          onClick={onToggle}
+          disabled={publishing}
+          style={{
+            appearance: "none",
+            padding: "9px 14px",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11.5,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            cursor: publishing ? "wait" : "pointer",
+            background: published ? "transparent" : "var(--fg)",
+            color: published ? "var(--fg-muted)" : "var(--bg)",
+            border: published ? "1px solid var(--line-strong)" : "none",
+          }}
+        >
+          {publishing ? "…" : published ? "Despublicar" : "Publicar"}
+        </button>
+
+        <button
+          type="button"
+          onClick={onGenerateImage}
+          disabled={imaging}
+          style={{ ...ghostBtn, cursor: imaging ? "wait" : "pointer" }}
+        >
+          {imaging ? "Generando imagen…" : data.imageUrl ? "Regenerar imagen" : "Generar imagen"}
+        </button>
+
+        {published && (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            style={{ ...ghostBtn, textAlign: "center", textDecoration: "none" }}
+          >
+            Ver publicado ↗
+          </a>
+        )}
+      </div>
+
+      {published && pubDate && (
+        <div className="mono" style={{ fontSize: 10, color: "var(--fg-faint)", marginTop: 10 }}>
+          Publicado {pubDate}
+          {data.publishedBy ? ` · ${data.publishedBy}` : ""}
+        </div>
+      )}
     </div>
   );
 }

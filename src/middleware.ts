@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth-edge";
 
 /**
  * Candado de producción — SEPARA público de admin.
  *
- * Público (lectura): `/`, `/archivo`, `/ensayos`, y los prefijos de secciones
- * públicas. TODO lo demás — `/admin/*` y el resto de `/api/*` — exige el token.
+ * Público (lectura): `/`, `/archivo`, `/ensayos`, `/login`, y los prefijos de
+ * secciones públicas. TODO lo demás — `/admin/*` y el resto de `/api/*` — exige
+ * autenticación.
  *
- * Fail-closed: si `ADMIN_ACCESS_TOKEN` no está seteado, el admin queda BLOQUEADO
- * (503), nunca expuesto. En producción el token va como secreto → env de App Runner.
+ * Autenticación (en orden):
+ *   1) Cookie de sesión `hc_session` (JWT HS256 firmado con AUTH_SECRET) —
+ *      el login real de humanos. Se verifica aquí con `jose` (Edge-safe).
+ *   2) Bearer/Basic `ADMIN_ACCESS_TOKEN` — fallback para clientes automáticos
+ *      (el smoke test post-deploy). NO se elimina para no romper el deploy.
  *
- * Gate mínimo (Basic para el navegador + Bearer para clientes/smoke). Ampliable a
- * NextAuth después sin tocar las superficies públicas.
+ * Fail-closed: si NO hay ni `AUTH_SECRET` ni `ADMIN_ACCESS_TOKEN`, el admin
+ * queda BLOQUEADO (503). En producción ambos van como secretos → env de App Runner.
+ *
+ * Edge runtime: este archivo SOLO puede importar `jose` (vía auth-edge). Nada de
+ * bcrypt ni Prisma aquí.
  */
 
 const PUBLIC_PAGE_PREFIXES = [
@@ -25,16 +33,30 @@ const PUBLIC_PAGE_PREFIXES = [
   "/colecciones",
 ];
 
-const PUBLIC_API = new Set(["/api/health"]);
+const PUBLIC_API = new Set([
+  "/api/health",
+  "/api/login",
+  "/api/logout",
+]);
+
+// Prefijos de API públicos (streaming de imágenes de piezas publicadas).
+const PUBLIC_API_PREFIXES = ["/api/public-image/"];
 
 function isPublicPage(pathname: string): boolean {
-  if (pathname === "/") return true;
+  if (pathname === "/" || pathname === "/login") return true;
   return PUBLIC_PAGE_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(p + "/"),
   );
 }
 
-function authorized(req: NextRequest, expected: string): boolean {
+function isPublicApi(pathname: string): boolean {
+  if (PUBLIC_API.has(pathname)) return true;
+  return PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+/** Fallback de token compartido (smoke test / clientes automáticos). */
+function tokenAuthorized(req: NextRequest, expected: string | undefined): boolean {
+  if (!expected) return false;
   const auth = req.headers.get("authorization") ?? "";
   const bearer = auth.replace(/^Bearer\s+/i, "");
   if (bearer && bearer === expected) return true;
@@ -50,40 +72,48 @@ function authorized(req: NextRequest, expected: string): boolean {
   return false;
 }
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Superficie pública de lectura → pasa sin candado.
-  if (isPublicPage(pathname) || PUBLIC_API.has(pathname)) {
+  if (isPublicPage(pathname) || isPublicApi(pathname)) {
     return NextResponse.next();
   }
 
-  const expected = process.env.ADMIN_ACCESS_TOKEN;
-  if (!expected) {
+  const token = process.env.ADMIN_ACCESS_TOKEN;
+  const authSecret = process.env.AUTH_SECRET;
+
+  // Fail-closed: sin ningún mecanismo configurado, el admin no existe.
+  if (!token && !authSecret) {
     return new NextResponse(
-      "Admin bloqueado: falta ADMIN_ACCESS_TOKEN en el entorno.",
+      "Admin bloqueado: falta AUTH_SECRET / ADMIN_ACCESS_TOKEN en el entorno.",
       { status: 503 },
     );
   }
 
-  if (authorized(req, expected)) {
-    // Que Google no indexe el admin aunque quedara accesible.
+  // 1) Sesión de cookie (login humano).
+  const session = await verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
+  // 2) Token compartido (smoke test / automatización).
+  const authed = Boolean(session) || tokenAuthorized(req, token);
+
+  if (authed) {
     const res = NextResponse.next();
     res.headers.set("X-Robots-Tag", "noindex, nofollow");
     return res;
   }
 
+  // No autenticado.
   if (pathname.startsWith("/api/")) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  return new NextResponse("Autenticación requerida.", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="Archivo · admin", charset="UTF-8"',
-      "X-Robots-Tag": "noindex, nofollow",
-    },
-  });
+  // Páginas HTML del admin → al formulario de login (con retorno).
+  const loginUrl = req.nextUrl.clone();
+  loginUrl.pathname = "/login";
+  loginUrl.search = `?next=${encodeURIComponent(pathname + req.nextUrl.search)}`;
+  const res = NextResponse.redirect(loginUrl);
+  res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return res;
 }
 
 export const config = {

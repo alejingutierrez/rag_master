@@ -233,6 +233,26 @@ const MIGRATIONS = [
      "createdAt"     TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
    )`,
   `CREATE INDEX IF NOT EXISTS consolidation_runs_per_cat_idx ON consolidation_runs ("periodoCode", "categoriaCode")`,
+
+  // 2026-07-02: publicación + tipología + imágenes en deliverables (El Taller → sitio público)
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "structuredData" JSONB`,
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "publishedAt" TIMESTAMP(3)`,
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "publishedBy" TEXT`,
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "imageUrl" TEXT`,
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "imageKey" TEXT`,
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "imageGeneratedAt" TIMESTAMP(3)`,
+  `CREATE INDEX IF NOT EXISTS "deliverables_publishedAt_idx" ON deliverables ("publishedAt")`,
+
+  // 2026-07-02: configuración editable del home (singleton, id='default')
+  `CREATE TABLE IF NOT EXISTS home_config (
+     id               TEXT PRIMARY KEY,
+     hero             JSONB NOT NULL DEFAULT '{}'::jsonb,
+     featured         JSONB NOT NULL DEFAULT '[]'::jsonb,
+     collection       JSONB NOT NULL DEFAULT '[]'::jsonb,
+     "questionOfWeek" JSONB NOT NULL DEFAULT '{}'::jsonb,
+     "updatedAt"      TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     "updatedBy"      TEXT
+   )`,
 ];
 
 async function main() {

@@ -44,6 +44,9 @@ export async function GET(request: NextRequest) {
           metadata: true,
           modelUsed: true,
           batchId: true,
+          publishedAt: true,
+          structuredData: true,
+          imageUrl: true,
           createdAt: true,
           updatedAt: true,
           question: {

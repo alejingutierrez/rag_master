@@ -231,9 +231,23 @@ model Deliverable {
   // mientras el procesamiento en after() corre en background.
   metadata     Json              @default("{}")
   // source: "batch" (viene de Question del batch) | "chat" (pregunta libre) |
-  // "deep_research" (pipeline agéntico multi-step).
+  // "deep_research" (pipeline agéntico multi-step) | "atelier" (El Taller).
   source       String            @default("batch")
   batchId      String
+
+  // ─── Publicación (curaduría) ───────────────────────────────────────────────
+  // Ficha estructurada por tipología (hecho/época/entidad/pregunta) que alimenta
+  // la página pública. Null ⇒ la pieza es solo un ensayo. Ver typology-schemas.ts.
+  structuredData   Json?
+  // Curaduría: publishedAt != null ⇒ visible en el sitio público. "Empezar en
+  // blanco": nada se publica hasta que el editor lo decida en Producciones.
+  publishedAt      DateTime?
+  publishedBy      String?
+  // Imagen generada (gpt-image) para portada de la pieza publicada.
+  imageUrl         String?
+  imageKey         String?
+  imageGeneratedAt DateTime?
+
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
@@ -245,6 +259,7 @@ model Deliverable {
   @@index([batchId])
   @@index([source])
   @@index([createdAt])
+  @@index([publishedAt])
   @@map("deliverables")
 }
 
@@ -325,4 +340,21 @@ model ConsolidationRun {
 
   @@index([periodoCode, categoriaCode])
   @@map("consolidation_runs")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Configuración editable del home. Singleton (id = "default"). El editor de home
+// (/admin/home) escribe estos bloques; la home pública los lee con fallback a los
+// defaults hardcoded. Todo referencia deliverables publicados por id.
+// ─────────────────────────────────────────────────────────────────────────────
+model HomeConfig {
+  id            String   @id @default("default")
+  hero          Json     @default("{}")
+  featured      Json     @default("[]")
+  collection    Json     @default("[]")
+  questionOfWeek Json    @default("{}")
+  updatedAt     DateTime @updatedAt @default(now())
+  updatedBy     String?
+
+  @@map("home_config")
 }

@@ -15,7 +15,9 @@ import { pulirYControlar } from "./phase6-edicion";
 import { deriveConfidenceIndex, buildCriticalApparatus, stripScaffolding } from "./aparato";
 import { assessRelevance } from "./relevancia";
 import { classifyDeliverable } from "../deliverable-classifier";
+import { extractTypology } from "./typology-extractor";
 import type { DeliverableTaxonomy } from "../taxonomy";
+import type { StructuredData } from "../typology-schemas";
 import type {
   AtelierInput,
   AtelierMetadata,
@@ -252,6 +254,21 @@ export async function runAtelier(
     console.warn(`[atelier] clasificación falló: ${(e as Error).message}`);
   }
 
+  // ── Extracción de tipología (ficha estructurada para la página pública) ──
+  // Best-effort: si falla, la pieza sigue siendo un ensayo normal (structuredData=null).
+  await emit("edicion", "Extrayendo la ficha de tipología…");
+  let structuredData: StructuredData | null = null;
+  try {
+    structuredData = await extractTypology({
+      answer,
+      intent: input.intent,
+      taxonomy,
+      brief,
+    });
+  } catch (e) {
+    console.warn(`[atelier] extracción de tipología falló: ${(e as Error).message}`);
+  }
+
   // ── Aparato crítico + persistencia ──
   const confidenceIndex = deriveConfidenceIndex(verified.claims);
   const criticalApparatus = buildCriticalApparatus(verified.claims);
@@ -273,6 +290,7 @@ export async function runAtelier(
     confidenceIndex,
     criticalApparatus,
     taxonomy,
+    structuredData,
     qualityScore,
     degraded,
     brief,

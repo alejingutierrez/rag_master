@@ -32,8 +32,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isDevPath = pathname.startsWith("/dev");
 
   // El sitio público tiene su propio chrome (PublicShell), no el del admin.
+  // `/login` también va sin chrome del admin (pantalla propia).
   const isPublicPath =
     pathname === "/" ||
+    pathname === "/login" ||
     PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
   useEffect(() => {

@@ -5,6 +5,7 @@
 import type { SearchResult } from "../vector-search";
 import type { AtelierFormatId, LongitudId } from "../atelier-formats";
 import type { DeliverableTaxonomy } from "../taxonomy";
+import type { StructuredData } from "../typology-schemas";
 
 // ── Entrada ──────────────────────────────────────────────────────────
 
@@ -241,6 +242,8 @@ export interface AtelierResult {
   confidenceIndex: ConfidenceIndex;
   criticalApparatus: CriticalApparatus;
   taxonomy?: DeliverableTaxonomy;
+  /** Ficha estructurada por tipología (hecho/época/entidad/pregunta), o null. */
+  structuredData?: StructuredData | null;
   qualityScore?: number;
   degraded: string[];
   brief: AtelierBrief;
