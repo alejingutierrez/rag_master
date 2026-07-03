@@ -162,9 +162,10 @@ export async function generateReferenceQueries(ctx: ReferenceContext): Promise<s
   }
   // Anclas garantizadas: el título de la pieza (nombre propio = lo que mejor
   // indexan los archivos) y las primeras entidades, por delante de lo del LLM.
-  const anchors = [ctx.titulo, ...(ctx.entidades ?? []).slice(0, 2)].filter(
-    (s) => s && s.trim().length > 2
-  );
+  // Las relaciones de una ficha vienen como "Nombre: contexto…" → solo el nombre.
+  const anchors = [ctx.titulo, ...(ctx.entidades ?? []).slice(0, 2)]
+    .map((s) => (s ?? "").split(":")[0].trim())
+    .filter((s) => s.length > 2);
   const seen = new Set<string>();
   const merged: string[] = [];
   for (const q of [...anchors, ...queries]) {
