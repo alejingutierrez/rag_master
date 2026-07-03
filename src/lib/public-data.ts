@@ -40,12 +40,15 @@ interface ChunkUsage {
   documentId?: string;
   documentFilename?: string;
   pageNumber?: number;
+  content?: string;
 }
 
 export interface EssaySource {
   n: number;
   label: string;
   page: number | null;
+  /** Fragmento exacto que respalda la fuente (ya guardado en chunksUsed). */
+  snippet: string | null;
 }
 
 export interface PublicEssayDetail {
@@ -129,7 +132,18 @@ async function resolveSources(chunks: ChunkUsage[]): Promise<EssaySource[]> {
     n: i + 1,
     label: sourceLabel(c, c.documentId ? docMap.get(c.documentId) : undefined),
     page: typeof c.pageNumber === "number" ? c.pageNumber : null,
+    snippet: cleanSnippet(c.content),
   }));
+}
+
+/** Fragmento legible del chunk: colapsa espacios, recorta en borde de palabra. */
+function cleanSnippet(raw: string | undefined, max = 320): string | null {
+  const t = (raw ?? "").replace(/\s+/g, " ").trim();
+  if (!t) return null;
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const i = cut.lastIndexOf(" ");
+  return (i > max * 0.6 ? cut.slice(0, i) : cut).trimEnd() + "…";
 }
 
 /**
@@ -472,7 +486,7 @@ function cardFromDeliverable(d: {
             ? "Época"
             : s.typology === "entidad"
               ? "Entidad"
-              : "Pregunta",
+              : "Ensayo",
       imageUrl: d.imageUrl ?? null,
     };
   }
@@ -563,7 +577,7 @@ export async function getHome(): Promise<HomeData> {
         questionOfWeek = { title: c.title, answer: c.desc, href: c.href };
       }
     } else if (q?.title && q?.answer) {
-      questionOfWeek = { title: q.title, answer: q.answer, href: q.href || "/preguntas" };
+      questionOfWeek = { title: q.title, answer: q.answer, href: q.href || "/ensayos" };
     }
 
     return { hero, featured, collection, questionOfWeek };
@@ -1090,6 +1104,46 @@ export async function getEntityNode(slug: string): Promise<EntityNode | null> {
   } catch (err) {
     console.error(`[public-data] getEntityNode(${slug}) falló:`, err);
     return null;
+  }
+}
+
+// ── Ensayos: superficie pública de lectura (todo lo discursivo) ──────────────
+
+/**
+ * Índice de ENSAYOS: las piezas discursivas (tipología `pregunta` + prosa sin
+ * ficha), ordenadas por ÉPOCA→AÑO. Reusa TypologyCard para el índice/filtros.
+ * Las fichas (hecho/época/entidad) NO entran — son nodos wiki, no lectura.
+ */
+export async function getEssaysIndex(): Promise<TypologyCard[]> {
+  try {
+    const pieces = await loadAnchoredPieces();
+    const cards: TypologyCard[] = pieces
+      .filter((p) => p.kind === "pregunta" || p.kind === "ensayo")
+      .map((p) => ({
+        id: p.id,
+        typology: "pregunta" as TypologyKind,
+        slug: p.entidadSlug ?? p.id,
+        href: p.href,
+        titulo: p.titulo,
+        resumen: p.resumen,
+        periodCode: p.periodCode,
+        periodoOrden: p.periodoOrden,
+        anio: p.anio,
+        entidades: { personas: p.personas, lugares: p.lugares, ideas: p.ideas },
+        meta: p.anio != null ? (p.anio < 0 ? `${-p.anio} a.C.` : String(p.anio)) : null,
+        imageUrl: p.imageUrl,
+      }));
+    cards.sort(
+      (a, b) =>
+        a.periodoOrden - b.periodoOrden ||
+        (a.anio ?? periodStartYear(a.periodCode) ?? 9999) -
+          (b.anio ?? periodStartYear(b.periodCode) ?? 9999) ||
+        a.titulo.localeCompare(b.titulo, "es"),
+    );
+    return cards;
+  } catch (err) {
+    console.error("[public-data] getEssaysIndex falló:", err);
+    return [];
   }
 }
 

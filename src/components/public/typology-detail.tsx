@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/public/public-shell";
+import { SourceApparatus } from "@/components/public/source-apparatus";
 import { renderProse } from "@/components/public/prose";
 import { getPeriodColor, periodInfo } from "@/lib/design-tokens";
 import { typologyLabel, type StructuredData, type Hito } from "@/lib/typology-schemas";
@@ -10,7 +11,7 @@ const INDEX_HREF: Record<StructuredData["typology"], { href: string; label: stri
   hecho: { href: "/hechos", label: "Hechos" },
   epoca: { href: "/epocas", label: "Épocas" },
   entidad: { href: "/entidades", label: "Entidades" },
-  pregunta: { href: "/preguntas", label: "Preguntas" },
+  pregunta: { href: "/ensayos", label: "Ensayos" },
 };
 
 function Tags({ items }: { items: string[] }) {
@@ -209,26 +210,7 @@ export function TypologyArticle({
             <div className="prose">{renderProse(detail.answer)}</div>
           </div>
 
-          <aside className="art-apx">
-            <span className="al">Aparato · fuentes</span>
-            {detail.sources.length ? (
-              detail.sources.map((src) => (
-                <div key={src.n} className="art-src" id={`f${src.n}`}>
-                  <span className="n">{src.n}</span>
-                  <span className="t">
-                    {src.label}
-                    {src.page ? <span className="pg"> · p. {src.page}</span> : null}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="art-src">
-                <span className="t" style={{ gridColumn: "1 / -1" }}>
-                  Producción de síntesis; fuentes en el corpus.
-                </span>
-              </div>
-            )}
-          </aside>
+          <SourceApparatus sources={detail.sources} />
         </div>
 
         {extra}

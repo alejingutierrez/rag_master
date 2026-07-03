@@ -269,5 +269,5 @@ export function typologyLabel(t: TypologyKind): string {
       ? "Época"
       : t === "entidad"
         ? "Entidad"
-        : "Pregunta";
+        : "Ensayo";
 }

@@ -7,7 +7,7 @@ const NAV = [
   { href: "/personas", label: "Personas" },
   { href: "/lugares", label: "Lugares" },
   { href: "/ideas", label: "Ideas" },
-  { href: "/preguntas", label: "Preguntas" },
+  { href: "/ensayos", label: "Ensayos" },
 ];
 
 const navLink: React.CSSProperties = {

@@ -54,7 +54,7 @@ const STATIC_LATEST = [
   { period: "VIO", title: "Jorge Eliécer Gaitán", meta: "Semblanza", href: "/archivo" },
   { period: "REG", title: "La Guerra de los Mil Días", meta: "Crónica · 1899", href: "/archivo" },
   { period: "IND", title: "Batalla de Boyacá", meta: "Hecho · 1819", href: "/archivo" },
-  { period: "REG", title: "¿Qué cambió la Constitución de 1886?", meta: "Pregunta", href: "/archivo" },
+  { period: "REG", title: "¿Qué cambió la Constitución de 1886?", meta: "Ensayo", href: "/archivo" },
   { period: "REP_LIB", title: "La República Liberal", meta: "Ensayo · 1930", href: "/archivo" },
   { period: "FN", title: "El Frente Nacional", meta: "Ensayo · 1958", href: "/archivo" },
   { period: "POS", title: "El proceso de paz", meta: "Ensayo · 2016", href: "/archivo" },
@@ -71,8 +71,8 @@ const TIMELINE = [
 
 const ENTRADAS = [
   { href: "/linea-de-tiempo", n: "01", title: "Línea de tiempo", desc: "Cinco siglos en una columna, calibrada por atención: los hitos pesan más." },
-  { href: "/entidades", n: "02", title: "Entidades", desc: "Los actores, lugares e ideas del corpus — y sus menciones exactas." },
-  { href: "/preguntas", n: "03", title: "Preguntas", desc: "Dudas históricas con respuesta razonada, evidencia y fuentes." },
+  { href: "/entidades", n: "02", title: "Personas, lugares e ideas", desc: "Las figuras, los territorios y las ideas — conectados por dónde aparecen y con quién." },
+  { href: "/ensayos", n: "03", title: "Ensayos", desc: "Crónicas, reportajes y preguntas con respuesta razonada, evidencia y fuentes." },
 ];
 
 export default async function HomePage() {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/public/public-shell";
 import { JsonLd } from "@/components/public/json-ld";
+import { SourceApparatus } from "@/components/public/source-apparatus";
 import { getEssay } from "@/lib/public-data";
 import { getPeriodColor } from "@/lib/design-tokens";
 import { buildMetadata, articleJsonLd, breadcrumbJsonLd, jsonLdGraph } from "@/lib/seo";
@@ -151,26 +152,7 @@ export default async function EnsayoPage({ params }: { params: Promise<{ id: str
         <div className="art-body">
           <div className="prose">{renderProse(essay.answer)}</div>
 
-          <aside className="art-apx">
-            <span className="al">Aparato · fuentes</span>
-            {essay.sources.length ? (
-              essay.sources.map((s) => (
-                <div key={s.n} className="art-src" id={`f${s.n}`}>
-                  <span className="n">{s.n}</span>
-                  <span className="t">
-                    {s.label}
-                    {s.page ? <span className="pg"> · p. {s.page}</span> : null}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="art-src">
-                <span className="t" style={{ gridColumn: "1 / -1" }}>
-                  Producción de síntesis; fuentes en el corpus.
-                </span>
-              </div>
-            )}
-          </aside>
+          <SourceApparatus sources={essay.sources} />
         </div>
 
         <div className="art-paso">
