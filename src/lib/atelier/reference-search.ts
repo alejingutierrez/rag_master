@@ -7,13 +7,16 @@
  * material en internet en general, no solo en Wikimedia:
  *
  *   1. Un LLM genera una escalera de queries (es/en, de específico a amplio).
- *   2. Fan-out a proveedores: Openverse (agrega Flickr/museos/archivos),
- *      Wikimedia Commons, Met Museum — sin llave — y Google Images vía
- *      serper.dev cuando `SERPER_API_KEY` está configurada.
+ *   2. Fan-out a proveedores SIN llave (Openverse, Wikimedia Commons, Met Museum,
+ *      Art Institute of Chicago, Cleveland Museum, Library of Congress) y, cuando
+ *      hay llave, Google Images (serper.dev), Europeana y Smithsonian Open Access.
+ *      Cuantas más fuentes, más probable llegar al piso documental.
  *   3. Filtro técnico (tamaño mínimo, dedup) + PUNTUACIÓN DE RELEVANCIA por LLM
  *      (los proveedores devuelven ruido; sin este paso el piso de calidad cae).
- *   4. Piso duro: ≥5 referencias relevantes o no se genera imagen (decisión
- *      editorial del proyecto). Con menos, mejor sin imagen que con una inventada.
+ *   4. Piso editorial EN NIVELES (no todo-o-nada): ≥5 relevantes = ancla
+ *      documental plena; con menos se degrada (capa de atmósfera + texto de la
+ *      pieza en el prompt) en vez de abandonar la imagen. El nivel conseguido se
+ *      registra y es auditable desde Producciones.
  *   5. Descarga + normalización (≤1568px, JPEG) listas para images/edits.
  *
  * Las referencias NUNCA se publican: son insumo del generador, como las fotos
@@ -26,7 +29,12 @@ import { periodInfo } from "../design-tokens";
 
 export const MIN_RELEVANT_REFS = 5;
 const MAX_REFS_TO_ATTACH = 7;
+/** Ancla documental directa (Tier "documental"): el material de verdad. */
 const MIN_SCORE = 6;
+/** Umbral blando (Tier "parcial"): sirve como atmósfera/grounding, no como ruido.
+ * Incluye la banda 5-6 del rubro ("útil solo como atmósfera general") — mejor
+ * darle ESO al generador que dejarlo sin ninguna ancla visual. */
+const SOFT_MIN_SCORE = 5;
 const MIN_WIDTH = 600;
 const PROVIDER_TIMEOUT_MS = 15_000;
 const DOWNLOAD_TIMEOUT_MS = 25_000;
@@ -40,6 +48,8 @@ export interface ReferenceCandidate {
   width: number;
   height: number;
   query: string;
+  /** Referer requerido para descargar (algunos CDN bloquean hotlinking, p. ej. artic). */
+  referer?: string;
 }
 
 export interface ScoredReference extends ReferenceCandidate {
@@ -60,12 +70,16 @@ export interface DownloadedReference {
 }
 
 export interface ReferenceSearchResult {
+  /** true = se descargaron ≥5 referencias RELEVANTES (ancla documental plena). */
   ok: boolean;
+  /** Mejor esfuerzo: puede traer <5 (o 0) referencias en modo degradado. */
   refs: DownloadedReference[];
   /** Candidatos únicos tras filtro técnico (para diagnóstico). */
   considered: number;
-  /** Relevantes según el LLM (score ≥ umbral), antes de descargar. */
+  /** Relevantes según el LLM (score ≥ MIN_SCORE), antes de descargar. */
   relevant: number;
+  /** Usables como atmósfera/grounding (score ≥ SOFT_MIN_SCORE). */
+  usable: number;
   queries: string[];
 }
 
@@ -328,6 +342,130 @@ async function searchLoc(q: string): Promise<ReferenceCandidate[]> {
   return out;
 }
 
+/** Art Institute of Chicago — sin llave, imágenes IIIF. Fuerte en pintura de época. */
+async function searchArtInstitute(q: string): Promise<ReferenceCandidate[]> {
+  const j = asRecord(
+    await jsonFetch(
+      `https://api.artic.edu/api/v1/artworks/search?q=${encodeURIComponent(q)}&limit=12&fields=id,title,image_id`
+    )
+  );
+  const iiifRaw = asRecord(j.config).iiif_url;
+  const iiif = typeof iiifRaw === "string" ? iiifRaw : "https://www.artic.edu/iiif/2";
+  const data = Array.isArray(j.data) ? j.data : [];
+  const out: ReferenceCandidate[] = [];
+  for (const r of data) {
+    const o = asRecord(r);
+    if (typeof o.image_id !== "string" || !o.image_id) continue; // sin imagen digitalizada
+    out.push({
+      provider: "artic",
+      title: typeof o.title === "string" ? o.title : "",
+      url: `${iiif}/${o.image_id}/full/1200,/0/default.jpg`,
+      page: typeof o.id === "number" ? `https://www.artic.edu/artworks/${o.id}` : undefined,
+      width: 1200,
+      height: 1200,
+      query: q,
+      referer: "https://www.artic.edu/", // su CDN IIIF exige Referer (si no, 403)
+    });
+  }
+  return out;
+}
+
+/** Cleveland Museum of Art — Open Access, sin llave. Arte y artefactos de época. */
+async function searchCleveland(q: string): Promise<ReferenceCandidate[]> {
+  const j = asRecord(
+    await jsonFetch(
+      `https://openaccess-api.clevelandart.org/api/artworks/?q=${encodeURIComponent(q)}&limit=12&has_image=1`
+    )
+  );
+  const data = Array.isArray(j.data) ? j.data : [];
+  const out: ReferenceCandidate[] = [];
+  for (const r of data) {
+    const o = asRecord(r);
+    const images = asRecord(o.images);
+    const web = asRecord(images.web);
+    const print = asRecord(images.print);
+    const url =
+      (typeof web.url === "string" && web.url) || (typeof print.url === "string" && print.url) || "";
+    if (!url) continue;
+    out.push({
+      provider: "cleveland",
+      title: typeof o.title === "string" ? o.title : "",
+      url,
+      page: typeof o.url === "string" ? o.url : undefined,
+      width: 1000,
+      height: 1000,
+      query: q,
+    });
+  }
+  return out;
+}
+
+/** Europeana — agrega archivos europeos (mucho material colonial y de ultramar).
+ * Como Google, es un buscador amplio: recibe la query completa. Requiere llave. */
+async function searchEuropeana(q: string): Promise<ReferenceCandidate[]> {
+  const key = process.env.EUROPEANA_API_KEY;
+  if (!key) return [];
+  const j = asRecord(
+    await jsonFetch(
+      `https://api.europeana.eu/record/v2/search.json?wskey=${encodeURIComponent(key)}&query=${encodeURIComponent(q)}&qf=TYPE%3AIMAGE&media=true&thumbnail=true&rows=20`
+    )
+  );
+  const items = Array.isArray(j.items) ? j.items : [];
+  const out: ReferenceCandidate[] = [];
+  for (const r of items) {
+    const o = asRecord(r);
+    const shown = Array.isArray(o.edmIsShownBy) ? o.edmIsShownBy[0] : undefined;
+    const preview = Array.isArray(o.edmPreview) ? o.edmPreview[0] : undefined;
+    const url = (typeof shown === "string" && shown) || (typeof preview === "string" && preview) || "";
+    if (!url) continue;
+    const title = Array.isArray(o.title) ? o.title[0] : o.title;
+    out.push({
+      provider: "europeana",
+      title: typeof title === "string" ? title : "",
+      url,
+      page: typeof o.guid === "string" ? o.guid : undefined,
+      width: 800,
+      height: 800,
+      query: q,
+    });
+  }
+  return out;
+}
+
+/** Smithsonian Open Access — fondo enorme, mucho de América Latina. Requiere llave. */
+async function searchSmithsonian(q: string): Promise<ReferenceCandidate[]> {
+  const key = process.env.SMITHSONIAN_API_KEY;
+  if (!key) return [];
+  const j = asRecord(
+    await jsonFetch(
+      `https://api.si.edu/openaccess/api/v1.0/search?q=${encodeURIComponent(q)}&rows=15&api_key=${encodeURIComponent(key)}`
+    )
+  );
+  const rows = Array.isArray(asRecord(j.response).rows) ? (asRecord(j.response).rows as unknown[]) : [];
+  const out: ReferenceCandidate[] = [];
+  for (const r of rows) {
+    const o = asRecord(r);
+    const dnr = asRecord(asRecord(o.content).descriptiveNonRepeating);
+    const list = Array.isArray(asRecord(dnr.online_media).media) ? (asRecord(dnr.online_media).media as unknown[]) : [];
+    const first = asRecord(list[0]);
+    const url =
+      (typeof first.content === "string" && first.content) ||
+      (typeof first.thumbnail === "string" && first.thumbnail) ||
+      "";
+    if (!url) continue;
+    out.push({
+      provider: "smithsonian",
+      title: typeof o.title === "string" ? o.title : "",
+      url,
+      page: typeof dnr.record_link === "string" ? dnr.record_link : undefined,
+      width: 1000,
+      height: 1000,
+      query: q,
+    });
+  }
+  return out;
+}
+
 const PROVIDERS: Array<{
   name: string;
   fn: (q: string) => Promise<ReferenceCandidate[]>;
@@ -337,8 +475,12 @@ const PROVIDERS: Array<{
   { name: "openverse", fn: searchOpenverse, archive: true },
   { name: "wikimedia", fn: searchWikimedia, archive: true },
   { name: "metmuseum", fn: searchMetMuseum, archive: true },
+  { name: "artic", fn: searchArtInstitute, archive: true },
+  { name: "cleveland", fn: searchCleveland, archive: true },
   { name: "loc", fn: searchLoc, archive: true },
-  // Google Images maneja bien las queries largas y descriptivas: recibe la original.
+  { name: "smithsonian", fn: searchSmithsonian, archive: true },
+  // Buscadores amplios (relevancia, no AND estricto): reciben la query completa.
+  { name: "europeana", fn: searchEuropeana, archive: false },
   { name: "serper", fn: searchSerper, archive: false },
 ];
 
@@ -431,7 +573,10 @@ export async function scoreCandidates(
 async function downloadOne(ref: ScoredReference, index: number): Promise<DownloadedReference | null> {
   try {
     const res = await fetch(ref.url, {
-      headers: { "User-Agent": UA },
+      headers: {
+        "User-Agent": UA,
+        ...(ref.referer ? { Referer: ref.referer } : {}), // CDN con anti-hotlink (artic)
+      },
       signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
     });
     if (!res.ok) return null;
@@ -502,18 +647,22 @@ export async function searchReferences(ctx: ReferenceContext): Promise<Reference
     }
   }
 
-  // Piso editorial: sin ≥5 relevantes no se genera imagen.
-  if (relevant.length < MIN_RELEVANT_REFS) {
-    return { ok: false, refs: [], considered: candidates.length, relevant: relevant.length, queries };
-  }
-
-  const refs = await downloadReferences(relevant, MAX_REFS_TO_ATTACH);
-  // Las descargas pueden fallar (hotlink muerto): el piso se evalúa sobre lo descargado.
+  // Descarga el MEJOR material disponible, sin abandonar si no se llega al piso.
+  // - Con ≥5 relevantes: solo material documental (preserva la calidad del Tier 1).
+  // - Si no: se echa mano de la capa de atmósfera (score ≥ SOFT_MIN_SCORE) para
+  //   que el generador tenga AL MENOS algo de ancla visual. El caller decide el
+  //   modo (edits con refs vs. generación desde el texto) según lo que baje.
+  const usable = scored.filter((s) => s.score >= SOFT_MIN_SCORE);
+  const pool = relevant.length >= MIN_RELEVANT_REFS ? relevant : usable;
+  const refs = await downloadReferences(pool, MAX_REFS_TO_ATTACH);
+  // Las descargas pueden fallar (hotlink muerto): el piso se evalúa sobre lo bajado.
+  const relevantDownloaded = refs.filter((r) => r.meta.score >= MIN_SCORE).length;
   return {
-    ok: refs.length >= MIN_RELEVANT_REFS,
+    ok: relevantDownloaded >= MIN_RELEVANT_REFS,
     refs,
     considered: candidates.length,
     relevant: relevant.length,
+    usable: usable.length,
     queries,
   };
 }

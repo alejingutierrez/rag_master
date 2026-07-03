@@ -20,7 +20,7 @@ const STALE_MS = 12 * 60 * 1000;
  *
  * PATRÓN ANTI-504 (App Runner corta peticiones largas): responde de inmediato
  * con `{status:"generando"}` y corre el pipeline completo en after() — director
- * de arte → referencias (≥5) → gpt-image-2 con edits → S3/BD. El cliente hace
+ * de arte → referencias (nivel de ancla) → gpt-image-2 → S3/BD. El cliente hace
  * polling de /api/deliverables/{id} y lee metadata.image.
  * Gateado por el middleware (solo admin: consume créditos de OpenAI/Bedrock).
  */
@@ -60,8 +60,8 @@ export async function POST(
       const { imageUrl } = await generateAndStoreImage(id);
       console.log(`[imagen ${id}] lista · ${imageUrl}`);
     } catch (e) {
-      // generateAndStoreImage ya persiste sin_referencias/error en sus rutas
-      // conocidas; esto cubre fallos tempranos para no dejar "generando" colgado.
+      // generateAndStoreImage ya persiste el "error" en sus rutas conocidas;
+      // esto cubre fallos tempranos para no dejar "generando" colgado.
       const msg = e instanceof Error ? e.message : "Error generando imagen";
       console.warn(`[imagen ${id}] falló:`, msg);
       const fresh = await prisma.deliverable

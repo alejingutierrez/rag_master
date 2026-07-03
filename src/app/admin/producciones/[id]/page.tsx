@@ -68,11 +68,13 @@ interface ImageMetaLite {
   status?: "generando" | "ok" | "sin_referencias" | "error";
   at?: string;
   modelo?: string;
+  ancla?: "documental" | "parcial" | "solo-texto";
   acento?: { color?: "rojo" | "amarillo" | "azul"; objetivo?: string; razon?: string };
   encuadre?: string;
   referencias?: { titulo?: string; url?: string; pagina?: string; fuente?: string; score?: number }[];
   relevantes?: number;
   candidatos?: number;
+  usables?: number;
   intentos?: number;
   error?: string;
 }
@@ -81,6 +83,12 @@ const ACCENT_HEX: Record<string, string> = {
   rojo: "#8c1d18",
   amarillo: "#a87b00",
   azul: "#1f4e79",
+};
+
+const ANCLA_LABELS: Record<string, string> = {
+  documental: "Ancla documental",
+  parcial: "Ancla parcial",
+  "solo-texto": "Ancla: solo texto",
 };
 
 const ENCUADRE_LABELS: Record<string, string> = {
@@ -739,6 +747,40 @@ function PublishPanel({
         </div>
       )}
 
+      {/* Nota informativa (no error): la imagen SÍ se generó, pero con ancla
+          documental reducida. Importa para el rigor: se hace explícito. */}
+      {!imageError &&
+        imageMeta?.status === "ok" &&
+        (imageMeta.ancla === "parcial" || imageMeta.ancla === "solo-texto") && (
+          <div
+            style={{
+              border: "1px solid var(--line-strong)",
+              borderLeft: "3px solid #a87b00",
+              padding: "10px 12px",
+              marginBottom: 14,
+              fontSize: 12,
+              color: "var(--fg-muted)",
+              lineHeight: 1.5,
+            }}
+          >
+            {imageMeta.ancla === "parcial" ? (
+              <>
+                Ancla documental parcial: {imageMeta.relevantes ?? 0} de 5 referencias relevantes (
+                {imageMeta.candidatos ?? 0} candidatas). La imagen se apoyó en las referencias
+                disponibles y en el texto de la pieza. Para ancla plena, regenera o afina el título de
+                la ficha.
+              </>
+            ) : (
+              <>
+                Sin referencias visuales suficientes ({imageMeta.candidatos ?? 0} candidatas,{" "}
+                {imageMeta.relevantes ?? 0} relevantes): la imagen se generó a partir del texto de la
+                pieza, sin ancla documental. Regenera o afina el título para conseguir referencias
+                reales.
+              </>
+            )}
+          </div>
+        )}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <button
           type="button"
@@ -834,6 +876,7 @@ function ImageDirectionPanel({ meta }: { meta: ImageMetaLite }) {
           </span>
         )}
         {meta.encuadre && <MiniTag>{ENCUADRE_LABELS[meta.encuadre] ?? meta.encuadre}</MiniTag>}
+        {meta.ancla && <MiniTag>{ANCLA_LABELS[meta.ancla] ?? meta.ancla}</MiniTag>}
         {refs.length > 0 && (
           <button
             type="button"
