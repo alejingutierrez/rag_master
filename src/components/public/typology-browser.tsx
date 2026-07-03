@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { SearchInput } from "@/components/editorial";
-import { PERIODS, getPeriodColor, type PeriodCode } from "@/lib/design-tokens";
+import { getPeriodColor } from "@/lib/design-tokens";
+import { PeriodFilter } from "@/components/public/period-filter";
 import type { TypologyCard } from "@/lib/public-data";
 
 function norm(s: string): string {
@@ -65,30 +66,7 @@ export function TypologyBrowser({
       {showFilters && (
         <div className="tix-filters">
           {periods.length >= 2 && (
-            <div className="tix-chips">
-              <button
-                type="button"
-                className={"tix-chip" + (periodo === null ? " is-active" : "")}
-                onClick={() => setPeriodo(null)}
-              >
-                Todas
-              </button>
-              {periods.map((code) => {
-                const p = PERIODS[code as PeriodCode];
-                const active = periodo === code;
-                return (
-                  <button
-                    key={code}
-                    type="button"
-                    className={"tix-chip" + (active ? " is-active" : "")}
-                    onClick={() => setPeriodo(active ? null : code)}
-                  >
-                    <span className="tix-chip-dot" style={{ background: getPeriodColor(code) }} />
-                    {p?.label ?? code}
-                  </button>
-                );
-              })}
-            </div>
+            <PeriodFilter periods={periods} active={periodo} onSelect={setPeriodo} />
           )}
           <div className="tix-searchrow">
             <SearchInput value={q} onChange={setQ} placeholder="Buscar por nombre, entidad…" width={260} />
