@@ -156,7 +156,12 @@ export async function generateReferenceQueries(ctx: ReferenceContext): Promise<s
 async function jsonFetch(url: string, init: RequestInit = {}): Promise<unknown> {
   const res = await fetch(url, {
     ...init,
-    headers: { "User-Agent": UA, ...(init.headers ?? {}) },
+    headers: {
+      "User-Agent": UA,
+      "Api-User-Agent": UA, // convención de Wikimedia para clientes automáticos
+      Accept: "application/json",
+      ...(init.headers ?? {}),
+    },
     signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -270,7 +275,39 @@ async function searchSerper(q: string): Promise<ReferenceCandidate[]> {
   });
 }
 
-const PROVIDERS = [searchOpenverse, searchWikimedia, searchMetMuseum, searchSerper];
+/** Library of Congress: ruidoso (libros digitalizados) pero robusto desde datacenters;
+ * el scoring por LLM filtra el ruido. Complementa a los demás cuando bloquean IPs cloud. */
+async function searchLoc(q: string): Promise<ReferenceCandidate[]> {
+  const j = asRecord(
+    await jsonFetch(`https://www.loc.gov/photos/?q=${encodeURIComponent(q)}&fo=json&c=12`)
+  );
+  const results = Array.isArray(j.results) ? j.results : [];
+  const out: ReferenceCandidate[] = [];
+  for (const r of results) {
+    const o = asRecord(r);
+    const imgs = Array.isArray(o.image_url) ? o.image_url : [];
+    const last = imgs[imgs.length - 1];
+    if (typeof last !== "string" || !last) continue;
+    out.push({
+      provider: "loc",
+      title: typeof o.title === "string" ? o.title : "",
+      url: last.startsWith("//") ? `https:${last}` : last,
+      page: typeof o.url === "string" ? o.url : undefined,
+      width: 800,
+      height: 800,
+      query: q,
+    });
+  }
+  return out;
+}
+
+const PROVIDERS: Array<{ name: string; fn: (q: string) => Promise<ReferenceCandidate[]> }> = [
+  { name: "openverse", fn: searchOpenverse },
+  { name: "wikimedia", fn: searchWikimedia },
+  { name: "metmuseum", fn: searchMetMuseum },
+  { name: "loc", fn: searchLoc },
+  { name: "serper", fn: searchSerper },
+];
 
 function dedupeCandidates(all: ReferenceCandidate[]): ReferenceCandidate[] {
   const seen = new Set<string>();
@@ -287,12 +324,29 @@ function dedupeCandidates(all: ReferenceCandidate[]): ReferenceCandidate[] {
 
 export async function searchAllProviders(queries: string[]): Promise<ReferenceCandidate[]> {
   const all: ReferenceCandidate[] = [];
+  // Diagnóstico por proveedor: sin esto, un bloqueo de IPs de datacenter (o un
+  // cambio de API) se ve como "0 candidatas" sin explicación en los logs.
+  const failures: Record<string, number> = {};
+  const empties: Record<string, number> = {};
   for (const q of queries) {
-    const settled = await Promise.allSettled(PROVIDERS.map((p) => p(q)));
-    for (const s of settled) {
-      if (s.status === "fulfilled") all.push(...s.value);
-    }
+    const settled = await Promise.allSettled(PROVIDERS.map((p) => p.fn(q)));
+    settled.forEach((s, i) => {
+      const name = PROVIDERS[i].name;
+      if (s.status === "fulfilled") {
+        all.push(...s.value);
+        if (s.value.length === 0) empties[name] = (empties[name] ?? 0) + 1;
+      } else {
+        failures[name] = (failures[name] ?? 0) + 1;
+        console.warn(
+          `[refs] ${name} falló con "${q}": ${(s.reason as Error)?.message?.slice(0, 160) ?? s.reason}`
+        );
+      }
+    });
   }
+  const resumen = PROVIDERS.map(
+    (p) => `${p.name}=${failures[p.name] ? `ERR×${failures[p.name]}` : `ok(${empties[p.name] ?? 0} vacías)`}`
+  ).join(" · ");
+  console.log(`[refs] proveedores: ${resumen} · candidatas brutas: ${all.length}`);
   return dedupeCandidates(all);
 }
 
