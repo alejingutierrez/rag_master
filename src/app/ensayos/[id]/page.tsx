@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/public/json-ld";
 import { getEssay } from "@/lib/public-data";
 import { getPeriodColor } from "@/lib/design-tokens";
 import { buildMetadata, articleJsonLd, breadcrumbJsonLd, jsonLdGraph } from "@/lib/seo";
+import { TrackView } from "@/components/analytics/track-view";
 import "@/components/public/article.css";
 
 export const dynamic = "force-dynamic";
@@ -125,6 +126,7 @@ export default async function EnsayoPage({ params }: { params: Promise<{ id: str
   return (
     <PublicShell>
       <JsonLd data={jsonLd} />
+      <TrackView contentType="ensayo" itemId={essay.id} itemName={essay.title} />
       <div className="art-wrap">
         <div className="art-crumb">
           <Link href="/archivo">Archivo</Link> · {essay.formatName}
