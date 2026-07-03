@@ -1,9 +1,15 @@
 import { PublicShell } from "@/components/public/public-shell";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Acerca · Historia Colombiana",
-  description: "Qué es este archivo y con qué método se construye.",
-};
+export const metadata = buildMetadata({
+  seo: {
+    metaTitle: "Acerca",
+    metaDescription: "Qué es este archivo de historia de Colombia y con qué método se construye.",
+    keywords: ["acerca", "método", "historia de Colombia", "fuentes"],
+  },
+  path: "/acerca",
+  type: "website",
+});
 
 export default function AcercaPage() {
   return (

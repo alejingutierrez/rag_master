@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/public/public-shell";
+import { JsonLd } from "@/components/public/json-ld";
 import { getEssay } from "@/lib/public-data";
 import { getPeriodColor } from "@/lib/design-tokens";
+import { buildMetadata, articleJsonLd, breadcrumbJsonLd, jsonLdGraph } from "@/lib/seo";
 import "@/components/public/article.css";
 
 export const dynamic = "force-dynamic";
@@ -10,9 +12,15 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const essay = await getEssay(id);
-  if (!essay) return { title: "Historia Colombiana" };
-  const t = essay.title.length > 70 ? essay.title.slice(0, 70).trimEnd() + "…" : essay.title;
-  return { title: `${t} · Historia Colombiana` };
+  if (!essay) return { title: "Ensayo" };
+  return buildMetadata({
+    seo: essay.seo,
+    path: `/ensayos/${essay.id}`,
+    imageUrl: essay.imageUrl,
+    publishedTime: essay.publishedAt,
+    modifiedTime: essay.updatedAt,
+    type: "article",
+  });
 }
 
 /** Inline: [#n]/[n] → cita superíndice (ancla a la fuente), **negrita**, *itálica*. */
@@ -97,8 +105,26 @@ export default async function EnsayoPage({ params }: { params: Promise<{ id: str
 
   const dot = essay.periodCode ? getPeriodColor(essay.periodCode) : "var(--fg-dim)";
 
+  const jsonLd = jsonLdGraph(
+    articleJsonLd({
+      path: `/ensayos/${essay.id}`,
+      title: essay.title,
+      description: essay.seo.metaDescription,
+      imageUrl: essay.imageUrl,
+      datePublished: essay.publishedAt,
+      dateModified: essay.updatedAt,
+      wordCount: essay.wordCount,
+    }),
+    breadcrumbJsonLd([
+      { name: "Inicio", path: "/" },
+      { name: "Archivo", path: "/archivo" },
+      { name: essay.title, path: `/ensayos/${essay.id}` },
+    ]),
+  );
+
   return (
     <PublicShell>
+      <JsonLd data={jsonLd} />
       <div className="art-wrap">
         <div className="art-crumb">
           <Link href="/archivo">Archivo</Link> · {essay.formatName}

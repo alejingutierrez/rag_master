@@ -5,6 +5,7 @@
 import type { SearchResult } from "../vector-search";
 import type { AtelierFormatId, LongitudId } from "../atelier-formats";
 import type { DeliverableTaxonomy } from "../taxonomy";
+import type { DeliverableSeo } from "../seo";
 import type { StructuredData } from "../typology-schemas";
 
 // ── Entrada ──────────────────────────────────────────────────────────
@@ -244,6 +245,8 @@ export interface AtelierResult {
   taxonomy?: DeliverableTaxonomy;
   /** Ficha estructurada por tipología (hecho/época/entidad/pregunta), o null. */
   structuredData?: StructuredData | null;
+  /** SEO de la pieza (meta title/description + keywords). Se persiste en metadata.seo. */
+  seo?: DeliverableSeo;
   qualityScore?: number;
   degraded: string[];
   brief: AtelierBrief;

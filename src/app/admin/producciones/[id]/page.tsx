@@ -15,6 +15,7 @@ import {
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { getAtelierFormat } from "@/lib/atelier-formats";
 import { TIPO_LABELS, ESCALA_LABELS } from "@/lib/questions-config";
+import { deriveSeo, normalizeSeo, type DeliverableSeo } from "@/lib/seo";
 
 interface ChunkUsage {
   id: string;
@@ -528,6 +529,15 @@ export default function ProduccionDetailPage({
           />
         )}
 
+        {isAtelier && !isGenerating && (
+          <SeoPanel
+            data={data}
+            onSaved={(seo) =>
+              setData((d) => (d ? { ...d, metadata: { ...(d.metadata ?? {}), seo } } : d))
+            }
+          />
+        )}
+
         <div className="label" style={{ marginBottom: 8 }}>
           Aparato crítico
         </div>
@@ -838,6 +848,137 @@ function PublishPanel({
 }
 
 /** Dirección de arte de la portada: acento, encuadre y las referencias reales usadas. */
+const seoLbl: React.CSSProperties = {
+  display: "block",
+  fontSize: 11,
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+  color: "var(--fg-subtle)",
+  margin: "10px 0 4px",
+};
+const seoInput: React.CSSProperties = {
+  width: "100%",
+  border: "1px solid var(--line-strong)",
+  borderRadius: 6,
+  padding: "8px 10px",
+  fontSize: 13,
+  fontFamily: "inherit",
+  background: "var(--bg)",
+  color: "var(--fg)",
+};
+const seoCount: React.CSSProperties = { fontSize: 11, textAlign: "right", marginTop: 2 };
+
+/**
+ * Panel de SEO editable. El Taller ya escribe metadata.seo; aquí el curador puede
+ * ajustar meta título / descripción / keywords antes de publicar. Si la pieza aún
+ * no tiene SEO, se muestra el sugerido (derivado del título + taxonomía).
+ */
+function SeoPanel({
+  data,
+  onSaved,
+}: {
+  data: DeliverableDetail;
+  onSaved: (seo: DeliverableSeo) => void;
+}) {
+  const suggested = (): DeliverableSeo =>
+    deriveSeo({
+      titulo: data.structuredData?.titulo ?? data.question?.pregunta ?? data.userQuestion ?? "",
+      answer: data.answer,
+      taxonomy: (data.metadata as { atelier?: { taxonomy?: unknown } } | null)?.atelier
+        ?.taxonomy as Parameters<typeof deriveSeo>[0]["taxonomy"],
+    });
+
+  const initial = normalizeSeo((data.metadata as { seo?: unknown } | null)?.seo) ?? suggested();
+
+  const [metaTitle, setMetaTitle] = useState(initial.metaTitle);
+  const [metaDescription, setMetaDescription] = useState(initial.metaDescription);
+  const [keywords, setKeywords] = useState(initial.keywords.join(", "));
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const seo = {
+        metaTitle: metaTitle.trim(),
+        metaDescription: metaDescription.trim(),
+        keywords: keywords
+          .split(",")
+          .map((k) => k.trim())
+          .filter(Boolean),
+      };
+      const res = await fetch(`/api/deliverables/${data.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seo }),
+      });
+      if (res.ok) {
+        const { deliverable } = (await res.json()) as {
+          deliverable: { metadata?: { seo?: DeliverableSeo } | null };
+        };
+        onSaved(deliverable.metadata?.seo ?? (seo as DeliverableSeo));
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function useSuggested() {
+    const s = suggested();
+    setMetaTitle(s.metaTitle);
+    setMetaDescription(s.metaDescription);
+    setKeywords(s.keywords.join(", "));
+  }
+
+  const titleOver = metaTitle.length > 60;
+  const descOver = metaDescription.length > 155;
+
+  return (
+    <div style={{ marginBottom: 28, paddingBottom: 24, borderBottom: "1px solid var(--line)" }}>
+      <div className="label" style={{ marginBottom: 10 }}>
+        SEO
+      </div>
+
+      <label style={seoLbl}>Meta título</label>
+      <input value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} style={seoInput} />
+      <div style={{ ...seoCount, color: titleOver ? "var(--danger)" : "var(--fg-subtle)" }}>
+        {metaTitle.length}/60
+      </div>
+
+      <label style={seoLbl}>Meta descripción</label>
+      <textarea
+        value={metaDescription}
+        onChange={(e) => setMetaDescription(e.target.value)}
+        rows={3}
+        style={{ ...seoInput, resize: "vertical" }}
+      />
+      <div style={{ ...seoCount, color: descOver ? "var(--danger)" : "var(--fg-subtle)" }}>
+        {metaDescription.length}/155
+      </div>
+
+      <label style={seoLbl}>Keywords (separadas por coma)</label>
+      <input value={keywords} onChange={(e) => setKeywords(e.target.value)} style={seoInput} />
+
+      <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 14 }}>
+        <button
+          onClick={save}
+          disabled={saving || !metaTitle.trim() || !metaDescription.trim()}
+          style={ghostBtn}
+        >
+          {saving ? "Guardando…" : "Guardar SEO"}
+        </button>
+        <button onClick={useSuggested} style={{ ...linkBtn, fontSize: 12 }}>
+          Usar sugerido
+        </button>
+        {saved && <span style={{ fontSize: 12, color: "var(--success)" }}>Guardado ✓</span>}
+      </div>
+    </div>
+  );
+}
+
 function ImageDirectionPanel({ meta }: { meta: ImageMetaLite }) {
   const [showRefs, setShowRefs] = useState(false);
   const color = meta.acento?.color;

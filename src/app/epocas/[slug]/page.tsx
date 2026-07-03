@@ -1,22 +1,34 @@
 import { notFound } from "next/navigation";
 import { TypologyArticle } from "@/components/public/typology-detail";
+import { JsonLd } from "@/components/public/json-ld";
 import { getTypologyDetail } from "@/lib/public-data";
+import { buildMetadata, detailJsonLd } from "@/lib/seo";
+import { typologyPath } from "@/lib/typology-schemas";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const d = await getTypologyDetail("epoca", slug);
-  if (!d) return { title: "Época · Historia Colombiana" };
-  return {
-    title: `${d.structured.titulo} · Historia Colombiana`,
-    description: d.structured.resumen || undefined,
-  };
+  if (!d) return { title: "Época" };
+  return buildMetadata({
+    seo: d.seo,
+    path: typologyPath(d.structured),
+    imageUrl: d.imageUrl,
+    publishedTime: d.publishedAt,
+    modifiedTime: d.updatedAt,
+    type: "article",
+  });
 }
 
 export default async function EpocaPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const detail = await getTypologyDetail("epoca", slug);
   if (!detail) notFound();
-  return <TypologyArticle detail={detail} />;
+  return (
+    <>
+      <JsonLd data={detailJsonLd(detail)} />
+      <TypologyArticle detail={detail} />
+    </>
+  );
 }

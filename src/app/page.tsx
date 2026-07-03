@@ -8,9 +8,11 @@ import "@/components/public/home.css";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Historia Colombiana",
+  // `absolute` evita que el title.template del layout añada un sufijo duplicado.
+  title: { absolute: "Historia de Colombia · Archivo abierto y citable" },
   description:
     "Un archivo vivo del pasado de Colombia, con las fuentes siempre a la vista. Ensayos, entidades, épocas y una línea de tiempo de cinco siglos.",
+  alternates: { canonical: "/" },
 };
 
 // Etiquetas compactas para el espectro (colores/años/slug vienen de PERIODS canónico).
