@@ -67,6 +67,11 @@ jobs:
       - name: Deploy to App Runner
         env:
           IMAGE_URI: ${{ steps.build-image.outputs.image }}
+          # El hash bcrypt contiene '$2b$12$…'. Si se inyecta con ${{ secrets }}
+          # inline en el string double-quoted de abajo, bash expande $2b/$12 y lo
+          # corrompe. Pasándolo por env y referenciándolo como "$ADMIN_PASSWORD_HASH"
+          # bash lo expande UNA vez y no re-escanea el resultado → llega intacto.
+          ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
         run: |
           aws apprunner update-service \
             --service-arn $APP_RUNNER_SERVICE_ARN \
@@ -85,7 +90,7 @@ jobs:
                     \"ADMIN_ACCESS_TOKEN\": \"${{ secrets.ADMIN_ACCESS_TOKEN }}\",
                     \"AUTH_SECRET\": \"${{ secrets.AUTH_SECRET }}\",
                     \"ADMIN_EMAIL\": \"${{ secrets.ADMIN_EMAIL }}\",
-                    \"ADMIN_PASSWORD_HASH\": \"${{ secrets.ADMIN_PASSWORD_HASH }}\",
+                    \"ADMIN_PASSWORD_HASH\": \"$ADMIN_PASSWORD_HASH\",
                     \"OPENAI_API_KEY\": \"${{ secrets.OPENAI_API_KEY }}\",
                     \"OPENAI_IMAGE_MODEL\": \"gpt-image-2\",
                     \"S3_BUCKET_NAME\": \"${{ secrets.S3_BUCKET_NAME }}\",
