@@ -2,11 +2,12 @@
  * Pipeline de imagen de portada del Taller — el estilo de la casa, completo:
  *
  *   1. Director de arte: elige {color, objetivo, encuadre} con significado.
- *   2. Buscador de referencias: ≥5 imágenes reales de internet en general
- *      (piso editorial duro: sin 5 relevantes NO se genera).
- *   3. gpt-image-2 vía images/edits con las referencias adjuntas, estilo
- *      cerrado (plata B/N + tinta 35% + un acento), reintentos ante la
- *      moderación estocástica de OpenAI.
+ *   2. Buscador de referencias: busca imágenes reales en muchas fuentes y fija
+ *      el NIVEL de ancla — documental (≥5 relevantes), parcial (1-4) o
+ *      solo-texto (0). Ya no es todo-o-nada: siempre se intenta la imagen.
+ *   3. gpt-image-2 con estilo cerrado (plata B/N + tinta 35% + un acento) y
+ *      reintentos ante la moderación estocástica: images/edits cuando hay
+ *      referencias; en solo-texto, generación anclada en el texto de la pieza.
  *   4. S3 + BD, con la decisión completa persistida en metadata.image
  *      (visible y auditable desde Producciones).
  *
@@ -18,6 +19,7 @@ import { prisma } from "../prisma";
 import { uploadToS3 } from "../s3";
 import {
   editImagePng,
+  generateImagePng,
   isModerationBlocked,
   isOpenAIConfigured,
   type ImageSize,
@@ -28,6 +30,7 @@ import {
   aspectForStructured,
   buildStyledPrompt,
   essaySubject,
+  pieceContextExcerpt,
   subjectFor,
 } from "./image-prompt";
 import {
@@ -63,11 +66,19 @@ export interface ImageMetaReference {
   score: number;
 }
 
+/** Nivel de anclaje visual conseguido para la imagen.
+ *  - documental: ≥5 referencias relevantes reales (ideal, calidad plena).
+ *  - parcial: 1-4 referencias (atmósfera) + texto de la pieza en el prompt.
+ *  - solo-texto: sin referencias usables; generada desde el texto de la pieza. */
+export type ImageAncla = "documental" | "parcial" | "solo-texto";
+
 /** Se persiste en Deliverable.metadata.image — sin migración (metadata es JSONB). */
 export interface ImageMeta {
   status: "generando" | "ok" | "sin_referencias" | "error";
   at: string;
   modelo?: string;
+  /** Nivel de ancla documental de esta imagen (ausente en registros viejos). */
+  ancla?: ImageAncla;
   acento?: {
     color: ArtDirection["accentColor"];
     objetivo: string;
@@ -80,6 +91,7 @@ export interface ImageMeta {
   queries?: string[];
   candidatos?: number;
   relevantes?: number;
+  usables?: number;
   intentos?: number;
   error?: string;
 }
@@ -155,31 +167,38 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     direction = fallbackDirection({ esPersona });
   }
 
-  // 2. Referencias reales (piso editorial: ≥5 relevantes o no hay imagen).
+  // 2. Referencias reales (mejor esfuerzo) + NIVEL de anclaje.
+  //    Piso editorial en 3 niveles, no todo-o-nada: si no se junta el ideal de
+  //    ≥5 relevantes, NO se abandona la imagen — se degrada con transparencia y
+  //    se apoya en el texto de la pieza dentro del prompt (proyecto, 2026-07).
   const search = await searchReferences(refCtx);
-  if (!search.ok) {
-    const meta: ImageMeta = {
-      status: "sin_referencias",
-      at: new Date().toISOString(),
-      acento: {
-        color: direction.accentColor,
-        objetivo: direction.accentTargetEs,
-        objetivoEn: direction.accentTarget,
-        razon: direction.razon,
-      },
-      encuadre: direction.encuadre,
-      queries: search.queries,
-      candidatos: search.considered,
-      relevantes: search.relevant,
-    };
-    await persistImageMeta(deliverableId, meta).catch(() => {});
-    throw new Error(
-      `Referencias insuficientes: ${search.relevant}/${MIN_RELEVANT_REFS} relevantes (de ${search.considered} candidatas). Sin ancla documental no se genera imagen.`
+  const hasRefs = search.refs.length > 0;
+  const ancla: ImageAncla = search.ok ? "documental" : hasRefs ? "parcial" : "solo-texto";
+  const degraded = ancla !== "documental";
+  if (degraded) {
+    console.warn(
+      `[imagen ${deliverableId}] ancla ${ancla}: ${search.relevant}/${MIN_RELEVANT_REFS} relevantes, ${search.refs.length} adjuntas (de ${search.considered} candidatas). Se genera con apoyo del texto de la pieza.`
     );
   }
 
-  // 3. Generación con referencias + reintentos (la moderación es estocástica).
-  const prompt = buildStyledPrompt({ subject, direction, withReferences: true });
+  // Diagnóstico común del buscador para persistir en cualquier salida.
+  const searchDiag = {
+    queries: search.queries,
+    candidatos: search.considered,
+    relevantes: search.relevant,
+    usables: search.usable,
+  };
+  const acentoMeta = {
+    color: direction.accentColor,
+    objetivo: direction.accentTargetEs,
+    objetivoEn: direction.accentTarget,
+    razon: direction.razon,
+  };
+
+  // 3. Generación con reintentos (la moderación es estocástica). Con referencias
+  //    → images/edits; sin ninguna usable → generación anclada solo en el texto.
+  const contextText = degraded ? pieceContextExcerpt(d.answer) : undefined;
+  const prompt = buildStyledPrompt({ subject, direction, withReferences: hasRefs, contextText });
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
   let png: Buffer | null = null;
   let attempts = 0;
@@ -187,11 +206,13 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
   for (let i = 1; i <= GENERATION_ATTEMPTS; i++) {
     attempts = i;
     try {
-      png = await editImagePng({
-        prompt,
-        size,
-        refs: search.refs.map((r) => ({ buffer: r.buffer, name: r.name })),
-      });
+      png = hasRefs
+        ? await editImagePng({
+            prompt,
+            size,
+            refs: search.refs.map((r) => ({ buffer: r.buffer, name: r.name })),
+          })
+        : await generateImagePng({ prompt, size });
       break;
     } catch (e) {
       lastErr = e as Error;
@@ -206,17 +227,11 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
       status: "error",
       at: new Date().toISOString(),
       modelo: model,
-      acento: {
-        color: direction.accentColor,
-        objetivo: direction.accentTargetEs,
-        objetivoEn: direction.accentTarget,
-        razon: direction.razon,
-      },
+      ancla,
+      acento: acentoMeta,
       encuadre: direction.encuadre,
       referencias: refsToMeta(search),
-      queries: search.queries,
-      candidatos: search.considered,
-      relevantes: search.relevant,
+      ...searchDiag,
       intentos: attempts,
       error: lastErr?.message.slice(0, 300),
     };
@@ -237,17 +252,11 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     status: "ok",
     at: new Date().toISOString(),
     modelo: model,
-    acento: {
-      color: direction.accentColor,
-      objetivo: direction.accentTargetEs,
-      objetivoEn: direction.accentTarget,
-      razon: direction.razon,
-    },
+    ancla,
+    acento: acentoMeta,
     encuadre: direction.encuadre,
     referencias: refsToMeta(search),
-    queries: search.queries,
-    candidatos: search.considered,
-    relevantes: search.relevant,
+    ...searchDiag,
     intentos: attempts,
   };
   const metadata = {

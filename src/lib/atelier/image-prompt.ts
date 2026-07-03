@@ -111,6 +111,27 @@ export function essaySubject(title: string, excerpt: string): string {
   return `An evocative documentary composition inspired by a historical essay titled "${title}". ${excerpt.slice(0, 400)} A single atmospheric scene about Colombian / Latin American history, no montage.`;
 }
 
+/**
+ * Extracto en prosa de la pieza para anclar la imagen cuando FALTAN referencias
+ * visuales: el texto generado compensa parte de lo que darían las fotos/pinturas.
+ * Sin markdown ni marcadores, recortado a un límite de frase.
+ */
+export function pieceContextExcerpt(answer: string | null | undefined, max = 700): string {
+  if (!answer) return "";
+  const clean = answer
+    .replace(/```[\s\S]*?```/g, " ") // bloques de código
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ") // imágenes markdown
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // enlaces → su texto
+    .replace(/\[[#^]?\d+\]/g, " ") // citas/notas al pie [1] [^1] [#1]
+    .replace(/[#>*_`~|]/g, " ") // marcas de markdown
+    .replace(/\s+/g, " ")
+    .trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const stop = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "));
+  return `${(stop > max * 0.5 ? cut.slice(0, stop + 1) : cut).trim()} …`;
+}
+
 // ── Prompt final ─────────────────────────────────────────────────────
 
 export interface StyledPromptArgs {
@@ -119,14 +140,23 @@ export interface StyledPromptArgs {
   direction: ArtDirection;
   /** true cuando van referencias adjuntas (images/edits). */
   withReferences: boolean;
+  /** Prosa de la pieza (ES) inyectada como contexto factual cuando faltan
+   * referencias visuales: ancla el generador en el texto, no en imágenes. */
+  contextText?: string;
 }
 
-/** Compone el prompt completo: sujeto + encuadre + referencias + estilo cerrado. */
+/** Compone el prompt completo: sujeto + contexto + encuadre + referencias + estilo. */
 export function buildStyledPrompt(args: StyledPromptArgs): string {
   const d = args.direction;
   const escena = d.escena ? ` ${d.escena}` : "";
+  const context = args.contextText?.trim();
   const parts = [
     `${args.subject}${escena}`,
+    ...(context
+      ? [
+          `HISTORICAL CONTEXT (Spanish — use ONLY to get the scene, figures, clothing, objects, architecture and setting historically right; do NOT render any of this text, letters or words in the image): ${context}`,
+        ]
+      : []),
     `COMPOSITION: ${ENCUADRE_EN[d.encuadre]}`,
     ...(args.withReferences ? [REFERENCE_CLAUSE] : []),
     `STYLE: ${STYLE_35} ${accentClause(d)}`,
