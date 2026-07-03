@@ -154,9 +154,19 @@ function Ficha({ s }: { s: StructuredData }) {
   }
 }
 
-export function TypologyArticle({ detail }: { detail: TypologyDetail }) {
+export function TypologyArticle({
+  detail,
+  extra,
+  crumb,
+}: {
+  detail: TypologyDetail;
+  /** Contenido agregado (hub de época, conexiones de entidad) tras el cuerpo. */
+  extra?: React.ReactNode;
+  /** Sobrescribe el índice de retorno (p. ej. entidad → Personas). */
+  crumb?: { href: string; label: string };
+}) {
   const s = detail.structured;
-  const idx = INDEX_HREF[s.typology];
+  const idx = crumb ?? INDEX_HREF[s.typology];
   const dot = s.periodoCode ? getPeriodColor(s.periodoCode) : "var(--fg-dim)";
   const periodLabel = s.periodoCode ? periodInfo(s.periodoCode)?.label : null;
   const isPortrait = s.typology === "entidad" && s.tipo === "Persona";
@@ -220,6 +230,8 @@ export function TypologyArticle({ detail }: { detail: TypologyDetail }) {
             )}
           </aside>
         </div>
+
+        {extra}
 
         <div className="art-paso">
           <Link href={idx.href}>
