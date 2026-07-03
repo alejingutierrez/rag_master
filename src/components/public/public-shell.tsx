@@ -4,7 +4,9 @@ const NAV = [
   { href: "/", label: "Portada" },
   { href: "/epocas", label: "Épocas" },
   { href: "/linea-de-tiempo", label: "Línea de tiempo" },
-  { href: "/entidades", label: "Entidades" },
+  { href: "/personas", label: "Personas" },
+  { href: "/lugares", label: "Lugares" },
+  { href: "/ideas", label: "Ideas" },
   { href: "/preguntas", label: "Preguntas" },
 ];
 
@@ -111,7 +113,9 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
             <Link href="/" style={footLink}>Portada</Link>
             <Link href="/epocas" style={footLink}>Épocas</Link>
             <Link href="/linea-de-tiempo" style={footLink}>Línea de tiempo</Link>
-            <Link href="/entidades" style={footLink}>Entidades</Link>
+            <Link href="/personas" style={footLink}>Personas</Link>
+            <Link href="/lugares" style={footLink}>Lugares</Link>
+            <Link href="/ideas" style={footLink}>Ideas</Link>
           </div>
           <div style={footCol}>
             <div className="label" style={{ marginBottom: 12 }}>Épocas</div>
