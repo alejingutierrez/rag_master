@@ -42,6 +42,7 @@ const STATIC_ITEMS: Item[] = [
   { id: "nav-enrich", label: "Enriquecer", href: "/admin/enrich", icon: FlaskConical, group: "Navegar" },
   { id: "nav-chat", label: "Consultar", href: "/admin/chat", icon: MessageCircle, group: "Navegar" },
   { id: "nav-atelier", label: "El Taller", href: "/admin/atelier", icon: Hammer, group: "Navegar" },
+  { id: "nav-serie", label: "Producción en serie", href: "/admin/atelier/serie", icon: Hammer, group: "Navegar" },
   { id: "nav-q", label: "Preguntas", href: "/admin/questions", icon: BookOpen, group: "Navegar" },
   { id: "nav-prod", label: "Producciones", href: "/admin/producciones", icon: LayoutGrid, group: "Navegar" },
   { id: "nav-bib", label: "Bibliografía", href: "/admin/bibliography", icon: Library, group: "Navegar" },

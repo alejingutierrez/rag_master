@@ -20,9 +20,11 @@ import {
 import {
   ATELIER_FORMAT_LIST,
   fichaKindForFormat,
+  isValidFormatId,
   type AtelierFormatId,
   type LongitudId,
 } from "@/lib/atelier-formats";
+import { decodeSourceRef, kindLabel, type SourceRef } from "@/lib/source-ref";
 
 type Stage =
   | "encuadre"
@@ -129,7 +131,7 @@ function AtelierContent() {
   const [intent, setIntent] = useState("");
   const [formatId, setFormatId] = useState<AtelierFormatId>("cronica");
   const [longitud, setLongitud] = useState<LongitudId>("normal");
-  const [linkedQuestionId, setLinkedQuestionId] = useState<string | null>(null);
+  const [sourceRef, setSourceRef] = useState<SourceRef | null>(null);
   const [data, setData] = useState<Data | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [tab, setTab] = useState<Tab>("pieza");
@@ -174,19 +176,30 @@ function AtelierContent() {
     };
   }, [idFromUrl, startPolling]);
 
-  // Precarga desde una pregunta del corpus: ?intent= y/o ?questionId=.
+  // Precarga desde una superficie del archivo: ?formatId= (preselección de ficha),
+  // ?sourceRef= (vínculo ítem↔producción) y/o los legacy ?questionId=/?intent=.
   useEffect(() => {
     if (idFromUrl || preloadedRef.current) return;
+    const formatParam = params.get("formatId");
+    const refParam = decodeSourceRef(params.get("sourceRef"));
     const qid = params.get("questionId");
     const intentParam = params.get("intent");
-    if (!qid && !intentParam) return;
+    if (!formatParam && !refParam && !qid && !intentParam) return;
     preloadedRef.current = true;
-    if (qid) setLinkedQuestionId(qid);
+
+    if (formatParam && isValidFormatId(formatParam)) setFormatId(formatParam);
+
+    // Vínculo: sourceRef explícito, o derivado del legacy ?questionId.
+    const ref: SourceRef | null =
+      refParam ?? (qid ? { kind: "pregunta", key: qid, label: intentParam ?? "" } : null);
+    if (ref) setSourceRef(ref);
+
+    // Intención: ?intent explícito > label del sourceRef > texto de la pregunta.
     if (intentParam) {
       setIntent(intentParam);
-      return;
-    }
-    if (qid) {
+    } else if (refParam?.label) {
+      setIntent(refParam.label);
+    } else if (qid) {
       fetch(`/api/questions/${qid}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((d: { question?: { pregunta?: string } } | null) => {
@@ -209,7 +222,13 @@ function AtelierContent() {
       const res = await fetch("/api/atelier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: q, formatId, longitud, questionId: linkedQuestionId ?? undefined }),
+        body: JSON.stringify({
+          intent: q,
+          formatId,
+          longitud,
+          questionId: sourceRef?.kind === "pregunta" ? sourceRef.key : undefined,
+          sourceRef: sourceRef ?? undefined,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -313,9 +332,10 @@ function AtelierContent() {
             }}
           >
             <span className="label">Intención</span>
-            {linkedQuestionId && (
+            {sourceRef && (
               <span
                 className="mono"
+                title={sourceRef.label || undefined}
                 style={{
                   fontSize: 10.5,
                   color: "var(--accent)",
@@ -323,9 +343,14 @@ function AtelierContent() {
                   borderRadius: 4,
                   padding: "2px 8px",
                   letterSpacing: "0.04em",
+                  maxWidth: 420,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
               >
-                ↳ vinculado a una pregunta del corpus
+                ↳ vinculado a {kindLabel(sourceRef.kind)}
+                {sourceRef.label ? `: ${sourceRef.label}` : ""}
               </span>
             )}
           </div>

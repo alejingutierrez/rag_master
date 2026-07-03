@@ -18,12 +18,10 @@ export const maxDuration = 3600; // El Taller en after(), igual que /api/atelier
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
-  const formatId = body?.formatId;
+  // Default a la ficha de pregunta (la producción "de su tipo" que marca la
+  // pregunta-madre como producida); un formato válido explícito se respeta.
+  const formatId = isValidFormatId(body?.formatId) ? body.formatId : "ficha-pregunta";
   const longitud = body?.longitud as LongitudId | undefined;
-
-  if (!isValidFormatId(formatId)) {
-    return Response.json({ error: "Formato inválido" }, { status: 400 });
-  }
 
   const master = await prisma.masterQuestion.findUnique({
     where: { id },
@@ -52,6 +50,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .filter((s) => s.trim().length > 3),
   };
 
+  // Puente ítem↔producción: enlaza este entregable con la pregunta-madre. Con
+  // formato ficha-pregunta, marca la madre como producida (ver production-state).
+  const sourceRef = { kind: "pregunta-madre" as const, key: master.id, label: master.pregunta };
+
   const modelUsed = process.env.BEDROCK_CLAUDE_MODEL_ID || "us.anthropic.claude-opus-4-7";
   const batchId = `mq-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const initialMetadata: AtelierMetadata = {
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       answer: "",
       modelUsed,
       chunksUsed: [],
-      metadata: { atelier: initialMetadata, masterId: master.id } as unknown as object,
+      metadata: { atelier: initialMetadata, masterId: master.id, sourceRef } as unknown as object,
       source: "master",
       batchId,
       questionId: null,
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         const curAtelier = (meta.atelier as AtelierMetadata) ?? initialMetadata;
         await prisma.deliverable.update({
           where: { id: deliverable.id },
-          data: { metadata: { ...meta, atelier: { ...curAtelier, ...patch }, masterId: master.id } as unknown as object },
+          data: { metadata: { ...meta, atelier: { ...curAtelier, ...patch }, masterId: master.id, sourceRef } as unknown as object },
         });
       } catch (e) {
         console.warn(`[mq ${deliverable.id}] updateMetadata:`, (e as Error).message);
@@ -133,7 +135,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           status: "COMPLETE",
           answer: result.answer,
           chunksUsed: result.chunksUsed as unknown as object,
-          metadata: { atelier: finalMeta, masterId: master.id } as unknown as object,
+          metadata: { atelier: finalMeta, masterId: master.id, sourceRef } as unknown as object,
         },
       });
     } catch (err) {
@@ -145,7 +147,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           data: {
             status: "ERROR",
             answer: `Error: ${msg}`,
-            metadata: { atelier: { ...initialMetadata, stage: "error", message: msg, finishedAt: new Date().toISOString() }, masterId: master.id } as unknown as object,
+            metadata: { atelier: { ...initialMetadata, stage: "error", message: msg, finishedAt: new Date().toISOString() }, masterId: master.id, sourceRef } as unknown as object,
           },
         })
         .catch(() => {});

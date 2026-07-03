@@ -29,6 +29,7 @@ const NAV: NavGroup[] = [
   {
     label: "Producción",
     items: [
+      { href: "/admin/atelier/serie", label: "Producción en serie" },
       { href: "/admin/producciones", label: "Producciones" },
       { href: "/admin/home", label: "Editor del home" },
       { href: "/admin/bibliography", label: "Bibliografía" },
