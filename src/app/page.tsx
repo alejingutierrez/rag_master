@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/public/public-shell";
 import { PERIODS, getPeriodColor, periodInfo } from "@/lib/design-tokens";
-import { getRecentEssays, getEssayCount, getHome } from "@/lib/public-data";
+import { getRecentEssays, getEssayCount, getHome, getEntityUniverse, getTypologyList } from "@/lib/public-data";
 import "@/components/public/home.css";
 
 // TODO post-lanzamiento: envolver las queries en unstable_cache para aliviar el RDS.
@@ -29,37 +29,6 @@ function startYear(yr: string): string {
   return yr.split(/[–-]/)[0].trim();
 }
 
-const FEATURED = [
-  { href: "/ensayos/rionegro", period: "EUC", type: "Ensayo · Est. U. de Colombia", title: "La Constitución de Rionegro", desc: "Nueve estados soberanos y un presidente de dos años." },
-  { href: "/entidades/mosquera", period: "EUC", type: "Semblanza · Persona", title: "Tomás Cipriano de Mosquera", desc: "Cinco veces jefe de Estado; el caudillo del federalismo." },
-  { href: "/hechos/bogotazo", period: "VIO", type: "Hecho · La Violencia", title: "El Bogotazo", desc: "El magnicidio que incendió Bogotá el 9 de abril de 1948." },
-];
-
-const COLLECTION = [
-  { href: "/epocas/ind", year: "1821 · Cúcuta", period: "IND", desc: "La Gran Colombia" },
-  { href: "/epocas/euc", year: "1863 · Rionegro", period: "EUC", desc: "El federalismo radical" },
-  { href: "/epocas/reg", year: "1886 · Regeneración", period: "REG", desc: "El Estado centralista" },
-  { href: "/epocas/c91", year: "1991 · Constituyente", period: "C91", desc: "La carta vigente" },
-];
-
-const ENTITIES = [
-  { href: "/entidades/bolivar", name: "Simón Bolívar", period: "IND", type: "Persona · Independencia" },
-  { href: "/entidades/mosquera", name: "Tomás C. de Mosquera", period: "EUC", type: "Persona · EUC" },
-  { href: "/entidades/nunez", name: "Rafael Núñez", period: "REG", type: "Persona · Regeneración" },
-  { href: "/entidades/gaitan", name: "Jorge Eliécer Gaitán", period: "VIO", type: "Persona · La Violencia" },
-];
-
-const STATIC_LATEST = [
-  { period: "IND", title: "La Patria Boba", meta: "Ensayo · 1810", href: "/archivo" },
-  { period: "VIO", title: "Jorge Eliécer Gaitán", meta: "Semblanza", href: "/archivo" },
-  { period: "REG", title: "La Guerra de los Mil Días", meta: "Crónica · 1899", href: "/archivo" },
-  { period: "IND", title: "Batalla de Boyacá", meta: "Hecho · 1819", href: "/archivo" },
-  { period: "REG", title: "¿Qué cambió la Constitución de 1886?", meta: "Ensayo", href: "/archivo" },
-  { period: "REP_LIB", title: "La República Liberal", meta: "Ensayo · 1930", href: "/archivo" },
-  { period: "FN", title: "El Frente Nacional", meta: "Ensayo · 1958", href: "/archivo" },
-  { period: "POS", title: "El proceso de paz", meta: "Ensayo · 2016", href: "/archivo" },
-];
-
 const TIMELINE = [
   { year: "1810", event: "Grito de Independencia", period: "IND" },
   { year: "1819", event: "Batalla de Boyacá", period: "IND" },
@@ -76,26 +45,40 @@ const ENTRADAS = [
 ];
 
 export default async function HomePage() {
-  const [essays, essayCount, home] = await Promise.all([
+  const [essays, essayCount, home, personas, epocaCards] = await Promise.all([
     getRecentEssays(8),
     getEssayCount(),
     getHome(),
+    getEntityUniverse("persona"),
+    getTypologyList("epoca"),
   ]);
-  const latest =
-    essays.length > 0
-      ? essays.map((e) => {
-          const yr = e.periodCode ? startYear(PERIODS[e.periodCode as keyof typeof PERIODS]?.yearRange ?? "") : "";
-          return {
-            period: e.periodCode ?? "TRANS",
-            title: e.title,
-            meta: e.formatName + (yr && yr !== "—" ? ` · ${yr}` : ""),
-            href: `/ensayos/${e.id}`,
-          };
-        })
-      : STATIC_LATEST;
 
-  // Bloques dinámicos (editor del home) con fallback a los defaults hardcoded.
-  const featuredCards = home.featured.length
+  const latest = essays.map((e) => {
+    const yr = e.periodCode ? startYear(PERIODS[e.periodCode as keyof typeof PERIODS]?.yearRange ?? "") : "";
+    return {
+      period: e.periodCode ?? "TRANS",
+      title: e.title,
+      meta: e.formatName + (yr && yr !== "—" ? ` · ${yr}` : ""),
+      href: `/ensayos/${e.id}`,
+    };
+  });
+
+  // Fallbacks REALES (solo lo producido): si el editor no configuró un bloque,
+  // se usa lo publicado — personas, épocas o ensayos reales. Nunca ejemplos.
+  const heroCard =
+    home.hero ??
+    (essays[0]
+      ? {
+          title: essays[0].title,
+          href: `/ensayos/${essays[0].id}`,
+          periodCode: essays[0].periodCode,
+          kicker: essays[0].formatName,
+          desc: "",
+          imageUrl: null as string | null,
+        }
+      : null);
+
+  const featuredCards = (home.featured.length
     ? home.featured.map((c) => ({
         href: c.href,
         period: c.periodCode ?? "TRANS",
@@ -104,7 +87,23 @@ export default async function HomePage() {
         desc: c.desc,
         imageUrl: c.imageUrl,
       }))
-    : FEATURED.map((f) => ({ ...f, imageUrl: null as string | null }));
+    : essays.slice(0, 3).map((e) => ({
+        href: `/ensayos/${e.id}`,
+        period: e.periodCode ?? "TRANS",
+        type: e.formatName,
+        title: e.title,
+        desc: "",
+        imageUrl: null as string | null,
+      })));
+
+  // Épocas publicadas → su página; el resto del espectro → la línea de tiempo.
+  const epocaSlugByCode = new Map<string, string>();
+  for (const c of epocaCards) if (c.periodCode) epocaSlugByCode.set(c.periodCode, c.slug);
+  const bandHref = (code: string) =>
+    epocaSlugByCode.has(code) ? `/epocas/${epocaSlugByCode.get(code)}` : `/linea-de-tiempo?p=${code}`;
+
+  const featuredEntities = personas.slice(0, 4);
+  const collectionEpocas = epocaCards.slice(0, 4);
 
   return (
     <PublicShell>
@@ -123,26 +122,23 @@ export default async function HomePage() {
           </div>
         </header>
 
+        {heroCard && (
         <section className="hp-hero hp-fade hp-d1">
           <div>
             <div className="hp-ek">
               <span
                 className="hp-dot"
-                style={{ background: getPeriodColor(home.hero?.periodCode ?? "NGR") }}
+                style={{ background: getPeriodColor(heroCard.periodCode ?? "TRANS") }}
               />
               <span className="label" style={{ color: "var(--fg-muted)" }}>
-                {home.hero
-                  ? `Destacado · ${home.hero.kicker}${home.hero.periodCode ? ` · ${periodInfo(home.hero.periodCode)?.label ?? ""}` : ""}`
-                  : "Destacado · Nueva Granada · 1831—1862"}
+                Destacado · {heroCard.kicker}
+                {heroCard.periodCode ? ` · ${periodInfo(heroCard.periodCode)?.label ?? ""}` : ""}
               </span>
             </div>
-            <h2>{home.hero?.title ?? "La Comisión Corográfica"}</h2>
-            <p className="hp-excerpt">
-              {home.hero?.desc ??
-                "Durante casi una década, geógrafos, botánicos y dibujantes recorrieron el país cargando teodolitos y acuarelas. Volvieron con la primera imagen completa de la Nueva Granada: sus montañas, sus caminos y sus gentes."}
-            </p>
+            <h2>{heroCard.title}</h2>
+            {heroCard.desc && <p className="hp-excerpt">{heroCard.desc}</p>}
             <div className="hp-byl">
-              <Link href={home.hero?.href ?? "/ensayos/corografica"} className="hp-read">
+              <Link href={heroCard.href} className="hp-read">
                 Leer →
               </Link>
               <span className="hp-sep">·</span>
@@ -150,25 +146,19 @@ export default async function HomePage() {
             </div>
           </div>
           <figure style={{ margin: 0 }}>
-            {home.hero?.imageUrl ? (
+            {heroCard.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={home.hero.imageUrl}
-                alt={home.hero.title}
+                src={heroCard.imageUrl}
+                alt={heroCard.title}
                 style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover" }}
               />
             ) : (
-              <>
-                <span className="hp-ph land" aria-hidden />
-                {!home.hero && (
-                  <figcaption className="hp-cap">
-                    Lámina · Comisión Corográfica, c. 1850 — Biblioteca Nacional
-                  </figcaption>
-                )}
-              </>
+              <span className="hp-ph land" aria-hidden />
             )}
           </figure>
         </section>
+        )}
 
         <section className="hp-sect">
           <div className="hp-sect-h"><span className="hp-sn">En portada</span><Link className="hp-allr" href="/archivo">Ver el archivo →</Link></div>
@@ -195,7 +185,7 @@ export default async function HomePage() {
           <div className="hp-sect-h"><span className="hp-sn">Cinco siglos</span><span className="hp-sc">Recorre la historia por época. El color es la navegación.</span></div>
           <div className="hp-band">
             {Object.values(PERIODS).map((p) => (
-              <Link key={p.code} className="hp-seg" href={`/epocas/${p.slug}`}>
+              <Link key={p.code} className="hp-seg" href={bandHref(p.code)}>
                 <div className="bar" style={{ background: getPeriodColor(p.code) }} />
                 <div className="in"><div className="sn2">{BAND_LABEL[p.code] ?? p.label}</div><div className="sy">{startYear(p.yearRange)}</div></div>
               </Link>
@@ -203,6 +193,7 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {(home.collection || collectionEpocas.length > 0) && (
         <section className="hp-sect">
           {home.collection ? (
             <>
@@ -230,47 +221,59 @@ export default async function HomePage() {
             </>
           ) : (
             <>
-              <div className="hp-sect-h"><span className="hp-sn">Colección</span><span className="hp-scount">· Las constituciones de Colombia</span><span className="hp-sc">Un país que se ha reescrito a sí mismo una y otra vez.</span></div>
+              <div className="hp-sect-h"><span className="hp-sn">Colección</span><span className="hp-scount">· Épocas publicadas</span><span className="hp-sc">Los grandes períodos, ya en el sitio.</span></div>
               <div className="hp-coll">
-                {COLLECTION.map((c) => (
-                  <Link key={c.href + c.year} className="hp-cc" href={c.href}>
-                    <figure style={{ margin: 0 }}><span className="hp-ph sq" aria-hidden /></figure>
-                    <div className="ccy">{c.year}</div>
-                    <div className="ccp"><span className="hp-dot" style={{ background: getPeriodColor(c.period) }} />{c.desc}</div>
+                {collectionEpocas.map((c) => (
+                  <Link key={c.id} className="hp-cc" href={c.href}>
+                    <figure style={{ margin: 0 }}>
+                      {c.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.imageUrl} alt={c.titulo} style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover" }} />
+                      ) : (
+                        <span className="hp-ph sq" aria-hidden />
+                      )}
+                    </figure>
+                    <div className="ccy">{c.meta ?? c.titulo}</div>
+                    <div className="ccp"><span className="hp-dot" style={{ background: getPeriodColor(c.periodCode ?? "TRANS") }} />{c.titulo}</div>
                   </Link>
                 ))}
               </div>
             </>
           )}
         </section>
+        )}
 
+        {featuredEntities.length > 0 && (
         <section className="hp-sect">
-          <div className="hp-sect-h"><span className="hp-sn">Entidades destacadas</span><Link className="hp-allr" href="/entidades">Ver todas →</Link></div>
+          <div className="hp-sect-h"><span className="hp-sn">Personas destacadas</span><Link className="hp-allr" href="/personas">Ver todas →</Link></div>
           <div className="hp-ents">
-            {ENTITIES.map((e) => (
-              <Link key={e.href} className="hp-ent-p" href={e.href}>
+            {featuredEntities.map((e) => (
+              <Link key={e.slug} className="hp-ent-p" href={e.href}>
                 <figure style={{ margin: 0 }}><span className="hp-ph port" aria-hidden /></figure>
                 <div className="enn">{e.name}</div>
-                <div className="ent-t"><span className="hp-dot" style={{ background: getPeriodColor(e.period) }} />{e.type}</div>
+                <div className="ent-t">
+                  <span className="hp-dot" style={{ background: e.periods[0] ? getPeriodColor(e.periods[0]) : "var(--fg-dim)" }} />
+                  {e.mentions} {e.mentions === 1 ? "aparición" : "apariciones"}
+                </div>
               </Link>
             ))}
           </div>
         </section>
+        )}
       </div>
 
+      {home.questionOfWeek && (
       <section className="hp-qband">
         <div className="inner">
           <div className="ql">La pregunta de la semana</div>
-          <h3>{home.questionOfWeek?.title ?? "¿Por qué fracasó el federalismo radical?"}</h3>
-          <p className="qa">
-            {home.questionOfWeek?.answer ??
-              "Porque la soberanía absoluta de los estados volvió ingobernable al país: sin un poder central capaz de imponer orden, los Estados Unidos de Colombia vivieron en guerra civil casi permanente."}
-          </p>
-          <Link className="qr" href={home.questionOfWeek?.href ?? "/preguntas/federalismo-radical"}>
+          <h3>{home.questionOfWeek.title}</h3>
+          <p className="qa">{home.questionOfWeek.answer}</p>
+          <Link className="qr" href={home.questionOfWeek.href}>
             Ver la respuesta completa →
           </Link>
         </div>
       </section>
+      )}
 
       <div className="hp-wrap">
         <section className="hp-sect">

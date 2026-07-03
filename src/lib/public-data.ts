@@ -7,7 +7,7 @@
  * publicarlo explícitamente.
  */
 import { prisma } from "@/lib/prisma";
-import { getAtelierFormat } from "@/lib/atelier-formats";
+import { getAtelierFormat, fichaKindForFormat, type AtelierFormatId } from "@/lib/atelier-formats";
 import { PERIODS } from "@/lib/design-tokens";
 import {
   normalizeStructured,
@@ -747,6 +747,7 @@ export interface AnchoredPiece {
   titulo: string;
   resumen: string;
   kind: string; // hecho | epoca | entidad | pregunta | ensayo
+  templateId: string; // formato del Taller (crónica/ensayo/…/ficha-*)
   imageUrl: string | null;
   periodCode: string | null;
   periodoOrden: number;
@@ -765,6 +766,7 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
     where: PUBLISHED_WHERE,
     select: {
       id: true,
+      templateId: true,
       structuredData: true,
       metadata: true,
       imageUrl: true,
@@ -787,6 +789,7 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       titulo: s?.titulo ?? shortTitle(r.question?.pregunta ?? r.userQuestion ?? "Producción", 80),
       resumen: s?.resumen ?? "",
       kind: s?.typology ?? "ensayo",
+      templateId: r.templateId,
       imageUrl: r.imageUrl ?? null,
       periodCode: anchor.periodCode,
       periodoOrden: anchor.periodoOrden,
@@ -1117,13 +1120,19 @@ export async function getEntityNode(slug: string): Promise<EntityNode | null> {
 export async function getEssaysIndex(): Promise<TypologyCard[]> {
   try {
     const pieces = await loadAnchoredPieces();
-    const cards: TypologyCard[] = pieces
-      .filter((p) => p.kind === "pregunta" || p.kind === "ensayo")
-      .map((p) => ({
+    const cards: TypologyCard[] = [];
+    for (const p of pieces) {
+      // Clasifica por FORMATO (lo que el autor produjo), no por la tipología que
+      // el Taller adivinó: narrativas (crónica/ensayo/reportaje/…) + preguntas.
+      // Las fichas hecho/época/entidad son nodos wiki, no lectura → fuera.
+      const fk = fichaKindForFormat(p.templateId as AtelierFormatId);
+      if (fk !== null && fk !== "pregunta") continue;
+      cards.push({
         id: p.id,
         typology: "pregunta" as TypologyKind,
-        slug: p.entidadSlug ?? p.id,
-        href: p.href,
+        slug: p.id,
+        // Narrativa → lector /ensayos/[id]; pregunta → su ficha /preguntas/[slug].
+        href: fk === "pregunta" ? p.href : `/ensayos/${p.id}`,
         titulo: p.titulo,
         resumen: p.resumen,
         periodCode: p.periodCode,
@@ -1132,7 +1141,8 @@ export async function getEssaysIndex(): Promise<TypologyCard[]> {
         entidades: { personas: p.personas, lugares: p.lugares, ideas: p.ideas },
         meta: p.anio != null ? (p.anio < 0 ? `${-p.anio} a.C.` : String(p.anio)) : null,
         imageUrl: p.imageUrl,
-      }));
+      });
+    }
     cards.sort(
       (a, b) =>
         a.periodoOrden - b.periodoOrden ||
