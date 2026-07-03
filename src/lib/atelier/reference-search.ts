@@ -121,13 +121,21 @@ export function referenceContextFromStructured(s: StructuredData): ReferenceCont
 
 const QUERY_SYSTEM = `Generas queries de BÚSQUEDA DE IMÁGENES para encontrar referencias visuales AUTÉNTICAS (fotos históricas, pinturas de época, piezas de museo, grabados, arquitectura real) sobre un tema de historia de Colombia / América Latina.
 
+REGLA DE ORO — QUERIES CORTAS: van a motores de ARCHIVO (Wikimedia, museos) que hacen AND estricto de términos: una query de 6+ palabras devuelve CERO. Verificado: "José Prudencio Padilla" → 33 resultados; "batalla naval Lago de Maracaibo 1823 pintura grabado independencia" → 0.
+
 Reglas:
-- De 4 a 6 queries, mezcla español e inglés.
-- Escalera: de lo más específico (nombres propios, lugar + año) a lo más amplio (la actividad, el tipo de objeto, el paisaje de época).
+- De 5 a 7 queries, cada una de 2 a 4 PALABRAS. Ni una más. Sin apilar sinónimos ("pintura grabado ilustración" en una query = veneno).
+- Ancla en NOMBRES PROPIOS: persona, lugar, batalla, institución — solos o con UNA palabra de apoyo ("Riohacha", "batalla Lago Maracaibo", "Cartagena murallas").
+- Mezcla español e inglés ("Spanish colonial ship", "naval battle painting").
+- Escalera: de lo más específico a lo más amplio (la actividad, el objeto, el paisaje de época).
 - Piensa en QUÉ EXISTE fotografiado o pintado: si el tema es anterior a la fotografía, busca pinturas, grabados, piezas de museo y los LUGARES reales.
-- Nada de queries abstractas ("historia de Colombia"): siempre algo visualmente concreto.
 
 Devuelve JSON puro: {"queries":["...", "..."]}`;
+
+/** Recorta una query a N términos: las APIs de archivo hacen AND estricto. */
+export function capForArchives(q: string, maxTokens = 4): string {
+  return q.trim().split(/\s+/).slice(0, maxTokens).join(" ");
+}
 
 export async function generateReferenceQueries(ctx: ReferenceContext): Promise<string[]> {
   const lines = [
@@ -138,17 +146,35 @@ export async function generateReferenceQueries(ctx: ReferenceContext): Promise<s
     ctx.entidades?.length ? `ENTIDADES: ${ctx.entidades.slice(0, 6).join(", ")}` : "",
     ctx.lugares?.length ? `LUGARES: ${ctx.lugares.slice(0, 4).join(", ")}` : "",
   ].filter(Boolean);
-  const raw = await callClaudeJson<{ queries?: unknown }>({
-    model: SONNET_MODEL,
-    system: QUERY_SYSTEM,
-    user: `${lines.join("\n")}\n\nJSON:`,
-    maxTokens: 600,
-  });
-  const queries = Array.isArray(raw.queries)
-    ? raw.queries.filter((q): q is string => typeof q === "string" && q.trim().length > 2).slice(0, 6)
-    : [];
-  if (queries.length === 0) queries.push(ctx.titulo);
-  return queries;
+  let queries: string[] = [];
+  try {
+    const raw = await callClaudeJson<{ queries?: unknown }>({
+      model: SONNET_MODEL,
+      system: QUERY_SYSTEM,
+      user: `${lines.join("\n")}\n\nJSON:`,
+      maxTokens: 600,
+    });
+    queries = Array.isArray(raw.queries)
+      ? raw.queries.filter((q): q is string => typeof q === "string" && q.trim().length > 2).slice(0, 7)
+      : [];
+  } catch (e) {
+    console.warn(`[refs] generación de queries falló: ${(e as Error).message}`);
+  }
+  // Anclas garantizadas: el título de la pieza (nombre propio = lo que mejor
+  // indexan los archivos) y las primeras entidades, por delante de lo del LLM.
+  const anchors = [ctx.titulo, ...(ctx.entidades ?? []).slice(0, 2)].filter(
+    (s) => s && s.trim().length > 2
+  );
+  const seen = new Set<string>();
+  const merged: string[] = [];
+  for (const q of [...anchors, ...queries]) {
+    const key = q.trim().toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(q.trim());
+    if (merged.length >= 9) break;
+  }
+  return merged;
 }
 
 // ── 2. Proveedores ───────────────────────────────────────────────────
@@ -301,12 +327,18 @@ async function searchLoc(q: string): Promise<ReferenceCandidate[]> {
   return out;
 }
 
-const PROVIDERS: Array<{ name: string; fn: (q: string) => Promise<ReferenceCandidate[]> }> = [
-  { name: "openverse", fn: searchOpenverse },
-  { name: "wikimedia", fn: searchWikimedia },
-  { name: "metmuseum", fn: searchMetMuseum },
-  { name: "loc", fn: searchLoc },
-  { name: "serper", fn: searchSerper },
+const PROVIDERS: Array<{
+  name: string;
+  fn: (q: string) => Promise<ReferenceCandidate[]>;
+  /** true = motor de archivo con AND estricto: recibe la query recortada (≤4 términos). */
+  archive: boolean;
+}> = [
+  { name: "openverse", fn: searchOpenverse, archive: true },
+  { name: "wikimedia", fn: searchWikimedia, archive: true },
+  { name: "metmuseum", fn: searchMetMuseum, archive: true },
+  { name: "loc", fn: searchLoc, archive: true },
+  // Google Images maneja bien las queries largas y descriptivas: recibe la original.
+  { name: "serper", fn: searchSerper, archive: false },
 ];
 
 function dedupeCandidates(all: ReferenceCandidate[]): ReferenceCandidate[] {
@@ -329,7 +361,9 @@ export async function searchAllProviders(queries: string[]): Promise<ReferenceCa
   const failures: Record<string, number> = {};
   const empties: Record<string, number> = {};
   for (const q of queries) {
-    const settled = await Promise.allSettled(PROVIDERS.map((p) => p.fn(q)));
+    const settled = await Promise.allSettled(
+      PROVIDERS.map((p) => p.fn(p.archive ? capForArchives(q) : q))
+    );
     settled.forEach((s, i) => {
       const name = PROVIDERS[i].name;
       if (s.status === "fulfilled") {
@@ -429,7 +463,7 @@ async function downloadReferences(scored: ScoredReference[], max: number): Promi
 
 // ── 5. Orquestación ──────────────────────────────────────────────────
 
-const BROADEN_SYSTEM = `Las queries anteriores no encontraron suficientes referencias visuales. Genera 3 queries MÁS AMPLIAS para el mismo tema: la actividad genérica, el tipo de lugar, el período en la región. Español y/o inglés. JSON puro: {"queries":["..."]}`;
+const BROADEN_SYSTEM = `Las queries anteriores no encontraron suficientes referencias visuales. Genera 3 queries MÁS AMPLIAS para el mismo tema: la actividad genérica, el tipo de lugar, el período en la región. CORTAS: 2-4 palabras cada una, sin apilar sinónimos (los motores de archivo hacen AND estricto). Español y/o inglés. JSON puro: {"queries":["..."]}`;
 
 export async function searchReferences(ctx: ReferenceContext): Promise<ReferenceSearchResult> {
   const queries = await generateReferenceQueries(ctx);
