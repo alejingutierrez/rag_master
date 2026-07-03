@@ -1,13 +1,22 @@
-import { ComingSoon } from "@/components/public/coming-soon";
+import { notFound } from "next/navigation";
+import { TypologyArticle } from "@/components/public/typology-detail";
+import { getTypologyDetail } from "@/lib/public-data";
 
-export const metadata = { title: "Época · Historia Colombiana" };
+export const dynamic = "force-dynamic";
 
-export default function EpocaPage() {
-  return (
-    <ComingSoon
-      label="Época"
-      title="Esta época, pronto"
-      note="La página de cada periodo —con su panorama, sus hitos, sus actores y sus ensayos— está en construcción."
-    />
-  );
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const d = await getTypologyDetail("epoca", slug);
+  if (!d) return { title: "Época · Historia Colombiana" };
+  return {
+    title: `${d.structured.titulo} · Historia Colombiana`,
+    description: d.structured.resumen || undefined,
+  };
+}
+
+export default async function EpocaPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const detail = await getTypologyDetail("epoca", slug);
+  if (!detail) notFound();
+  return <TypologyArticle detail={detail} />;
 }

@@ -16,6 +16,13 @@ import { getAtelierFormat, ATELIER_FORMAT_LIST } from "@/lib/atelier-formats";
 
 type KindFilter = "all" | "chat" | "batch" | "deep_research" | "atelier";
 
+const TYPOLOGY_LABEL: Record<string, string> = {
+  hecho: "Hecho",
+  epoca: "Época",
+  entidad: "Entidad",
+  pregunta: "Pregunta",
+};
+
 interface DeliverableCounts {
   all: number;
   bySource: Record<string, number>;
@@ -54,6 +61,8 @@ interface DeliverableItem {
   answerPreview?: string;
   userQuestion?: string | null;
   metadata?: Record<string, unknown>;
+  publishedAt?: string | null;
+  structuredData?: { typology?: string; slug?: string } | null;
   question?: {
     id: string;
     pregunta: string;
@@ -280,11 +289,29 @@ function ProduccionesContent() {
                         textTransform: "uppercase",
                         letterSpacing: "0.06em",
                         marginBottom: 6,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        flexWrap: "wrap",
                       }}
                     >
-                      {tplName}
-                      {p.status === "GENERATING" ? " · generando" : ""}
-                      {p.status === "ERROR" ? " · error" : ""}
+                      {p.publishedAt && (
+                        <span
+                          style={{ display: "inline-flex", alignItems: "center", gap: 5, color: "var(--success)" }}
+                          title="Publicado en el sitio público"
+                        >
+                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--success)" }} />
+                          publicado
+                        </span>
+                      )}
+                      <span>
+                        {tplName}
+                        {p.structuredData?.typology
+                          ? ` · ${TYPOLOGY_LABEL[p.structuredData.typology] ?? p.structuredData.typology}`
+                          : ""}
+                        {p.status === "GENERATING" ? " · generando" : ""}
+                        {p.status === "ERROR" ? " · error" : ""}
+                      </span>
                     </div>
                     <div
                       className="serif"

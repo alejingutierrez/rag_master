@@ -4,6 +4,7 @@ import { runAtelier } from "@/lib/atelier/orchestrator";
 import { isValidFormatId, type LongitudId } from "@/lib/atelier-formats";
 import type { AtelierMetadata, AtelierQuestionMeta } from "@/lib/atelier/types";
 import { syncQuestionStats } from "@/lib/question-stats-sync";
+import { generateAndStoreImage, isOpenAIConfigured } from "@/lib/atelier/image";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 3600; // 60 min en after() — el capítulo cruza ~340 fuentes y pondera 6 hipótesis; el resto, menos
@@ -182,6 +183,10 @@ export async function POST(req: NextRequest) {
           answer: result.answer,
           chunksUsed: result.chunksUsed as unknown as object,
           metadata: { atelier: finalMeta } as unknown as object,
+          // Ficha estructurada por tipología (o se deja null si no se pudo extraer).
+          ...(result.structuredData
+            ? { structuredData: result.structuredData as unknown as object }
+            : {}),
         },
       });
       console.log(`[atelier ${deliverable.id}] DONE · ${finalMeta.wordCount} palabras · confianza ${result.confidenceIndex.score}`);
@@ -193,6 +198,18 @@ export async function POST(req: NextRequest) {
         await syncQuestionStats(safeQuestionId).catch((e) =>
           console.warn(`[atelier ${deliverable.id}] syncQuestionStats:`, (e as Error).message)
         );
+      }
+
+      // Imagen de portada (best-effort, DESPUÉS de persistir COMPLETE). Externa y
+      // lenta: nunca debe tumbar ni demorar la pieza. Si falta la key o falla, la
+      // pieza queda sin imagen (se puede generar luego a mano en Producciones).
+      if (isOpenAIConfigured()) {
+        try {
+          const { imageUrl } = await generateAndStoreImage(deliverable.id);
+          console.log(`[atelier ${deliverable.id}] imagen lista · ${imageUrl}`);
+        } catch (e) {
+          console.warn(`[atelier ${deliverable.id}] imagen falló:`, (e as Error).message);
+        }
       }
     } catch (err) {
       console.error(`[atelier ${deliverable.id}] FAILED:`, err);

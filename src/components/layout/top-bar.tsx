@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
@@ -32,6 +32,31 @@ export interface TopBarProps {
 
 export function TopBar({ onSearchClick }: TopBarProps) {
   const pathname = usePathname();
+  const [email, setEmail] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d?.authenticated) setEmail(d.email ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function logout() {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/logout", { method: "POST" });
+    } catch {
+      /* ignora — igual redirigimos */
+    }
+    window.location.assign("/login");
+  }
 
   const trail = useMemo(() => {
     if (ROUTE_TRAIL[pathname]) return ROUTE_TRAIL[pathname];
@@ -116,6 +141,43 @@ export function TopBar({ onSearchClick }: TopBarProps) {
           </button>
         )}
         <ThemeToggle />
+        {email && (
+          <span
+            className="mono"
+            style={{
+              fontSize: 10.5,
+              color: "var(--fg-subtle)",
+              letterSpacing: "0.02em",
+              maxWidth: 180,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={`Sesión: ${email}`}
+          >
+            {email}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={logout}
+          disabled={loggingOut}
+          style={{
+            appearance: "none",
+            background: "transparent",
+            border: "1px solid var(--line-strong)",
+            padding: "5px 11px",
+            fontSize: 11,
+            fontFamily: "var(--font-mono)",
+            color: "var(--fg-muted)",
+            cursor: loggingOut ? "wait" : "pointer",
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+          }}
+          aria-label="Cerrar sesión"
+        >
+          {loggingOut ? "Saliendo…" : "Salir"}
+        </button>
       </div>
     </header>
   );

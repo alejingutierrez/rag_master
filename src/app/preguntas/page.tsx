@@ -1,13 +1,18 @@
-import { ComingSoon } from "@/components/public/coming-soon";
+import { TypologyIndex } from "@/components/public/typology-index";
+import { getTypologyList } from "@/lib/public-data";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Preguntas · Historia Colombiana" };
 
-export default function PreguntasPage() {
+export default async function PreguntasPage() {
+  const cards = await getTypologyList("pregunta");
   return (
-    <ComingSoon
-      label="Preguntas"
-      title="Dudas con respuesta"
-      note="Preguntas históricas con respuesta razonada, evidencia y fuentes. Sección en construcción."
+    <TypologyIndex
+      kicker="Dudas con respuesta"
+      title="Preguntas"
+      intro="Preguntas históricas con respuesta razonada, su tesis, el debate que abren y la evidencia que las sostiene."
+      cards={cards}
+      emptyNote="Aún no hay preguntas publicadas. Aparecerán aquí a medida que se publiquen desde el taller."
     />
   );
 }

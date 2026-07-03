@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/public/public-shell";
-import { PERIODS, getPeriodColor } from "@/lib/design-tokens";
-import { getRecentEssays, getEssayCount } from "@/lib/public-data";
+import { PERIODS, getPeriodColor, periodInfo } from "@/lib/design-tokens";
+import { getRecentEssays, getEssayCount, getHome } from "@/lib/public-data";
 import "@/components/public/home.css";
 
 // TODO post-lanzamiento: envolver las queries en unstable_cache para aliviar el RDS.
@@ -74,7 +74,11 @@ const ENTRADAS = [
 ];
 
 export default async function HomePage() {
-  const [essays, essayCount] = await Promise.all([getRecentEssays(8), getEssayCount()]);
+  const [essays, essayCount, home] = await Promise.all([
+    getRecentEssays(8),
+    getEssayCount(),
+    getHome(),
+  ]);
   const latest =
     essays.length > 0
       ? essays.map((e) => {
@@ -87,6 +91,18 @@ export default async function HomePage() {
           };
         })
       : STATIC_LATEST;
+
+  // Bloques dinámicos (editor del home) con fallback a los defaults hardcoded.
+  const featuredCards = home.featured.length
+    ? home.featured.map((c) => ({
+        href: c.href,
+        period: c.periodCode ?? "TRANS",
+        type: c.kicker,
+        title: c.title,
+        desc: c.desc,
+        imageUrl: c.imageUrl,
+      }))
+    : FEATURED.map((f) => ({ ...f, imageUrl: null as string | null }));
 
   return (
     <PublicShell>
@@ -108,30 +124,63 @@ export default async function HomePage() {
         <section className="hp-hero hp-fade hp-d1">
           <div>
             <div className="hp-ek">
-              <span className="hp-dot" style={{ background: getPeriodColor("NGR") }} />
-              <span className="label" style={{ color: "var(--fg-muted)" }}>Destacado · Nueva Granada · 1831—1862</span>
+              <span
+                className="hp-dot"
+                style={{ background: getPeriodColor(home.hero?.periodCode ?? "NGR") }}
+              />
+              <span className="label" style={{ color: "var(--fg-muted)" }}>
+                {home.hero
+                  ? `Destacado · ${home.hero.kicker}${home.hero.periodCode ? ` · ${periodInfo(home.hero.periodCode)?.label ?? ""}` : ""}`
+                  : "Destacado · Nueva Granada · 1831—1862"}
+              </span>
             </div>
-            <h2>La Comisión Corográfica</h2>
-            <p className="hp-excerpt">Durante casi una década, geógrafos, botánicos y dibujantes recorrieron el país cargando teodolitos y acuarelas. Volvieron con la primera imagen completa de la Nueva Granada: sus montañas, sus caminos y sus gentes.</p>
+            <h2>{home.hero?.title ?? "La Comisión Corográfica"}</h2>
+            <p className="hp-excerpt">
+              {home.hero?.desc ??
+                "Durante casi una década, geógrafos, botánicos y dibujantes recorrieron el país cargando teodolitos y acuarelas. Volvieron con la primera imagen completa de la Nueva Granada: sus montañas, sus caminos y sus gentes."}
+            </p>
             <div className="hp-byl">
-              <Link href="/ensayos/corografica" className="hp-read">Leer el ensayo →</Link>
+              <Link href={home.hero?.href ?? "/ensayos/corografica"} className="hp-read">
+                Leer →
+              </Link>
               <span className="hp-sep">·</span>
               <span className="hp-au">Alejandro Gutiérrez</span>
-              <span className="mono" style={{ fontSize: 11, color: "var(--fg-faint)" }}>11 min</span>
             </div>
           </div>
           <figure style={{ margin: 0 }}>
-            <span className="hp-ph land" aria-hidden />
-            <figcaption className="hp-cap">Lámina · Comisión Corográfica, c. 1850 — Biblioteca Nacional</figcaption>
+            {home.hero?.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={home.hero.imageUrl}
+                alt={home.hero.title}
+                style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", filter: "grayscale(1)" }}
+              />
+            ) : (
+              <>
+                <span className="hp-ph land" aria-hidden />
+                {!home.hero && (
+                  <figcaption className="hp-cap">
+                    Lámina · Comisión Corográfica, c. 1850 — Biblioteca Nacional
+                  </figcaption>
+                )}
+              </>
+            )}
           </figure>
         </section>
 
         <section className="hp-sect">
           <div className="hp-sect-h"><span className="hp-sn">En portada</span><Link className="hp-allr" href="/archivo">Ver el archivo →</Link></div>
           <div className="hp-three">
-            {FEATURED.map((f) => (
+            {featuredCards.map((f) => (
               <Link key={f.href} className="hp-fc" href={f.href}>
-                <figure style={{ margin: 0 }}><span className="hp-ph land" aria-hidden /></figure>
+                <figure style={{ margin: 0 }}>
+                  {f.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={f.imageUrl} alt={f.title} style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", filter: "grayscale(1)" }} />
+                  ) : (
+                    <span className="hp-ph land" aria-hidden />
+                  )}
+                </figure>
                 <div className="hp-fct"><span className="hp-dot" style={{ background: getPeriodColor(f.period) }} /><span className="hp-fcty">{f.type}</span></div>
                 <h3>{f.title}</h3>
                 <p>{f.desc}</p>
@@ -153,16 +202,44 @@ export default async function HomePage() {
         </section>
 
         <section className="hp-sect">
-          <div className="hp-sect-h"><span className="hp-sn">Colección</span><span className="hp-scount">· Las constituciones de Colombia</span><span className="hp-sc">Un país que se ha reescrito a sí mismo una y otra vez.</span></div>
-          <div className="hp-coll">
-            {COLLECTION.map((c) => (
-              <Link key={c.href + c.year} className="hp-cc" href={c.href}>
-                <figure style={{ margin: 0 }}><span className="hp-ph sq" aria-hidden /></figure>
-                <div className="ccy">{c.year}</div>
-                <div className="ccp"><span className="hp-dot" style={{ background: getPeriodColor(c.period) }} />{c.desc}</div>
-              </Link>
-            ))}
-          </div>
+          {home.collection ? (
+            <>
+              <div className="hp-sect-h">
+                <span className="hp-sn">Colección</span>
+                <span className="hp-scount">· {home.collection.title}</span>
+                {home.collection.subtitle && <span className="hp-sc">{home.collection.subtitle}</span>}
+              </div>
+              <div className="hp-coll">
+                {home.collection.cards.map((c) => (
+                  <Link key={c.id} className="hp-cc" href={c.href}>
+                    <figure style={{ margin: 0 }}>
+                      {c.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.imageUrl} alt={c.title} style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", filter: "grayscale(1)" }} />
+                      ) : (
+                        <span className="hp-ph sq" aria-hidden />
+                      )}
+                    </figure>
+                    <div className="ccy">{c.title}</div>
+                    <div className="ccp"><span className="hp-dot" style={{ background: getPeriodColor(c.periodCode ?? "TRANS") }} />{c.kicker}</div>
+                  </Link>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="hp-sect-h"><span className="hp-sn">Colección</span><span className="hp-scount">· Las constituciones de Colombia</span><span className="hp-sc">Un país que se ha reescrito a sí mismo una y otra vez.</span></div>
+              <div className="hp-coll">
+                {COLLECTION.map((c) => (
+                  <Link key={c.href + c.year} className="hp-cc" href={c.href}>
+                    <figure style={{ margin: 0 }}><span className="hp-ph sq" aria-hidden /></figure>
+                    <div className="ccy">{c.year}</div>
+                    <div className="ccp"><span className="hp-dot" style={{ background: getPeriodColor(c.period) }} />{c.desc}</div>
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
         </section>
 
         <section className="hp-sect">
@@ -182,9 +259,14 @@ export default async function HomePage() {
       <section className="hp-qband">
         <div className="inner">
           <div className="ql">La pregunta de la semana</div>
-          <h3>¿Por qué fracasó el federalismo radical?</h3>
-          <p className="qa">Porque la soberanía absoluta de los estados volvió ingobernable al país: sin un poder central capaz de imponer orden, los Estados Unidos de Colombia vivieron en guerra civil casi permanente.</p>
-          <Link className="qr" href="/preguntas/federalismo-radical">Ver la respuesta completa →</Link>
+          <h3>{home.questionOfWeek?.title ?? "¿Por qué fracasó el federalismo radical?"}</h3>
+          <p className="qa">
+            {home.questionOfWeek?.answer ??
+              "Porque la soberanía absoluta de los estados volvió ingobernable al país: sin un poder central capaz de imponer orden, los Estados Unidos de Colombia vivieron en guerra civil casi permanente."}
+          </p>
+          <Link className="qr" href={home.questionOfWeek?.href ?? "/preguntas/federalismo-radical"}>
+            Ver la respuesta completa →
+          </Link>
         </div>
       </section>
 

@@ -30,6 +30,7 @@ const NAV: NavGroup[] = [
     label: "Producción",
     items: [
       { href: "/admin/producciones", label: "Producciones" },
+      { href: "/admin/home", label: "Editor del home" },
       { href: "/admin/bibliography", label: "Bibliografía" },
     ],
   },
