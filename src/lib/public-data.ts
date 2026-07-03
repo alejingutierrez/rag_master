@@ -18,7 +18,7 @@ import {
 } from "@/lib/typology-schemas";
 import { normalizeSeo, deriveSeo, type DeliverableSeo } from "@/lib/seo";
 import type { DeliverableTaxonomy } from "@/lib/taxonomy";
-import { resolveAnchor, periodStartYear, type ContentAnchor } from "@/lib/content-anchor";
+import { resolveAnchor, periodStartYear, periodRank, type ContentAnchor } from "@/lib/content-anchor";
 import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
 
 /** WHERE base de todo lo publicable: pieza del Taller, completa y publicada. */
@@ -997,37 +997,161 @@ export interface PublicEntity {
   resumen: string | null;
 }
 
-function toPublicEntity(acc: EntityAccum): PublicEntity {
-  const periods = [...acc.periods];
+// ── Registro CANÓNICO de entidades (del corpus de preguntas) ─────────────────
+// Fuente de verdad: las entidades detectadas al generar las preguntas
+// (Question.entidadesPersonas/Lugares/Conceptos), agregadas y contadas — el
+// "conteo que ya existía". Personas/Lugares/Ideas salen de AQUÍ, no de las
+// piezas. Las piezas REFERENCIAN estas entidades (match por nombre/variante).
+
+interface CorpusEntity {
+  key: string; // `${type}:${slug}`
+  type: EntityType;
+  slug: string;
+  variants: Map<string, number>;
+  questionIds: Set<string>;
+  periods: Set<string>;
+  periodoOrden: number;
+  anio: number | null;
+  related: Map<string, number>; // otra clave → # preguntas compartidas
+}
+
+/** Umbral: una entidad entra al registro público con ≥ N menciones en el corpus. */
+const CORPUS_MIN_MENTIONS = 2;
+
+async function loadCorpusEntityIndex(): Promise<{
+  byKey: Map<string, CorpusEntity>;
+  variantSlugToKey: Map<string, string>;
+}> {
+  const questions = await prisma.question.findMany({
+    select: {
+      id: true,
+      entidadesPersonas: true,
+      entidadesLugares: true,
+      entidadesConceptos: true,
+      periodoCode: true,
+      yearPrincipal: true,
+    },
+  });
+
+  const byKey = new Map<string, CorpusEntity>();
+  const upsert = (type: EntityType, rawName: string): CorpusEntity | null => {
+    const name = rawName.trim();
+    if (!name) return null;
+    const slug = slugify(name);
+    if (!slug) return null;
+    const key = `${type}:${slug}`;
+    let e = byKey.get(key);
+    if (!e) {
+      e = { key, type, slug, variants: new Map(), questionIds: new Set(), periods: new Set(), periodoOrden: 99, anio: null, related: new Map() };
+      byKey.set(key, e);
+    }
+    e.variants.set(name, (e.variants.get(name) ?? 0) + 1);
+    return e;
+  };
+
+  for (const q of questions) {
+    const ents: CorpusEntity[] = [];
+    const seen = new Set<string>();
+    for (const [type, list] of [
+      ["persona", q.entidadesPersonas],
+      ["lugar", q.entidadesLugares],
+      ["idea", q.entidadesConceptos],
+    ] as const) {
+      for (const nm of list) {
+        const e = upsert(type, nm);
+        if (!e || seen.has(e.key)) continue;
+        seen.add(e.key);
+        e.questionIds.add(q.id);
+        if (q.periodoCode) e.periods.add(q.periodoCode);
+        const orden = periodRank(q.periodoCode);
+        if (orden < e.periodoOrden) e.periodoOrden = orden;
+        if (q.yearPrincipal != null && (e.anio == null || q.yearPrincipal < e.anio)) e.anio = q.yearPrincipal;
+        ents.push(e);
+      }
+    }
+    for (const a of ents) for (const b of ents) {
+      if (a.key !== b.key) a.related.set(b.key, (a.related.get(b.key) ?? 0) + 1);
+    }
+  }
+
+  const filtered = new Map<string, CorpusEntity>();
+  const variantSlugToKey = new Map<string, string>();
+  for (const e of byKey.values()) {
+    if (e.questionIds.size < CORPUS_MIN_MENTIONS) continue;
+    filtered.set(e.key, e);
+    for (const v of e.variants.keys()) {
+      const vs = slugify(v);
+      if (vs && !variantSlugToKey.has(vs)) variantSlugToKey.set(vs, e.key);
+    }
+  }
+  return { byKey: filtered, variantSlugToKey };
+}
+
+function bestVariant(variants: Map<string, number>): string {
+  let best = "";
+  let n = -1;
+  for (const [v, c] of variants) if (c > n) { best = v; n = c; }
+  return best;
+}
+
+/** Todas las grafías (slugs) de una entidad — para casarla con las piezas. */
+function entityVariantSlugs(e: CorpusEntity): Set<string> {
+  const s = new Set<string>([e.slug]);
+  for (const v of e.variants.keys()) {
+    const vs = slugify(v);
+    if (vs) s.add(vs);
+  }
+  return s;
+}
+
+/** slug de entidad → resumen de su ficha publicada (si existe). */
+function fichaMapFrom(pieces: AnchoredPiece[]): Map<string, string> {
+  const m = new Map<string, string>();
+  for (const p of pieces) {
+    if (p.kind === "entidad" && p.entidadSlug) m.set(p.entidadSlug, p.resumen);
+  }
+  return m;
+}
+
+function corpusToPublic(e: CorpusEntity, fichas: Map<string, string>): PublicEntity {
+  let hasFicha = false;
+  let resumen: string | null = null;
+  for (const vs of entityVariantSlugs(e)) {
+    if (fichas.has(vs)) {
+      hasFicha = true;
+      resumen = fichas.get(vs) || resumen;
+      break;
+    }
+  }
   return {
-    name: canonicalName(acc),
-    slug: acc.slug,
-    type: acc.type,
-    href: entityPath(acc.slug),
-    mentions: acc.pieceIds.size,
-    periods,
-    periodoOrden: acc.periodoOrden,
-    anio: acc.anio,
-    hasFicha: acc.hasFicha,
-    resumen: acc.resumen,
+    name: bestVariant(e.variants),
+    slug: e.slug,
+    type: e.type,
+    href: entityPath(e.slug),
+    mentions: e.questionIds.size,
+    periods: [...e.periods],
+    periodoOrden: e.periodoOrden,
+    anio: e.anio,
+    hasFicha,
+    resumen,
   };
 }
 
-/** Índice público de entidades de un tipo, ordenado cronológicamente (época→prominencia). */
+const entityByChrono = (a: PublicEntity, b: PublicEntity) =>
+  a.periodoOrden - b.periodoOrden ||
+  (a.anio ?? periodStartYear(a.periods[0] ?? null) ?? 9999) -
+    (b.anio ?? periodStartYear(b.periods[0] ?? null) ?? 9999) ||
+  b.mentions - a.mentions ||
+  a.name.localeCompare(b.name, "es");
+
+/** Índice público de entidades de un tipo, DESDE EL REGISTRO DEL CORPUS. */
 export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[]> {
   try {
-    const { byKey } = buildEntityIndex(await loadAnchoredPieces());
+    const [{ byKey }, pieces] = await Promise.all([loadCorpusEntityIndex(), loadAnchoredPieces()]);
+    const fichas = fichaMapFrom(pieces);
     const list: PublicEntity[] = [];
-    for (const acc of byKey.values()) {
-      if (acc.type !== type) continue;
-      list.push(toPublicEntity(acc));
-    }
-    list.sort(
-      (a, b) =>
-        a.periodoOrden - b.periodoOrden ||
-        b.mentions - a.mentions ||
-        a.name.localeCompare(b.name, "es"),
-    );
+    for (const e of byKey.values()) if (e.type === type) list.push(corpusToPublic(e, fichas));
+    list.sort(entityByChrono);
     return list;
   } catch (err) {
     console.error(`[public-data] getEntityUniverse(${type}) falló:`, err);
@@ -1035,12 +1159,12 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
   }
 }
 
-/** Conteos por tipo de entidad (para el hub /entidades y los índices). */
+/** Conteos por tipo (registro del corpus). */
 export async function getEntityCounts(): Promise<Record<EntityType, number>> {
   const empty: Record<EntityType, number> = { persona: 0, lugar: 0, idea: 0 };
   try {
-    const { byKey } = buildEntityIndex(await loadAnchoredPieces());
-    for (const acc of byKey.values()) empty[acc.type]++;
+    const { byKey } = await loadCorpusEntityIndex();
+    for (const e of byKey.values()) empty[e.type]++;
     return empty;
   } catch (err) {
     console.error("[public-data] getEntityCounts falló:", err);
@@ -1067,47 +1191,91 @@ export interface EntityNode extends PublicEntity {
 }
 
 /**
- * Nodo wiki de una entidad por slug. Funciona AUNQUE no exista ficha curada:
- * reúne las piezas donde aparece y las entidades con las que co-ocurre.
+ * Nodo wiki de una entidad por slug. Sale del REGISTRO DEL CORPUS; reúne las
+ * piezas publicadas que la referencian (match por variante) y las entidades con
+ * las que co-ocurre en el corpus. Fallback a piezas si la entidad aún no llegó
+ * al registro (para no romper enlaces existentes).
  */
 export async function getEntityNode(slug: string): Promise<EntityNode | null> {
   try {
-    const { byKey, piecesById } = buildEntityIndex(await loadAnchoredPieces());
-    // Resuelve el slug entre tipos: prioriza la que tenga ficha, luego más menciones.
-    let acc: EntityAccum | null = null;
-    for (const a of byKey.values()) {
-      if (a.slug !== slug) continue;
-      if (!acc || (a.hasFicha && !acc.hasFicha) || a.pieceIds.size > acc.pieceIds.size) acc = a;
-    }
-    if (!acc) return null;
+    const [{ byKey, variantSlugToKey }, pieces] = await Promise.all([
+      loadCorpusEntityIndex(),
+      loadAnchoredPieces(),
+    ]);
 
-    const pieces: EntityPieceRef[] = [...acc.pieceIds]
-      .map((id) => piecesById.get(id))
-      .filter((p): p is AnchoredPiece => !!p)
+    let e: CorpusEntity | null = null;
+    for (const x of byKey.values()) {
+      if (x.slug !== slug) continue;
+      if (!e || x.questionIds.size > e.questionIds.size) e = x;
+    }
+    if (!e) {
+      const k = variantSlugToKey.get(slug);
+      if (k) e = byKey.get(k) ?? null;
+    }
+    if (!e) return pieceEntityNode(slug, pieces);
+
+    const fichas = fichaMapFrom(pieces);
+    const varSlugs = entityVariantSlugs(e);
+
+    const pieceRefs: EntityPieceRef[] = pieces
+      .filter((p) => [...p.personas, ...p.lugares, ...p.ideas].some((n) => varSlugs.has(slugify(n))))
       .map((p) => ({ href: p.href, titulo: p.titulo, kind: p.kind, anio: p.anio }))
       .sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es"));
 
-    const related: EntityRelation[] = [...acc.related.entries()]
-      .map(([key, shared]) => {
-        const other = byKey.get(key);
-        if (!other) return null;
-        return {
-          name: canonicalName(other),
-          slug: other.slug,
-          type: other.type,
-          href: entityPath(other.slug),
-          shared,
-        } as EntityRelation;
+    const related: EntityRelation[] = [...e.related.entries()]
+      .map(([k, shared]) => {
+        const o = byKey.get(k);
+        if (!o) return null;
+        return { name: bestVariant(o.variants), slug: o.slug, type: o.type, href: entityPath(o.slug), shared } as EntityRelation;
       })
       .filter((x): x is EntityRelation => !!x)
       .sort((a, b) => b.shared - a.shared || a.name.localeCompare(b.name, "es"))
       .slice(0, 16);
 
-    return { ...toPublicEntity(acc), pieces, related };
+    return { ...corpusToPublic(e, fichas), pieces: pieceRefs, related };
   } catch (err) {
     console.error(`[public-data] getEntityNode(${slug}) falló:`, err);
     return null;
   }
+}
+
+/** Fallback: nodo de una entidad que aparece en piezas pero no está en el registro. */
+function pieceEntityNode(slug: string, pieces: AnchoredPiece[]): EntityNode | null {
+  const { byKey, piecesById } = buildEntityIndex(pieces);
+  let acc: EntityAccum | null = null;
+  for (const a of byKey.values()) {
+    if (a.slug !== slug) continue;
+    if (!acc || a.pieceIds.size > acc.pieceIds.size) acc = a;
+  }
+  if (!acc) return null;
+  const pieceRefs: EntityPieceRef[] = [...acc.pieceIds]
+    .map((id) => piecesById.get(id))
+    .filter((p): p is AnchoredPiece => !!p)
+    .map((p) => ({ href: p.href, titulo: p.titulo, kind: p.kind, anio: p.anio }))
+    .sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es"));
+  const related: EntityRelation[] = [...acc.related.entries()]
+    .map(([k, shared]) => {
+      const o = byKey.get(k);
+      if (!o) return null;
+      return { name: canonicalName(o), slug: o.slug, type: o.type, href: entityPath(o.slug), shared } as EntityRelation;
+    })
+    .filter((x): x is EntityRelation => !!x)
+    .sort((a, b) => b.shared - a.shared || a.name.localeCompare(b.name, "es"))
+    .slice(0, 16);
+  return {
+    name: canonicalName(acc),
+    slug: acc.slug,
+    type: acc.type,
+    href: entityPath(acc.slug),
+    mentions: acc.pieceIds.size,
+    periods: [...acc.periods],
+    periodoOrden: acc.periodoOrden,
+    anio: acc.anio,
+    hasFicha: acc.hasFicha,
+    resumen: acc.resumen,
+    pieces: pieceRefs,
+    related,
+  };
 }
 
 // ── Ensayos: superficie pública de lectura (todo lo discursivo) ──────────────
