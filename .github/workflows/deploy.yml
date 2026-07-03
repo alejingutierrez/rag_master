@@ -103,6 +103,7 @@ jobs:
                     \"BEDROCK_EXPANSION_MODEL_ID\": \"us.anthropic.claude-haiku-4-5-20251001-v1:0\",
                     \"BEDROCK_VALIDATOR_MODEL_ID\": \"us.anthropic.claude-haiku-4-5-20251001-v1:0\",
                     \"BEDROCK_RERANK_MODEL_ID\": \"cohere.rerank-v3-5:0\",
+                    \"BEDROCK_SEMAPHORE_LIMIT\": \"3\",
                     \"PGVECTOR_EF_SEARCH\": \"200\",
                     \"ENABLE_CITATION_VALIDATION\": \"false\",
                     \"NODE_ENV\": \"production\",
