@@ -35,6 +35,12 @@ COPY --from=deps /app/node_modules/@prisma ./node_modules/@prisma
 # pdf-parse needs its worker file (not traced automatically in standalone mode)
 COPY --from=deps /app/node_modules/pdf-parse ./node_modules/pdf-parse
 
+# sharp (redimensiona las referencias del generador de imágenes) + sus binarios
+# nativos (@img/*-linuxmusl): igual que pdf-parse, se copian explícitos para no
+# depender del tracing del standalone.
+COPY --from=deps /app/node_modules/sharp ./node_modules/sharp
+COPY --from=deps /app/node_modules/@img ./node_modules/@img
+
 # Migration script — runs on every container startup before the server starts.
 # Uses @prisma/client (already present) so no Prisma CLI needed.
 # All statements use IF NOT EXISTS → idempotent and safe to re-run.

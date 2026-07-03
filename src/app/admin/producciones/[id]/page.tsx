@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, use, useEffect, useRef, useState } from "react";
+import { Fragment, use, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PeriodTag, ghostBtn, linkBtn } from "@/components/editorial";
 import { Cita } from "@/components/editorial/cita";
@@ -65,7 +65,7 @@ interface StructuredLite {
 
 /** Espejo de ImageMeta (lib/atelier/image.ts) — lo que persiste metadata.image. */
 interface ImageMetaLite {
-  status?: "ok" | "sin_referencias" | "error";
+  status?: "generando" | "ok" | "sin_referencias" | "error";
   at?: string;
   modelo?: string;
   acento?: { color?: "rojo" | "amarillo" | "azul"; objetivo?: string; razon?: string };
@@ -180,6 +180,7 @@ export default function ProduccionDetailPage({
   const [imaging, setImaging] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const imagePollRef = useRef<NodeJS.Timeout | null>(null);
 
   async function togglePublish() {
     if (!data) return;
@@ -210,22 +211,42 @@ export default function ProduccionDetailPage({
     }
   }
 
+  /**
+   * El endpoint responde 202 de inmediato y el pipeline (referencias → gpt-image)
+   * corre en background: aquí solo se arranca y se hace polling de metadata.image
+   * hasta que deje de estar "generando" (o venza el plazo).
+   */
+  const startImagePolling = useCallback(() => {
+    if (imagePollRef.current) clearInterval(imagePollRef.current);
+    const deadline = Date.now() + 12 * 60 * 1000;
+    imagePollRef.current = setInterval(async () => {
+      const fresh = (await fetch(`/api/deliverables/${id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null)) as DeliverableDetail | null;
+      if (!fresh) return;
+      setData(fresh);
+      const st = (fresh.metadata as { image?: ImageMetaLite } | null)?.image?.status;
+      if (st !== "generando" || Date.now() > deadline) {
+        if (imagePollRef.current) clearInterval(imagePollRef.current);
+        imagePollRef.current = null;
+      }
+    }, 4000);
+  }, [id]);
+
   async function generateImage() {
     if (!data) return;
     setImaging(true);
     setImageError(null);
     try {
       const res = await fetch(`/api/deliverables/${id}/generate-image`, { method: "POST" });
-      if (res.ok) {
-        const { imageUrl } = (await res.json()) as { imageUrl?: string };
-        if (imageUrl) setData((d) => (d ? { ...d, imageUrl } : d));
-      } else {
+      if (!res.ok && res.status !== 202) {
         const err = (await res.json().catch(() => ({}))) as { error?: string };
         setImageError(err.error ?? `HTTP ${res.status}`);
       }
-      // Trae la metadata fresca (dirección de arte, referencias o el motivo del fallo).
+      // Refleja el estado "generando" de inmediato y arranca el polling.
       const fresh = await fetch(`/api/deliverables/${id}`).then((r) => (r.ok ? r.json() : null));
       if (fresh) setData(fresh as DeliverableDetail);
+      startImagePolling();
     } finally {
       setImaging(false);
     }
@@ -250,6 +271,10 @@ export default function ProduccionDetailPage({
           if (pollRef.current) clearInterval(pollRef.current);
           pollRef.current = null;
         }
+        // Si la portada quedó "generando" (p. ej. tras recargar la página),
+        // retoma el polling de metadata.image.
+        const imgSt = (d.metadata as { image?: ImageMetaLite } | null)?.image?.status;
+        if (imgSt === "generando" && !imagePollRef.current) startImagePolling();
       } catch (e) {
         if ((e as Error).name !== "AbortError" && mounted) {
           setError((e as Error).message);
@@ -264,8 +289,9 @@ export default function ProduccionDetailPage({
       mounted = false;
       ctrl.abort();
       if (pollRef.current) clearInterval(pollRef.current);
+      if (imagePollRef.current) clearInterval(imagePollRef.current);
     };
-  }, [id]);
+  }, [id, startImagePolling]);
 
   // El snippet en chunksUsed va recortado (~400 chars). Al abrir el modal,
   // pedimos el contenido íntegro al endpoint read-only; si falla, queda el snippet.
@@ -484,7 +510,10 @@ export default function ProduccionDetailPage({
           <PublishPanel
             data={data}
             publishing={publishing}
-            imaging={imaging}
+            imaging={
+              imaging ||
+              (data.metadata as { image?: ImageMetaLite } | null)?.image?.status === "generando"
+            }
             imageError={imageError}
             onToggle={togglePublish}
             onGenerateImage={generateImage}

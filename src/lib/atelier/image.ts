@@ -65,7 +65,7 @@ export interface ImageMetaReference {
 
 /** Se persiste en Deliverable.metadata.image — sin migración (metadata es JSONB). */
 export interface ImageMeta {
-  status: "ok" | "sin_referencias" | "error";
+  status: "generando" | "ok" | "sin_referencias" | "error";
   at: string;
   modelo?: string;
   acento?: {
@@ -85,7 +85,7 @@ export interface ImageMeta {
 }
 
 /** Merge no destructivo de metadata.image (preserva metadata.atelier y demás). */
-async function persistImageMeta(deliverableId: string, image: ImageMeta): Promise<void> {
+export async function persistImageMeta(deliverableId: string, image: ImageMeta): Promise<void> {
   const cur = await prisma.deliverable.findUnique({
     where: { id: deliverableId },
     select: { metadata: true },
