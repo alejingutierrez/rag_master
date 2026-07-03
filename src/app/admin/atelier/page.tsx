@@ -19,6 +19,7 @@ import {
 } from "@/components/editorial";
 import {
   ATELIER_FORMAT_LIST,
+  fichaKindForFormat,
   type AtelierFormatId,
   type LongitudId,
 } from "@/lib/atelier-formats";
@@ -243,49 +244,64 @@ function AtelierContent() {
 
       {phase === "idle" && (
         <section style={{ padding: "56px 56px 0", maxWidth: 1100 }}>
-          {/* Selector de formato */}
-          <div className="label" style={{ marginBottom: 14 }}>
-            Formato del entregable
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 14,
-              marginBottom: 44,
-            }}
-          >
-            {ATELIER_FORMAT_LIST.map((f) => {
-              const selected = f.id === formatId;
-              return (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setFormatId(f.id)}
-                  style={{
-                    appearance: "none",
-                    textAlign: "left",
-                    cursor: "pointer",
-                    background: selected ? "var(--bg-hover)" : "transparent",
-                    border: `1px solid ${selected ? "var(--accent)" : "var(--line)"}`,
-                    borderRadius: 8,
-                    padding: "16px 18px",
-                    transition: "border-color 140ms var(--ease-out-custom)",
-                  }}
-                >
-                  <div
-                    className="display"
-                    style={{ fontSize: 18, color: "var(--fg)", marginBottom: 6 }}
-                  >
-                    {f.name}
-                  </div>
-                  <div style={{ fontSize: 12.5, color: "var(--fg-muted)", lineHeight: 1.5 }}>
-                    {f.description}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          {/* Selector de formato: narrativos y fichas del archivo */}
+          {(
+            [
+              {
+                label: "Formatos narrativos",
+                items: ATELIER_FORMAT_LIST.filter((f) => !fichaKindForFormat(f.id)),
+              },
+              {
+                label: "Fichas del archivo — crean la página de su tipología con ficha completa",
+                items: ATELIER_FORMAT_LIST.filter((f) => fichaKindForFormat(f.id)),
+              },
+            ] as const
+          ).map((group) => (
+            <div key={group.label}>
+              <div className="label" style={{ marginBottom: 14 }}>
+                {group.label}
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: 14,
+                  marginBottom: 32,
+                }}
+              >
+                {group.items.map((f) => {
+                  const selected = f.id === formatId;
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setFormatId(f.id)}
+                      style={{
+                        appearance: "none",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        background: selected ? "var(--bg-hover)" : "transparent",
+                        border: `1px solid ${selected ? "var(--accent)" : "var(--line)"}`,
+                        borderRadius: 8,
+                        padding: "16px 18px",
+                        transition: "border-color 140ms var(--ease-out-custom)",
+                      }}
+                    >
+                      <div
+                        className="display"
+                        style={{ fontSize: 18, color: "var(--fg)", marginBottom: 6 }}
+                      >
+                        {f.name}
+                      </div>
+                      <div style={{ fontSize: 12.5, color: "var(--fg-muted)", lineHeight: 1.5 }}>
+                        {f.description}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
 
           <div
             style={{
@@ -316,7 +332,11 @@ function AtelierContent() {
           <textarea
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
-            placeholder='Ej: "Cuéntame la toma y retoma del Palacio de Justicia desde la mirada de las víctimas."'
+            placeholder={
+              fichaKindForFormat(formatId)
+                ? 'Ej: "El almirante José Prudencio Padilla" — nombra el sujeto de la ficha (y el ángulo, si quieres).'
+                : 'Ej: "Cuéntame la toma y retoma del Palacio de Justicia desde la mirada de las víctimas."'
+            }
             rows={2}
             style={{
               width: "100%",

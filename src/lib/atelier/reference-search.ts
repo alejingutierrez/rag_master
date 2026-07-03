@@ -1,0 +1,430 @@
+/**
+ * Buscador de REFERENCIAS VISUALES reales para el generador de imágenes.
+ *
+ * El realismo del estilo de la casa (plata B/N + tinta 35% + un acento) depende
+ * de anclar cada generación en material auténtico: fotos de prensa, pinturas de
+ * época, piezas de museo, arquitectura que sigue en pie. Este módulo busca ese
+ * material en internet en general, no solo en Wikimedia:
+ *
+ *   1. Un LLM genera una escalera de queries (es/en, de específico a amplio).
+ *   2. Fan-out a proveedores: Openverse (agrega Flickr/museos/archivos),
+ *      Wikimedia Commons, Met Museum — sin llave — y Google Images vía
+ *      serper.dev cuando `SERPER_API_KEY` está configurada.
+ *   3. Filtro técnico (tamaño mínimo, dedup) + PUNTUACIÓN DE RELEVANCIA por LLM
+ *      (los proveedores devuelven ruido; sin este paso el piso de calidad cae).
+ *   4. Piso duro: ≥5 referencias relevantes o no se genera imagen (decisión
+ *      editorial del proyecto). Con menos, mejor sin imagen que con una inventada.
+ *   5. Descarga + normalización (≤1568px, JPEG) listas para images/edits.
+ *
+ * Las referencias NUNCA se publican: son insumo del generador, como las fotos
+ * sobre la mesa de un ilustrador.
+ */
+import sharp from "sharp";
+import { callClaudeJson, SONNET_MODEL } from "./bedrock-json";
+import type { StructuredData } from "../typology-schemas";
+import { periodInfo } from "../design-tokens";
+
+export const MIN_RELEVANT_REFS = 5;
+const MAX_REFS_TO_ATTACH = 7;
+const MIN_SCORE = 6;
+const MIN_WIDTH = 600;
+const PROVIDER_TIMEOUT_MS = 15_000;
+const DOWNLOAD_TIMEOUT_MS = 25_000;
+const UA = "HistoriaColombiana/1.0 (buscador de referencias editoriales)";
+
+export interface ReferenceCandidate {
+  provider: string;
+  title: string;
+  url: string;
+  page?: string;
+  width: number;
+  height: number;
+  query: string;
+}
+
+export interface ScoredReference extends ReferenceCandidate {
+  score: number;
+}
+
+/** Referencia descargada, lista para adjuntar a images/edits. */
+export interface DownloadedReference {
+  buffer: Buffer;
+  name: string;
+  meta: {
+    provider: string;
+    title: string;
+    url: string;
+    page?: string;
+    score: number;
+  };
+}
+
+export interface ReferenceSearchResult {
+  ok: boolean;
+  refs: DownloadedReference[];
+  /** Candidatos únicos tras filtro técnico (para diagnóstico). */
+  considered: number;
+  /** Relevantes según el LLM (score ≥ umbral), antes de descargar. */
+  relevant: number;
+  queries: string[];
+}
+
+export interface ReferenceContext {
+  titulo: string;
+  resumen: string;
+  typology?: string;
+  periodoLabel?: string;
+  entidades?: string[];
+  lugares?: string[];
+}
+
+export function referenceContextFromStructured(s: StructuredData): ReferenceContext {
+  const periodoLabel = s.periodoCode ? (periodInfo(s.periodoCode)?.label ?? "") : "";
+  switch (s.typology) {
+    case "hecho":
+      return {
+        titulo: s.titulo,
+        resumen: s.resumen,
+        typology: "hecho",
+        periodoLabel,
+        entidades: s.protagonistas,
+        lugares: s.lugares,
+      };
+    case "epoca":
+      return {
+        titulo: s.titulo,
+        resumen: s.panorama || s.resumen,
+        typology: "época",
+        periodoLabel: s.rango ?? periodoLabel,
+        entidades: s.actores,
+      };
+    case "entidad":
+      return {
+        titulo: s.titulo,
+        resumen: s.semblanza || s.resumen,
+        typology: `entidad (${s.tipo})`,
+        periodoLabel,
+        entidades: s.relaciones,
+      };
+    case "pregunta":
+      return {
+        titulo: s.titulo,
+        resumen: s.tesis || s.resumen,
+        typology: "pregunta",
+        periodoLabel,
+        entidades: s.temasRelacionados,
+      };
+  }
+}
+
+// ── 1. Queries por LLM ───────────────────────────────────────────────
+
+const QUERY_SYSTEM = `Generas queries de BÚSQUEDA DE IMÁGENES para encontrar referencias visuales AUTÉNTICAS (fotos históricas, pinturas de época, piezas de museo, grabados, arquitectura real) sobre un tema de historia de Colombia / América Latina.
+
+Reglas:
+- De 4 a 6 queries, mezcla español e inglés.
+- Escalera: de lo más específico (nombres propios, lugar + año) a lo más amplio (la actividad, el tipo de objeto, el paisaje de época).
+- Piensa en QUÉ EXISTE fotografiado o pintado: si el tema es anterior a la fotografía, busca pinturas, grabados, piezas de museo y los LUGARES reales.
+- Nada de queries abstractas ("historia de Colombia"): siempre algo visualmente concreto.
+
+Devuelve JSON puro: {"queries":["...", "..."]}`;
+
+export async function generateReferenceQueries(ctx: ReferenceContext): Promise<string[]> {
+  const lines = [
+    `TEMA: ${ctx.titulo}`,
+    ctx.resumen ? `RESUMEN: ${ctx.resumen}` : "",
+    ctx.typology ? `TIPO DE PIEZA: ${ctx.typology}` : "",
+    ctx.periodoLabel ? `PERÍODO: ${ctx.periodoLabel}` : "",
+    ctx.entidades?.length ? `ENTIDADES: ${ctx.entidades.slice(0, 6).join(", ")}` : "",
+    ctx.lugares?.length ? `LUGARES: ${ctx.lugares.slice(0, 4).join(", ")}` : "",
+  ].filter(Boolean);
+  const raw = await callClaudeJson<{ queries?: unknown }>({
+    model: SONNET_MODEL,
+    system: QUERY_SYSTEM,
+    user: `${lines.join("\n")}\n\nJSON:`,
+    maxTokens: 600,
+  });
+  const queries = Array.isArray(raw.queries)
+    ? raw.queries.filter((q): q is string => typeof q === "string" && q.trim().length > 2).slice(0, 6)
+    : [];
+  if (queries.length === 0) queries.push(ctx.titulo);
+  return queries;
+}
+
+// ── 2. Proveedores ───────────────────────────────────────────────────
+
+async function jsonFetch(url: string, init: RequestInit = {}): Promise<unknown> {
+  const res = await fetch(url, {
+    ...init,
+    headers: { "User-Agent": UA, ...(init.headers ?? {}) },
+    signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+function asRecord(v: unknown): Record<string, unknown> {
+  return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+}
+
+async function searchOpenverse(q: string): Promise<ReferenceCandidate[]> {
+  const j = asRecord(
+    await jsonFetch(`https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&page_size=20`)
+  );
+  const results = Array.isArray(j.results) ? j.results : [];
+  return results.map((r) => {
+    const o = asRecord(r);
+    return {
+      provider: `openverse:${typeof o.source === "string" ? o.source : "web"}`,
+      title: typeof o.title === "string" ? o.title : "",
+      url: typeof o.url === "string" ? o.url : "",
+      page: typeof o.foreign_landing_url === "string" ? o.foreign_landing_url : undefined,
+      width: typeof o.width === "number" ? o.width : 0,
+      height: typeof o.height === "number" ? o.height : 0,
+      query: q,
+    };
+  });
+}
+
+async function searchWikimedia(q: string): Promise<ReferenceCandidate[]> {
+  const j = asRecord(
+    await jsonFetch(
+      `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=15&prop=imageinfo&iiprop=url|size|mime&format=json`
+    )
+  );
+  const pages = asRecord(asRecord(j.query).pages);
+  const out: ReferenceCandidate[] = [];
+  for (const p of Object.values(pages)) {
+    const page = asRecord(p);
+    const ii = asRecord(Array.isArray(page.imageinfo) ? page.imageinfo[0] : undefined);
+    const mime = typeof ii.mime === "string" ? ii.mime : "";
+    const url = typeof ii.url === "string" ? ii.url : "";
+    if (!url || !/jpe?g|png/i.test(mime)) continue;
+    out.push({
+      provider: "wikimedia",
+      title: String(page.title ?? "").replace(/^File:/, ""),
+      url,
+      page: typeof ii.descriptionurl === "string" ? ii.descriptionurl : undefined,
+      width: typeof ii.width === "number" ? ii.width : 0,
+      height: typeof ii.height === "number" ? ii.height : 0,
+      query: q,
+    });
+  }
+  return out;
+}
+
+async function searchMetMuseum(q: string): Promise<ReferenceCandidate[]> {
+  const s = asRecord(
+    await jsonFetch(
+      `https://collectionapi.metmuseum.org/public/collection/v1/search?q=${encodeURIComponent(q)}&hasImages=true`
+    )
+  );
+  const ids = (Array.isArray(s.objectIDs) ? s.objectIDs : []).slice(0, 5);
+  const out: ReferenceCandidate[] = [];
+  for (const id of ids) {
+    try {
+      const o = asRecord(
+        await jsonFetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`)
+      );
+      if (typeof o.primaryImage === "string" && o.primaryImage) {
+        out.push({
+          provider: "metmuseum",
+          title: typeof o.title === "string" ? o.title : "",
+          url: o.primaryImage,
+          page: typeof o.objectURL === "string" ? o.objectURL : undefined,
+          width: 1200,
+          height: 1200,
+          query: q,
+        });
+      }
+    } catch {
+      // pieza sin acceso: se ignora
+    }
+  }
+  return out;
+}
+
+/** Google Images vía serper.dev — la capa "internet en general". Requiere llave. */
+async function searchSerper(q: string): Promise<ReferenceCandidate[]> {
+  const key = process.env.SERPER_API_KEY;
+  if (!key) return [];
+  const j = asRecord(
+    await jsonFetch("https://google.serper.dev/images", {
+      method: "POST",
+      headers: { "X-API-KEY": key, "Content-Type": "application/json" },
+      body: JSON.stringify({ q, num: 20 }),
+    })
+  );
+  const images = Array.isArray(j.images) ? j.images : [];
+  return images.map((r) => {
+    const o = asRecord(r);
+    return {
+      provider: "google-images",
+      title: typeof o.title === "string" ? o.title : "",
+      url: typeof o.imageUrl === "string" ? o.imageUrl : "",
+      page: typeof o.link === "string" ? o.link : undefined,
+      width: typeof o.imageWidth === "number" ? o.imageWidth : 0,
+      height: typeof o.imageHeight === "number" ? o.imageHeight : 0,
+      query: q,
+    };
+  });
+}
+
+const PROVIDERS = [searchOpenverse, searchWikimedia, searchMetMuseum, searchSerper];
+
+function dedupeCandidates(all: ReferenceCandidate[]): ReferenceCandidate[] {
+  const seen = new Set<string>();
+  const out: ReferenceCandidate[] = [];
+  for (const c of all) {
+    if (!c.url || c.width < MIN_WIDTH) continue;
+    const key = c.url.split("/").pop()?.split("?")[0]?.toLowerCase() ?? c.url;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(c);
+  }
+  return out;
+}
+
+export async function searchAllProviders(queries: string[]): Promise<ReferenceCandidate[]> {
+  const all: ReferenceCandidate[] = [];
+  for (const q of queries) {
+    const settled = await Promise.allSettled(PROVIDERS.map((p) => p(q)));
+    for (const s of settled) {
+      if (s.status === "fulfilled") all.push(...s.value);
+    }
+  }
+  return dedupeCandidates(all);
+}
+
+// ── 3. Puntuación de relevancia por LLM ──────────────────────────────
+
+const SCORE_SYSTEM = `Puntúas candidatos a REFERENCIA VISUAL para ilustrar una pieza de historia de Colombia. Solo ves título, fuente y la query que lo encontró.
+
+Puntúa 0–10 cada candidato según su utilidad como ANCLA DOCUMENTAL para un ilustrador:
+- 9–10: material de época del tema exacto (foto de prensa, pintura, pieza de museo, el lugar real).
+- 7–8: del tema o su contexto directo (el lugar hoy, la actividad exacta, vestuario/objetos del período).
+- 5–6: útil solo como atmósfera general (paisaje o arquitectura de la región/época, actividad análoga en otra geografía).
+- 0–4: ruido — logos, mapas genéricos, portadas de libros, páginas de texto, temas ajenos, arte moderno sin relación.
+
+Sé escéptico: un título ambiguo sin señales del tema puntúa bajo. Devuelve JSON puro: {"scores":[{"i":0,"score":7},...]} — un item por candidato, mismo orden.`;
+
+export async function scoreCandidates(
+  candidates: ReferenceCandidate[],
+  ctx: ReferenceContext
+): Promise<ScoredReference[]> {
+  if (candidates.length === 0) return [];
+  const list = candidates
+    .map((c, i) => `${i}. [${c.provider}] "${c.title || "(sin título)"}" (query: ${c.query})`)
+    .join("\n");
+  const user = `PIEZA: ${ctx.titulo} — ${ctx.resumen}\n${ctx.periodoLabel ? `PERÍODO: ${ctx.periodoLabel}\n` : ""}\nCANDIDATOS:\n${list}\n\nJSON:`;
+  const raw = await callClaudeJson<{ scores?: unknown }>({
+    model: SONNET_MODEL,
+    system: SCORE_SYSTEM,
+    user,
+    maxTokens: 3000,
+  });
+  const scores = new Map<number, number>();
+  if (Array.isArray(raw.scores)) {
+    for (const s of raw.scores) {
+      const o = asRecord(s);
+      const i = typeof o.i === "number" ? o.i : -1;
+      const score = typeof o.score === "number" ? o.score : 0;
+      if (i >= 0 && i < candidates.length) scores.set(i, score);
+    }
+  }
+  return candidates
+    .map((c, i) => ({ ...c, score: scores.get(i) ?? 0 }))
+    .sort((a, b) => b.score - a.score);
+}
+
+// ── 4. Descarga + normalización ──────────────────────────────────────
+
+async function downloadOne(ref: ScoredReference, index: number): Promise<DownloadedReference | null> {
+  try {
+    const res = await fetch(ref.url, {
+      headers: { "User-Agent": UA },
+      signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS),
+    });
+    if (!res.ok) return null;
+    const raw = Buffer.from(await res.arrayBuffer());
+    if (raw.length < 10_000) return null; // miniatura o placeholder
+    const buffer = await sharp(raw)
+      .resize(1568, 1568, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 88 })
+      .toBuffer();
+    return {
+      buffer,
+      name: `ref-${index + 1}.jpg`,
+      meta: { provider: ref.provider, title: ref.title, url: ref.url, page: ref.page, score: ref.score },
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function downloadReferences(scored: ScoredReference[], max: number): Promise<DownloadedReference[]> {
+  const out: DownloadedReference[] = [];
+  // Descarga secuencial con exceso de candidatos: si una URL falla, entra la siguiente.
+  for (const ref of scored) {
+    if (out.length >= max) break;
+    const dl = await downloadOne(ref, out.length);
+    if (dl) out.push(dl);
+  }
+  return out;
+}
+
+// ── 5. Orquestación ──────────────────────────────────────────────────
+
+const BROADEN_SYSTEM = `Las queries anteriores no encontraron suficientes referencias visuales. Genera 3 queries MÁS AMPLIAS para el mismo tema: la actividad genérica, el tipo de lugar, el período en la región. Español y/o inglés. JSON puro: {"queries":["..."]}`;
+
+export async function searchReferences(ctx: ReferenceContext): Promise<ReferenceSearchResult> {
+  const queries = await generateReferenceQueries(ctx);
+
+  let candidates = await searchAllProviders(queries);
+  let scored = await scoreCandidates(candidates, ctx);
+  let relevant = scored.filter((s) => s.score >= MIN_SCORE);
+
+  // Segunda pasada con queries más amplias si no se llegó al piso.
+  if (relevant.length < MIN_RELEVANT_REFS) {
+    try {
+      const raw = await callClaudeJson<{ queries?: unknown }>({
+        model: SONNET_MODEL,
+        system: BROADEN_SYSTEM,
+        user: `TEMA: ${ctx.titulo} — ${ctx.resumen}\nQUERIES YA USADAS: ${queries.join(" · ")}\n\nJSON:`,
+        maxTokens: 400,
+      });
+      const broader = Array.isArray(raw.queries)
+        ? raw.queries.filter((q): q is string => typeof q === "string" && q.trim().length > 2).slice(0, 3)
+        : [];
+      if (broader.length) {
+        queries.push(...broader);
+        const extra = await searchAllProviders(broader);
+        const known = new Set(candidates.map((c) => c.url));
+        const fresh = extra.filter((c) => !known.has(c.url));
+        if (fresh.length) {
+          const freshScored = await scoreCandidates(fresh, ctx);
+          scored = [...scored, ...freshScored].sort((a, b) => b.score - a.score);
+          candidates = [...candidates, ...fresh];
+          relevant = scored.filter((s) => s.score >= MIN_SCORE);
+        }
+      }
+    } catch (e) {
+      console.warn(`[refs] ampliación de queries falló: ${(e as Error).message}`);
+    }
+  }
+
+  // Piso editorial: sin ≥5 relevantes no se genera imagen.
+  if (relevant.length < MIN_RELEVANT_REFS) {
+    return { ok: false, refs: [], considered: candidates.length, relevant: relevant.length, queries };
+  }
+
+  const refs = await downloadReferences(relevant, MAX_REFS_TO_ATTACH);
+  // Las descargas pueden fallar (hotlink muerto): el piso se evalúa sobre lo descargado.
+  return {
+    ok: refs.length >= MIN_RELEVANT_REFS,
+    refs,
+    considered: candidates.length,
+    relevant: relevant.length,
+    queries,
+  };
+}

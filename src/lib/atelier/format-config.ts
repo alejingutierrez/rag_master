@@ -133,6 +133,39 @@ export const FORMAT_CONFIG: Record<AtelierFormatId, FormatConfig> = {
     perEjeTopK: 60,
     claimsMax: 14,
   },
+
+  // ── Fichas (creación por tipología) ──
+  // La prosa es más corta que un reportaje, pero la FICHA exige cobertura de
+  // campos (causas, consecuencias, hitos, actores, relaciones): la indagación
+  // debe morder todos esos ángulos, así que los ejes no bajan del suelo común.
+
+  // Hecho: el acontecimiento y sus dos cadenas (hacia atrás: causas; hacia
+  // adelante: consecuencias), más lugar y protagonistas.
+  "ficha-hecho": { ...BASE },
+
+  // Época: la más ancha de las fichas — hitos a lo largo de décadas, actores y
+  // transformaciones piden cruzar más documentos y más ángulos.
+  "ficha-epoca": {
+    ...BASE,
+    poolTarget: 220,
+    perEjeCandidates: 180,
+    maxEjes: 13,
+    minEjes: 10,
+    maxNucleos: 11,
+  },
+
+  // Entidad: trayectoria completa (hitos), red de relaciones y semblanza.
+  "ficha-entidad": {
+    ...BASE,
+    maxEjes: 12,
+    minEjes: 9,
+  },
+
+  // Pregunta: tesis y debate — menos volumen, más contraste de posiciones.
+  "ficha-pregunta": {
+    ...BASE,
+    hipotesisCandidatas: 5,
+  },
 };
 
 export function getFormatConfig(id: AtelierFormatId): FormatConfig {

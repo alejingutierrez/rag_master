@@ -153,7 +153,7 @@ export default async function HomePage() {
               <img
                 src={home.hero.imageUrl}
                 alt={home.hero.title}
-                style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", filter: "grayscale(1)" }}
+                style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover" }}
               />
             ) : (
               <>
@@ -176,7 +176,7 @@ export default async function HomePage() {
                 <figure style={{ margin: 0 }}>
                   {f.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={f.imageUrl} alt={f.title} style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", filter: "grayscale(1)" }} />
+                    <img src={f.imageUrl} alt={f.title} style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover" }} />
                   ) : (
                     <span className="hp-ph land" aria-hidden />
                   )}
@@ -215,7 +215,7 @@ export default async function HomePage() {
                     <figure style={{ margin: 0 }}>
                       {c.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={c.imageUrl} alt={c.title} style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", filter: "grayscale(1)" }} />
+                        <img src={c.imageUrl} alt={c.title} style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover" }} />
                       ) : (
                         <span className="hp-ph sq" aria-hidden />
                       )}

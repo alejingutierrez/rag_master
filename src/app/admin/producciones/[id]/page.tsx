@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, use, useEffect, useRef, useState } from "react";
+import { Fragment, use, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PeriodTag, ghostBtn, linkBtn } from "@/components/editorial";
 import { Cita } from "@/components/editorial/cita";
@@ -62,6 +62,36 @@ interface StructuredLite {
   titulo?: string;
   tipo?: string;
 }
+
+/** Espejo de ImageMeta (lib/atelier/image.ts) — lo que persiste metadata.image. */
+interface ImageMetaLite {
+  status?: "generando" | "ok" | "sin_referencias" | "error";
+  at?: string;
+  modelo?: string;
+  acento?: { color?: "rojo" | "amarillo" | "azul"; objetivo?: string; razon?: string };
+  encuadre?: string;
+  referencias?: { titulo?: string; url?: string; pagina?: string; fuente?: string; score?: number }[];
+  relevantes?: number;
+  candidatos?: number;
+  intentos?: number;
+  error?: string;
+}
+
+const ACCENT_HEX: Record<string, string> = {
+  rojo: "#8c1d18",
+  amarillo: "#a87b00",
+  azul: "#1f4e79",
+};
+
+const ENCUADRE_LABELS: Record<string, string> = {
+  "plano-general": "Plano general",
+  "plano-medio": "Plano medio",
+  detalle: "Detalle",
+  contrapicado: "Contrapicado",
+  cenital: "Cenital",
+  interior: "Interior",
+  retrato: "Retrato",
+};
 
 const TYPOLOGY_SEG: Record<string, string> = {
   hecho: "hechos",
@@ -148,7 +178,9 @@ export default function ProduccionDetailPage({
   const [sourceLoading, setSourceLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [imaging, setImaging] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const imagePollRef = useRef<NodeJS.Timeout | null>(null);
 
   async function togglePublish() {
     if (!data) return;
@@ -179,15 +211,42 @@ export default function ProduccionDetailPage({
     }
   }
 
+  /**
+   * El endpoint responde 202 de inmediato y el pipeline (referencias → gpt-image)
+   * corre en background: aquí solo se arranca y se hace polling de metadata.image
+   * hasta que deje de estar "generando" (o venza el plazo).
+   */
+  const startImagePolling = useCallback(() => {
+    if (imagePollRef.current) clearInterval(imagePollRef.current);
+    const deadline = Date.now() + 12 * 60 * 1000;
+    imagePollRef.current = setInterval(async () => {
+      const fresh = (await fetch(`/api/deliverables/${id}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null)) as DeliverableDetail | null;
+      if (!fresh) return;
+      setData(fresh);
+      const st = (fresh.metadata as { image?: ImageMetaLite } | null)?.image?.status;
+      if (st !== "generando" || Date.now() > deadline) {
+        if (imagePollRef.current) clearInterval(imagePollRef.current);
+        imagePollRef.current = null;
+      }
+    }, 4000);
+  }, [id]);
+
   async function generateImage() {
     if (!data) return;
     setImaging(true);
+    setImageError(null);
     try {
       const res = await fetch(`/api/deliverables/${id}/generate-image`, { method: "POST" });
-      if (res.ok) {
-        const { imageUrl } = (await res.json()) as { imageUrl?: string };
-        if (imageUrl) setData((d) => (d ? { ...d, imageUrl } : d));
+      if (!res.ok && res.status !== 202) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        setImageError(err.error ?? `HTTP ${res.status}`);
       }
+      // Refleja el estado "generando" de inmediato y arranca el polling.
+      const fresh = await fetch(`/api/deliverables/${id}`).then((r) => (r.ok ? r.json() : null));
+      if (fresh) setData(fresh as DeliverableDetail);
+      startImagePolling();
     } finally {
       setImaging(false);
     }
@@ -212,6 +271,10 @@ export default function ProduccionDetailPage({
           if (pollRef.current) clearInterval(pollRef.current);
           pollRef.current = null;
         }
+        // Si la portada quedó "generando" (p. ej. tras recargar la página),
+        // retoma el polling de metadata.image.
+        const imgSt = (d.metadata as { image?: ImageMetaLite } | null)?.image?.status;
+        if (imgSt === "generando" && !imagePollRef.current) startImagePolling();
       } catch (e) {
         if ((e as Error).name !== "AbortError" && mounted) {
           setError((e as Error).message);
@@ -226,8 +289,9 @@ export default function ProduccionDetailPage({
       mounted = false;
       ctrl.abort();
       if (pollRef.current) clearInterval(pollRef.current);
+      if (imagePollRef.current) clearInterval(imagePollRef.current);
     };
-  }, [id]);
+  }, [id, startImagePolling]);
 
   // El snippet en chunksUsed va recortado (~400 chars). Al abrir el modal,
   // pedimos el contenido íntegro al endpoint read-only; si falla, queda el snippet.
@@ -446,7 +510,11 @@ export default function ProduccionDetailPage({
           <PublishPanel
             data={data}
             publishing={publishing}
-            imaging={imaging}
+            imaging={
+              imaging ||
+              (data.metadata as { image?: ImageMetaLite } | null)?.image?.status === "generando"
+            }
+            imageError={imageError}
             onToggle={togglePublish}
             onGenerateImage={generateImage}
           />
@@ -572,12 +640,14 @@ function PublishPanel({
   data,
   publishing,
   imaging,
+  imageError,
   onToggle,
   onGenerateImage,
 }: {
   data: DeliverableDetail;
   publishing: boolean;
   imaging: boolean;
+  imageError: string | null;
   onToggle: () => void;
   onGenerateImage: () => void;
 }) {
@@ -588,6 +658,7 @@ function PublishPanel({
   const pubDate = data.publishedAt
     ? new Date(data.publishedAt).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })
     : null;
+  const imageMeta = (data.metadata as { image?: ImageMetaLite } | null)?.image;
 
   return (
     <div
@@ -626,19 +697,45 @@ function PublishPanel({
 
       {data.imageUrl && (
         <div style={{ marginBottom: 14 }}>
+          {/* La portada lleva UN acento de color con significado: nunca filtrarla a gris. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={data.imageUrl}
-            alt=""
+            alt={imageMeta?.acento?.objetivo ? `Portada — acento en ${imageMeta.acento.objetivo}` : "Portada"}
             style={{
               width: "100%",
-              aspectRatio: s?.typology === "entidad" ? "9 / 16" : "16 / 9",
+              aspectRatio: s?.typology === "entidad" && s?.tipo === "Persona" ? "9 / 16" : "16 / 9",
               objectFit: "cover",
-              filter: "grayscale(1)",
               border: "1px solid var(--line)",
-              maxHeight: 220,
+              maxHeight: 260,
             }}
           />
+        </div>
+      )}
+
+      {imageMeta && <ImageDirectionPanel meta={imageMeta} />}
+
+      {(imageError || imageMeta?.status === "sin_referencias" || imageMeta?.status === "error") && (
+        <div
+          style={{
+            border: "1px solid var(--line-strong)",
+            borderLeft: "3px solid var(--danger)",
+            padding: "10px 12px",
+            marginBottom: 14,
+            fontSize: 12,
+            color: "var(--fg-muted)",
+            lineHeight: 1.5,
+          }}
+        >
+          {imageMeta?.status === "sin_referencias" && !imageError ? (
+            <>
+              Sin imagen: el buscador halló {imageMeta.relevantes ?? 0} referencias relevantes de las 5
+              mínimas ({imageMeta.candidatos ?? 0} candidatas). Reintenta, o considera afinar el título de la
+              ficha.
+            </>
+          ) : (
+            (imageError ?? imageMeta?.error ?? "La generación falló.")
+          )}
         </div>
       )}
 
@@ -669,7 +766,11 @@ function PublishPanel({
           disabled={imaging}
           style={{ ...ghostBtn, cursor: imaging ? "wait" : "pointer" }}
         >
-          {imaging ? "Generando imagen…" : data.imageUrl ? "Regenerar imagen" : "Generar imagen"}
+          {imaging
+            ? "Buscando referencias y generando…"
+            : data.imageUrl
+              ? "Regenerar imagen"
+              : "Generar imagen"}
         </button>
 
         {published && (
@@ -689,6 +790,99 @@ function PublishPanel({
           Publicado {pubDate}
           {data.publishedBy ? ` · ${data.publishedBy}` : ""}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** Dirección de arte de la portada: acento, encuadre y las referencias reales usadas. */
+function ImageDirectionPanel({ meta }: { meta: ImageMetaLite }) {
+  const [showRefs, setShowRefs] = useState(false);
+  const color = meta.acento?.color;
+  const refs = meta.referencias ?? [];
+  if (meta.status !== "ok" && refs.length === 0 && !meta.acento) return null;
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        {color && (
+          <span
+            className="mono"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 10,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              padding: "3px 8px",
+              border: "1px solid var(--line-strong)",
+              borderRadius: 4,
+              color: "var(--fg-muted)",
+            }}
+            title={meta.acento?.razon}
+          >
+            <span
+              style={{
+                width: 9,
+                height: 9,
+                borderRadius: "50%",
+                background: ACCENT_HEX[color] ?? "var(--fg-dim)",
+              }}
+            />
+            {meta.acento?.objetivo ?? color}
+          </span>
+        )}
+        {meta.encuadre && <MiniTag>{ENCUADRE_LABELS[meta.encuadre] ?? meta.encuadre}</MiniTag>}
+        {refs.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowRefs((v) => !v)}
+            className="mono"
+            style={{
+              appearance: "none",
+              background: "transparent",
+              cursor: "pointer",
+              fontSize: 10,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              padding: "3px 8px",
+              border: "1px solid var(--line-strong)",
+              borderRadius: 4,
+              color: "var(--fg-muted)",
+            }}
+          >
+            {refs.length} referencias {showRefs ? "▴" : "▾"}
+          </button>
+        )}
+      </div>
+
+      {showRefs && refs.length > 0 && (
+        <ul style={{ listStyle: "none", margin: "10px 0 0", padding: 0 }}>
+          {refs.map((r, i) => (
+            <li
+              key={i}
+              style={{
+                padding: "7px 0",
+                borderTop: "1px solid var(--line)",
+                fontSize: 11.5,
+                lineHeight: 1.4,
+              }}
+            >
+              <a
+                href={r.pagina ?? r.url}
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: "var(--fg)", textDecoration: "none" }}
+              >
+                {r.titulo || r.url || "referencia"} ↗
+              </a>
+              <span className="mono" style={{ fontSize: 9.5, color: "var(--fg-faint)", marginLeft: 6 }}>
+                {r.fuente}
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
