@@ -8,6 +8,7 @@ import {
   type StructuredData,
   type TypologyKind,
 } from "@/lib/typology-schemas";
+import { normalizeSeo } from "@/lib/seo";
 
 export const runtime = "nodejs";
 
@@ -96,7 +97,7 @@ export async function PATCH(
 
     const existing = await prisma.deliverable.findUnique({
       where: { id },
-      select: { id: true, structuredData: true, publishedAt: true, source: true },
+      select: { id: true, structuredData: true, publishedAt: true, source: true, metadata: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Entregable no encontrado" }, { status: 404 });
@@ -125,6 +126,23 @@ export async function PATCH(
       data.structuredData = structured as unknown as object;
     }
 
+    // 2.5) Edición del SEO (metaTitle/metaDescription/keywords) → metadata.seo.
+    // Merge no destructivo: preserva atelier/image/sourceRef.
+    if (body.seo !== undefined) {
+      const nextSeo = normalizeSeo(body.seo);
+      if (body.seo !== null && !nextSeo) {
+        return NextResponse.json({ error: "seo inválido" }, { status: 400 });
+      }
+      const meta = (existing.metadata as Record<string, unknown> | null) ?? {};
+      if (nextSeo) {
+        data.metadata = { ...meta, seo: nextSeo } as unknown as object;
+      } else {
+        const rest = { ...meta };
+        delete rest.seo;
+        data.metadata = rest as unknown as object;
+      }
+    }
+
     // 3) Publicar / despublicar.
     if (typeof body.published === "boolean") {
       if (body.published) {
@@ -151,6 +169,7 @@ export async function PATCH(
         publishedAt: true,
         publishedBy: true,
         structuredData: true,
+        metadata: true,
       },
     });
 

@@ -187,7 +187,11 @@ export async function POST(req: NextRequest) {
           status: "COMPLETE",
           answer: result.answer,
           chunksUsed: result.chunksUsed as unknown as object,
-          metadata: { atelier: finalMeta, ...(sourceRef ? { sourceRef } : {}) } as unknown as object,
+          metadata: {
+            atelier: finalMeta,
+            ...(result.seo ? { seo: result.seo } : {}),
+            ...(sourceRef ? { sourceRef } : {}),
+          } as unknown as object,
           // Ficha estructurada por tipología (o se deja null si no se pudo extraer).
           ...(result.structuredData
             ? { structuredData: result.structuredData as unknown as object }

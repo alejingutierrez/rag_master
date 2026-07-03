@@ -15,6 +15,8 @@ import {
   type StructuredData,
   type TypologyKind,
 } from "@/lib/typology-schemas";
+import { normalizeSeo, deriveSeo, type DeliverableSeo } from "@/lib/seo";
+import type { DeliverableTaxonomy } from "@/lib/taxonomy";
 
 /** WHERE base de todo lo publicable: pieza del Taller, completa y publicada. */
 const PUBLISHED_WHERE = {
@@ -55,6 +57,9 @@ export interface PublicEssayDetail {
   wordCount: number;
   sources: EssaySource[];
   imageUrl: string | null;
+  seo: DeliverableSeo;
+  publishedAt: string | null;
+  updatedAt: string | null;
 }
 
 /** Recorta a un título legible en borde de palabra. */
@@ -70,6 +75,27 @@ function docLabel(c: ChunkUsage): string {
   if (c.documentFilename) return c.documentFilename.replace(/\.pdf$/i, "");
   if (c.documentId) return c.documentId.slice(0, 8);
   return "Fuente";
+}
+
+/**
+ * SEO de una pieza: usa `metadata.seo` (lo escribe El Taller) si es válido; si no,
+ * lo deriva de forma determinista del título/resumen/answer + la taxonomía en
+ * `metadata.atelier.taxonomy`. Así las piezas publicadas antes de esta feature
+ * también quedan full-SEO, sin necesidad de escribir en prod.
+ */
+function getSeo(row: {
+  metadata: unknown;
+  titulo: string;
+  resumen?: string | null;
+  answer?: string | null;
+}): DeliverableSeo {
+  const meta = (row.metadata ?? null) as Record<string, unknown> | null;
+  const stored = normalizeSeo(meta?.seo);
+  if (stored) return stored;
+  const taxonomy = (meta?.atelier as Record<string, unknown> | undefined)?.taxonomy as
+    | DeliverableTaxonomy
+    | undefined;
+  return deriveSeo({ titulo: row.titulo, resumen: row.resumen, answer: row.answer, taxonomy });
 }
 
 /**
@@ -123,9 +149,11 @@ export async function getEssay(id: string): Promise<PublicEssayDetail | null> {
         status: true,
         source: true,
         publishedAt: true,
+        updatedAt: true,
         imageUrl: true,
         createdAt: true,
         chunksUsed: true,
+        metadata: true,
         userQuestion: true,
         question: {
           select: { pregunta: true, periodoCode: true, categoriaNombre: true },
@@ -145,13 +173,15 @@ export async function getEssay(id: string): Promise<PublicEssayDetail | null> {
     }));
 
     const period = d.question?.periodoCode ?? null;
+    const title = (d.question?.pregunta ?? d.userQuestion ?? "Producción").trim();
+    const categoria = d.question?.categoriaNombre ?? null;
     return {
       id: d.id,
-      title: (d.question?.pregunta ?? d.userQuestion ?? "Producción").trim(),
+      title,
       formatName: getAtelierFormat(d.templateId)?.name ?? d.templateId,
       periodCode: period,
       yearRange: period ? (PERIODS[period as keyof typeof PERIODS]?.yearRange ?? null) : null,
-      categoria: d.question?.categoriaNombre ?? null,
+      categoria,
       answer: d.answer,
       dateLabel: d.createdAt.toLocaleDateString("es-CO", {
         day: "2-digit",
@@ -161,6 +191,9 @@ export async function getEssay(id: string): Promise<PublicEssayDetail | null> {
       wordCount: d.answer.trim().split(/\s+/).filter(Boolean).length,
       sources,
       imageUrl: d.imageUrl ?? null,
+      seo: getSeo({ metadata: d.metadata, titulo: title, resumen: categoria, answer: d.answer }),
+      publishedAt: d.publishedAt ? d.publishedAt.toISOString() : null,
+      updatedAt: d.updatedAt ? d.updatedAt.toISOString() : null,
     };
   } catch (err) {
     console.error("[public-data] getEssay falló:", err);
@@ -247,6 +280,9 @@ export interface TypologyDetail {
   yearRange: string | null;
   sources: EssaySource[];
   imageUrl: string | null;
+  seo: DeliverableSeo;
+  publishedAt: string | null;
+  updatedAt: string | null;
 }
 
 /** Detalle publicado de una ficha por tipología + slug. */
@@ -269,9 +305,12 @@ export async function getTypologyDetail(
         templateId: true,
         answer: true,
         createdAt: true,
+        publishedAt: true,
+        updatedAt: true,
         chunksUsed: true,
         imageUrl: true,
         structuredData: true,
+        metadata: true,
       },
     });
     if (!d) return null;
@@ -298,6 +337,14 @@ export async function getTypologyDetail(
       yearRange: period ? (PERIODS[period as keyof typeof PERIODS]?.yearRange ?? null) : null,
       sources,
       imageUrl: d.imageUrl ?? null,
+      seo: getSeo({
+        metadata: d.metadata,
+        titulo: structured.titulo,
+        resumen: structured.resumen,
+        answer: d.answer,
+      }),
+      publishedAt: d.publishedAt ? d.publishedAt.toISOString() : null,
+      updatedAt: d.updatedAt ? d.updatedAt.toISOString() : null,
     };
   } catch (err) {
     console.error(`[public-data] getTypologyDetail(${typology}/${slug}) falló:`, err);
@@ -476,5 +523,36 @@ export async function getTypologyCounts(): Promise<Record<TypologyKind, number>>
   } catch (err) {
     console.error("[public-data] getTypologyCounts falló:", err);
     return empty;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sitemap: una entrada por pieza publicada. Al ser dinámico (leído en vivo),
+// publicar aparece de inmediato sin rebuild.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SitemapEntry {
+  path: string;
+  lastModified: Date;
+}
+
+/** Paths + lastModified de todas las piezas publicadas (fichas y ensayos). */
+export async function getSitemapEntries(): Promise<SitemapEntry[]> {
+  try {
+    const rows = await prisma.deliverable.findMany({
+      where: PUBLISHED_WHERE,
+      orderBy: { publishedAt: "desc" },
+      select: { id: true, structuredData: true, updatedAt: true, publishedAt: true },
+    });
+    return rows.map((r) => {
+      const s = normalizeStructured(r.structuredData);
+      return {
+        path: s ? typologyPath(s) : `/ensayos/${r.id}`,
+        lastModified: r.updatedAt ?? r.publishedAt ?? r.updatedAt,
+      };
+    });
+  } catch (err) {
+    console.error("[public-data] getSitemapEntries falló:", err);
+    return [];
   }
 }

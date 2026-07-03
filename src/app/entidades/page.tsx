@@ -1,8 +1,18 @@
 import { TypologyIndex } from "@/components/public/typology-index";
 import { getTypologyList } from "@/lib/public-data";
+import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Entidades · Historia Colombiana" };
+export const metadata = buildMetadata({
+  seo: {
+    metaTitle: "Entidades",
+    metaDescription:
+      "Las personas, los lugares y los conceptos que habitan esta historia — con su cronología, sus roles y sus relaciones.",
+    keywords: ["personajes históricos", "lugares", "conceptos", "historia de Colombia"],
+  },
+  path: "/entidades",
+  type: "website",
+});
 
 export default async function EntidadesPage() {
   const cards = await getTypologyList("entidad");

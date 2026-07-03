@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Instrument_Serif, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
+import { SITE_URL, SITE_NAME, AUTHOR, DEFAULT_OG_IMAGE } from "@/lib/site";
 import "@/lib/dayjs-config";
 import "./globals.css";
 
@@ -27,10 +28,47 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+const SITE_TAGLINE = "Una historia de Colombia citable y abierta a la consulta.";
+
 export const metadata: Metadata = {
-  title: "Archivo · Historia de Colombia",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Historia de Colombia · Archivo abierto y citable",
+    template: `%s · ${SITE_NAME}`,
+  },
   description:
-    "Una historia de Colombia vectorizada, citable, abierta a la consulta. Plataforma de investigación con RAG, agentes y producción académica.",
+    "Una historia de Colombia vectorizada, citable, abierta a la consulta. Investigación con fuentes, agentes y producción académica.",
+  applicationName: SITE_NAME,
+  authors: [{ name: AUTHOR }],
+  creator: AUTHOR,
+  publisher: SITE_NAME,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "es_CO",
+    url: SITE_URL,
+    title: "Historia de Colombia",
+    description: SITE_TAGLINE,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Historia de Colombia",
+    description: SITE_TAGLINE,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default function RootLayout({

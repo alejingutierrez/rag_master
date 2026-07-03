@@ -17,8 +17,10 @@ import { assessRelevance } from "./relevancia";
 import { classifyDeliverable } from "../deliverable-classifier";
 import { extractTypology } from "./typology-extractor";
 import { composeTypology, missingFields } from "./typology-composer";
+import { composeSeo } from "./seo-composer";
 import { fichaKindForFormat } from "../atelier-formats";
 import type { DeliverableTaxonomy } from "../taxonomy";
+import type { DeliverableSeo } from "../seo";
 import type { StructuredData } from "../typology-schemas";
 import type {
   AtelierInput,
@@ -303,6 +305,18 @@ export async function runAtelier(
     }
   }
 
+  // ── SEO (meta title/description + keywords) ──
+  // Barato (una llamada Sonnet) y con respaldo determinista: nunca falla ni frena
+  // la pieza. Se persiste en metadata.seo; la capa pública también sabe derivarlo.
+  await emit("edicion", "Optimizando SEO…");
+  const seo: DeliverableSeo = await composeSeo({
+    titulo: structuredData?.titulo ?? input.questionMeta?.pregunta ?? input.intent,
+    resumen: structuredData?.resumen,
+    answer,
+    typology: structuredData?.typology ?? null,
+    taxonomy,
+  });
+
   // ── Aparato crítico + persistencia ──
   const confidenceIndex = deriveConfidenceIndex(verified.claims);
   const criticalApparatus = buildCriticalApparatus(verified.claims);
@@ -325,6 +339,7 @@ export async function runAtelier(
     criticalApparatus,
     taxonomy,
     structuredData,
+    seo,
     qualityScore,
     degraded,
     brief,

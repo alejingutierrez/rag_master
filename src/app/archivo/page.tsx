@@ -2,9 +2,19 @@ import Link from "next/link";
 import { PublicShell } from "@/components/public/public-shell";
 import { getRecentEssays, getEssayCount } from "@/lib/public-data";
 import { getPeriodColor } from "@/lib/design-tokens";
+import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "El archivo · Historia Colombiana" };
+export const metadata = buildMetadata({
+  seo: {
+    metaTitle: "El archivo",
+    metaDescription:
+      "Todas las producciones publicadas: crónicas, ensayos, fichas y preguntas sobre la historia de Colombia, con fuentes.",
+    keywords: ["archivo histórico", "historia de Colombia", "ensayos", "fuentes"],
+  },
+  path: "/archivo",
+  type: "website",
+});
 
 export default async function ArchivoPage() {
   const [essays, total] = await Promise.all([getRecentEssays(60), getEssayCount()]);
