@@ -93,6 +93,7 @@ jobs:
                     \"ADMIN_PASSWORD_HASH\": \"$ADMIN_PASSWORD_HASH\",
                     \"OPENAI_API_KEY\": \"${{ secrets.OPENAI_API_KEY }}\",
                     \"OPENAI_IMAGE_MODEL\": \"gpt-image-2\",
+                    \"SERPER_API_KEY\": \"${{ secrets.SERPER_API_KEY }}\",
                     \"S3_BUCKET_NAME\": \"${{ secrets.S3_BUCKET_NAME }}\",
                     \"AWS_REGION\": \"${{ env.AWS_REGION }}\",
                     \"AWS_ACCESS_KEY_ID\": \"${{ secrets.APP_AWS_ACCESS_KEY_ID }}\",
