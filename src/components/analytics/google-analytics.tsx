@@ -12,7 +12,14 @@ const isPrivate = (p: string) => p.startsWith("/admin") || p.startsWith("/login"
 function PageviewTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const firstRun = useRef(true);
   useEffect(() => {
+    // El page_view inicial lo envía gtag('config') de forma fiable; aquí sólo
+    // emitimos las navegaciones SPA subsiguientes (Next no las dispara solo).
+    if (firstRun.current) {
+      firstRun.current = false;
+      return;
+    }
     if (isPrivate(pathname) || typeof window === "undefined" || typeof window.gtag !== "function") {
       return;
     }
@@ -45,7 +52,7 @@ export function GoogleAnalytics() {
         strategy="afterInteractive"
       />
       <Script id="ga4-init" strategy="afterInteractive">
-        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:false});`}
+        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`}
       </Script>
       <Suspense fallback={null}>
         <PageviewTracker />
