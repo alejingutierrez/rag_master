@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/public/json-ld";
 import { getTypologyDetail } from "@/lib/public-data";
 import { buildMetadata, detailJsonLd } from "@/lib/seo";
 import { typologyPath } from "@/lib/typology-schemas";
+import { TrackView } from "@/components/analytics/track-view";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,11 @@ export default async function EpocaPage({ params }: { params: Promise<{ slug: st
   return (
     <>
       <JsonLd data={detailJsonLd(detail)} />
+      <TrackView
+        contentType={detail.structured.typology}
+        itemId={detail.structured.slug}
+        itemName={detail.structured.titulo}
+      />
       <TypologyArticle detail={detail} />
     </>
   );
