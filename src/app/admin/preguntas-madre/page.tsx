@@ -34,6 +34,9 @@ interface Child {
 }
 
 const FORMATS = [
+  // La ficha de pregunta es la producción "de su mismo tipo": marca la
+  // pregunta-madre como producida. Va primera y es el default.
+  { id: "ficha-pregunta", label: "Pregunta — ficha del archivo" },
   { id: "cronica", label: "Crónica histórica" },
   { id: "ensayo-autor", label: "Ensayo de autor" },
   { id: "reportaje", label: "Reportaje" },
@@ -54,6 +57,19 @@ export default function PreguntasMadrePage() {
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState<{ total: number; byPeriodo: { periodoCode: string; count: number }[] } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  // Estado "producida" por pregunta-madre (ficha-pregunta COMPLETE enlazada).
+  const [produced, setProduced] = useState<Record<string, { deliverableId: string; publishedAt: string | null }>>({});
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch("/api/production-state?kind=pregunta-madre", { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { produced?: Record<string, { deliverableId: string; publishedAt: string | null }> } | null) => {
+        if (d?.produced) setProduced(d.produced);
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,6 +167,14 @@ export default function PreguntasMadrePage() {
                 </div>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10, alignItems: "center" }}>
                   <PeriodTag code={m.periodoCode} />
+                  {produced[m.id] && (
+                    <span
+                      style={{ ...chip, color: "var(--success)", borderColor: "var(--success)" }}
+                      title="Producida como pregunta (ficha del archivo)"
+                    >
+                      ✓ Producida{produced[m.id].publishedAt ? " · publicada" : ""}
+                    </span>
+                  )}
                   <span style={chip}>{CATEGORIES[m.categoriaCode]?.short ?? m.categoriaCode}</span>
                   <span style={chip}>{m.childCount} hijas · {m.bookCount} libros</span>
                   <span style={chip}>gate {m.gateScore}/5</span>
@@ -189,7 +213,7 @@ function MasterDetail({ id }: { id: string }) {
   const [data, setData] = useState<{
     master: Master; children: Child[]; deliverables: { id: string; status: string; templateId: string }[];
   } | null>(null);
-  const [format, setFormat] = useState("ensayo-autor");
+  const [format, setFormat] = useState("ficha-pregunta");
   const [producing, setProducing] = useState<string | null>(null);
 
   useEffect(() => {

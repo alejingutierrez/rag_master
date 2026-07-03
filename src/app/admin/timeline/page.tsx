@@ -10,8 +10,10 @@ import {
   fmtYearSpan,
   type TimelineEventData,
   type TimelinePeriodData,
+  type ProducedInfo,
 } from "@/components/timeline/TimelineEventDrawer";
 import { TimelineDensityStrip } from "@/components/timeline/TimelineDensityStrip";
+import { atelierProduceHref, hechoKey, epocaKey } from "@/lib/source-ref";
 
 interface TimelineData {
   questions: Array<{
@@ -82,6 +84,25 @@ function TimelineContent() {
     Record<string, TimelinePeriodData | null>
   >({});
   const [selectedEvent, setSelectedEvent] = useState<TimelineEventData | null>(null);
+  // Estado "producido" de hechos (llave periodo:evento) y épocas (llave periodo).
+  const [producedHechos, setProducedHechos] = useState<Record<string, ProducedInfo>>({});
+  const [producedEpocas, setProducedEpocas] = useState<Record<string, ProducedInfo>>({});
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    Promise.all([
+      fetch("/api/production-state?kind=hecho", { signal: ctrl.signal })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
+      fetch("/api/production-state?kind=epoca", { signal: ctrl.signal })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
+    ]).then(([h, e]) => {
+      if (h?.produced) setProducedHechos(h.produced);
+      if (e?.produced) setProducedEpocas(e.produced);
+    });
+    return () => ctrl.abort();
+  }, []);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -341,6 +362,50 @@ function TimelineContent() {
             <Metric label="Producciones" value={prodCount} />
           </div>
 
+          {(() => {
+            const prod = producedEpocas[epocaKey(selected)];
+            const outline: React.CSSProperties = {
+              appearance: "none",
+              background: "transparent",
+              border: `1px solid ${prod ? "var(--success)" : "var(--line-strong)"}`,
+              color: prod ? "var(--success)" : "var(--fg)",
+              padding: "10px 14px",
+              width: "100%",
+              marginBottom: 10,
+              fontFamily: "var(--font-mono)",
+              fontSize: 12,
+              letterSpacing: "0.04em",
+              cursor: "pointer",
+              textAlign: "center",
+            };
+            return prod ? (
+              <button
+                type="button"
+                onClick={() => router.push(`/admin/producciones/${prod.deliverableId}`)}
+                title="Ver la ficha de época producida"
+                style={outline}
+              >
+                ✓ Época producida{prod.publishedAt ? " · publicada" : ""} →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    atelierProduceHref({
+                      ref: { kind: "epoca", key: epocaKey(selected), label: period.label },
+                      intent: `${period.label} (${period.yearRange})`,
+                    }),
+                  )
+                }
+                title="Producir la ficha de época en el Taller"
+                style={outline}
+              >
+                Producir como época →
+              </button>
+            );
+          })()}
+
           <button
             type="button"
             onClick={() => router.push(`/admin/questions?periodo=${selected}`)}
@@ -437,6 +502,20 @@ function TimelineContent() {
                           }}
                         >
                           {e.titulo}
+                          {producedHechos[hechoKey(selected, e)] && (
+                            <span
+                              title="Producido como hecho"
+                              style={{
+                                color: "var(--success)",
+                                fontSize: 15,
+                                marginLeft: 10,
+                                fontFamily: "var(--font-mono)",
+                                verticalAlign: "middle",
+                              }}
+                            >
+                              ✓
+                            </span>
+                          )}
                         </h4>
                         <p
                           className="serif"
@@ -573,6 +652,7 @@ function TimelineContent() {
       <TimelineEventDrawer
         event={selectedEvent}
         periodoCode={selected}
+        produced={selectedEvent ? producedHechos[hechoKey(selected, selectedEvent)] ?? null : null}
         onClose={() => setSelectedEvent(null)}
       />
     </div>

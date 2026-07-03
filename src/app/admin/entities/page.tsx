@@ -8,6 +8,7 @@ import {
   SearchInput,
   EmptyState,
 } from "@/components/editorial";
+import { atelierProduceHref, entidadKey } from "@/lib/source-ref";
 
 type TypeFilter = "all" | "person" | "place" | "concept";
 
@@ -19,6 +20,20 @@ interface Entity {
   type: "person" | "place" | "concept";
 }
 
+/** Marcador pequeño junto a cada entidad: ✓ producida / ＋ producir. */
+const markerBtn = (color: string): React.CSSProperties => ({
+  appearance: "none",
+  background: "transparent",
+  border: 0,
+  padding: "0 2px",
+  cursor: "pointer",
+  fontFamily: "var(--font-mono)",
+  fontSize: 12,
+  lineHeight: 1,
+  color,
+  alignSelf: "center",
+});
+
 export default function EntitiesPage() {
   const router = useRouter();
   const [entities, setEntities] = useState<Entity[]>([]);
@@ -26,6 +41,19 @@ export default function EntitiesPage() {
   const [type, setType] = useState<TypeFilter>("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  // Estado "producida" por entidad (ficha-entidad COMPLETE enlazada por sourceRef).
+  const [produced, setProduced] = useState<Record<string, { deliverableId: string; publishedAt: string | null }>>({});
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch("/api/production-state?kind=entidad", { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { produced?: Record<string, { deliverableId: string; publishedAt: string | null }> } | null) => {
+        if (d?.produced) setProduced(d.produced);
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, []);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -117,47 +145,76 @@ export default function EntitiesPage() {
             {filtered.map((e) => {
               const w = e.mentions / max;
               const fontSize = 16 + w * 36;
+              const key = entidadKey(e.type, e.name);
+              const prod = produced[key];
               return (
-                <button
-                  key={e.name}
-                  type="button"
-                  onClick={() =>
-                    router.push(
-                      `/admin/questions?entity=${encodeURIComponent(e.name)}&entityType=${e.type}`,
-                    )
-                  }
-                  style={{
-                    appearance: "none",
-                    background: "transparent",
-                    border: 0,
-                    padding: 0,
-                    cursor: "pointer",
-                    fontFamily: "var(--font-display)",
-                    fontSize,
-                    lineHeight: 1.0,
-                    color: "var(--fg)",
-                    letterSpacing: "-0.015em",
-                    transition: "color 140ms var(--ease-out-custom)",
-                  }}
-                  onMouseEnter={(ev) => (ev.currentTarget.style.color = "var(--accent)")}
-                  onMouseLeave={(ev) => (ev.currentTarget.style.color = "var(--fg)")}
-                  title={`${e.mentions} menciones en ${e.docCount} documentos`}
-                >
-                  {e.type === "place" ? <em>{e.name}</em> : e.name}
-                  <sub
-                    className="mono"
+                <span key={e.name} style={{ display: "inline-flex", alignItems: "baseline", gap: 4 }}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        `/admin/questions?entity=${encodeURIComponent(e.name)}&entityType=${e.type}`,
+                      )
+                    }
                     style={{
-                      fontSize: 10,
-                      color: "var(--fg-faint)",
-                      marginLeft: 4,
-                      fontStyle: "normal",
-                      position: "relative",
-                      top: -fontSize * 0.4,
+                      appearance: "none",
+                      background: "transparent",
+                      border: 0,
+                      padding: 0,
+                      cursor: "pointer",
+                      fontFamily: "var(--font-display)",
+                      fontSize,
+                      lineHeight: 1.0,
+                      // Producida ⇒ acento sutil que la distingue en la nube.
+                      color: prod ? "var(--success)" : "var(--fg)",
+                      letterSpacing: "-0.015em",
+                      transition: "color 140ms var(--ease-out-custom)",
                     }}
+                    onMouseEnter={(ev) => (ev.currentTarget.style.color = "var(--accent)")}
+                    onMouseLeave={(ev) => (ev.currentTarget.style.color = prod ? "var(--success)" : "var(--fg)")}
+                    title={`${e.mentions} menciones en ${e.docCount} documentos`}
                   >
-                    {e.mentions}
-                  </sub>
-                </button>
+                    {e.type === "place" ? <em>{e.name}</em> : e.name}
+                    <sub
+                      className="mono"
+                      style={{
+                        fontSize: 10,
+                        color: "var(--fg-faint)",
+                        marginLeft: 4,
+                        fontStyle: "normal",
+                        position: "relative",
+                        top: -fontSize * 0.4,
+                      }}
+                    >
+                      {e.mentions}
+                    </sub>
+                  </button>
+                  {prod ? (
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/admin/producciones/${prod.deliverableId}`)}
+                      title={`Producida como entidad${prod.publishedAt ? " · publicada" : ""} — ver ficha`}
+                      style={markerBtn("var(--success)")}
+                    >
+                      ✓
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(
+                          atelierProduceHref({ ref: { kind: "entidad", key, label: e.name }, intent: e.name }),
+                        )
+                      }
+                      title="Producir como entidad en el Taller"
+                      style={markerBtn("var(--fg-faint)")}
+                      onMouseEnter={(ev) => (ev.currentTarget.style.color = "var(--accent)")}
+                      onMouseLeave={(ev) => (ev.currentTarget.style.color = "var(--fg-faint)")}
+                    >
+                      ＋
+                    </button>
+                  )}
+                </span>
               );
             })}
           </div>

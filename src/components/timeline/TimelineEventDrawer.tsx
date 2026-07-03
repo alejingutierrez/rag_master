@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PeriodTag } from "@/components/editorial";
 import { CATEGORIES, type CategoryCode, type PeriodCode, PERIODS } from "@/lib/design-tokens";
+import { atelierProduceHref, hechoKey } from "@/lib/source-ref";
+
+export interface ProducedInfo {
+  deliverableId: string;
+  publishedAt: string | null;
+}
 
 // ─── Tipos del artefacto minado (scripts/mine-timeline-events.mts) ──────────
 
@@ -48,10 +54,12 @@ export function fmtYearSpan(a: number, b: number): string {
 export function TimelineEventDrawer({
   event,
   periodoCode,
+  produced,
   onClose,
 }: {
   event: TimelineEventData | null;
   periodoCode: PeriodCode;
+  produced?: ProducedInfo | null;
   onClose: () => void;
 }) {
   const open = event !== null;
@@ -98,7 +106,7 @@ export function TimelineEventDrawer({
       >
         {/* key: remonta el contenido al cambiar de evento — resetea el estado de carga */}
         {event && (
-          <DrawerContent key={event.id} ev={event} periodoCode={periodoCode} onClose={onClose} />
+          <DrawerContent key={event.id} ev={event} periodoCode={periodoCode} produced={produced ?? null} onClose={onClose} />
         )}
       </aside>
     </>
@@ -108,10 +116,12 @@ export function TimelineEventDrawer({
 function DrawerContent({
   ev,
   periodoCode,
+  produced,
   onClose,
 }: {
   ev: TimelineEventData;
   periodoCode: PeriodCode;
+  produced: ProducedInfo | null;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -374,6 +384,30 @@ function DrawerContent({
         </Section>
 
         <div style={{ paddingTop: 12, borderTop: "1px solid var(--line)", marginTop: 4 }}>
+          {produced && (
+            <button
+              type="button"
+              onClick={() => router.push(`/admin/producciones/${produced.deliverableId}`)}
+              title="Ver la ficha de hecho producida"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                marginBottom: 14,
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+                letterSpacing: "0.04em",
+                color: "var(--success)",
+                background: "transparent",
+                border: "1px solid var(--success)",
+                borderRadius: 999,
+                padding: "3px 10px",
+                cursor: "pointer",
+              }}
+            >
+              ✓ Producido como hecho{produced.publishedAt ? " · publicado" : ""} →
+            </button>
+          )}
           <h3
             className="mono"
             style={{
@@ -389,8 +423,19 @@ function DrawerContent({
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <ActionBtn
-              label="El Taller"
+              label="Producir como hecho"
               primary
+              onClick={() =>
+                router.push(
+                  atelierProduceHref({
+                    ref: { kind: "hecho", key: hechoKey(periodoCode, ev), label: ev.titulo },
+                    intent: tallerIntent,
+                  })
+                )
+              }
+            />
+            <ActionBtn
+              label="El Taller (libre)"
               onClick={() => router.push(`/admin/atelier?intent=${encodeURIComponent(tallerIntent)}`)}
             />
             <ActionBtn

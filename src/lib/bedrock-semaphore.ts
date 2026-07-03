@@ -11,6 +11,10 @@
 // Embeddings (Cohere) tienen rate limits separados y no usan este semáforo.
 // Para bypass total (recomendado al usar pipeline con reranker+expansion):
 //   BEDROCK_SEMAPHORE_LIMIT=0
+// Para la "producción en serie" del Taller (/admin/atelier/serie): el pool del
+// cliente lanza varias piezas a la vez, pero sus llamadas al LLM se serializan
+// aquí si el límite es 1. Subir a ~3 (BEDROCK_SEMAPHORE_LIMIT=3) las solapa de
+// verdad; ojo con el throttling de Opus con contexto grande.
 const MAX_CONCURRENT = Number(process.env.BEDROCK_SEMAPHORE_LIMIT ?? "1");
 const BYPASS = MAX_CONCURRENT <= 0;
 

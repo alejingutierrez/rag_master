@@ -354,7 +354,10 @@ function fakeBrief(formato: AtelierBrief["ficha"]["formato"]): AtelierBrief {
 test("el set de formatos incluye podcast y todos son válidos", () => {
   const ids = ATELIER_FORMAT_LIST.map((f) => f.id);
   assert.ok(ids.includes("podcast"), "falta el formato podcast");
-  assert.equal(ids.length, 5);
+  // 5 narrativos + 4 fichas del archivo (hecho/época/entidad/pregunta).
+  assert.equal(ids.length, 9);
+  for (const k of ["ficha-hecho", "ficha-epoca", "ficha-entidad", "ficha-pregunta"])
+    assert.ok(ids.includes(k), `falta el formato ${k}`);
   for (const id of ids) assert.ok(isValidFormatId(id), `formato inválido: ${id}`);
 });
 

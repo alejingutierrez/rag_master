@@ -10,6 +10,7 @@ import {
   type EscalaGeografica,
 } from "@/lib/questions-config";
 import { getAtelierFormat } from "@/lib/atelier-formats";
+import { atelierProduceHref } from "@/lib/source-ref";
 
 export interface QuestionDetail {
   id: string;
@@ -335,6 +336,28 @@ function DrawerContent({
         )}
 
         <div style={{ paddingTop: 12, borderTop: "1px solid var(--line)", marginTop: 4 }}>
+          {(q.deliverables ?? []).some(
+            (d) => d.templateId === "ficha-pregunta" && d.status === "COMPLETE"
+          ) && (
+            <div
+              title="Ya existe una ficha de pregunta producida a partir de esta pregunta"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                marginBottom: 14,
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+                letterSpacing: "0.04em",
+                color: "var(--success)",
+                border: "1px solid var(--success)",
+                borderRadius: 999,
+                padding: "3px 10px",
+              }}
+            >
+              ✓ Producida como pregunta
+            </div>
+          )}
           <h3
             className="mono"
             style={{
@@ -350,17 +373,20 @@ function DrawerContent({
           </h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <ActionBtn
-              label="Chat"
+              label="Producir como pregunta"
               primary
-              onClick={() => router.push(`/admin/chat?questionId=${encodeURIComponent(q.id)}`)}
-            />
-            <ActionBtn
-              label="El Taller"
               onClick={() =>
                 router.push(
-                  `/admin/atelier?questionId=${encodeURIComponent(q.id)}&intent=${encodeURIComponent(q.pregunta)}`
+                  atelierProduceHref({
+                    ref: { kind: "pregunta", key: q.id, label: q.pregunta },
+                    intent: q.pregunta,
+                  })
                 )
               }
+            />
+            <ActionBtn
+              label="Chat"
+              onClick={() => router.push(`/admin/chat?questionId=${encodeURIComponent(q.id)}`)}
             />
           </div>
         </div>

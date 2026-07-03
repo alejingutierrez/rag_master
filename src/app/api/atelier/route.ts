@@ -2,6 +2,7 @@ import { NextRequest, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { runAtelier } from "@/lib/atelier/orchestrator";
 import { isValidFormatId, type LongitudId } from "@/lib/atelier-formats";
+import { asSourceRef } from "@/lib/source-ref";
 import type { AtelierMetadata, AtelierQuestionMeta } from "@/lib/atelier/types";
 import { syncQuestionStats } from "@/lib/question-stats-sync";
 import { generateAndStoreImage, isOpenAIConfigured } from "@/lib/atelier/image";
@@ -27,6 +28,10 @@ export async function POST(req: NextRequest) {
   const formatId = body?.formatId;
   const longitud = body?.longitud as LongitudId | undefined;
   const questionId = typeof body?.questionId === "string" && body.questionId ? body.questionId : undefined;
+  // Puente ítem↔producción (pregunta/madre/hecho/entidad/época). Se persiste en
+  // metadata.sourceRef y es lo que marca al ítem como "producido" cuando el
+  // formato es la ficha de su tipo. Ver src/lib/source-ref.ts.
+  const sourceRef = asSourceRef(body?.sourceRef);
 
   if (intent.length < 12) {
     return new Response(JSON.stringify({ error: "Intención requerida (≥12 caracteres)" }), {
@@ -103,7 +108,7 @@ export async function POST(req: NextRequest) {
       answer: "",
       modelUsed,
       chunksUsed: [],
-      metadata: { atelier: initialMetadata } as unknown as object,
+      metadata: { atelier: initialMetadata, ...(sourceRef ? { sourceRef } : {}) } as unknown as object,
       source: "atelier",
       batchId,
       questionId: safeQuestionId,
@@ -124,7 +129,7 @@ export async function POST(req: NextRequest) {
         const newMeta = { ...curMeta, ...patch };
         await prisma.deliverable.update({
           where: { id: deliverable.id },
-          data: { metadata: { atelier: newMeta } as unknown as object },
+          data: { metadata: { atelier: newMeta, ...(sourceRef ? { sourceRef } : {}) } as unknown as object },
         });
       } catch (e) {
         console.warn(`[atelier ${deliverable.id}] updateMetadata failed:`, (e as Error).message);
@@ -182,7 +187,7 @@ export async function POST(req: NextRequest) {
           status: "COMPLETE",
           answer: result.answer,
           chunksUsed: result.chunksUsed as unknown as object,
-          metadata: { atelier: finalMeta } as unknown as object,
+          metadata: { atelier: finalMeta, ...(sourceRef ? { sourceRef } : {}) } as unknown as object,
           // Ficha estructurada por tipología (o se deja null si no se pudo extraer).
           ...(result.structuredData
             ? { structuredData: result.structuredData as unknown as object }
@@ -227,6 +232,7 @@ export async function POST(req: NextRequest) {
                 message: msg,
                 finishedAt: new Date().toISOString(),
               },
+              ...(sourceRef ? { sourceRef } : {}),
             } as unknown as object,
           },
         });

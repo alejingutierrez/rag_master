@@ -52,6 +52,14 @@ function deriveState(q: Question): "pending" | "partial" | "complete" {
   return "partial";
 }
 
+/** Producida "como pregunta" ⇔ existe una ficha-pregunta COMPLETE (la producción
+ *  de su mismo tipo). Distinto del conteo genérico de producciones. */
+function isProducedAsPregunta(q: Question): boolean {
+  return (q.deliverables ?? []).some(
+    (d) => d.templateId === "ficha-pregunta" && d.status === "COMPLETE"
+  );
+}
+
 const SORT_LABELS: Record<SortBy, string> = {
   cronologico: "Cronológico",
   periodo: "Por período",
@@ -681,6 +689,7 @@ function ListView({ questions, onSelect }: { questions: Question[]; onSelect: (i
 function ListRow({ q, i, onClick }: { q: Question; i: number; onClick: () => void }) {
   const state = deriveState(q);
   const completed = (q.deliverables ?? []).filter((d) => d.status === "COMPLETE").length;
+  const producedAsPregunta = isProducedAsPregunta(q);
   const entities = [
     ...(q.entidadesPersonas ?? []),
     ...(q.entidadesLugares ?? []),
@@ -765,7 +774,7 @@ function ListRow({ q, i, onClick }: { q: Question; i: number; onClick: () => voi
           </div>
         </div>
         <PeriodTag code={q.periodoCode} size="sm" />
-        <QState state={state} completed={completed} />
+        <QState state={state} completed={completed} producedAsPregunta={producedAsPregunta} />
       </button>
     </li>
   );
@@ -792,6 +801,7 @@ function CardsView({ questions, onSelect }: { questions: Question[]; onSelect: (
 function QuestionCard({ q, onClick }: { q: Question; onClick: () => void }) {
   const state = deriveState(q);
   const completed = (q.deliverables ?? []).filter((d) => d.status === "COMPLETE").length;
+  const producedAsPregunta = isProducedAsPregunta(q);
   const tipoLabel = q.tipoPregunta ? TIPO_LABELS[q.tipoPregunta as TipoPregunta] ?? q.tipoPregunta : null;
   const entities = [
     ...(q.entidadesPersonas ?? []),
@@ -906,7 +916,7 @@ function QuestionCard({ q, onClick }: { q: Question; onClick: () => void }) {
         </div>
       )}
       <div style={{ marginTop: "auto", paddingTop: 6 }}>
-        <QState state={state} completed={completed} />
+        <QState state={state} completed={completed} producedAsPregunta={producedAsPregunta} />
       </div>
     </button>
   );
@@ -945,6 +955,7 @@ function TableView({ questions, onSelect }: { questions: Question[]; onSelect: (
               : "—";
             const state = deriveState(q);
             const completed = (q.deliverables ?? []).filter((d) => d.status === "COMPLETE").length;
+  const producedAsPregunta = isProducedAsPregunta(q);
             return (
               <tr
                 key={q.id}
@@ -974,7 +985,7 @@ function TableView({ questions, onSelect }: { questions: Question[]; onSelect: (
                 <Td mono small>{tipoLabel}</Td>
                 <Td mono small>{escalaLabel}</Td>
                 <Td mono faint>{q.yearPrincipal ?? "—"}</Td>
-                <Td><QState state={state} completed={completed} /></Td>
+                <Td><QState state={state} completed={completed} producedAsPregunta={producedAsPregunta} /></Td>
               </tr>
             );
           })}
@@ -1033,7 +1044,20 @@ function Td({
   );
 }
 
-function QState({ state, completed }: { state: "pending" | "partial" | "complete"; completed: number }) {
+function QState({
+  state,
+  completed,
+  producedAsPregunta,
+}: {
+  state: "pending" | "partial" | "complete";
+  completed: number;
+  producedAsPregunta?: boolean;
+}) {
+  // Producida como su mismo tipo (ficha-pregunta): la marca que pidió el usuario,
+  // por encima del conteo genérico. No oculta nada — el detalle sigue mostrando todo.
+  if (producedAsPregunta) {
+    return <StatusDot kind="success" label="Producida como pregunta" />;
+  }
   if (state === "complete") {
     return <StatusDot kind="success" label={`${completed} producciones`} />;
   }
