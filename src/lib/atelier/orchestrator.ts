@@ -16,6 +16,8 @@ import { deriveConfidenceIndex, buildCriticalApparatus, stripScaffolding } from 
 import { assessRelevance } from "./relevancia";
 import { classifyDeliverable } from "../deliverable-classifier";
 import { extractTypology } from "./typology-extractor";
+import { composeTypology, missingFields } from "./typology-composer";
+import { fichaKindForFormat } from "../atelier-formats";
 import type { DeliverableTaxonomy } from "../taxonomy";
 import type { StructuredData } from "../typology-schemas";
 import type {
@@ -105,11 +107,15 @@ export async function runAtelier(
   set("encuadre", "running", "Encuadrando el encargo…");
   await emit("encuadre", "Encuadrando el encargo…");
   const extensionTarget = targetWords(input.formatId, input.longitud);
+  // Modo FICHA: el formato fuerza la tipología y orienta toda la cadena
+  // (ejes del encuadre → artículo de referencia → composición de la ficha).
+  const fichaKind = fichaKindForFormat(input.formatId);
   const brief = await buildBrief({
     intent: input.intent,
     formatId: input.formatId,
     extensionTarget,
     questionMeta: input.questionMeta,
+    fichaKind: fichaKind ?? undefined,
   });
   set("encuadre", "done", undefined, `${brief.ejes.length} ejes`);
   await emit("encuadre", "Encargo encuadrado.", { brief });
@@ -254,19 +260,47 @@ export async function runAtelier(
     console.warn(`[atelier] clasificación falló: ${(e as Error).message}`);
   }
 
-  // ── Extracción de tipología (ficha estructurada para la página pública) ──
-  // Best-effort: si falla, la pieza sigue siendo un ensayo normal (structuredData=null).
-  await emit("edicion", "Extrayendo la ficha de tipología…");
+  // ── Ficha estructurada para la página pública ──
+  // En modo FICHA la composición es OBLIGATORIA y completa (compositor dedicado
+  // con ronda de reparación); en los formatos narrativos sigue siendo la
+  // extracción best-effort de siempre (si falla, la pieza queda como ensayo).
   let structuredData: StructuredData | null = null;
-  try {
-    structuredData = await extractTypology({
-      answer,
-      intent: input.intent,
-      taxonomy,
-      brief,
-    });
-  } catch (e) {
-    console.warn(`[atelier] extracción de tipología falló: ${(e as Error).message}`);
+  if (fichaKind) {
+    await emit("edicion", `Componiendo la ficha de ${fichaKind}…`);
+    try {
+      structuredData = await composeTypology({
+        kind: fichaKind,
+        intent: input.intent,
+        answer,
+        brief,
+        verified,
+        taxonomy,
+      });
+      const faltantes = missingFields(structuredData);
+      if (faltantes.length > 0) {
+        degraded.push(`Ficha con campos delgados pese a la reparación: ${faltantes.join(", ")}.`);
+      }
+    } catch (e) {
+      console.warn(`[atelier] compositor de ficha falló: ${(e as Error).message}`);
+      degraded.push("El compositor de ficha falló; se intentó la extracción best-effort.");
+      try {
+        structuredData = await extractTypology({ answer, intent: input.intent, taxonomy, brief });
+      } catch {
+        structuredData = null;
+      }
+    }
+  } else {
+    await emit("edicion", "Extrayendo la ficha de tipología…");
+    try {
+      structuredData = await extractTypology({
+        answer,
+        intent: input.intent,
+        taxonomy,
+        brief,
+      });
+    } catch (e) {
+      console.warn(`[atelier] extracción de tipología falló: ${(e as Error).message}`);
+    }
   }
 
   // ── Aparato crítico + persistencia ──

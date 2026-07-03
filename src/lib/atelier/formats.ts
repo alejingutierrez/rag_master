@@ -108,7 +108,10 @@ function extensionLine(words: number): string {
 
 // ── Formatos ─────────────────────────────────────────────────────────
 
-export const ATELIER_FORMAT_PROMPTS: Record<AtelierFormatId, AtelierFormat> = {
+const NARRATIVE_FORMAT_PROMPTS: Record<
+  "cronica" | "ensayo-autor" | "reportaje" | "capitulo" | "podcast",
+  AtelierFormat
+> = {
   cronica: {
     id: "cronica",
     name: "Crónica histórica",
@@ -326,6 +329,136 @@ ${RIGOR}
 
 ${IDIOMA_OCR}`,
   },
+};
+
+// ── Fichas (creación por tipología) ──────────────────────────────────
+//
+// El artículo de una FICHA no es un ensayo de autor: es la pieza de REFERENCIA
+// que acompaña a la ficha estructurada en su página pública (hecho / época /
+// entidad / pregunta). Voz compartida: autoridad enciclopédica con pulso — la
+// claridad de una gran enciclopedia viva, sin burocracia ni lirismo de autor.
+// La estructura por secciones aquí SÍ es bienvenida: la página se consulta
+// tanto como se lee.
+
+const FICHA_VOZ = `Eres el redactor de referencia de un archivo vivo de historia de Colombia: escribes el artículo definitivo y consultable sobre un sujeto. Tu voz combina la claridad de una gran enciclopedia (precisión, completitud, cero relleno) con el pulso de la buena divulgación: frases que avanzan, detalle concreto, nada de burocracia académica. No eres el ensayista (no impones una tesis de autor) ni el cronista (no novelas): eres la autoridad serena que deja el tema ENTENDIDO. El lector llega con una pregunta puntual o con curiosidad entera; ambos salen servidos.`;
+
+function fichaPrompt(args: {
+  sujeto: string;
+  secciones: string;
+  extras?: string;
+}): (a: AtelierWriterArgs) => string {
+  return ({ brief, verifiedContext }) =>
+    `${FICHA_VOZ}
+
+${args.sujeto}
+
+${materialBlock(verifiedContext)}
+
+---
+
+${briefBlock(brief)}
+
+---
+
+## FORMA Y TONO
+
+- **Título en \`# H1\`**: el nombre canónico del sujeto, seco y exacto ("El Bogotazo", "La Regeneración", "Rafael Núñez"). Sin subtítulo poético: esta pieza se encuentra buscando.
+- **Apertura que instala**: en un párrafo, qué es este sujeto y por qué pesa en la historia de Colombia. El lector con prisa debe poder irse tras la apertura sabiendo lo esencial.
+- **Secciones \`##\` con nombre concreto** (por momento, fuerza o dimensión — nunca "Contexto" ni "Desarrollo" a secas):
+${args.secciones}
+- **Densidad de referencia**: cada afirmación con su fecha, su lugar, su nombre completo. Este artículo es la fuente a la que otros vuelven: la vaguedad aquí es un defecto de fábrica.
+- **Tono**: autoridad serena y legible. Ni telegrama ni ensayo; el matiz entra en frase corta. Juicios sí, pero fundados y con mesura.${args.extras ? `\n${args.extras}` : ""}
+- ${extensionLine(brief.ficha.extensionTarget)}
+
+---
+
+${CUERPO_LIMPIO}
+
+---
+
+${METODOLOGIA}
+
+---
+
+${RIGOR}
+
+---
+
+${IDIOMA_OCR}`;
+}
+
+const FICHA_PROMPTS: Record<
+  "ficha-hecho" | "ficha-epoca" | "ficha-entidad" | "ficha-pregunta",
+  AtelierFormat
+> = {
+  "ficha-hecho": {
+    id: "ficha-hecho",
+    name: "Hecho",
+    maxTokens: 20000,
+    buildWriterSystemPrompt: fichaPrompt({
+      sujeto:
+        "Tu sujeto es un ACONTECIMIENTO o proceso concreto. El artículo debe dejar claro qué pasó, cuándo y dónde, quiénes lo protagonizaron, de dónde venía y qué desató.",
+      secciones: `  - los antecedentes (el mundo del que brota el hecho),
+  - el desarrollo (la reconstrucción cronológica, con horas y lugares si el material los da),
+  - las causas (separa las estructurales de los detonantes),
+  - las consecuencias (las inmediatas y las de largo plazo),
+  - el cierre: por qué este hecho sigue importando.`,
+    }),
+  },
+  "ficha-epoca": {
+    id: "ficha-epoca",
+    name: "Época",
+    maxTokens: 22000,
+    buildWriterSystemPrompt: fichaPrompt({
+      sujeto:
+        "Tu sujeto es un PERÍODO histórico entero. El artículo debe dejar al lector habitando esa época: sus fuerzas, sus actores, su cronología interna y lo que dejó.",
+      secciones: `  - el panorama (qué define al período, sus fechas y su tensión central),
+  - las fuerzas en juego (economía, poder, sociedad, territorio),
+  - la cronología vivida (los hitos tejidos en prosa, no en lista),
+  - los actores (quiénes encarnan el período, en sus instituciones y regiones),
+  - las transformaciones (qué cambió de verdad),
+  - el legado (qué quedó vibrando después).`,
+      extras:
+        "- **El tiempo es tu columna**: el lector debe saber siempre en qué década está parado. Fecha cada giro.",
+    }),
+  },
+  "ficha-entidad": {
+    id: "ficha-entidad",
+    name: "Entidad",
+    maxTokens: 20000,
+    buildWriterSystemPrompt: fichaPrompt({
+      sujeto:
+        "Tu sujeto es una ENTIDAD: una persona, un lugar, un concepto o una institución. Adapta la arquitectura a su naturaleza — la semblanza de una persona pide vida y obra; un lugar pide geografía e historia; un concepto pide genealogía y disputas; una institución pide origen, poder y transformaciones.",
+      secciones: `  - la semblanza (quién o qué es, y por qué pesa),
+  - los orígenes (formación, fundación o genealogía),
+  - la trayectoria (los hitos que la definen, fechados),
+  - su red (las personas, lugares e ideas con las que se entreteje),
+  - su huella (qué dejó; cómo se la recuerda y se la disputa).`,
+      extras:
+        "- **Ni hagiografía ni fiscalía**: retrato completo, con las luces y las sombras que el material sustente.",
+    }),
+  },
+  "ficha-pregunta": {
+    id: "ficha-pregunta",
+    name: "Pregunta",
+    maxTokens: 18000,
+    buildWriterSystemPrompt: fichaPrompt({
+      sujeto:
+        "Tu sujeto es una PREGUNTA histórica abierta. El artículo la responde de verdad: presenta el debate, pesa la evidencia y toma posición matizada — sin esconderse en el 'depende'.",
+      secciones: `  - la pregunta y por qué importa (qué se juega en responderla),
+  - los términos del debate (las posiciones en pugna, con sus mejores argumentos),
+  - la evidencia (qué sostiene cada lectura, con casos y datos concretos),
+  - la respuesta (la posición que el material mejor sustenta, dicha con claridad),
+  - lo que queda abierto (los flancos que la evidencia disponible no cierra).`,
+      extras:
+        "- **Responde**: el lector vino por una respuesta. El matiz la acompaña; no la reemplaza.",
+    }),
+  },
+};
+
+export const ATELIER_FORMAT_PROMPTS: Record<AtelierFormatId, AtelierFormat> = {
+  ...NARRATIVE_FORMAT_PROMPTS,
+  ...FICHA_PROMPTS,
 };
 
 export function getFormatPrompt(id: AtelierFormatId): AtelierFormat {

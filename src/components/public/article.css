@@ -33,7 +33,7 @@
 
 /* ── Imagen de portada de la pieza ─────────────────────────────────────── */
 .art-figure { margin: 6px 0 30px; max-width: 900px; }
-.art-figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); filter: grayscale(1) contrast(1.02); }
+.art-figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); }
 .art-figure.portrait { max-width: 380px; }
 .art-figure.landscape img { aspect-ratio: 16 / 9; object-fit: cover; }
 .art-figure.portrait img { aspect-ratio: 9 / 16; object-fit: cover; }

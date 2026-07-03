@@ -10,7 +10,27 @@ export type AtelierFormatId =
   | "ensayo-autor"
   | "reportaje"
   | "capitulo"
-  | "podcast";
+  | "podcast"
+  | "ficha-hecho"
+  | "ficha-epoca"
+  | "ficha-entidad"
+  | "ficha-pregunta";
+
+/** Tipología que produce un formato de ficha, o null si es un formato narrativo. */
+export function fichaKindForFormat(id: AtelierFormatId): "hecho" | "epoca" | "entidad" | "pregunta" | null {
+  switch (id) {
+    case "ficha-hecho":
+      return "hecho";
+    case "ficha-epoca":
+      return "epoca";
+    case "ficha-entidad":
+      return "entidad";
+    case "ficha-pregunta":
+      return "pregunta";
+    default:
+      return null;
+  }
+}
 
 export interface AtelierFormatMeta {
   id: AtelierFormatId;
@@ -51,6 +71,30 @@ export const ATELIER_FORMATS: Record<AtelierFormatId, AtelierFormatMeta> = {
     description: "Guion hablado para una sola voz: íntimo, escénico, dicho al oído.",
     defaultWords: 2400,
   },
+  "ficha-hecho": {
+    id: "ficha-hecho",
+    name: "Hecho",
+    description: "Ficha completa de un acontecimiento: qué pasó, causas, consecuencias y su artículo de referencia.",
+    defaultWords: 2200,
+  },
+  "ficha-epoca": {
+    id: "ficha-epoca",
+    name: "Época",
+    description: "Ficha completa de un período: panorama, hitos, actores, transformaciones y legado.",
+    defaultWords: 2600,
+  },
+  "ficha-entidad": {
+    id: "ficha-entidad",
+    name: "Entidad",
+    description: "Ficha completa de una persona, lugar, concepto o institución: semblanza, hitos y relaciones.",
+    defaultWords: 2200,
+  },
+  "ficha-pregunta": {
+    id: "ficha-pregunta",
+    name: "Pregunta",
+    description: "Ficha completa de una pregunta histórica: tesis, debate y el artículo que la responde.",
+    defaultWords: 2000,
+  },
 };
 
 export const ATELIER_FORMAT_LIST: AtelierFormatMeta[] = Object.values(ATELIER_FORMATS);
@@ -82,6 +126,12 @@ const WORD_TARGETS: Record<AtelierFormatId, Record<LongitudId, number>> = {
   capitulo: { compacta: 4500, normal: 8000, extensa: 12000 },
   // Monólogo hablado: medido en minutos al oído (≈150 palabras/min ⇒ ~12/20/32 min).
   podcast: { compacta: 1700, normal: 3000, extensa: 4800 },
+  // Fichas: artículo de referencia — denso y completo sin inflarse; la ficha
+  // estructurada (campos) se compone aparte sobre la misma evidencia.
+  "ficha-hecho": { compacta: 1400, normal: 2200, extensa: 3600 },
+  "ficha-epoca": { compacta: 1700, normal: 2600, extensa: 4200 },
+  "ficha-entidad": { compacta: 1400, normal: 2200, extensa: 3600 },
+  "ficha-pregunta": { compacta: 1300, normal: 2000, extensa: 3200 },
 };
 
 /** Palabras objetivo para un formato y modo dados (modo por defecto: "normal"). */

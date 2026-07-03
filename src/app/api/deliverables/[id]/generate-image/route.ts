@@ -3,7 +3,9 @@ import { generateAndStoreImage } from "@/lib/atelier/image";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300; // gpt-image puede tardar
+// El pipeline completo tarda: queries LLM + búsqueda multi-fuente + puntuación +
+// descarga de referencias + gpt-image (con reintentos de moderación).
+export const maxDuration = 600;
 
 // POST /api/deliverables/[id]/generate-image — genera (o regenera) la portada.
 // Gateado por el middleware (solo admin: consume créditos de OpenAI).

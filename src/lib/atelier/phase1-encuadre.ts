@@ -8,6 +8,26 @@ import type { AtelierBrief, AtelierEntities, AtelierQuestionMeta } from "./types
 import type { AtelierFormatId } from "../atelier-formats";
 import { getAtelierFormat } from "../atelier-formats";
 import { getFormatConfig } from "./format-config";
+import type { TypologyKind } from "../typology-schemas";
+
+/**
+ * En modo FICHA, la indagación no solo persigue una tesis: debe llenar CAMPOS.
+ * Este bloque orienta los ejes hacia lo que la ficha estructurada exigirá.
+ */
+const FICHA_EJES: Record<TypologyKind, string> = {
+  hecho:
+    "fecha y lugar exactos · protagonistas · antecedentes y contexto · causas estructurales · detonantes coyunturales · desarrollo cronológico del acontecimiento · consecuencias inmediatas y de largo plazo · por qué importa",
+  epoca:
+    "rango de años del período · panorama general · hitos fechados a lo largo de TODO el período · actores e instituciones · transformaciones (economía, sociedad, poder, territorio) · legado",
+  entidad:
+    "identidad y naturaleza del sujeto · orígenes o formación (nacimiento y muerte si es persona) · roles y cargos · hitos fechados de su trayectoria completa · relaciones con personas, lugares y conceptos · huella y memoria",
+  pregunta:
+    "los términos del debate · las posiciones en pugna y sus defensores · la evidencia que sostiene cada lectura · casos y datos concretos · lo que la evidencia no cierra",
+};
+
+function fichaBlock(kind: TypologyKind): string {
+  return `\n\nMODO FICHA (${kind.toUpperCase()}): esta pieza alimentará una ficha estructurada además del artículo. Los ejes deben CUBRIR ENTRE TODOS estos frentes — reparte, no los fusiones en uno: ${FICHA_EJES[kind]}. Un frente sin eje es un campo que quedará vacío en la ficha.`;
+}
 
 const uniq = (xs: string[]): string[] => Array.from(new Set(xs.map((s) => s.trim()).filter(Boolean)));
 
@@ -94,13 +114,16 @@ export async function buildBrief(args: {
   formatId: AtelierFormatId;
   extensionTarget: number;
   questionMeta?: AtelierQuestionMeta;
+  /** Presente cuando el encargo es una FICHA: orienta los ejes a sus campos. */
+  fichaKind?: TypologyKind;
 }): Promise<AtelierBrief> {
   const meta = getAtelierFormat(args.formatId);
   const cfg = getFormatConfig(args.formatId);
-  const system = ENCUADRE_SYSTEM.replace("{FORMAT_NAME}", meta?.name ?? args.formatId)
-    .replace("{FORMAT_DESC}", meta?.description ?? "")
-    .replace("{MIN_EJES}", String(cfg.minEjes))
-    .replace("{MAX_EJES}", String(cfg.maxEjes));
+  const system =
+    ENCUADRE_SYSTEM.replace("{FORMAT_NAME}", meta?.name ?? args.formatId)
+      .replace("{FORMAT_DESC}", meta?.description ?? "")
+      .replace("{MIN_EJES}", String(cfg.minEjes))
+      .replace("{MAX_EJES}", String(cfg.maxEjes)) + (args.fichaKind ? fichaBlock(args.fichaKind) : "");
 
   const hints = args.questionMeta ? buildQuestionHints(args.questionMeta) : "";
   const user = `INTENCIÓN DEL AUTOR:\n${args.intent}${hints ? `\n\n${hints}` : ""}\n\nJSON:`;
