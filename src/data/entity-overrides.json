@@ -1,3 +1,3155 @@
 {
- "_README": "Curación 'uno por uno' del backfill de época. Cada clave es `type:slug` (p. ej. \"persona:rafael-nunez\", \"lugar:bogota\", \"idea:federalismo\"). Valores: { periodoCode?: código PRE…POS|TRANS|null, anio?: número|null, hide?: true para excluir la entidad del sitio }. PISA la derivación automática del corpus. Reejecuta `npx tsx scripts/mine-entities.mts` para regenerar src/data/entities.json con estos overrides aplicados. Las claves que empiezan con _ se ignoran."
+ "_README": "Curación 'uno por uno' del backfill de época. Cada clave es `type:slug` (p. ej. \"persona:rafael-nunez\", \"lugar:bogota\", \"idea:federalismo\"). Valores: { periodoCode?: código PRE…POS|TRANS|null, anio?: número|null, hide?: true para excluir la entidad del sitio }. PISA la derivación automática del corpus. Reejecuta `npx tsx scripts/mine-entities.mts` para regenerar src/data/entities.json con estos overrides aplicados. Las claves que empiezan con _ se ignoran.",
+ "persona:juan-manuel-santos": {
+  "periodoCode": "SDE",
+  "anio": 2012
+ },
+ "persona:jorge-eliecer-gaitan": {
+  "periodoCode": "VIO",
+  "anio": 1948
+ },
+ "persona:comision-de-la-verdad": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:orlando-fals-borda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gonzalo-sanchez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alfonso-lopez-michelsen": {
+  "periodoCode": "CNA",
+  "anio": 1975
+ },
+ "persona:alfredo-molano": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:manuel-quintin-lame": {
+  "periodoCode": "REG",
+  "anio": 1915
+ },
+ "persona:salvador-camacho-roldan": {
+  "periodoCode": "EUC",
+  "anio": 1870
+ },
+ "persona:marco-palacios": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gustavo-petro": {
+  "periodoCode": "POS",
+  "anio": 2022
+ },
+ "persona:jose-manuel-marroquin": {
+  "periodoCode": "REG",
+  "anio": 1900
+ },
+ "persona:manuel-ancizar": {
+  "periodoCode": "NGR",
+  "anio": 1850
+ },
+ "persona:ivan-cepeda": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:gerardo-reichel-dolmatoff": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:german-colmenares": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:catherine-legrand": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:salomon-kalmanovitz": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gonzalo-sanchez-gomez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-emma-wills": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:absalon-machado": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:donny-meertens": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:humberto-de-la-calle": {
+  "periodoCode": "POS",
+  "anio": 2016
+ },
+ "persona:juan-friede": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-pizarro": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jaime-jaramillo-uribe": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:german-guzman-campos": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-victoria-uribe": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:centro-nacional-de-memoria-historica": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:mauricio-romero": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:fidel-castro": {
+  "periodoCode": "FN",
+  "anio": 1965
+ },
+ "persona:dario-fajardo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jorge-orlando-melo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pilar-riano": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jaime-arocha": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:estanislao-zuleta": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:german-arciniegas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:rafael-pardo": {
+  "periodoCode": "C91",
+  "anio": 1992
+ },
+ "persona:ingrid-betancourt": {
+  "periodoCode": "C91",
+  "anio": 2002
+ },
+ "persona:nina-s-de-friedemann": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mauricio-archila": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:francisco-gutierrez-sanin": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:claudia-lopez": {
+  "periodoCode": "SDE",
+  "anio": 2015
+ },
+ "persona:esteban-jaramillo": {
+  "periodoCode": "REG",
+  "anio": 1930
+ },
+ "persona:fernan-gonzalez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:patricia-linares": {
+  "periodoCode": "POS",
+  "anio": 2017
+ },
+ "persona:juan-camilo-restrepo": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:miguel-urrutia": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alejandro-reyes": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gustavo-duncan": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jose-antonio-ocampo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jesus-antonio-bejarano": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-clemencia-ramirez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pedro-fermin-de-vargas": {
+  "periodoCode": "PRE_IND",
+  "anio": 1795
+ },
+ "persona:eduardo-umana-luna": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:charles-bergquist": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gerardo-molina": {
+  "periodoCode": "REP_LIB",
+  "anio": 1945
+ },
+ "persona:roberto-pineda-camacho": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alejandro-reyes-posada": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:fernando-gonzalez": {
+  "periodoCode": "REG",
+  "anio": 1930
+ },
+ "persona:francisco-thoumi": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alvaro-valencia-tovar": {
+  "periodoCode": "FN",
+  "anio": 1970
+ },
+ "persona:ana-maria-ibanez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ivan-orozco": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alejandro-castillejo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carl-henrik-langebaek": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:arturo-alape": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-restrepo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ezequiel-uricoechea": {
+  "periodoCode": "EUC",
+  "anio": 1870
+ },
+ "persona:luis-eduardo-nieto-arteta": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ernesto-guhl": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:hermes-tovar": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:hermes-tovar-pinzon": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:joseph-gumilla": {
+  "periodoCode": "COL",
+  "anio": 1740
+ },
+ "persona:alvaro-villarraga": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:german-guzman": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:frank-safford": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jesus-abad-colorado": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:luis-ospina-vasquez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:margarita-gonzalez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:aline-helg": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-pizarro-leongomez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:quintin-lame": {
+  "periodoCode": "REG",
+  "anio": 1920
+ },
+ "persona:leon-valencia": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:manuel-antonio-carreno": {
+  "periodoCode": "NGR",
+  "anio": 1853
+ },
+ "persona:alvaro-tirado-mejia": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mauricio-garcia-villegas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:richard-evans-schultes": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:victor-daniel-bonilla": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jorge-rojas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:renan-silva": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-posada-carbo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-santa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:magdala-velasquez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pierre-gilhodes": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:amnistia-internacional": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:carlos-arturo-torres": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:jose-maria-espinosa": {
+  "periodoCode": "IND",
+  "anio": 1820
+ },
+ "persona:josefa-acevedo-de-gomez": {
+  "periodoCode": "NGR",
+  "anio": 1840
+ },
+ "persona:marta-traba": {
+  "periodoCode": "FN",
+  "anio": 1965
+ },
+ "persona:martha-nubia-bello": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:myriam-jimeno": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:nicolas-tanco-armero": {
+  "periodoCode": "NGR",
+  "anio": 1860
+ },
+ "persona:ivan-orozco-abad": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:julio-londono-londono": {
+  "periodoCode": "FN",
+  "anio": 1965
+ },
+ "persona:malcolm-deas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ruta-pacifica": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:astrid-ulloa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:fernando-urrea": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-teresa-ronderos": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mauricio-pardo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ruta-pacifica-de-las-mujeres": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:jorge-enrique-robledo": {
+  "periodoCode": "TRANS",
+  "anio": 2010
+ },
+ "persona:camila-medina": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-londono": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:patricia-lara": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alfonso-munera": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alfredo-molano-bravo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:caroline-moser": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:elsa-blair": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:leon-zamosc": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mara-viveros": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:medofilo-medina": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:francisco-gutierrez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:luis-florez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pedro-maria-ibanez": {
+  "periodoCode": "REG",
+  "anio": 1900
+ },
+ "persona:andres-guhl": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:antonio-caballero": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:comision-nacional-de-reparacion": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:elisee-reclus": {
+  "periodoCode": "NGR",
+  "anio": 1855
+ },
+ "persona:grupo-de-memoria-historica": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:wade-davis": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ana-maria-bidegain": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:beatriz-gonzalez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:german-castro-caycedo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:marta-ines-villa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:rufino-cuervo": {
+  "periodoCode": "NGR",
+  "anio": 1850
+ },
+ "persona:saul-franco": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:daniel-mejia": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:daniel-samper-pizano": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:helka-quevedo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:julio-carrizosa-umana": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:winifred-tate": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alvaro-camacho-guizado": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ana-maria-jaramillo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:camilo-dominguez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:clara-ines-garcia": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ernst-rothlisberger": {
+  "periodoCode": "REG",
+  "anio": 1885
+ },
+ "persona:jose-antonio-osorio-lizarazo": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:julio-carrizosa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mara-viveros-vigoya": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:marcos-martinon-torres": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:miguel-cane": {
+  "periodoCode": "EUC",
+  "anio": 1880
+ },
+ "persona:nazih-richani": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pablo-rodriguez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pablo-tattay": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:roberto-lleras": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:rosa-carnegie-williams": {
+  "periodoCode": "EUC",
+  "anio": 1882
+ },
+ "persona:carlos-mario-perea": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gabriel-misas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jorge-palacios-preciado": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mario-aguilera": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mercedes-lopez-rodriguez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:roberto-pineda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:william-ospina": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alvaro-delgado": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:francois-correa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-alicia-uribe-villegas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:marianne-cardale": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ricardo-vargas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:sandra-borda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:santiago-giraldo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:sergio-camargo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:yamile-salinas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alberto-mayor-mora": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alvaro-villarraga-sarmiento": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ariel-avila": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:aurora-vergara-figueroa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-miguel-ortiz": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:claudia-mosquera": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-umana": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gonzalo-correal": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:leonor-herrera": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mario-aguilera-pena": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:olivier-barbary": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:victoria-eugenia-henao": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:alvaro-camacho": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:angelika-rettberg": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gloria-triana": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jacobo-grajales": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:juan-jose-echavarria": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:lucero-aristizabal": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:luz-marina-monzon": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pablo-jaramillo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:patricia-londono-vega": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pilar-riano-alcala": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:rocio-londono": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ruben-dario": {
+  "periodoCode": "REG",
+  "anio": 1900
+ },
+ "persona:stefania-gallini": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alberto-rivera": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:angela-iranzo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:antonio-cacua-prada": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:beatriz-castro-carvajal": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-eduardo-jaramillo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-jose-reyes": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:clement-thibaud": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-calderon-saenz": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:enrique-parejo-gonzalez": {
+  "periodoCode": "CNA",
+  "anio": 1986
+ },
+ "persona:enrique-santos-calderon": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:esmeralda-prada": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:francisco-barbosa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gonzalo-hernandez-de-alba": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:juan-felipe-gaviria": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:juan-pablo-barrientos": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-antonieta-corcione": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:marianne-cardale-de-schrimpff": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mauricio-archila-neira": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ricardo-alvarez-leon": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ricardo-ferrer-espinosa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:santiago-castro-gomez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:shawn-van-ausdal": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:stephen-gudeman": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:teofilo-vasquez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alberto-donadio": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:aldo-civico": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:andres-lopez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:augusto-javier-gomez-lopez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-uribe": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:cesar-caballero": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:cesar-rodriguez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:cesar-rodriguez-garavito": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:daniela-castellanos": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:dario-mesa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:enrique-parejo": {
+  "periodoCode": "CNA",
+  "anio": 1986
+ },
+ "persona:esteban-restrepo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:fernando-cepeda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gabriel-poveda-ramos": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gabriel-silva-lujan": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:gloria-amparo-rodriguez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:gonzalo-catano": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:javier-ocampo-lopez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jorge-giraldo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:klaus-meschkat": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:magdala-velasquez-toro": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-alicia-uribe": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mauricio-nieto": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:nicolas-loaiza": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:patricia-londono": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:rafael-gutierrez-girardot": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ruben-sierra-mejia": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:tatiana-rincon": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alanis-bello-ramirez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alberto-gomez-gutierrez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alhena-caicedo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ana-carrigan": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:andres-lopez-restrepo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ann-farnsworth-alvear": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:antonio-jose-cancino": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:axel-rojas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:bernardo-tovar-zambrano": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:bruce-hoffman": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:camilo-lopez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:camilo-villamizar": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-andres-duran": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-arboleda-mora": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-davila": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:clemencia-rodriguez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:constanza-millan": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:cristina-rojas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-lemaitre": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eliecer-soto": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:enrique-sanchez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:fals-borda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:german-rey": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ignacio-briceno": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:james-j-parsons": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jasmin-hristov": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:john-jairo-rincon": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:john-lynch": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jorge-augusto-gamboa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jose-ivan-mojica": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jose-olinto-rueda-plata": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:juan-gustavo-cobo-borda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:juan-manuel-santos-calderon": {
+  "periodoCode": "SDE",
+  "anio": 2012
+ },
+ "persona:lacydes-moreno-blanco": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:luis-eduardo-perez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:luz-amparo-sanchez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:marc-bechard": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:margarita-garrido": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-mercedes-maldonado": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:marixa-lasso": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:marta-saade": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:martha-cecilia-garcia": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mauricio-baron": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mauricio-garcia": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:miguel-arturo-fajardo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pablo-vila": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:patricia-linares-prieto": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ricardo-rocha": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:roberto-steiner": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:victor-hugo": {
+  "hide": true,
+  "_motivo": "ruido"
+ },
+ "persona:william-elvis-plata": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alberto-gomez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alberto-mayor": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alvaro-tirado": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:andrea-perez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:andres-cancimance": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:andres-felipe-de-pablos": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:andres-felipe-mora-cortes": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:andres-solimano": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:armando-martinez-garnica": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-eduardo-lopez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-esteban-posada": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carmen-andrea-becerra": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:catalina-reyes": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:catalina-reyes-cardenas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:catalina-zorro": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:cesar-marquez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:daniel-samper": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:dario-villamizar": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:diana-paola-hernandez-fernandez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:diana-rodriguez-franco": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:eduardo-diaz-ardila": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:federico-andreu-guzman": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:francisco-gil-tovar": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:francisco-javier-aceituno": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:fundacion-prolongar": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:garry-leech": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:german-patino": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:german-tellez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:graciela-bolanos": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:greta-friedemann-sanchez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:hector-riveros": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:hermann-trimborn": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:hernan-alonso-munoz-velez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ingrid-johanna-bolivar": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:iris-marin": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:isabel-corpas-de-posada": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:james-d-henderson": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jane-m-rausch": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:john-lindsay-poland": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:jose-olinto-rueda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:juan-alberto-gomez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:juan-carlos-guataqui": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:juan-diego-restrepo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:juanita-esguerra": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:leah-anne-carroll": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:lina-maria-cespedes-baez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:liz-arevalo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:luis-guillermo-baptiste": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:luisa-mendoza": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:manuel-iturralde": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-elisa-pinto": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-eugenia-ibarra": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-teresa-cristina": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mario-latorre": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mario-mendoza": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mauricio-avella": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:michael-francis": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:natalia-quiceno": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:piedad-bonnett": {
+  "periodoCode": "TRANS",
+  "anio": 2000
+ },
+ "persona:renata-serna": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ricardo-arias": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ricardo-penaranda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:ricardo-sanchez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:roberto-hinestrosa": {
+  "periodoCode": "TRANS",
+  "anio": 1995
+ },
+ "persona:robin-kirk": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:rocio-londono-botero": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:santiago-diaz-piedrahita": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:sara-victoria-alvarado": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:tulia-almanza": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-castano": {
+  "periodoCode": "C91",
+  "anio": 1998
+ },
+ "persona:alvaro-uribe-velez": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:carlos-lleras-restrepo": {
+  "periodoCode": "FN",
+  "anio": 1968
+ },
+ "persona:salvatore-mancuso": {
+  "periodoCode": "SDE",
+  "anio": 2003
+ },
+ "persona:alfonso-lopez-pumarejo": {
+  "periodoCode": "REP_LIB",
+  "anio": 1936
+ },
+ "persona:rafael-nunez": {
+  "periodoCode": "REG",
+  "anio": 1886
+ },
+ "persona:andres-pastrana": {
+  "periodoCode": "C91",
+  "anio": 1999
+ },
+ "persona:cesar-gaviria": {
+  "periodoCode": "C91",
+  "anio": 1992
+ },
+ "persona:pablo-escobar": {
+  "periodoCode": "CNA",
+  "anio": 1989
+ },
+ "persona:manuel-marulanda": {
+  "periodoCode": "TRANS",
+  "anio": 1990
+ },
+ "persona:belisario-betancur": {
+  "periodoCode": "CNA",
+  "anio": 1984
+ },
+ "persona:laureano-gomez": {
+  "periodoCode": "VIO",
+  "anio": 1950
+ },
+ "persona:alvaro-uribe": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:mariano-ospina-perez": {
+  "periodoCode": "VIO",
+  "anio": 1948
+ },
+ "persona:tomas-cipriano-de-mosquera": {
+  "periodoCode": "NGR",
+  "anio": 1861
+ },
+ "persona:alberto-lleras-camargo": {
+  "periodoCode": "FN",
+  "anio": 1960
+ },
+ "persona:miguel-antonio-caro": {
+  "periodoCode": "REG",
+  "anio": 1894
+ },
+ "persona:simon-bolivar": {
+  "periodoCode": "IND",
+  "anio": 1819
+ },
+ "persona:gustavo-rojas-pinilla": {
+  "periodoCode": "VIO",
+  "anio": 1955
+ },
+ "persona:rafael-reyes": {
+  "periodoCode": "REG",
+  "anio": 1906
+ },
+ "persona:virgilio-barco": {
+  "periodoCode": "CNA",
+  "anio": 1988
+ },
+ "persona:ernesto-samper": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:camilo-torres-restrepo": {
+  "periodoCode": "FN",
+  "anio": 1965
+ },
+ "persona:manuel-marulanda-velez": {
+  "periodoCode": "TRANS",
+  "anio": 1990
+ },
+ "persona:francisco-de-paula-santander": {
+  "periodoCode": "IND",
+  "anio": 1825
+ },
+ "persona:francisco-de-roux": {
+  "periodoCode": "POS",
+  "anio": 2020
+ },
+ "persona:ivan-duque": {
+  "periodoCode": "POS",
+  "anio": 2020
+ },
+ "persona:jacobo-arenas": {
+  "periodoCode": "FN",
+  "anio": 1970
+ },
+ "persona:bill-clinton": {
+  "periodoCode": "C91",
+  "anio": 1999
+ },
+ "persona:antonio-navarro-wolff": {
+  "periodoCode": "C91",
+  "anio": 1990
+ },
+ "persona:eduardo-santos": {
+  "periodoCode": "REP_LIB",
+  "anio": 1938
+ },
+ "persona:pedro-nel-ospina": {
+  "periodoCode": "REG",
+  "anio": 1922
+ },
+ "persona:henry-perez": {
+  "periodoCode": "CNA",
+  "anio": 1988
+ },
+ "persona:carlos-pizarro": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:daniel-pecaut": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:lorenzo-muelas": {
+  "periodoCode": "C91",
+  "anio": 1991
+ },
+ "persona:jose-hilario-lopez": {
+  "periodoCode": "NGR",
+  "anio": 1850
+ },
+ "persona:alvaro-gomez-hurtado": {
+  "periodoCode": "C91",
+  "anio": 1991
+ },
+ "persona:rafael-uribe-uribe": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:marco-fidel-suarez": {
+  "periodoCode": "REG",
+  "anio": 1920
+ },
+ "persona:anuc": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:manuel-murillo-toro": {
+  "periodoCode": "EUC",
+  "anio": 1870
+ },
+ "persona:gonzalo-rodriguez-gacha": {
+  "periodoCode": "CNA",
+  "anio": 1989
+ },
+ "persona:misael-pastrana-borrero": {
+  "periodoCode": "FN",
+  "anio": 1972
+ },
+ "persona:misael-pastrana": {
+  "periodoCode": "FN",
+  "anio": 1972
+ },
+ "persona:jaime-pardo-leal": {
+  "periodoCode": "CNA",
+  "anio": 1987
+ },
+ "persona:luis-carlos-galan": {
+  "periodoCode": "CNA",
+  "anio": 1989
+ },
+ "persona:julio-cesar-turbay": {
+  "periodoCode": "CNA",
+  "anio": 1980
+ },
+ "persona:vicente-castano": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:mariano-ospina-rodriguez": {
+  "periodoCode": "NGR",
+  "anio": 1855
+ },
+ "persona:camilo-torres": {
+  "periodoCode": "IND",
+  "anio": 1815
+ },
+ "persona:fidel-castano": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:enrique-olaya-herrera": {
+  "periodoCode": "REP_LIB",
+  "anio": 1932
+ },
+ "persona:lauchlin-currie": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:maria-cano": {
+  "periodoCode": "REG",
+  "anio": 1925
+ },
+ "persona:antonio-narino": {
+  "periodoCode": "IND",
+  "anio": 1810
+ },
+ "persona:gonzalo-jimenez-de-quesada": {
+  "periodoCode": "CON",
+  "anio": 1538
+ },
+ "persona:gabriel-garcia-marquez": {
+  "periodoCode": "TRANS",
+  "anio": 1970
+ },
+ "persona:auc": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:mario-montoya": {
+  "periodoCode": "SDE",
+  "anio": 2008
+ },
+ "persona:miguel-abadia-mendez": {
+  "periodoCode": "REG",
+  "anio": 1928
+ },
+ "persona:ivan-marquez": {
+  "periodoCode": "POS",
+  "anio": 2016
+ },
+ "persona:agustin-codazzi": {
+  "periodoCode": "NGR",
+  "anio": 1850
+ },
+ "persona:bernardo-jaramillo-ossa": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:hugo-chavez": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:corte-constitucional": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:theodore-roosevelt": {
+  "periodoCode": "REG",
+  "anio": 1903
+ },
+ "persona:jaime-bateman": {
+  "periodoCode": "CNA",
+  "anio": 1983
+ },
+ "persona:manuel-jose-cepeda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:manuel-zapata-olivella": {
+  "periodoCode": "TRANS",
+  "anio": 1970
+ },
+ "persona:rodrigo-tovar-pupo": {
+  "periodoCode": "SDE",
+  "anio": 2000
+ },
+ "persona:alfonso-cano": {
+  "periodoCode": "SDE",
+  "anio": 2000
+ },
+ "persona:francia-marquez": {
+  "periodoCode": "POS",
+  "anio": 2020
+ },
+ "persona:horacio-serpa": {
+  "periodoCode": "C91",
+  "anio": 1998
+ },
+ "persona:luis-lopez-de-mesa": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:jose-manuel-restrepo": {
+  "periodoCode": "IND",
+  "anio": 1825
+ },
+ "persona:aquileo-parra": {
+  "periodoCode": "EUC",
+  "anio": 1878
+ },
+ "persona:julio-cesar-turbay-ayala": {
+  "periodoCode": "CNA",
+  "anio": 1980
+ },
+ "persona:ramon-isaza": {
+  "periodoCode": "SDE",
+  "anio": 2000
+ },
+ "persona:jose-celestino-mutis": {
+  "periodoCode": "COL",
+  "anio": 1783
+ },
+ "persona:jep": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:farc-ep": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:pablo-morillo": {
+  "periodoCode": "IND",
+  "anio": 1816
+ },
+ "persona:farc": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:bernardo-jaramillo": {
+  "periodoCode": "CNA",
+  "anio": 1989
+ },
+ "persona:carlos-e-restrepo": {
+  "periodoCode": "REG",
+  "anio": 1912
+ },
+ "persona:ignacio-torres-giraldo": {
+  "periodoCode": "REG",
+  "anio": 1925
+ },
+ "persona:jose-maria-samper": {
+  "periodoCode": "NGR",
+  "anio": 1860
+ },
+ "persona:raul-reyes": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:guillermo-leon-valencia": {
+  "periodoCode": "FN",
+  "anio": 1963
+ },
+ "persona:onic": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:raul-eduardo-mahecha": {
+  "periodoCode": "REG",
+  "anio": 1928
+ },
+ "persona:antonio-caballero-y-gongora": {
+  "periodoCode": "COL",
+  "anio": 1785
+ },
+ "persona:defensoria-del-pueblo": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:francisco-rojas-birry": {
+  "periodoCode": "C91",
+  "anio": 1991
+ },
+ "persona:juan-de-la-cruz-varela": {
+  "periodoCode": "VIO",
+  "anio": 1953
+ },
+ "persona:julio-cesar-arana": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:leon-xiii": {
+  "periodoCode": "REG",
+  "anio": 1890
+ },
+ "persona:jose-antonio-paez": {
+  "periodoCode": "IND",
+  "anio": 1825
+ },
+ "persona:luis-carlos-restrepo": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:dario-echandia": {
+  "periodoCode": "REP_LIB",
+  "anio": 1943
+ },
+ "persona:george-w-bush": {
+  "periodoCode": "SDE",
+  "anio": 2003
+ },
+ "persona:ivan-roberto-duque": {
+  "periodoCode": "SDE",
+  "anio": 2003
+ },
+ "persona:alejandro-lopez": {
+  "periodoCode": "REG",
+  "anio": 1920
+ },
+ "persona:francisco-jose-de-caldas": {
+  "periodoCode": "PRE_IND",
+  "anio": 1805
+ },
+ "persona:rodrigo-londono": {
+  "periodoCode": "POS",
+  "anio": 2016
+ },
+ "persona:manuel-cepeda-vargas": {
+  "periodoCode": "C91",
+  "anio": 1994
+ },
+ "persona:jorge-40": {
+  "periodoCode": "SDE",
+  "anio": 2003
+ },
+ "persona:fabio-vasquez-castano": {
+  "periodoCode": "FN",
+  "anio": 1965
+ },
+ "persona:gregorio-hernandez-de-alba": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:james-parsons": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:florentino-gonzalez": {
+  "periodoCode": "NGR",
+  "anio": 1850
+ },
+ "persona:hernan-giraldo": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:roger-casement": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:jose-maria-obando": {
+  "periodoCode": "NGR",
+  "anio": 1850
+ },
+ "persona:victor-carranza": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:carlos-rosero": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:gilberto-vieira": {
+  "periodoCode": "FN",
+  "anio": 1970
+ },
+ "persona:sergio-jaramillo": {
+  "periodoCode": "POS",
+  "anio": 2016
+ },
+ "persona:carlos-iii": {
+  "periodoCode": "COL",
+  "anio": 1770
+ },
+ "persona:erasmo-valencia": {
+  "periodoCode": "REP_LIB",
+  "anio": 1935
+ },
+ "persona:carlos-lehder": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:piedad-cordoba": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:rodrigo-lara-bonilla": {
+  "periodoCode": "CNA",
+  "anio": 1984
+ },
+ "persona:rudolf-hommes": {
+  "periodoCode": "C91",
+  "anio": 1992
+ },
+ "persona:libia-grueso": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:virginia-gutierrez-de-pineda": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:aida-quilcue": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:antonio-garcia": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:rodrigo-uprimny": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:tomas-carrasquilla": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:antanas-mockus": {
+  "periodoCode": "C91",
+  "anio": 1998
+ },
+ "persona:miguel-samper": {
+  "periodoCode": "EUC",
+  "anio": 1875
+ },
+ "persona:jose-antonio-galan": {
+  "periodoCode": "PRE_IND",
+  "anio": 1781
+ },
+ "persona:alexander-von-humboldt": {
+  "periodoCode": "PRE_IND",
+  "anio": 1801
+ },
+ "persona:eln": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:sebastian-de-belalcazar": {
+  "periodoCode": "CON",
+  "anio": 1540
+ },
+ "persona:manuel-perez": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:acnur": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:john-f-kennedy": {
+  "periodoCode": "FN",
+  "anio": 1962
+ },
+ "persona:mario-uribe": {
+  "periodoCode": "SDE",
+  "anio": 2007
+ },
+ "persona:rito-alejo-del-rio": {
+  "periodoCode": "C91",
+  "anio": 1998
+ },
+ "persona:bartolome-de-las-casas": {
+  "periodoCode": "CON",
+  "anio": 1540
+ },
+ "persona:jose-eustasio-rivera": {
+  "periodoCode": "REG",
+  "anio": 1924
+ },
+ "persona:lazaro-cardenas": {
+  "periodoCode": "REP_LIB",
+  "anio": 1936
+ },
+ "persona:alberto-ruiz-novoa": {
+  "periodoCode": "FN",
+  "anio": 1962
+ },
+ "persona:jaime-castro": {
+  "periodoCode": "CNA",
+  "anio": 1988
+ },
+ "persona:francisco-antonio-zea": {
+  "periodoCode": "IND",
+  "anio": 1820
+ },
+ "persona:federacion-nacional-de-cafeteros": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:alonso-salazar": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:incora": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:manuel-mejia": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:manuel-rodriguez-becerra": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:miguel-arroyave": {
+  "periodoCode": "SDE",
+  "anio": 2004
+ },
+ "persona:pablo-guarin": {
+  "periodoCode": "CNA",
+  "anio": 1987
+ },
+ "persona:soledad-acosta-de-samper": {
+  "periodoCode": "EUC",
+  "anio": 1880
+ },
+ "persona:antonio-jose-de-sucre": {
+  "periodoCode": "IND",
+  "anio": 1824
+ },
+ "persona:edwin-kemmerer": {
+  "periodoCode": "REG",
+  "anio": 1923
+ },
+ "persona:alvaro-fayad": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:arturo-escobar": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:javier-giraldo": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:juan-domingo-peron": {
+  "periodoCode": "VIO",
+  "anio": 1950
+ },
+ "persona:luis-duque-gomez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pedro-de-heredia": {
+  "periodoCode": "CON",
+  "anio": 1533
+ },
+ "persona:united-fruit-company": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:augusto-pinochet": {
+  "periodoCode": "CNA",
+  "anio": 1980
+ },
+ "persona:benjamin-herrera": {
+  "periodoCode": "REG",
+  "anio": 1902
+ },
+ "persona:manuel-perez-martinez": {
+  "periodoCode": "FN",
+  "anio": 1985
+ },
+ "persona:paul-rivet": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:peter-wade": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:guadalupe-salcedo": {
+  "periodoCode": "VIO",
+  "anio": 1953
+ },
+ "persona:francisco-santos": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:jorge-isaacs": {
+  "periodoCode": "EUC",
+  "anio": 1867
+ },
+ "persona:rufino-jose-cuervo": {
+  "periodoCode": "REG",
+  "anio": 1900
+ },
+ "persona:andres-almarales": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:don-berna": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:eduardo-cifuentes": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:sergio-arboleda": {
+  "periodoCode": "NGR",
+  "anio": 1860
+ },
+ "persona:cortes-vargas": {
+  "periodoCode": "REG",
+  "anio": 1928
+ },
+ "persona:gilberto-rodriguez-orejuela": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:madres-de-soacha": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:pedro-claver": {
+  "periodoCode": "COL",
+  "anio": 1630
+ },
+ "persona:margarita-serje": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:nicolas-rodriguez-bautista": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:carlos-cortes-vargas": {
+  "periodoCode": "REG",
+  "anio": 1928
+ },
+ "persona:daniel-rendon-herrera": {
+  "periodoCode": "SDE",
+  "anio": 2009
+ },
+ "persona:gustavo-gutierrez": {
+  "periodoCode": "FN",
+  "anio": 1971
+ },
+ "persona:rafael-correa": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:ronald-reagan": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:aquiles-escalante": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:esmeralda-arboleda": {
+  "periodoCode": "VIO",
+  "anio": 1955
+ },
+ "persona:jose-maria-melo": {
+  "periodoCode": "NGR",
+  "anio": 1854
+ },
+ "persona:jose-vicente-concha": {
+  "periodoCode": "REG",
+  "anio": 1915
+ },
+ "persona:maria-eugenia-rojas": {
+  "periodoCode": "FN",
+  "anio": 1974
+ },
+ "persona:sergio-fajardo": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:alfonso-reyes-echandia": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:miguel-angel-builes": {
+  "periodoCode": "VIO",
+  "anio": 1950
+ },
+ "persona:pedro-alcantara-herran": {
+  "periodoCode": "NGR",
+  "anio": 1841
+ },
+ "persona:yair-klein": {
+  "periodoCode": "CNA",
+  "anio": 1988
+ },
+ "persona:benkos-bioho": {
+  "periodoCode": "COL",
+  "anio": 1605
+ },
+ "persona:codhes": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:feliciano-valencia": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:jose-manuel-groot": {
+  "periodoCode": "NGR",
+  "anio": 1860
+ },
+ "persona:tulio-ospina": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:andres-bello": {
+  "periodoCode": "NGR",
+  "anio": 1840
+ },
+ "persona:asfaddes": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:francisco-javier-cisneros": {
+  "periodoCode": "REG",
+  "anio": 1890
+ },
+ "persona:ecopetrol": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:florence-thomas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:manuel-de-jesus-piraban": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:santiago-perez": {
+  "periodoCode": "EUC",
+  "anio": 1874
+ },
+ "persona:vicente-azuero": {
+  "periodoCode": "IND",
+  "anio": 1825
+ },
+ "persona:victor-g-ricardo": {
+  "periodoCode": "C91",
+  "anio": 1999
+ },
+ "persona:diego-murillo-bejarano": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:evo-morales": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:ezequiel-rojas": {
+  "periodoCode": "NGR",
+  "anio": 1850
+ },
+ "persona:indalecio-lievano-aguirre": {
+  "periodoCode": "FN",
+  "anio": 1970
+ },
+ "persona:juan-de-dios-mosquera": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:victor-raul-haya-de-la-torre": {
+  "periodoCode": "REP_LIB",
+  "anio": 1935
+ },
+ "persona:francisco-leal-buitrago": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:hermanos-rodriguez-orejuela": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:jorge-briceno": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:magdalena-leon": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:manuel-cepeda": {
+  "periodoCode": "CNA",
+  "anio": 1993
+ },
+ "persona:mary-roldan": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alberto-fujimori": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:alvaro-garcia-romero": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:icbf": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:jaime-bateman-cayon": {
+  "periodoCode": "CNA",
+  "anio": 1980
+ },
+ "persona:juan-francisco-berbeo": {
+  "periodoCode": "PRE_IND",
+  "anio": 1781
+ },
+ "persona:juan-jose-nieto": {
+  "periodoCode": "NGR",
+  "anio": 1860
+ },
+ "persona:manuela-beltran": {
+  "periodoCode": "PRE_IND",
+  "anio": 1781
+ },
+ "persona:michael-taussig": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:nicolas-maduro": {
+  "periodoCode": "POS",
+  "anio": 2018
+ },
+ "persona:yolanda-becerra": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:cnmh": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:felipe-ii": {
+  "periodoCode": "CON",
+  "anio": 1580
+ },
+ "persona:francisco-de-miranda": {
+  "periodoCode": "IND",
+  "anio": 1810
+ },
+ "persona:jose-maria-vergara-y-vergara": {
+  "periodoCode": "EUC",
+  "anio": 1870
+ },
+ "persona:miguel-jimenez-lopez": {
+  "periodoCode": "REG",
+  "anio": 1920
+ },
+ "persona:yolanda-ceron": {
+  "periodoCode": "C91",
+  "anio": 2001
+ },
+ "persona:accion-social": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:antonio-navarro": {
+  "periodoCode": "C91",
+  "anio": 1991
+ },
+ "persona:fernando-vallejo": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:floro-tunubala": {
+  "periodoCode": "C91",
+  "anio": 2001
+ },
+ "persona:ismael-perdomo": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:ivan-marino-ospina": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:jorge-tadeo-lozano": {
+  "periodoCode": "IND",
+  "anio": 1810
+ },
+ "persona:jose-gonzalo-sanchez": {
+  "periodoCode": "REG",
+  "anio": 1928
+ },
+ "persona:pedro-antonio-marin": {
+  "periodoCode": "FN",
+  "anio": 1964
+ },
+ "persona:vera-grabe": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:anibal-galindo": {
+  "periodoCode": "EUC",
+  "anio": 1875
+ },
+ "persona:barry-mccaffrey": {
+  "periodoCode": "C91",
+  "anio": 1999
+ },
+ "persona:bernardo-gutierrez": {
+  "periodoCode": "C91",
+  "anio": 1994
+ },
+ "persona:candelario-obeso": {
+  "periodoCode": "NGR",
+  "anio": 1877
+ },
+ "persona:carlos-holguin": {
+  "periodoCode": "REG",
+  "anio": 1890
+ },
+ "persona:cric": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:farouk-yanine-diaz": {
+  "periodoCode": "CNA",
+  "anio": 1987
+ },
+ "persona:mono-jojoy": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:baldomero-sanin-cano": {
+  "periodoCode": "REG",
+  "anio": 1920
+ },
+ "persona:diego-fernando-murillo": {
+  "periodoCode": "SDE",
+  "anio": 2006
+ },
+ "persona:diego-luis-cordoba": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:juan-de-castellanos": {
+  "periodoCode": "CON",
+  "anio": 1590
+ },
+ "persona:lucas-fernandez-de-piedrahita": {
+  "periodoCode": "COL",
+  "anio": 1670
+ },
+ "persona:mario-arrubla": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:otto-morales-benitez": {
+  "periodoCode": "CNA",
+  "anio": 1980
+ },
+ "persona:patricia-tobon-yagari": {
+  "periodoCode": "POS",
+  "anio": 2022
+ },
+ "persona:pedro-simon": {
+  "periodoCode": "CON",
+  "anio": 1625
+ },
+ "persona:tomas-uribe-marquez": {
+  "periodoCode": "REG",
+  "anio": 1925
+ },
+ "persona:trino-morales": {
+  "periodoCode": "FN",
+  "anio": 1970
+ },
+ "persona:walter-hardenburg": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:antonio-garcia-nossa": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:corte-suprema-de-justicia": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:joaquin-acosta": {
+  "periodoCode": "NGR",
+  "anio": 1845
+ },
+ "persona:jorge-holguin": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:leyner-palacios": {
+  "periodoCode": "POS",
+  "anio": 2018
+ },
+ "persona:paul-oquist": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:pedro-justo-berrio": {
+  "periodoCode": "EUC",
+  "anio": 1870
+ },
+ "persona:rafael-urdaneta": {
+  "periodoCode": "IND",
+  "anio": 1825
+ },
+ "persona:alonso-de-jesus-baquero": {
+  "periodoCode": "CNA",
+  "anio": 1988
+ },
+ "persona:enrique-perez-arbelaez": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:fernando-landazabal": {
+  "periodoCode": "CNA",
+  "anio": 1984
+ },
+ "persona:guillermo-valencia": {
+  "periodoCode": "REG",
+  "anio": 1918
+ },
+ "persona:harold-bedoya": {
+  "periodoCode": "C91",
+  "anio": 1997
+ },
+ "persona:jorge-noguera": {
+  "periodoCode": "SDE",
+  "anio": 2006
+ },
+ "persona:jose-ignacio-de-marquez": {
+  "periodoCode": "NGR",
+  "anio": 1838
+ },
+ "persona:luis-tejada": {
+  "periodoCode": "REG",
+  "anio": 1922
+ },
+ "persona:ofelia-uribe-de-acosta": {
+  "periodoCode": "REP_LIB",
+  "anio": 1944
+ },
+ "persona:pedro-gual": {
+  "periodoCode": "IND",
+  "anio": 1825
+ },
+ "persona:proceso-de-comunidades-negras": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:richard-nixon": {
+  "periodoCode": "CNA",
+  "anio": 1972
+ },
+ "persona:stathis-kalyvas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:yolanda-izquierdo": {
+  "periodoCode": "SDE",
+  "anio": 2007
+ },
+ "persona:agustin-nieto-caballero": {
+  "periodoCode": "REG",
+  "anio": 1925
+ },
+ "persona:banco-mundial": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:felipe-perez": {
+  "periodoCode": "NGR",
+  "anio": 1860
+ },
+ "persona:francisco-caraballo": {
+  "periodoCode": "C91",
+  "anio": 1994
+ },
+ "persona:gloria-cuartas": {
+  "periodoCode": "C91",
+  "anio": 1996
+ },
+ "persona:gustavo-gallon": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:isauro-yosa": {
+  "periodoCode": "VIO",
+  "anio": 1952
+ },
+ "persona:jaime-garzon": {
+  "periodoCode": "C91",
+  "anio": 1999
+ },
+ "persona:jose-jeronimo-triana": {
+  "periodoCode": "NGR",
+  "anio": 1855
+ },
+ "persona:jose-padilla": {
+  "periodoCode": "IND",
+  "anio": 1825
+ },
+ "persona:m-19": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:maria-teresa-uribe": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mariano-montilla": {
+  "periodoCode": "IND",
+  "anio": 1822
+ },
+ "persona:pedro-oliverio-guerrero": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:philippe-bunau-varilla": {
+  "periodoCode": "REG",
+  "anio": 1903
+ },
+ "persona:roberto-urdaneta-arbelaez": {
+  "periodoCode": "VIO",
+  "anio": 1952
+ },
+ "persona:union-patriotica": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:andres-felipe-arias": {
+  "periodoCode": "SDE",
+  "anio": 2008
+ },
+ "persona:carlos-gaviria": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:carlos-v": {
+  "periodoCode": "CON",
+  "anio": 1540
+ },
+ "persona:cesar-gaviria-trujillo": {
+  "periodoCode": "C91",
+  "anio": 1992
+ },
+ "persona:compania-de-jesus": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:dane": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:diego-montoya": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:fedegan": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:incoder": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:ivan-velasquez": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:jorge-bejarano": {
+  "periodoCode": "REG",
+  "anio": 1920
+ },
+ "persona:jose-eusebio-caro": {
+  "periodoCode": "NGR",
+  "anio": 1845
+ },
+ "persona:juan-rodriguez-freyle": {
+  "periodoCode": "COL",
+  "anio": 1636
+ },
+ "persona:manuel-jose-caycedo": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:manuel-jose-mosquera": {
+  "periodoCode": "NGR",
+  "anio": 1845
+ },
+ "persona:manuel-uribe-angel": {
+  "periodoCode": "REG",
+  "anio": 1885
+ },
+ "persona:bernardo-herrera-restrepo": {
+  "periodoCode": "REG",
+  "anio": 1910
+ },
+ "persona:daniel-ortega": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:enrique-penalosa": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:luis-jorge-garay": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:mario-iguaran": {
+  "periodoCode": "SDE",
+  "anio": 2007
+ },
+ "persona:movice": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:pablo-vi": {
+  "periodoCode": "FN",
+  "anio": 1968
+ },
+ "persona:policarpa-salavarrieta": {
+  "periodoCode": "IND",
+  "anio": 1817
+ },
+ "persona:vicente-restrepo": {
+  "periodoCode": "REG",
+  "anio": 1890
+ },
+ "persona:alicia-dussan": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:arnubio-triana": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:barack-obama": {
+  "periodoCode": "SDE",
+  "anio": 2012
+ },
+ "persona:carlos-gaviria-diaz": {
+  "periodoCode": "C91",
+  "anio": 2000
+ },
+ "persona:edwin-walter-kemmerer": {
+  "periodoCode": "REG",
+  "anio": 1923
+ },
+ "persona:fernando-botero": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:fiscalia-general": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:francisco-antonio-moreno-y-escandon": {
+  "periodoCode": "COL",
+  "anio": 1775
+ },
+ "persona:frank-pearl": {
+  "periodoCode": "SDE",
+  "anio": 2012
+ },
+ "persona:gerardo-valencia-cano": {
+  "periodoCode": "FN",
+  "anio": 1970
+ },
+ "persona:guillermo-cano": {
+  "periodoCode": "CNA",
+  "anio": 1986
+ },
+ "persona:jose-ignacio-de-pombo": {
+  "periodoCode": "PRE_IND",
+  "anio": 1800
+ },
+ "persona:julio-arboleda": {
+  "periodoCode": "NGR",
+  "anio": 1860
+ },
+ "persona:luis-zapata-de-cardenas": {
+  "periodoCode": "CON",
+  "anio": 1575
+ },
+ "persona:manuel-del-socorro-rodriguez": {
+  "periodoCode": "PRE_IND",
+  "anio": 1800
+ },
+ "persona:manuel-maria-paz": {
+  "periodoCode": "NGR",
+  "anio": 1855
+ },
+ "persona:pio-ix": {
+  "periodoCode": "EUC",
+  "anio": 1870
+ },
+ "persona:raul-hasbun": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:rogerio-velasquez": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:botalon": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:charles-tilly": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:comision-colombiana-de-juristas": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:diego-murillo": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:francisco-silvestre": {
+  "periodoCode": "COL",
+  "anio": 1780
+ },
+ "persona:jose-asuncion-silva": {
+  "periodoCode": "REG",
+  "anio": 1895
+ },
+ "persona:juan-roa-sierra": {
+  "periodoCode": "VIO",
+  "anio": 1948
+ },
+ "persona:liborio-zerda": {
+  "periodoCode": "REG",
+  "anio": 1890
+ },
+ "persona:lino-de-pombo": {
+  "periodoCode": "NGR",
+  "anio": 1850
+ },
+ "persona:manuel-antonio-sanclemente": {
+  "periodoCode": "REG",
+  "anio": 1898
+ },
+ "persona:manuela-saenz": {
+  "periodoCode": "IND",
+  "anio": 1825
+ },
+ "persona:margarita-marino-de-botero": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:pcn": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:philip-alston": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:william-yarborough": {
+  "periodoCode": "FN",
+  "anio": 1962
+ },
+ "persona:aida-avella": {
+  "periodoCode": "CNA",
+  "anio": 1988
+ },
+ "persona:carlos-jimenez-gomez": {
+  "periodoCode": "CNA",
+  "anio": 1985
+ },
+ "persona:carlos-mario-jimenez": {
+  "periodoCode": "SDE",
+  "anio": 2005
+ },
+ "persona:diego-montana-cuellar": {
+  "periodoCode": "FN",
+  "anio": 1970
+ },
+ "persona:eric-hobsbawm": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:fabiola-lalinde": {
+  "periodoCode": "CNA",
+  "anio": 1988
+ },
+ "persona:getulio-vargas": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:jose-carlos-mariategui": {
+  "periodoCode": "REP_LIB",
+  "anio": 1928
+ },
+ "persona:juan-jose-flores": {
+  "periodoCode": "IND",
+  "anio": 1830
+ },
+ "persona:madres-de-plaza-de-mayo": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:marta-lucia-ramirez": {
+  "periodoCode": "SDE",
+  "anio": 2010
+ },
+ "persona:mauricio-cardenas": {
+  "periodoCode": "SDE",
+  "anio": 2012
+ },
+ "persona:pierre-bourdieu": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:tiberio-fernandez": {
+  "periodoCode": "CNA",
+  "anio": 1989
+ },
+ "persona:timoleon-jimenez": {
+  "periodoCode": "SDE",
+  "anio": 2012
+ },
+ "persona:unidad-de-victimas": {
+  "hide": true,
+  "_motivo": "institucion"
+ },
+ "persona:yanette-bautista": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:albert-berry": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alfonso-lopez-trujillo": {
+  "periodoCode": "FN",
+  "anio": 1972
+ },
+ "persona:ana-maria-falchetti": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carl-langebaek": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:carlos-andres-perez": {
+  "periodoCode": "CNA",
+  "anio": 1989
+ },
+ "persona:daniel-samper-ortega": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:eduardo-umana-mendoza": {
+  "periodoCode": "CNA",
+  "anio": 1990
+ },
+ "persona:fernando-botero-zea": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:gerardo-loaiza": {
+  "periodoCode": "VIO",
+  "anio": 1952
+ },
+ "persona:henry-loaiza": {
+  "periodoCode": "C91",
+  "anio": 1995
+ },
+ "persona:jacobo-prias-alape": {
+  "periodoCode": "VIO",
+  "anio": 1955
+ },
+ "persona:joaquin-posada-gutierrez": {
+  "periodoCode": "NGR",
+  "anio": 1850
+ },
+ "persona:jorge-robledo": {
+  "periodoCode": "CON",
+  "anio": 1540
+ },
+ "persona:manuel-rodriguez-torices": {
+  "periodoCode": "IND",
+  "anio": 1815
+ },
+ "persona:gabriel-turbay": {
+  "periodoCode": "REP_LIB",
+  "anio": 1940
+ },
+ "persona:clemencia-plazas": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:vicente-arbelaez": {
+  "periodoCode": "EUC",
+  "anio": 1870
+ },
+ "persona:ezequiel-moreno-diaz": {
+  "periodoCode": "REG",
+  "anio": 1895
+ },
+ "persona:jose-prudencio-padilla": {
+  "periodoCode": "IND",
+  "anio": 1823
+ },
+ "persona:betty-meggers": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:luis-brion": {
+  "periodoCode": "IND",
+  "anio": 1820
+ },
+ "persona:ana-maria-boada": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:augusto-oyuela-caycedo": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:julio-cesar-cubillos": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:adolfo-meisel-roca": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:alicia-dussan-de-reichel": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:calarca": {
+  "periodoCode": "CON",
+  "anio": 1560
+ },
+ "persona:francisco-tomas-morales": {
+  "periodoCode": "IND",
+  "anio": 1820
+ },
+ "persona:robert-carneiro": {
+  "hide": true,
+  "_motivo": "academico"
+ },
+ "persona:joaquin-fernando-velez": {
+  "periodoCode": "REG",
+  "anio": 1895
+ },
+ "persona:nutibara": {
+  "periodoCode": "CON",
+  "anio": 1540
+ }
 }
