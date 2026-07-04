@@ -1018,10 +1018,21 @@ interface CorpusEntity {
 /** Umbral: una entidad entra al registro público con ≥ N menciones en el corpus. */
 const CORPUS_MIN_MENTIONS = 2;
 
-async function loadCorpusEntityIndex(): Promise<{
+interface CorpusIndex {
   byKey: Map<string, CorpusEntity>;
   variantSlugToKey: Map<string, string>;
-}> {
+}
+
+// El registro (miles de entidades) se computa escaneando TODAS las preguntas —
+// caro (~8 s). No cambia entre requests, así que se cachea en memoria del proceso.
+// TTL amplio: solo cambia al regenerar preguntas (proceso batch, poco frecuente).
+let corpusCache: { data: CorpusIndex; at: number } | null = null;
+const CORPUS_TTL_MS = 15 * 60 * 1000;
+
+async function loadCorpusEntityIndex(): Promise<CorpusIndex> {
+  const now = Date.now();
+  if (corpusCache && now - corpusCache.at < CORPUS_TTL_MS) return corpusCache.data;
+
   const questions = await prisma.question.findMany({
     select: {
       id: true,
@@ -1084,7 +1095,9 @@ async function loadCorpusEntityIndex(): Promise<{
       if (vs && !variantSlugToKey.has(vs)) variantSlugToKey.set(vs, e.key);
     }
   }
-  return { byKey: filtered, variantSlugToKey };
+  const data: CorpusIndex = { byKey: filtered, variantSlugToKey };
+  corpusCache = { data, at: now };
+  return data;
 }
 
 function bestVariant(variants: Map<string, number>): string {
