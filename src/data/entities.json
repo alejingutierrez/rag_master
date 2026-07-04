@@ -1,7 +1,7 @@
 {
- "generatedAt": "2026-07-04T20:58:06.820Z",
+ "generatedAt": "2026-07-04T22:11:18.397Z",
  "minMentions": 2,
- "count": 13634,
+ "count": 13234,
  "entities": [
   {
    "type": "lugar",
@@ -112,7 +112,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2010
+   "anio": 2012
   },
   {
    "type": "lugar",
@@ -145,7 +145,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2007
+   "anio": 2005
   },
   {
    "type": "lugar",
@@ -245,13 +245,13 @@
     "Salvatore Mancuso"
    ],
    "mentions": 706,
-   "periodoCode": "C91",
+   "periodoCode": "SDE",
    "periods": [
     "C91",
     "SDE"
    ],
-   "periodoOrden": 12,
-   "anio": 2000
+   "periodoOrden": 13,
+   "anio": 2003
   },
   {
    "type": "lugar",
@@ -303,7 +303,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1893
+   "anio": 1886
   },
   {
    "type": "persona",
@@ -369,7 +369,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1993
+   "anio": 1992
   },
   {
    "type": "persona",
@@ -385,7 +385,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1985
+   "anio": 1989
   },
   {
    "type": "lugar",
@@ -413,15 +413,16 @@
     "Manuel Marulanda"
    ],
    "mentions": 538,
-   "periodoCode": "C91",
+   "periodoCode": "TRANS",
    "periods": [
+    "TRANS",
     "FN",
     "CNA",
     "C91",
     "SDE"
    ],
-   "periodoOrden": 12,
-   "anio": 1999
+   "periodoOrden": 15,
+   "anio": 1990
   },
   {
    "type": "persona",
@@ -436,7 +437,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1985
+   "anio": 1984
   },
   {
    "type": "persona",
@@ -468,7 +469,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2007
+   "anio": 2005
   },
   {
    "type": "persona",
@@ -484,7 +485,7 @@
     "VIO"
    ],
    "periodoOrden": 9,
-   "anio": 1949
+   "anio": 1948
   },
   {
    "type": "lugar",
@@ -535,7 +536,7 @@
     "EUC"
    ],
    "periodoOrden": 5,
-   "anio": 1851
+   "anio": 1861
   },
   {
    "type": "lugar",
@@ -584,7 +585,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1964
+   "anio": 1960
   },
   {
    "type": "lugar",
@@ -616,7 +617,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1893
+   "anio": 1894
   },
   {
    "type": "persona",
@@ -631,7 +632,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1821
+   "anio": 1819
   },
   {
    "type": "lugar",
@@ -664,23 +665,7 @@
     "FN"
    ],
    "periodoOrden": 9,
-   "anio": 1953
-  },
-  {
-   "type": "persona",
-   "slug": "comision-de-la-verdad",
-   "name": "Comisión de la Verdad",
-   "variants": [
-    "Comisión de la Verdad"
-   ],
-   "mentions": 371,
-   "periodoCode": "POS",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
+   "anio": 1955
   },
   {
    "type": "persona",
@@ -695,7 +680,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1907
+   "anio": 1906
   },
   {
    "type": "lugar",
@@ -730,7 +715,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1987
+   "anio": 1988
   },
   {
    "type": "idea",
@@ -748,23 +733,6 @@
    ],
    "periodoOrden": 14,
    "anio": 2018
-  },
-  {
-   "type": "persona",
-   "slug": "orlando-fals-borda",
-   "name": "Orlando Fals Borda",
-   "variants": [
-    "Orlando Fals Borda"
-   ],
-   "mentions": 323,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 10,
-   "anio": 1965
   },
   {
    "type": "lugar",
@@ -835,23 +803,6 @@
   },
   {
    "type": "persona",
-   "slug": "gonzalo-sanchez",
-   "name": "Gonzalo Sánchez",
-   "variants": [
-    "Gonzalo Sánchez"
-   ],
-   "mentions": 289,
-   "periodoCode": "POS",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
-  },
-  {
-   "type": "persona",
    "slug": "ernesto-samper",
    "name": "Ernesto Samper",
    "variants": [
@@ -863,7 +814,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1996
+   "anio": 1995
   },
   {
    "type": "lugar",
@@ -942,15 +893,16 @@
     "Manuel Marulanda Vélez"
    ],
    "mentions": 272,
-   "periodoCode": "FN",
+   "periodoCode": "TRANS",
    "periods": [
+    "TRANS",
     "VIO",
     "FN",
     "CNA",
     "C91"
    ],
-   "periodoOrden": 10,
-   "anio": 1964
+   "periodoOrden": 15,
+   "anio": 1990
   },
   {
    "type": "persona",
@@ -966,7 +918,7 @@
     "NGR"
    ],
    "periodoOrden": 4,
-   "anio": 1824
+   "anio": 1825
   },
   {
    "type": "idea",
@@ -1158,7 +1110,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1978
+   "anio": 1975
   },
   {
    "type": "persona",
@@ -1223,7 +1175,7 @@
     "POS"
    ],
    "periodoOrden": 14,
-   "anio": 2019
+   "anio": 2020
   },
   {
    "type": "persona",
@@ -1240,7 +1192,7 @@
     "C91"
    ],
    "periodoOrden": 10,
-   "anio": 1964
+   "anio": 1970
   },
   {
    "type": "persona",
@@ -1256,7 +1208,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 2000
+   "anio": 1999
   },
   {
    "type": "persona",
@@ -1272,7 +1224,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1991
+   "anio": 1990
   },
   {
    "type": "lugar",
@@ -1325,7 +1277,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 8,
-   "anio": 1937
+   "anio": 1938
   },
   {
    "type": "persona",
@@ -1356,7 +1308,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1987
+   "anio": 1988
   },
   {
    "type": "persona",
@@ -1372,47 +1324,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1986
-  },
-  {
-   "type": "persona",
-   "slug": "alfredo-molano",
-   "name": "Alfredo Molano",
-   "variants": [
-    "Alfredo Molano"
-   ],
-   "mentions": 209,
-   "periodoCode": "C91",
-   "periods": [
-    "VIO",
-    "FN",
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
-   "type": "persona",
-   "slug": "daniel-pecaut",
-   "name": "Daniel Pécaut",
-   "variants": [
-    "Daniel Pécaut",
-    "Daniel Pecaut"
-   ],
-   "mentions": 209,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
+   "anio": 1990
   },
   {
    "type": "lugar",
@@ -1476,7 +1388,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1851
+   "anio": 1850
   },
   {
    "type": "lugar",
@@ -1511,7 +1423,7 @@
     "C91"
    ],
    "periodoOrden": 7,
-   "anio": 1916
+   "anio": 1915
   },
   {
    "type": "lugar",
@@ -1583,7 +1495,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1906
+   "anio": 1910
   },
   {
    "type": "persona",
@@ -1598,7 +1510,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1915
+   "anio": 1920
   },
   {
    "type": "lugar",
@@ -1656,23 +1568,6 @@
    "anio": 1928
   },
   {
-   "type": "persona",
-   "slug": "anuc",
-   "name": "ANUC",
-   "variants": [
-    "ANUC"
-   ],
-   "mentions": 192,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 10,
-   "anio": 1971
-  },
-  {
    "type": "lugar",
    "slug": "soacha",
    "name": "Soacha",
@@ -1716,7 +1611,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1986
+   "anio": 1989
   },
   {
    "type": "persona",
@@ -1731,7 +1626,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1971
+   "anio": 1972
   },
   {
    "type": "persona",
@@ -1741,14 +1636,14 @@
     "Salvador Camacho Roldán"
    ],
    "mentions": 185,
-   "periodoCode": "REG",
+   "periodoCode": "EUC",
    "periods": [
     "NGR",
     "EUC",
     "REG"
    ],
-   "periodoOrden": 7,
-   "anio": 1890
+   "periodoOrden": 6,
+   "anio": 1870
   },
   {
    "type": "lugar",
@@ -1782,7 +1677,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1969
+   "anio": 1972
   },
   {
    "type": "lugar",
@@ -1815,7 +1710,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1988
+   "anio": 1987
   },
   {
    "type": "persona",
@@ -1830,7 +1725,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1986
+   "anio": 1989
   },
   {
    "type": "persona",
@@ -1862,7 +1757,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 1999
+   "anio": 2000
   },
   {
    "type": "persona",
@@ -1879,7 +1774,7 @@
     "REG"
    ],
    "periodoOrden": 5,
-   "anio": 1850
+   "anio": 1855
   },
   {
    "type": "lugar",
@@ -1914,7 +1809,7 @@
     "CNA"
    ],
    "periodoOrden": 4,
-   "anio": 1812
+   "anio": 1815
   },
   {
    "type": "lugar",
@@ -1949,27 +1844,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1987
-  },
-  {
-   "type": "persona",
-   "slug": "marco-palacios",
-   "name": "Marco Palacios",
-   "variants": [
-    "Marco Palacios"
-   ],
-   "mentions": 168,
-   "periodoCode": "REG",
-   "periods": [
-    "EUC",
-    "REG",
-    "REP_LIB",
-    "FN",
-    "C91",
-    "POS"
-   ],
-   "periodoOrden": 7,
-   "anio": 1910
+   "anio": 1990
   },
   {
    "type": "persona",
@@ -1984,7 +1859,7 @@
     "POS"
    ],
    "periodoOrden": 14,
-   "anio": 2019
+   "anio": 2022
   },
   {
    "type": "lugar",
@@ -2040,7 +1915,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 8,
-   "anio": 1933
+   "anio": 1932
   },
   {
    "type": "idea",
@@ -2072,22 +1947,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1903
-  },
-  {
-   "type": "persona",
-   "slug": "lauchlin-currie",
-   "name": "Lauchlin Currie",
-   "variants": [
-    "Lauchlin Currie"
-   ],
-   "mentions": 163,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1965
+   "anio": 1900
   },
   {
    "type": "persona",
@@ -2103,7 +1963,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1928
+   "anio": 1925
   },
   {
    "type": "lugar",
@@ -2138,7 +1998,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1814
+   "anio": 1810
   },
   {
    "type": "idea",
@@ -2170,7 +2030,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1852
+   "anio": 1850
   },
   {
    "type": "lugar",
@@ -2220,7 +2080,7 @@
     "CON"
    ],
    "periodoOrden": 1,
-   "anio": 1540
+   "anio": 1538
   },
   {
    "type": "idea",
@@ -2267,7 +2127,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2010
   },
   {
    "type": "lugar",
@@ -2311,15 +2171,16 @@
     "Gabriel García Márquez"
    ],
    "mentions": 150,
-   "periodoCode": "REG",
+   "periodoCode": "TRANS",
    "periods": [
+    "TRANS",
     "REG",
     "FN",
     "CNA",
     "C91"
    ],
-   "periodoOrden": 7,
-   "anio": 1928
+   "periodoOrden": 15,
+   "anio": 1970
   },
   {
    "type": "lugar",
@@ -2378,22 +2239,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2006
-  },
-  {
-   "type": "persona",
-   "slug": "auc",
-   "name": "AUC",
-   "variants": [
-    "AUC"
-   ],
-   "mentions": 146,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
   },
   {
    "type": "lugar",
@@ -2485,7 +2330,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2007
+   "anio": 2008
   },
   {
    "type": "idea",
@@ -2551,7 +2396,7 @@
     "POS"
    ],
    "periodoOrden": 14,
-   "anio": 2017
+   "anio": 2016
   },
   {
    "type": "persona",
@@ -2567,7 +2412,7 @@
     "REG"
    ],
    "periodoOrden": 5,
-   "anio": 1853
+   "anio": 1850
   },
   {
    "type": "lugar",
@@ -2585,23 +2430,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2007
-  },
-  {
-   "type": "persona",
-   "slug": "gerardo-reichel-dolmatoff",
-   "name": "Gerardo Reichel-Dolmatoff",
-   "variants": [
-    "Gerardo Reichel-Dolmatoff"
-   ],
-   "mentions": 130,
-   "periodoCode": "FN",
-   "periods": [
-    "PRE",
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1968
   },
   {
    "type": "lugar",
@@ -2726,7 +2554,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1988
+   "anio": 1990
   },
   {
    "type": "persona",
@@ -2743,7 +2571,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2005
   },
   {
    "type": "idea",
@@ -2778,23 +2606,6 @@
    ],
    "periodoOrden": 4,
    "anio": 1825
-  },
-  {
-   "type": "persona",
-   "slug": "corte-constitucional",
-   "name": "Corte Constitucional",
-   "variants": [
-    "Corte Constitucional"
-   ],
-   "mentions": 124,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
   },
   {
    "type": "idea",
@@ -2847,40 +2658,6 @@
    "anio": 1966
   },
   {
-   "type": "persona",
-   "slug": "german-colmenares",
-   "name": "Germán Colmenares",
-   "variants": [
-    "Germán Colmenares"
-   ],
-   "mentions": 121,
-   "periodoCode": "COL",
-   "periods": [
-    "CON",
-    "COL",
-    "FN"
-   ],
-   "periodoOrden": 2,
-   "anio": 1720
-  },
-  {
-   "type": "persona",
-   "slug": "catherine-legrand",
-   "name": "Catherine LeGrand",
-   "variants": [
-    "Catherine LeGrand",
-    "Catherine Legrand"
-   ],
-   "mentions": 120,
-   "periodoCode": "REG",
-   "periods": [
-    "REG",
-    "REP_LIB"
-   ],
-   "periodoOrden": 7,
-   "anio": 1915
-  },
-  {
    "type": "idea",
    "slug": "frontera-interna",
    "name": "Frontera interna",
@@ -2914,7 +2691,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1985
+   "anio": 1983
   },
   {
    "type": "lugar",
@@ -2991,30 +2768,15 @@
   },
   {
    "type": "persona",
-   "slug": "manuel-jose-cepeda",
-   "name": "Manuel José Cepeda",
-   "variants": [
-    "Manuel José Cepeda"
-   ],
-   "mentions": 117,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
-   "type": "persona",
    "slug": "manuel-zapata-olivella",
    "name": "Manuel Zapata Olivella",
    "variants": [
     "Manuel Zapata Olivella"
    ],
    "mentions": 117,
-   "periodoCode": "C91",
+   "periodoCode": "TRANS",
    "periods": [
+    "TRANS",
     "COL",
     "REG",
     "REP_LIB",
@@ -3022,8 +2784,8 @@
     "CNA",
     "C91"
    ],
-   "periodoOrden": 12,
-   "anio": 1993
+   "periodoOrden": 15,
+   "anio": 1970
   },
   {
    "type": "persona",
@@ -3033,12 +2795,12 @@
     "Rodrigo Tovar Pupo"
    ],
    "mentions": 117,
-   "periodoCode": "C91",
+   "periodoCode": "SDE",
    "periods": [
     "C91",
     "SDE"
    ],
-   "periodoOrden": 12,
+   "periodoOrden": 13,
    "anio": 2000
   },
   {
@@ -3058,25 +2820,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1903
-  },
-  {
-   "type": "persona",
-   "slug": "salomon-kalmanovitz",
-   "name": "Salomón Kalmanovitz",
-   "variants": [
-    "Salomón Kalmanovitz"
-   ],
-   "mentions": 113,
-   "periodoCode": "CNA",
-   "periods": [
-    "REG",
-    "FN",
-    "CNA",
-    "C91",
-    "POS"
-   ],
-   "periodoOrden": 11,
-   "anio": 1982
   },
   {
    "type": "idea",
@@ -3102,13 +2845,13 @@
     "Alfonso Cano"
    ],
    "mentions": 112,
-   "periodoCode": "C91",
+   "periodoCode": "SDE",
    "periods": [
     "C91",
     "SDE"
    ],
-   "periodoOrden": 12,
-   "anio": 1998
+   "periodoOrden": 13,
+   "anio": 2000
   },
   {
    "type": "idea",
@@ -3144,7 +2887,7 @@
     "POS"
    ],
    "periodoOrden": 14,
-   "anio": 2021
+   "anio": 2020
   },
   {
    "type": "idea",
@@ -3177,7 +2920,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1991
+   "anio": 1998
   },
   {
    "type": "persona",
@@ -3193,7 +2936,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 8,
-   "anio": 1937
+   "anio": 1940
   },
   {
    "type": "lugar",
@@ -3227,7 +2970,7 @@
     "NGR"
    ],
    "periodoOrden": 4,
-   "anio": 1824
+   "anio": 1825
   },
   {
    "type": "persona",
@@ -3242,7 +2985,7 @@
     "EUC"
    ],
    "periodoOrden": 6,
-   "anio": 1875
+   "anio": 1878
   },
   {
    "type": "persona",
@@ -3257,7 +3000,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1979
+   "anio": 1980
   },
   {
    "type": "lugar",
@@ -3396,13 +3139,13 @@
     "Ramón Isaza"
    ],
    "mentions": 106,
-   "periodoCode": "C91",
+   "periodoCode": "SDE",
    "periods": [
     "CNA",
     "C91",
     "SDE"
    ],
-   "periodoOrden": 12,
+   "periodoOrden": 13,
    "anio": 2000
   },
   {
@@ -3428,13 +3171,13 @@
     "José Celestino Mutis"
    ],
    "mentions": 105,
-   "periodoCode": "PRE_IND",
+   "periodoCode": "COL",
    "periods": [
     "COL",
     "PRE_IND"
    ],
-   "periodoOrden": 3,
-   "anio": 1791
+   "periodoOrden": 2,
+   "anio": 1783
   },
   {
    "type": "lugar",
@@ -3515,39 +3258,6 @@
   },
   {
    "type": "persona",
-   "slug": "jep",
-   "name": "JEP",
-   "variants": [
-    "JEP"
-   ],
-   "mentions": 104,
-   "periodoCode": "POS",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
-  },
-  {
-   "type": "persona",
-   "slug": "farc-ep",
-   "name": "FARC-EP",
-   "variants": [
-    "FARC-EP"
-   ],
-   "mentions": 103,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
-   "type": "persona",
    "slug": "pablo-morillo",
    "name": "Pablo Morillo",
    "variants": [
@@ -3578,22 +3288,6 @@
   },
   {
    "type": "persona",
-   "slug": "farc",
-   "name": "FARC",
-   "variants": [
-    "FARC"
-   ],
-   "mentions": 101,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
    "slug": "bernardo-jaramillo",
    "name": "Bernardo Jaramillo",
    "variants": [
@@ -3605,7 +3299,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1988
+   "anio": 1989
   },
   {
    "type": "persona",
@@ -3620,23 +3314,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1910
-  },
-  {
-   "type": "persona",
-   "slug": "gonzalo-sanchez-gomez",
-   "name": "Gonzalo Sánchez Gómez",
-   "variants": [
-    "Gonzalo Sánchez Gómez"
-   ],
-   "mentions": 100,
-   "periodoCode": "POS",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
+   "anio": 1912
   },
   {
    "type": "lugar",
@@ -3689,44 +3367,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1928
-  },
-  {
-   "type": "persona",
-   "slug": "maria-emma-wills",
-   "name": "María Emma Wills",
-   "variants": [
-    "María Emma Wills"
-   ],
-   "mentions": 99,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2011
-  },
-  {
-   "type": "persona",
-   "slug": "absalon-machado",
-   "name": "Absalón Machado",
-   "variants": [
-    "Absalón Machado"
-   ],
-   "mentions": 98,
-   "periodoCode": "C91",
-   "periods": [
-    "REP_LIB",
-    "FN",
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1996
+   "anio": 1925
   },
   {
    "type": "lugar",
@@ -3760,7 +3401,7 @@
     "REG"
    ],
    "periodoOrden": 5,
-   "anio": 1854
+   "anio": 1860
   },
   {
    "type": "lugar",
@@ -3808,13 +3449,13 @@
     "Raúl Reyes"
    ],
    "mentions": 96,
-   "periodoCode": "C91",
+   "periodoCode": "SDE",
    "periods": [
     "C91",
     "SDE"
    ],
-   "periodoOrden": 12,
-   "anio": 2000
+   "periodoOrden": 13,
+   "anio": 2005
   },
   {
    "type": "idea",
@@ -3850,7 +3491,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1964
+   "anio": 1963
   },
   {
    "type": "idea",
@@ -3890,25 +3531,6 @@
    "anio": 1995
   },
   {
-   "type": "persona",
-   "slug": "donny-meertens",
-   "name": "Donny Meertens",
-   "variants": [
-    "Donny Meertens"
-   ],
-   "mentions": 94,
-   "periodoCode": "C91",
-   "periods": [
-    "VIO",
-    "FN",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
    "type": "idea",
    "slug": "frente-nacional",
    "name": "Frente Nacional",
@@ -3922,24 +3544,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1964
-  },
-  {
-   "type": "persona",
-   "slug": "onic",
-   "name": "ONIC",
-   "variants": [
-    "ONIC",
-    "Onic"
-   ],
-   "mentions": 94,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1995
   },
   {
    "type": "persona",
@@ -3964,13 +3568,13 @@
     "Antonio Caballero y Góngora"
    ],
    "mentions": 92,
-   "periodoCode": "PRE_IND",
+   "periodoCode": "COL",
    "periods": [
     "COL",
     "PRE_IND"
    ],
-   "periodoOrden": 3,
-   "anio": 1781
+   "periodoOrden": 2,
+   "anio": 1785
   },
   {
    "type": "idea",
@@ -4009,23 +3613,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1995
-  },
-  {
-   "type": "persona",
-   "slug": "defensoria-del-pueblo",
-   "name": "Defensoría del Pueblo",
-   "variants": [
-    "Defensoría del Pueblo"
-   ],
-   "mentions": 91,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2010
   },
   {
    "type": "persona",
@@ -4138,7 +3725,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1912
+   "anio": 1910
   },
   {
    "type": "idea",
@@ -4172,7 +3759,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1887
+   "anio": 1890
   },
   {
    "type": "persona",
@@ -4187,7 +3774,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1824
+   "anio": 1825
   },
   {
    "type": "persona",
@@ -4277,26 +3864,6 @@
    "anio": 2010
   },
   {
-   "type": "persona",
-   "slug": "juan-friede",
-   "name": "Juan Friede",
-   "variants": [
-    "Juan Friede"
-   ],
-   "mentions": 85,
-   "periodoCode": "CON",
-   "periods": [
-    "CON",
-    "COL",
-    "NGR",
-    "REG",
-    "REP_LIB",
-    "FN"
-   ],
-   "periodoOrden": 1,
-   "anio": 1560
-  },
-  {
    "type": "lugar",
    "slug": "nueva-granada",
    "name": "Nueva Granada",
@@ -4325,22 +3892,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "eduardo-pizarro",
-   "name": "Eduardo Pizarro",
-   "variants": [
-    "Eduardo Pizarro"
-   ],
-   "mentions": 84,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2007
   },
   {
    "type": "idea",
@@ -4391,7 +3942,7 @@
     "VIO"
    ],
    "periodoOrden": 8,
-   "anio": 1936
+   "anio": 1943
   },
   {
    "type": "persona",
@@ -4417,33 +3968,14 @@
     "Iván Roberto Duque"
    ],
    "mentions": 83,
-   "periodoCode": "C91",
+   "periodoCode": "SDE",
    "periods": [
     "CNA",
     "C91",
     "SDE"
    ],
-   "periodoOrden": 12,
-   "anio": 2001
-  },
-  {
-   "type": "persona",
-   "slug": "jaime-jaramillo-uribe",
-   "name": "Jaime Jaramillo Uribe",
-   "variants": [
-    "Jaime Jaramillo Uribe"
-   ],
-   "mentions": 83,
-   "periodoCode": "FN",
-   "periods": [
-    "COL",
-    "REP_LIB",
-    "FN",
-    "CNA",
-    "POS"
-   ],
-   "periodoOrden": 10,
-   "anio": 1970
+   "periodoOrden": 13,
+   "anio": 2003
   },
   {
    "type": "idea",
@@ -4512,7 +4044,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1919
+   "anio": 1920
   },
   {
    "type": "persona",
@@ -4528,23 +4060,7 @@
     "IND"
    ],
    "periodoOrden": 3,
-   "anio": 1793
-  },
-  {
-   "type": "persona",
-   "slug": "german-guzman-campos",
-   "name": "Germán Guzmán Campos",
-   "variants": [
-    "Germán Guzmán Campos"
-   ],
-   "mentions": 82,
-   "periodoCode": "FN",
-   "periods": [
-    "VIO",
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1962
+   "anio": 1805
   },
   {
    "type": "persona",
@@ -4559,7 +4075,7 @@
     "POS"
    ],
    "periodoOrden": 14,
-   "anio": 2017
+   "anio": 2016
   },
   {
    "type": "idea",
@@ -4620,30 +4136,13 @@
     "Manuel Cepeda Vargas"
    ],
    "mentions": 80,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1988
-  },
-  {
-   "type": "persona",
-   "slug": "maria-victoria-uribe",
-   "name": "María Victoria Uribe",
-   "variants": [
-    "María Victoria Uribe"
-   ],
-   "mentions": 80,
    "periodoCode": "C91",
    "periods": [
-    "VIO",
     "C91",
-    "SDE",
-    "POS"
+    "CNA"
    ],
    "periodoOrden": 12,
-   "anio": 2000
+   "anio": 1994
   },
   {
    "type": "lugar",
@@ -4695,7 +4194,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2006
+   "anio": 2003
   },
   {
    "type": "lugar",
@@ -4801,22 +4300,6 @@
    "anio": 1965
   },
   {
-   "type": "persona",
-   "slug": "gregorio-hernandez-de-alba",
-   "name": "Gregorio Hernández de Alba",
-   "variants": [
-    "Gregorio Hernández de Alba"
-   ],
-   "mentions": 77,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB",
-    "FN"
-   ],
-   "periodoOrden": 8,
-   "anio": 1941
-  },
-  {
    "type": "lugar",
    "slug": "leticia",
    "name": "Leticia",
@@ -4850,41 +4333,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1995
-  },
-  {
-   "type": "persona",
-   "slug": "centro-nacional-de-memoria-historica",
-   "name": "Centro Nacional de Memoria Histórica",
-   "variants": [
-    "Centro Nacional de Memoria Histórica"
-   ],
-   "mentions": 76,
-   "periodoCode": "POS",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
-  },
-  {
-   "type": "persona",
-   "slug": "james-parsons",
-   "name": "James Parsons",
-   "variants": [
-    "James Parsons"
-   ],
-   "mentions": 76,
-   "periodoCode": "REG",
-   "periods": [
-    "EUC",
-    "REG",
-    "REP_LIB",
-    "FN"
-   ],
-   "periodoOrden": 7,
-   "anio": 1910
   },
   {
    "type": "persona",
@@ -4933,24 +4381,6 @@
    "anio": 1985
   },
   {
-   "type": "persona",
-   "slug": "mauricio-romero",
-   "name": "Mauricio Romero",
-   "variants": [
-    "Mauricio Romero"
-   ],
-   "mentions": 75,
-   "periodoCode": "SDE",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
    "type": "idea",
    "slug": "mestizaje",
    "name": "Mestizaje",
@@ -4983,7 +4413,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1912
+   "anio": 1910
   },
   {
    "type": "lugar",
@@ -5016,7 +4446,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1851
+   "anio": 1850
   },
   {
    "type": "idea",
@@ -5116,7 +4546,7 @@
     "SDE"
    ],
    "periodoOrden": 11,
-   "anio": 1988
+   "anio": 1990
   },
   {
    "type": "lugar",
@@ -5163,7 +4593,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1993
+   "anio": 1995
   },
   {
    "type": "idea",
@@ -5214,7 +4644,7 @@
     "CNA"
    ],
    "periodoOrden": 10,
-   "anio": 1965
+   "anio": 1970
   },
   {
    "type": "idea",
@@ -5245,27 +4675,7 @@
     "POS"
    ],
    "periodoOrden": 14,
-   "anio": 2017
-  },
-  {
-   "type": "persona",
-   "slug": "dario-fajardo",
-   "name": "Darío Fajardo",
-   "variants": [
-    "Darío Fajardo"
-   ],
-   "mentions": 69,
-   "periodoCode": "FN",
-   "periods": [
-    "REP_LIB",
-    "VIO",
-    "FN",
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 10,
-   "anio": 1972
+   "anio": 2016
   },
   {
    "type": "lugar",
@@ -5301,7 +4711,7 @@
     "PRE_IND"
    ],
    "periodoOrden": 2,
-   "anio": 1767
+   "anio": 1770
   },
   {
    "type": "idea",
@@ -5365,7 +4775,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 8,
-   "anio": 1936
+   "anio": 1935
   },
   {
    "type": "idea",
@@ -5433,25 +4843,6 @@
    "anio": 1964
   },
   {
-   "type": "persona",
-   "slug": "jorge-orlando-melo",
-   "name": "Jorge Orlando Melo",
-   "variants": [
-    "Jorge Orlando Melo"
-   ],
-   "mentions": 67,
-   "periodoCode": "CNA",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
-  },
-  {
    "type": "lugar",
    "slug": "norte-de-santander",
    "name": "Norte de Santander",
@@ -5468,23 +4859,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1998
-  },
-  {
-   "type": "persona",
-   "slug": "pilar-riano",
-   "name": "Pilar Riaño",
-   "variants": [
-    "Pilar Riaño"
-   ],
-   "mentions": 67,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
   },
   {
    "type": "lugar",
@@ -5530,13 +4904,13 @@
     "Piedad Córdoba"
    ],
    "mentions": 66,
-   "periodoCode": "C91",
+   "periodoCode": "SDE",
    "periods": [
     "C91",
     "SDE"
    ],
-   "periodoOrden": 12,
-   "anio": 1997
+   "periodoOrden": 13,
+   "anio": 2005
   },
   {
    "type": "persona",
@@ -5551,7 +4925,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1985
+   "anio": 1984
   },
   {
    "type": "persona",
@@ -5566,7 +4940,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1991
+   "anio": 1992
   },
   {
    "type": "idea",
@@ -5631,7 +5005,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1993
+   "anio": 1995
   },
   {
    "type": "lugar",
@@ -5652,25 +5026,6 @@
   },
   {
    "type": "persona",
-   "slug": "virginia-gutierrez-de-pineda",
-   "name": "Virginia Gutiérrez de Pineda",
-   "variants": [
-    "Virginia Gutiérrez de Pineda"
-   ],
-   "mentions": 65,
-   "periodoCode": "FN",
-   "periods": [
-    "REP_LIB",
-    "VIO",
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 10,
-   "anio": 1968
-  },
-  {
-   "type": "persona",
    "slug": "aida-quilcue",
    "name": "Aida Quilcué",
    "variants": [
@@ -5685,7 +5040,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2009
+   "anio": 2010
   },
   {
    "type": "persona",
@@ -5723,39 +5078,6 @@
   },
   {
    "type": "persona",
-   "slug": "jaime-arocha",
-   "name": "Jaime Arocha",
-   "variants": [
-    "Jaime Arocha"
-   ],
-   "mentions": 64,
-   "periodoCode": "C91",
-   "periods": [
-    "REG",
-    "FN",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1993
-  },
-  {
-   "type": "persona",
-   "slug": "rodrigo-uprimny",
-   "name": "Rodrigo Uprimny",
-   "variants": [
-    "Rodrigo Uprimny"
-   ],
-   "mentions": 64,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
-   "type": "persona",
    "slug": "tomas-carrasquilla",
    "name": "Tomás Carrasquilla",
    "variants": [
@@ -5783,7 +5105,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 1995
+   "anio": 1998
   },
   {
    "type": "idea",
@@ -5801,22 +5123,6 @@
    ],
    "periodoOrden": 1,
    "anio": 1550
-  },
-  {
-   "type": "persona",
-   "slug": "estanislao-zuleta",
-   "name": "Estanislao Zuleta",
-   "variants": [
-    "Estanislao Zuleta"
-   ],
-   "mentions": 63,
-   "periodoCode": "CNA",
-   "periods": [
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1982
   },
   {
    "type": "lugar",
@@ -5913,22 +5219,6 @@
    "anio": 2010
   },
   {
-   "type": "persona",
-   "slug": "german-arciniegas",
-   "name": "Germán Arciniegas",
-   "variants": [
-    "Germán Arciniegas"
-   ],
-   "mentions": 62,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REG",
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1939
-  },
-  {
    "type": "lugar",
    "slug": "mapiripan",
    "name": "Mapiripán",
@@ -5959,7 +5249,7 @@
     "REG"
    ],
    "periodoOrden": 6,
-   "anio": 1872
+   "anio": 1875
   },
   {
    "type": "persona",
@@ -5969,14 +5259,14 @@
     "Rafael Pardo"
    ],
    "mentions": 62,
-   "periodoCode": "CNA",
+   "periodoCode": "C91",
    "periods": [
     "CNA",
     "C91",
     "SDE"
    ],
-   "periodoOrden": 11,
-   "anio": 1988
+   "periodoOrden": 12,
+   "anio": 1992
   },
   {
    "type": "lugar",
@@ -6113,7 +5403,7 @@
     "REG"
    ],
    "periodoOrden": 3,
-   "anio": 1798
+   "anio": 1801
   },
   {
    "type": "idea",
@@ -6154,22 +5444,6 @@
   },
   {
    "type": "persona",
-   "slug": "eln",
-   "name": "ELN",
-   "variants": [
-    "ELN"
-   ],
-   "mentions": 60,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
-   "type": "persona",
    "slug": "ingrid-betancourt",
    "name": "Ingrid Betancourt",
    "variants": [
@@ -6183,7 +5457,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 2000
+   "anio": 2002
   },
   {
    "type": "idea",
@@ -6201,25 +5475,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1989
-  },
-  {
-   "type": "persona",
-   "slug": "nina-s-de-friedemann",
-   "name": "Nina S. de Friedemann",
-   "variants": [
-    "Nina S. de Friedemann"
-   ],
-   "mentions": 60,
-   "periodoCode": "C91",
-   "periods": [
-    "COL",
-    "NGR",
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1995
   },
   {
    "type": "idea",
@@ -6338,27 +5593,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1997
-  },
-  {
-   "type": "persona",
-   "slug": "mauricio-archila",
-   "name": "Mauricio Archila",
-   "variants": [
-    "Mauricio Archila"
-   ],
-   "mentions": 59,
-   "periodoCode": "C91",
-   "periods": [
-    "REG",
-    "FN",
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
+   "anio": 1995
   },
   {
    "type": "idea",
@@ -6411,24 +5646,6 @@
    "anio": 1781
   },
   {
-   "type": "persona",
-   "slug": "acnur",
-   "name": "ACNUR",
-   "variants": [
-    "ACNUR",
-    "Acnur"
-   ],
-   "mentions": 58,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
-  },
-  {
    "type": "lugar",
    "slug": "bajo-atrato",
    "name": "Bajo Atrato",
@@ -6478,7 +5695,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1963
+   "anio": 1962
   },
   {
    "type": "persona",
@@ -6493,7 +5710,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2006
+   "anio": 2007
   },
   {
    "type": "lugar",
@@ -6524,7 +5741,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1997
+   "anio": 1998
   },
   {
    "type": "idea",
@@ -6557,7 +5774,7 @@
     "COL"
    ],
    "periodoOrden": 1,
-   "anio": 1549
+   "anio": 1540
   },
   {
    "type": "lugar",
@@ -6609,7 +5826,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1923
+   "anio": 1924
   },
   {
    "type": "persona",
@@ -6660,7 +5877,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1964
+   "anio": 1962
   },
   {
    "type": "lugar",
@@ -6726,7 +5943,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1985
+   "anio": 1988
   },
   {
    "type": "idea",
@@ -6829,7 +6046,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1822
+   "anio": 1820
   },
   {
    "type": "idea",
@@ -6878,25 +6095,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2011
-  },
-  {
-   "type": "persona",
-   "slug": "federacion-nacional-de-cafeteros",
-   "name": "Federación Nacional de Cafeteros",
-   "variants": [
-    "Federación Nacional de Cafeteros"
-   ],
-   "mentions": 54,
-   "periodoCode": "FN",
-   "periods": [
-    "REG",
-    "REP_LIB",
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 10,
-   "anio": 1970
   },
   {
    "type": "idea",
@@ -6967,7 +6165,7 @@
     "SDE"
    ],
    "periodoOrden": 11,
-   "anio": 1988
+   "anio": 1990
   },
   {
    "type": "lugar",
@@ -7007,72 +6205,20 @@
   },
   {
    "type": "persona",
-   "slug": "francisco-gutierrez-sanin",
-   "name": "Francisco Gutiérrez Sanín",
-   "variants": [
-    "Francisco Gutiérrez Sanín"
-   ],
-   "mentions": 53,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "incora",
-   "name": "INCORA",
-   "variants": [
-    "INCORA",
-    "Incora"
-   ],
-   "mentions": 53,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 10,
-   "anio": 1968
-  },
-  {
-   "type": "persona",
    "slug": "manuel-mejia",
    "name": "Manuel Mejía",
    "variants": [
     "Manuel Mejía"
    ],
    "mentions": 53,
-   "periodoCode": "REG",
+   "periodoCode": "REP_LIB",
    "periods": [
     "REG",
     "REP_LIB",
     "FN"
    ],
-   "periodoOrden": 7,
-   "anio": 1927
-  },
-  {
-   "type": "persona",
-   "slug": "manuel-rodriguez-becerra",
-   "name": "Manuel Rodríguez Becerra",
-   "variants": [
-    "Manuel Rodríguez Becerra"
-   ],
-   "mentions": 53,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1993
+   "periodoOrden": 8,
+   "anio": 1940
   },
   {
    "type": "persona",
@@ -7088,7 +6234,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2003
+   "anio": 2004
   },
   {
    "type": "persona",
@@ -7113,14 +6259,14 @@
     "Soledad Acosta de Samper"
    ],
    "mentions": 53,
-   "periodoCode": "REG",
+   "periodoCode": "EUC",
    "periods": [
     "NGR",
     "EUC",
     "REG"
    ],
-   "periodoOrden": 7,
-   "anio": 1898
+   "periodoOrden": 6,
+   "anio": 1880
   },
   {
    "type": "idea",
@@ -7168,7 +6314,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1826
+   "anio": 1824
   },
   {
    "type": "idea",
@@ -7268,7 +6414,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2015
   },
   {
    "type": "idea",
@@ -7301,7 +6447,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1925
+   "anio": 1923
   },
   {
    "type": "idea",
@@ -7333,25 +6479,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1923
-  },
-  {
-   "type": "persona",
-   "slug": "fernan-gonzalez",
-   "name": "Fernán González",
-   "variants": [
-    "Fernán González"
-   ],
-   "mentions": 52,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
+   "anio": 1930
   },
   {
    "type": "lugar",
@@ -7434,7 +6562,7 @@
     "POS"
    ],
    "periodoOrden": 14,
-   "anio": 2018
+   "anio": 2017
   },
   {
    "type": "persona",
@@ -7454,24 +6582,6 @@
   },
   {
    "type": "persona",
-   "slug": "arturo-escobar",
-   "name": "Arturo Escobar",
-   "variants": [
-    "Arturo Escobar"
-   ],
-   "mentions": 51,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1995
-  },
-  {
-   "type": "persona",
    "slug": "javier-giraldo",
    "name": "Javier Giraldo",
    "variants": [
@@ -7485,7 +6595,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 1997
+   "anio": 1995
   },
   {
    "type": "persona",
@@ -7502,7 +6612,7 @@
     "POS"
    ],
    "periodoOrden": 12,
-   "anio": 1998
+   "anio": 2000
   },
   {
    "type": "idea",
@@ -7559,24 +6669,7 @@
     "VIO"
    ],
    "periodoOrden": 9,
-   "anio": 1948
-  },
-  {
-   "type": "persona",
-   "slug": "luis-duque-gomez",
-   "name": "Luis Duque Gómez",
-   "variants": [
-    "Luis Duque Gómez"
-   ],
-   "mentions": 50,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB",
-    "VIO",
-    "FN"
-   ],
-   "periodoOrden": 8,
-   "anio": 1941
+   "anio": 1950
   },
   {
    "type": "persona",
@@ -7592,7 +6685,7 @@
     "COL"
    ],
    "periodoOrden": 1,
-   "anio": 1540
+   "anio": 1533
   },
   {
    "type": "idea",
@@ -7642,21 +6735,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1971
-  },
-  {
-   "type": "persona",
-   "slug": "united-fruit-company",
-   "name": "United Fruit Company",
-   "variants": [
-    "United Fruit Company"
-   ],
-   "mentions": 50,
-   "periodoCode": "REG",
-   "periods": [
-    "REG"
-   ],
-   "periodoOrden": 7,
-   "anio": 1928
   },
   {
    "type": "idea",
@@ -7710,7 +6788,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1984
+   "anio": 1980
   },
   {
    "type": "persona",
@@ -7743,39 +6821,7 @@
     "C91"
    ],
    "periodoOrden": 10,
-   "anio": 1966
-  },
-  {
-   "type": "persona",
-   "slug": "paul-rivet",
-   "name": "Paul Rivet",
-   "variants": [
-    "Paul Rivet"
-   ],
-   "mentions": 49,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1941
-  },
-  {
-   "type": "persona",
-   "slug": "peter-wade",
-   "name": "Peter Wade",
-   "variants": [
-    "Peter Wade"
-   ],
-   "mentions": 49,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1995
+   "anio": 1985
   },
   {
    "type": "idea",
@@ -7915,26 +6961,6 @@
    "anio": 1953
   },
   {
-   "type": "persona",
-   "slug": "miguel-urrutia",
-   "name": "Miguel Urrutia",
-   "variants": [
-    "Miguel Urrutia"
-   ],
-   "mentions": 48,
-   "periodoCode": "C91",
-   "periods": [
-    "EUC",
-    "REG",
-    "VIO",
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1995
-  },
-  {
    "type": "lugar",
    "slug": "darien",
    "name": "Darién",
@@ -8003,7 +7029,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2006
+   "anio": 2005
   },
   {
    "type": "persona",
@@ -8021,7 +7047,7 @@
     "FN"
    ],
    "periodoOrden": 6,
-   "anio": 1869
+   "anio": 1867
   },
   {
    "type": "lugar",
@@ -8057,7 +7083,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1891
+   "anio": 1900
   },
   {
    "type": "lugar",
@@ -8189,7 +7215,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2007
+   "anio": 2005
   },
   {
    "type": "persona",
@@ -8206,7 +7232,7 @@
     "POS"
    ],
    "periodoOrden": 12,
-   "anio": 1997
+   "anio": 1995
   },
   {
    "type": "idea",
@@ -8331,24 +7357,7 @@
     "REG"
    ],
    "periodoOrden": 5,
-   "anio": 1851
-  },
-  {
-   "type": "persona",
-   "slug": "alejandro-reyes",
-   "name": "Alejandro Reyes",
-   "variants": [
-    "Alejandro Reyes"
-   ],
-   "mentions": 45,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
+   "anio": 1860
   },
   {
    "type": "idea",
@@ -8430,25 +7439,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "gustavo-duncan",
-   "name": "Gustavo Duncan",
-   "variants": [
-    "Gustavo Duncan"
-   ],
-   "mentions": 45,
-   "periodoCode": "SDE",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
+   "anio": 1990
   },
   {
    "type": "idea",
@@ -8468,41 +7459,6 @@
   },
   {
    "type": "persona",
-   "slug": "jose-antonio-ocampo",
-   "name": "José Antonio Ocampo",
-   "variants": [
-    "José Antonio Ocampo"
-   ],
-   "mentions": 45,
-   "periodoCode": "SDE",
-   "periods": [
-    "REG",
-    "REP_LIB",
-    "FN",
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2010
-  },
-  {
-   "type": "persona",
-   "slug": "madres-de-soacha",
-   "name": "Madres de Soacha",
-   "variants": [
-    "Madres de Soacha"
-   ],
-   "mentions": 45,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
-   "type": "persona",
    "slug": "pedro-claver",
    "name": "Pedro Claver",
    "variants": [
@@ -8514,7 +7470,7 @@
     "COL"
    ],
    "periodoOrden": 2,
-   "anio": 1700
+   "anio": 1630
   },
   {
    "type": "lugar",
@@ -8608,59 +7564,6 @@
   },
   {
    "type": "persona",
-   "slug": "jesus-antonio-bejarano",
-   "name": "Jesús Antonio Bejarano",
-   "variants": [
-    "Jesús Antonio Bejarano"
-   ],
-   "mentions": 44,
-   "periodoCode": "C91",
-   "periods": [
-    "REG",
-    "REP_LIB",
-    "FN",
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1992
-  },
-  {
-   "type": "persona",
-   "slug": "margarita-serje",
-   "name": "Margarita Serje",
-   "variants": [
-    "Margarita Serje"
-   ],
-   "mentions": 44,
-   "periodoCode": "POS",
-   "periods": [
-    "REG",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2022
-  },
-  {
-   "type": "persona",
-   "slug": "maria-clemencia-ramirez",
-   "name": "María Clemencia Ramírez",
-   "variants": [
-    "María Clemencia Ramírez"
-   ],
-   "mentions": 44,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1996
-  },
-  {
-   "type": "persona",
    "slug": "nicolas-rodriguez-bautista",
    "name": "Nicolás Rodríguez Bautista",
    "variants": [
@@ -8675,7 +7578,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 1999
+   "anio": 2000
   },
   {
    "type": "persona",
@@ -8690,7 +7593,7 @@
     "PRE_IND"
    ],
    "periodoOrden": 3,
-   "anio": 1791
+   "anio": 1795
   },
   {
    "type": "idea",
@@ -8792,7 +7695,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2009
   },
   {
    "type": "idea",
@@ -8876,7 +7779,7 @@
     "C91"
    ],
    "periodoOrden": 10,
-   "anio": 1968
+   "anio": 1971
   },
   {
    "type": "idea",
@@ -8907,7 +7810,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2010
   },
   {
    "type": "lugar",
@@ -8990,23 +7893,6 @@
    "anio": 2000
   },
   {
-   "type": "persona",
-   "slug": "aquiles-escalante",
-   "name": "Aquiles Escalante",
-   "variants": [
-    "Aquiles Escalante"
-   ],
-   "mentions": 42,
-   "periodoCode": "COL",
-   "periods": [
-    "COL",
-    "FN",
-    "C91"
-   ],
-   "periodoOrden": 2,
-   "anio": 1700
-  },
-  {
    "type": "idea",
    "slug": "bandas-criminales",
    "name": "Bandas criminales",
@@ -9073,7 +7959,7 @@
     "VIO"
    ],
    "periodoOrden": 9,
-   "anio": 1954
+   "anio": 1955
   },
   {
    "type": "idea",
@@ -9172,7 +8058,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1970
+   "anio": 1974
   },
   {
    "type": "idea",
@@ -9222,7 +8108,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2010
   },
   {
    "type": "idea",
@@ -9322,22 +8208,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1998
-  },
-  {
-   "type": "persona",
-   "slug": "eduardo-umana-luna",
-   "name": "Eduardo Umaña Luna",
-   "variants": [
-    "Eduardo Umaña Luna"
-   ],
-   "mentions": 41,
-   "periodoCode": "FN",
-   "periods": [
-    "VIO",
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1962
   },
   {
    "type": "lugar",
@@ -9440,7 +8310,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1842
+   "anio": 1841
   },
   {
    "type": "idea",
@@ -9506,24 +8376,7 @@
     "COL"
    ],
    "periodoOrden": 2,
-   "anio": 1700
-  },
-  {
-   "type": "persona",
-   "slug": "codhes",
-   "name": "CODHES",
-   "variants": [
-    "CODHES",
-    "Codhes"
-   ],
-   "mentions": 40,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
+   "anio": 1605
   },
   {
    "type": "idea",
@@ -9574,7 +8427,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2009
+   "anio": 2010
   },
   {
    "type": "idea",
@@ -9612,23 +8465,6 @@
    "anio": 1997
   },
   {
-   "type": "persona",
-   "slug": "charles-bergquist",
-   "name": "Charles Bergquist",
-   "variants": [
-    "Charles Bergquist"
-   ],
-   "mentions": 39,
-   "periodoCode": "REG",
-   "periods": [
-    "REG",
-    "REP_LIB",
-    "C91"
-   ],
-   "periodoOrden": 7,
-   "anio": 1910
-  },
-  {
    "type": "idea",
    "slug": "colonizacion-campesina",
    "name": "Colonización campesina",
@@ -9663,7 +8499,7 @@
     "CNA"
    ],
    "periodoOrden": 8,
-   "anio": 1936
+   "anio": 1945
   },
   {
    "type": "persona",
@@ -9680,7 +8516,7 @@
     "REG"
    ],
    "periodoOrden": 5,
-   "anio": 1851
+   "anio": 1860
   },
   {
    "type": "idea",
@@ -9697,24 +8533,6 @@
    ],
    "periodoOrden": 8,
    "anio": 1936
-  },
-  {
-   "type": "persona",
-   "slug": "roberto-pineda-camacho",
-   "name": "Roberto Pineda Camacho",
-   "variants": [
-    "Roberto Pineda Camacho"
-   ],
-   "mentions": 39,
-   "periodoCode": "REG",
-   "periods": [
-    "REG",
-    "REP_LIB",
-    "FN",
-    "POS"
-   ],
-   "periodoOrden": 7,
-   "anio": 1910
   },
   {
    "type": "idea",
@@ -9782,58 +8600,21 @@
   },
   {
    "type": "persona",
-   "slug": "alejandro-reyes-posada",
-   "name": "Alejandro Reyes Posada",
-   "variants": [
-    "Alejandro Reyes Posada"
-   ],
-   "mentions": 38,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1997
-  },
-  {
-   "type": "persona",
    "slug": "andres-bello",
    "name": "Andrés Bello",
    "variants": [
     "Andrés Bello"
    ],
    "mentions": 38,
-   "periodoCode": "REG",
+   "periodoCode": "NGR",
    "periods": [
     "IND",
     "NGR",
     "EUC",
     "REG"
    ],
-   "periodoOrden": 7,
-   "anio": 1890
-  },
-  {
-   "type": "persona",
-   "slug": "asfaddes",
-   "name": "Asfaddes",
-   "variants": [
-    "Asfaddes",
-    "ASFADDES"
-   ],
-   "mentions": 38,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
+   "periodoOrden": 5,
+   "anio": 1840
   },
   {
    "type": "idea",
@@ -9864,7 +8645,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1928
+   "anio": 1930
   },
   {
    "type": "persona",
@@ -9881,7 +8662,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1912
+   "anio": 1890
   },
   {
    "type": "idea",
@@ -10104,58 +8885,6 @@
    "anio": 1940
   },
   {
-   "type": "persona",
-   "slug": "ecopetrol",
-   "name": "Ecopetrol",
-   "variants": [
-    "Ecopetrol",
-    "ECOPETROL"
-   ],
-   "mentions": 37,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
-   "type": "persona",
-   "slug": "florence-thomas",
-   "name": "Florence Thomas",
-   "variants": [
-    "Florence Thomas"
-   ],
-   "mentions": 37,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "francisco-thoumi",
-   "name": "Francisco Thoumi",
-   "variants": [
-    "Francisco Thoumi"
-   ],
-   "mentions": 37,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
-  },
-  {
    "type": "lugar",
    "slug": "guajira",
    "name": "Guajira",
@@ -10206,7 +8935,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2004
+   "anio": 2005
   },
   {
    "type": "lugar",
@@ -10268,14 +8997,14 @@
     "Santiago Pérez"
    ],
    "mentions": 37,
-   "periodoCode": "NGR",
+   "periodoCode": "EUC",
    "periods": [
     "NGR",
     "EUC",
     "REG"
    ],
-   "periodoOrden": 5,
-   "anio": 1853
+   "periodoOrden": 6,
+   "anio": 1874
   },
   {
    "type": "idea",
@@ -10327,7 +9056,7 @@
     "NGR"
    ],
    "periodoOrden": 4,
-   "anio": 1826
+   "anio": 1825
   },
   {
    "type": "persona",
@@ -10343,7 +9072,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 2000
+   "anio": 1999
   },
   {
    "type": "lugar",
@@ -10499,7 +9228,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2010
   },
   {
    "type": "persona",
@@ -10514,7 +9243,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1849
+   "anio": 1850
   },
   {
    "type": "lugar",
@@ -10553,7 +9282,7 @@
     "CNA"
    ],
    "periodoOrden": 10,
-   "anio": 1965
+   "anio": 1970
   },
   {
    "type": "persona",
@@ -10569,7 +9298,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1993
+   "anio": 1995
   },
   {
    "type": "lugar",
@@ -10638,7 +9367,7 @@
     "VIO"
    ],
    "periodoOrden": 8,
-   "anio": 1936
+   "anio": 1935
   },
   {
    "type": "persona",
@@ -10654,23 +9383,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1964
-  },
-  {
-   "type": "persona",
-   "slug": "ana-maria-ibanez",
-   "name": "Ana María Ibáñez",
-   "variants": [
-    "Ana María Ibáñez"
-   ],
-   "mentions": 35,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
+   "anio": 1970
   },
   {
    "type": "lugar",
@@ -10721,23 +9434,6 @@
   },
   {
    "type": "persona",
-   "slug": "francisco-leal-buitrago",
-   "name": "Francisco Leal Buitrago",
-   "variants": [
-    "Francisco Leal Buitrago"
-   ],
-   "mentions": 35,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 10,
-   "anio": 1966
-  },
-  {
-   "type": "persona",
    "slug": "hermanos-rodriguez-orejuela",
    "name": "Hermanos Rodríguez Orejuela",
    "variants": [
@@ -10750,7 +9446,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1987
+   "anio": 1990
   },
   {
    "type": "idea",
@@ -10767,23 +9463,6 @@
    ],
    "periodoOrden": 14,
    "anio": 2019
-  },
-  {
-   "type": "persona",
-   "slug": "ivan-orozco",
-   "name": "Iván Orozco",
-   "variants": [
-    "Iván Orozco"
-   ],
-   "mentions": 35,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
   },
   {
    "type": "persona",
@@ -10841,24 +9520,6 @@
   },
   {
    "type": "persona",
-   "slug": "magdalena-leon",
-   "name": "Magdalena León",
-   "variants": [
-    "Magdalena León"
-   ],
-   "mentions": 35,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1996
-  },
-  {
-   "type": "persona",
    "slug": "manuel-cepeda",
    "name": "Manuel Cepeda",
    "variants": [
@@ -10870,27 +9531,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1988
-  },
-  {
-   "type": "persona",
-   "slug": "mary-roldan",
-   "name": "Mary Roldán",
-   "variants": [
-    "Mary Roldán"
-   ],
-   "mentions": 35,
-   "periodoCode": "CNA",
-   "periods": [
-    "REG",
-    "VIO",
-    "FN",
-    "CNA",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
+   "anio": 1993
   },
   {
    "type": "idea",
@@ -10974,24 +9615,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 1997
-  },
-  {
-   "type": "persona",
-   "slug": "alejandro-castillejo",
-   "name": "Alejandro Castillejo",
-   "variants": [
-    "Alejandro Castillejo"
-   ],
-   "mentions": 34,
-   "periodoCode": "POS",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2021
+   "anio": 1995
   },
   {
    "type": "persona",
@@ -11007,7 +9631,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2007
+   "anio": 2005
   },
   {
    "type": "idea",
@@ -11025,25 +9649,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "carl-henrik-langebaek",
-   "name": "Carl Henrik Langebaek",
-   "variants": [
-    "Carl Henrik Langebaek"
-   ],
-   "mentions": 34,
-   "periodoCode": "POS",
-   "periods": [
-    "PRE",
-    "CON",
-    "FN",
-    "CNA",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2019
   },
   {
    "type": "lugar",
@@ -11118,23 +9723,6 @@
   },
   {
    "type": "persona",
-   "slug": "icbf",
-   "name": "ICBF",
-   "variants": [
-    "ICBF"
-   ],
-   "mentions": 34,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
-   "type": "persona",
    "slug": "jaime-bateman-cayon",
    "name": "Jaime Bateman Cayón",
    "variants": [
@@ -11147,7 +9735,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1981
+   "anio": 1980
   },
   {
    "type": "persona",
@@ -11177,7 +9765,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1852
+   "anio": 1860
   },
   {
    "type": "persona",
@@ -11193,24 +9781,6 @@
    ],
    "periodoOrden": 3,
    "anio": 1781
-  },
-  {
-   "type": "persona",
-   "slug": "michael-taussig",
-   "name": "Michael Taussig",
-   "variants": [
-    "Michael Taussig"
-   ],
-   "mentions": 34,
-   "periodoCode": "C91",
-   "periods": [
-    "REG",
-    "CNA",
-    "C91",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
   },
   {
    "type": "persona",
@@ -11331,7 +9901,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 1999
+   "anio": 2000
   },
   {
    "type": "idea",
@@ -11365,23 +9935,6 @@
    "anio": 1999
   },
   {
-   "type": "persona",
-   "slug": "cnmh",
-   "name": "CNMH",
-   "variants": [
-    "CNMH"
-   ],
-   "mentions": 33,
-   "periodoCode": "POS",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
-  },
-  {
    "type": "idea",
    "slug": "danza-de-los-millones",
    "name": "Danza de los millones",
@@ -11412,7 +9965,7 @@
     "COL"
    ],
    "periodoOrden": 1,
-   "anio": 1573
+   "anio": 1580
   },
   {
    "type": "persona",
@@ -11427,7 +9980,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1812
+   "anio": 1810
   },
   {
    "type": "persona",
@@ -11444,7 +9997,7 @@
     "REG"
    ],
    "periodoOrden": 6,
-   "anio": 1869
+   "anio": 1870
   },
   {
    "type": "persona",
@@ -11598,23 +10151,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "accion-social",
-   "name": "Acción Social",
-   "variants": [
-    "Acción Social"
-   ],
-   "mentions": 32,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2007
+   "anio": 2001
   },
   {
    "type": "persona",
@@ -11632,25 +10169,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1991
-  },
-  {
-   "type": "persona",
-   "slug": "arturo-alape",
-   "name": "Arturo Alape",
-   "variants": [
-    "Arturo Alape",
-    "Arturo Álape"
-   ],
-   "mentions": 32,
-   "periodoCode": "C91",
-   "periods": [
-    "VIO",
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
   },
   {
    "type": "idea",
@@ -11710,21 +10228,6 @@
   },
   {
    "type": "persona",
-   "slug": "eduardo-restrepo",
-   "name": "Eduardo Restrepo",
-   "variants": [
-    "Eduardo Restrepo"
-   ],
-   "mentions": 32,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1996
-  },
-  {
-   "type": "persona",
    "slug": "ezequiel-uricoechea",
    "name": "Ezequiel Uricoechea",
    "variants": [
@@ -11737,7 +10240,7 @@
     "REG"
    ],
    "periodoOrden": 6,
-   "anio": 1871
+   "anio": 1870
   },
   {
    "type": "persona",
@@ -11753,7 +10256,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1988
+   "anio": 1990
   },
   {
    "type": "idea",
@@ -11804,23 +10307,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1923
-  },
-  {
-   "type": "persona",
-   "slug": "luis-eduardo-nieto-arteta",
-   "name": "Luis Eduardo Nieto Arteta",
-   "variants": [
-    "Luis Eduardo Nieto Arteta"
-   ],
-   "mentions": 32,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "EUC",
-    "REP_LIB",
-    "FN"
-   ],
-   "periodoOrden": 8,
-   "anio": 1940
   },
   {
    "type": "idea",
@@ -12022,24 +10508,6 @@
    "anio": 2010
   },
   {
-   "type": "persona",
-   "slug": "ernesto-guhl",
-   "name": "Ernesto Guhl",
-   "variants": [
-    "Ernesto Guhl"
-   ],
-   "mentions": 31,
-   "periodoCode": "FN",
-   "periods": [
-    "REP_LIB",
-    "VIO",
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1967
-  },
-  {
    "type": "idea",
    "slug": "estado-fragmentado",
    "name": "Estado fragmentado",
@@ -12071,7 +10539,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 2000
+   "anio": 2001
   },
   {
    "type": "idea",
@@ -12113,39 +10581,6 @@
    "anio": 1985
   },
   {
-   "type": "persona",
-   "slug": "hermes-tovar",
-   "name": "Hermes Tovar",
-   "variants": [
-    "Hermes Tovar"
-   ],
-   "mentions": 31,
-   "periodoCode": "CON",
-   "periods": [
-    "CON",
-    "COL"
-   ],
-   "periodoOrden": 1,
-   "anio": 1560
-  },
-  {
-   "type": "persona",
-   "slug": "hermes-tovar-pinzon",
-   "name": "Hermes Tovar Pinzón",
-   "variants": [
-    "Hermes Tovar Pinzón"
-   ],
-   "mentions": 31,
-   "periodoCode": "CON",
-   "periods": [
-    "CON",
-    "COL",
-    "POS"
-   ],
-   "periodoOrden": 1,
-   "anio": 1576
-  },
-  {
    "type": "idea",
    "slug": "ilustracion-criolla",
    "name": "Ilustración criolla",
@@ -12175,7 +10610,7 @@
     "VIO"
    ],
    "periodoOrden": 8,
-   "anio": 1936
+   "anio": 1940
   },
   {
    "type": "persona",
@@ -12206,7 +10641,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1812
+   "anio": 1810
   },
   {
    "type": "persona",
@@ -12222,7 +10657,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1919
+   "anio": 1928
   },
   {
    "type": "persona",
@@ -12237,7 +10672,7 @@
     "COL"
    ],
    "periodoOrden": 2,
-   "anio": 1741
+   "anio": 1740
   },
   {
    "type": "idea",
@@ -12343,23 +10778,7 @@
     "POS"
    ],
    "periodoOrden": 11,
-   "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "alvaro-villarraga",
-   "name": "Álvaro Villarraga",
-   "variants": [
-    "Álvaro Villarraga"
-   ],
-   "mentions": 30,
-   "periodoCode": "POS",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
+   "anio": 1990
   },
   {
    "type": "persona",
@@ -12424,7 +10843,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1991
+   "anio": 1994
   },
   {
    "type": "idea",
@@ -12457,7 +10876,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 5,
-   "anio": 1851
+   "anio": 1877
   },
   {
    "type": "persona",
@@ -12472,7 +10891,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1888
+   "anio": 1890
   },
   {
    "type": "idea",
@@ -12492,24 +10911,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "cric",
-   "name": "CRIC",
-   "variants": [
-    "CRIC"
-   ],
-   "mentions": 30,
-   "periodoCode": "SDE",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2010
   },
   {
    "type": "idea",
@@ -12579,7 +10980,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1985
+   "anio": 1987
   },
   {
    "type": "idea",
@@ -12597,24 +10998,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1997
-  },
-  {
-   "type": "persona",
-   "slug": "german-guzman",
-   "name": "Germán Guzmán",
-   "variants": [
-    "Germán Guzmán"
-   ],
-   "mentions": 30,
-   "periodoCode": "VIO",
-   "periods": [
-    "VIO",
-    "FN",
-    "C91",
-    "POS"
-   ],
-   "periodoOrden": 9,
-   "anio": 1952
   },
   {
    "type": "idea",
@@ -12712,7 +11095,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 1999
+   "anio": 2000
   },
   {
    "type": "lugar",
@@ -12797,7 +11180,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1910
+   "anio": 1920
   },
   {
    "type": "lugar",
@@ -12850,7 +11233,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2005
+   "anio": 2006
   },
   {
    "type": "persona",
@@ -12869,7 +11252,7 @@
     "C91"
    ],
    "periodoOrden": 8,
-   "anio": 1933
+   "anio": 1940
   },
   {
    "type": "idea",
@@ -12952,7 +11335,7 @@
     "COL"
    ],
    "periodoOrden": 1,
-   "anio": 1560
+   "anio": 1590
   },
   {
    "type": "persona",
@@ -12963,14 +11346,14 @@
     "Lucas Fernández de Piedrahíta"
    ],
    "mentions": 29,
-   "periodoCode": "CON",
+   "periodoCode": "COL",
    "periods": [
     "CON",
     "COL",
     "EUC"
    ],
-   "periodoOrden": 1,
-   "anio": 1553
+   "periodoOrden": 2,
+   "anio": 1670
   },
   {
    "type": "idea",
@@ -12987,22 +11370,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1989
-  },
-  {
-   "type": "persona",
-   "slug": "mario-arrubla",
-   "name": "Mario Arrubla",
-   "variants": [
-    "Mario Arrubla"
-   ],
-   "mentions": 29,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1967
   },
   {
    "type": "idea",
@@ -13054,7 +11421,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1984
+   "anio": 1980
   },
   {
    "type": "persona",
@@ -13087,7 +11454,7 @@
     "COL"
    ],
    "periodoOrden": 1,
-   "anio": 1549
+   "anio": 1625
   },
   {
    "type": "idea",
@@ -13169,7 +11536,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1926
+   "anio": 1925
   },
   {
    "type": "persona",
@@ -13185,7 +11552,7 @@
     "CNA"
    ],
    "periodoOrden": 10,
-   "anio": 1971
+   "anio": 1970
   },
   {
    "type": "idea",
@@ -13215,7 +11582,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1912
+   "anio": 1910
   },
   {
    "type": "idea",
@@ -13236,22 +11603,6 @@
    ],
    "periodoOrden": 9,
    "anio": 1953
-  },
-  {
-   "type": "persona",
-   "slug": "antonio-garcia-nossa",
-   "name": "Antonio García Nossa",
-   "variants": [
-    "Antonio García Nossa"
-   ],
-   "mentions": 28,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB",
-    "FN"
-   ],
-   "periodoOrden": 8,
-   "anio": 1935
   },
   {
    "type": "lugar",
@@ -13337,39 +11688,6 @@
   },
   {
    "type": "persona",
-   "slug": "corte-suprema-de-justicia",
-   "name": "Corte Suprema de Justicia",
-   "variants": [
-    "Corte Suprema de Justicia"
-   ],
-   "mentions": 28,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2007
-  },
-  {
-   "type": "persona",
-   "slug": "frank-safford",
-   "name": "Frank Safford",
-   "variants": [
-    "Frank Safford"
-   ],
-   "mentions": 28,
-   "periodoCode": "REG",
-   "periods": [
-    "NGR",
-    "EUC",
-    "REG",
-    "FN"
-   ],
-   "periodoOrden": 7,
-   "anio": 1900
-  },
-  {
-   "type": "persona",
    "slug": "jesus-abad-colorado",
    "name": "Jesús Abad Colorado",
    "variants": [
@@ -13383,7 +11701,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2009
+   "anio": 2010
   },
   {
    "type": "persona",
@@ -13399,7 +11717,7 @@
     "EUC"
    ],
    "periodoOrden": 5,
-   "anio": 1850
+   "anio": 1845
   },
   {
    "type": "persona",
@@ -13431,27 +11749,7 @@
     "POS"
    ],
    "periodoOrden": 14,
-   "anio": 2019
-  },
-  {
-   "type": "persona",
-   "slug": "luis-ospina-vasquez",
-   "name": "Luis Ospina Vásquez",
-   "variants": [
-    "Luis Ospina Vásquez"
-   ],
-   "mentions": 28,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "COL",
-    "EUC",
-    "REG",
-    "REP_LIB",
-    "VIO",
-    "FN"
-   ],
-   "periodoOrden": 8,
-   "anio": 1940
+   "anio": 2018
   },
   {
    "type": "idea",
@@ -13506,25 +11804,6 @@
   },
   {
    "type": "persona",
-   "slug": "paul-oquist",
-   "name": "Paul Oquist",
-   "variants": [
-    "Paul Oquist"
-   ],
-   "mentions": 28,
-   "periodoCode": "CNA",
-   "periods": [
-    "REP_LIB",
-    "VIO",
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 11,
-   "anio": 1987
-  },
-  {
-   "type": "persona",
    "slug": "pedro-justo-berrio",
    "name": "Pedro Justo Berrío",
    "variants": [
@@ -13553,7 +11832,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1828
+   "anio": 1825
   },
   {
    "type": "idea",
@@ -13869,7 +12148,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1916
+   "anio": 1918
   },
   {
    "type": "persona",
@@ -13956,7 +12235,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1840
+   "anio": 1838
   },
   {
    "type": "idea",
@@ -13987,7 +12266,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1921
+   "anio": 1922
   },
   {
    "type": "idea",
@@ -14005,23 +12284,6 @@
    ],
    "periodoOrden": 6,
    "anio": 1863
-  },
-  {
-   "type": "persona",
-   "slug": "margarita-gonzalez",
-   "name": "Margarita González",
-   "variants": [
-    "Margarita González"
-   ],
-   "mentions": 27,
-   "periodoCode": "COL",
-   "periods": [
-    "COL",
-    "NGR",
-    "CNA"
-   ],
-   "periodoOrden": 2,
-   "anio": 1680
   },
   {
    "type": "lugar",
@@ -14078,7 +12340,7 @@
     "VIO"
    ],
    "periodoOrden": 8,
-   "anio": 1938
+   "anio": 1944
   },
   {
    "type": "idea",
@@ -14159,24 +12421,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1824
-  },
-  {
-   "type": "persona",
-   "slug": "proceso-de-comunidades-negras",
-   "name": "Proceso de Comunidades Negras",
-   "variants": [
-    "Proceso de Comunidades Negras"
-   ],
-   "mentions": 27,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
+   "anio": 1825
   },
   {
    "type": "idea",
@@ -14228,7 +12473,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1985
+   "anio": 1972
   },
   {
    "type": "idea",
@@ -14242,22 +12487,6 @@
    "periods": [
     "FN",
     "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "stathis-kalyvas",
-   "name": "Stathis Kalyvas",
-   "variants": [
-    "Stathis Kalyvas"
-   ],
-   "mentions": 27,
-   "periodoCode": "C91",
-   "periods": [
     "C91",
     "SDE"
    ],
@@ -14297,7 +12526,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2009
+   "anio": 2007
   },
   {
    "type": "lugar",
@@ -14330,26 +12559,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1920
-  },
-  {
-   "type": "persona",
-   "slug": "aline-helg",
-   "name": "Aline Helg",
-   "variants": [
-    "Aline Helg"
-   ],
-   "mentions": 26,
-   "periodoCode": "REG",
-   "periods": [
-    "COL",
-    "REG",
-    "REP_LIB",
-    "FN",
-    "POS"
-   ],
-   "periodoOrden": 7,
-   "anio": 1915
+   "anio": 1925
   },
   {
    "type": "lugar",
@@ -14366,25 +12576,6 @@
    ],
    "periodoOrden": 5,
    "anio": 1853
-  },
-  {
-   "type": "persona",
-   "slug": "banco-mundial",
-   "name": "Banco Mundial",
-   "variants": [
-    "Banco Mundial"
-   ],
-   "mentions": 26,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
   },
   {
    "type": "idea",
@@ -14472,22 +12663,6 @@
    "anio": 2005
   },
   {
-   "type": "persona",
-   "slug": "eduardo-pizarro-leongomez",
-   "name": "Eduardo Pizarro Leongómez",
-   "variants": [
-    "Eduardo Pizarro Leongómez"
-   ],
-   "mentions": 26,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2006
-  },
-  {
    "type": "idea",
    "slug": "exterminio-politico",
    "name": "Exterminio político",
@@ -14517,7 +12692,7 @@
     "REG"
    ],
    "periodoOrden": 5,
-   "anio": 1854
+   "anio": 1860
   },
   {
    "type": "persona",
@@ -14534,7 +12709,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1992
+   "anio": 1994
   },
   {
    "type": "idea",
@@ -14563,24 +12738,6 @@
    "periods": [
     "CNA",
     "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1997
-  },
-  {
-   "type": "persona",
-   "slug": "gustavo-gallon",
-   "name": "Gustavo Gallón",
-   "variants": [
-    "Gustavo Gallón"
-   ],
-   "mentions": 26,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91",
-    "SDE"
    ],
    "periodoOrden": 12,
    "anio": 1996
@@ -14662,7 +12819,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1853
+   "anio": 1855
   },
   {
    "type": "persona",
@@ -14677,7 +12834,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1823
+   "anio": 1825
   },
   {
    "type": "idea",
@@ -14713,40 +12870,6 @@
   },
   {
    "type": "persona",
-   "slug": "m-19",
-   "name": "M-19",
-   "variants": [
-    "M-19"
-   ],
-   "mentions": 26,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "maria-teresa-uribe",
-   "name": "María Teresa Uribe",
-   "variants": [
-    "María Teresa Uribe"
-   ],
-   "mentions": 26,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
-   "type": "persona",
    "slug": "mariano-montilla",
    "name": "Mariano Montilla",
    "variants": [
@@ -14758,7 +12881,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1826
+   "anio": 1822
   },
   {
    "type": "idea",
@@ -14822,7 +12945,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2004
+   "anio": 2010
   },
   {
    "type": "idea",
@@ -14874,7 +12997,7 @@
     "POS"
    ],
    "periodoOrden": 7,
-   "anio": 1926
+   "anio": 1920
   },
   {
    "type": "idea",
@@ -14906,7 +13029,7 @@
     "VIO"
    ],
    "periodoOrden": 9,
-   "anio": 1953
+   "anio": 1952
   },
   {
    "type": "idea",
@@ -14953,22 +13076,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "union-patriotica",
-   "name": "Unión Patriótica",
-   "variants": [
-    "Unión Patriótica"
-   ],
-   "mentions": 26,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 11,
-   "anio": 1988
   },
   {
    "type": "idea",
@@ -15038,7 +13145,7 @@
     "SDE"
    ],
    "periodoOrden": 12,
-   "anio": 1997
+   "anio": 2000
   },
   {
    "type": "persona",
@@ -15053,7 +13160,7 @@
     "CON"
    ],
    "periodoOrden": 1,
-   "anio": 1542
+   "anio": 1540
   },
   {
    "type": "persona",
@@ -15069,41 +13176,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1991
-  },
-  {
-   "type": "persona",
-   "slug": "compania-de-jesus",
-   "name": "Compañía de Jesús",
-   "variants": [
-    "Compañía de Jesús"
-   ],
-   "mentions": 25,
-   "periodoCode": "COL",
-   "periods": [
-    "COL"
-   ],
-   "periodoOrden": 2,
-   "anio": 1741
-  },
-  {
-   "type": "persona",
-   "slug": "dane",
-   "name": "DANE",
-   "variants": [
-    "DANE"
-   ],
-   "mentions": 25,
-   "periodoCode": "SDE",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
+   "anio": 1992
   },
   {
    "type": "persona",
@@ -15138,42 +13211,6 @@
    "anio": 1988
   },
   {
-   "type": "persona",
-   "slug": "fedegan",
-   "name": "FEDEGAN",
-   "variants": [
-    "FEDEGAN",
-    "Fedegán",
-    "Fedegan"
-   ],
-   "mentions": 25,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1997
-  },
-  {
-   "type": "persona",
-   "slug": "incoder",
-   "name": "Incoder",
-   "variants": [
-    "Incoder",
-    "INCODER"
-   ],
-   "mentions": 25,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
    "type": "lugar",
    "slug": "italia",
    "name": "Italia",
@@ -15205,7 +13242,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2010
   },
   {
    "type": "persona",
@@ -15237,7 +13274,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1849
+   "anio": 1845
   },
   {
    "type": "persona",
@@ -15254,7 +13291,7 @@
     "COL"
    ],
    "periodoOrden": 2,
-   "anio": 1650
+   "anio": 1636
   },
   {
    "type": "lugar",
@@ -15274,22 +13311,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2009
-  },
-  {
-   "type": "persona",
-   "slug": "leon-valencia",
-   "name": "León Valencia",
-   "variants": [
-    "León Valencia"
-   ],
-   "mentions": 25,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
   },
   {
    "type": "idea",
@@ -15331,14 +13352,14 @@
     "Manuel Antonio Carreño"
    ],
    "mentions": 25,
-   "periodoCode": "REG",
+   "periodoCode": "NGR",
    "periods": [
     "NGR",
     "REG",
     "FN"
    ],
-   "periodoOrden": 7,
-   "anio": 1910
+   "periodoOrden": 5,
+   "anio": 1853
   },
   {
    "type": "persona",
@@ -15354,7 +13375,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1914
+   "anio": 1910
   },
   {
    "type": "persona",
@@ -15371,7 +13392,7 @@
     "REG"
    ],
    "periodoOrden": 5,
-   "anio": 1851
+   "anio": 1845
   },
   {
    "type": "persona",
@@ -15388,7 +13409,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 7,
-   "anio": 1900
+   "anio": 1885
   },
   {
    "type": "lugar",
@@ -15647,26 +13668,6 @@
    "anio": 2012
   },
   {
-   "type": "persona",
-   "slug": "alvaro-tirado-mejia",
-   "name": "Álvaro Tirado Mejía",
-   "variants": [
-    "Álvaro Tirado Mejía"
-   ],
-   "mentions": 24,
-   "periodoCode": "CNA",
-   "periods": [
-    "NGR",
-    "REP_LIB",
-    "FN",
-    "CNA",
-    "C91",
-    "POS"
-   ],
-   "periodoOrden": 11,
-   "anio": 1986
-  },
-  {
    "type": "lugar",
    "slug": "armenia",
    "name": "Armenia",
@@ -15698,7 +13699,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1913
+   "anio": 1910
   },
   {
    "type": "idea",
@@ -15754,7 +13755,7 @@
     "POS"
    ],
    "periodoOrden": 11,
-   "anio": 1984
+   "anio": 1985
   },
   {
    "type": "idea",
@@ -15788,7 +13789,7 @@
     "POS"
    ],
    "periodoOrden": 12,
-   "anio": 1998
+   "anio": 2000
   },
   {
    "type": "idea",
@@ -15875,22 +13876,6 @@
    "anio": 1996
   },
   {
-   "type": "persona",
-   "slug": "luis-jorge-garay",
-   "name": "Luis Jorge Garay",
-   "variants": [
-    "Luis Jorge Garay"
-   ],
-   "mentions": 24,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2010
-  },
-  {
    "type": "lugar",
    "slug": "magangue",
    "name": "Magangué",
@@ -15923,25 +13908,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
-   "type": "persona",
-   "slug": "movice",
-   "name": "MOVICE",
-   "variants": [
-    "MOVICE",
-    "Movice"
-   ],
-   "mentions": 24,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2010
+   "anio": 2007
   },
   {
    "type": "lugar",
@@ -15975,7 +13942,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1969
+   "anio": 1968
   },
   {
    "type": "idea",
@@ -16109,25 +14076,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1900
-  },
-  {
-   "type": "persona",
-   "slug": "alicia-dussan",
-   "name": "Alicia Dussán",
-   "variants": [
-    "Alicia Dussán"
-   ],
-   "mentions": 23,
-   "periodoCode": "FN",
-   "periods": [
-    "REP_LIB",
-    "VIO",
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1968
+   "anio": 1890
   },
   {
    "type": "lugar",
@@ -16160,7 +14109,7 @@
     "POS"
    ],
    "periodoOrden": 12,
-   "anio": 1999
+   "anio": 2000
   },
   {
    "type": "persona",
@@ -16211,7 +14160,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1992
+   "anio": 2000
   },
   {
    "type": "idea",
@@ -16391,23 +14340,6 @@
   },
   {
    "type": "persona",
-   "slug": "fiscalia-general",
-   "name": "Fiscalía General",
-   "variants": [
-    "Fiscalía General"
-   ],
-   "mentions": 23,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
-   "type": "persona",
    "slug": "francisco-antonio-moreno-y-escandon",
    "name": "Francisco Antonio Moreno y Escandón",
    "variants": [
@@ -16420,7 +14352,7 @@
     "PRE_IND"
    ],
    "periodoOrden": 2,
-   "anio": 1767
+   "anio": 1775
   },
   {
    "type": "persona",
@@ -16435,7 +14367,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2009
+   "anio": 2012
   },
   {
    "type": "persona",
@@ -16520,7 +14452,7 @@
     "IND"
    ],
    "periodoOrden": 3,
-   "anio": 1796
+   "anio": 1800
   },
   {
    "type": "persona",
@@ -16535,7 +14467,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1851
+   "anio": 1860
   },
   {
    "type": "lugar",
@@ -16567,7 +14499,7 @@
     "CON"
    ],
    "periodoOrden": 1,
-   "anio": 1576
+   "anio": 1575
   },
   {
    "type": "persona",
@@ -16584,7 +14516,7 @@
     "REG"
    ],
    "periodoOrden": 3,
-   "anio": 1794
+   "anio": 1800
   },
   {
    "type": "persona",
@@ -16599,25 +14531,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1853
-  },
-  {
-   "type": "persona",
-   "slug": "mauricio-garcia-villegas",
-   "name": "Mauricio García Villegas",
-   "variants": [
-    "Mauricio García Villegas",
-    "Mauricio García-Villegas"
-   ],
-   "mentions": 23,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1997
+   "anio": 1855
   },
   {
    "type": "idea",
@@ -16670,7 +14584,7 @@
     "REG"
    ],
    "periodoOrden": 6,
-   "anio": 1863
+   "anio": 1870
   },
   {
    "type": "persona",
@@ -16681,12 +14595,13 @@
     "Raúl Hasbun"
    ],
    "mentions": 23,
-   "periodoCode": "C91",
+   "periodoCode": "SDE",
    "periods": [
+    "SDE",
     "C91"
    ],
-   "periodoOrden": 12,
-   "anio": 1997
+   "periodoOrden": 13,
+   "anio": 2005
   },
   {
    "type": "idea",
@@ -16739,41 +14654,6 @@
    "anio": 1988
   },
   {
-   "type": "persona",
-   "slug": "richard-evans-schultes",
-   "name": "Richard Evans Schultes",
-   "variants": [
-    "Richard Evans Schultes"
-   ],
-   "mentions": 23,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB",
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 8,
-   "anio": 1942
-  },
-  {
-   "type": "persona",
-   "slug": "rogerio-velasquez",
-   "name": "Rogerio Velásquez",
-   "variants": [
-    "Rogerio Velásquez"
-   ],
-   "mentions": 23,
-   "periodoCode": "FN",
-   "periods": [
-    "REG",
-    "FN",
-    "C91"
-   ],
-   "periodoOrden": 10,
-   "anio": 1965
-  },
-  {
    "type": "lugar",
    "slug": "santo-domingo-cauca",
    "name": "Santo Domingo (Cauca)",
@@ -16806,24 +14686,6 @@
    ],
    "periodoOrden": 5,
    "anio": 1854
-  },
-  {
-   "type": "persona",
-   "slug": "victor-daniel-bonilla",
-   "name": "Víctor Daniel Bonilla",
-   "variants": [
-    "Víctor Daniel Bonilla"
-   ],
-   "mentions": 23,
-   "periodoCode": "FN",
-   "periods": [
-    "REG",
-    "REP_LIB",
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1971
   },
   {
    "type": "idea",
@@ -16881,14 +14743,14 @@
     "Botalón"
    ],
    "mentions": 22,
-   "periodoCode": "C91",
+   "periodoCode": "SDE",
    "periods": [
     "C91",
     "SDE",
     "POS"
    ],
-   "periodoOrden": 12,
-   "anio": 2000
+   "periodoOrden": 13,
+   "anio": 2005
   },
   {
    "type": "lugar",
@@ -16922,39 +14784,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1987
-  },
-  {
-   "type": "persona",
-   "slug": "charles-tilly",
-   "name": "Charles Tilly",
-   "variants": [
-    "Charles Tilly"
-   ],
-   "mentions": 22,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1996
-  },
-  {
-   "type": "persona",
-   "slug": "comision-colombiana-de-juristas",
-   "name": "Comisión Colombiana de Juristas",
-   "variants": [
-    "Comisión Colombiana de Juristas"
-   ],
-   "mentions": 22,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2007
   },
   {
    "type": "idea",
@@ -17073,7 +14902,7 @@
     "PRE_IND"
    ],
    "periodoOrden": 2,
-   "anio": 1730
+   "anio": 1780
   },
   {
    "type": "idea",
@@ -17098,22 +14927,6 @@
   },
   {
    "type": "persona",
-   "slug": "jorge-rojas",
-   "name": "Jorge Rojas",
-   "variants": [
-    "Jorge Rojas"
-   ],
-   "mentions": 22,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
    "slug": "jose-asuncion-silva",
    "name": "José Asunción Silva",
    "variants": [
@@ -17125,7 +14938,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1900
+   "anio": 1895
   },
   {
    "type": "persona",
@@ -17156,7 +14969,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1894
+   "anio": 1890
   },
   {
    "type": "persona",
@@ -17171,7 +14984,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1847
+   "anio": 1850
   },
   {
    "type": "persona",
@@ -17186,7 +14999,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1900
+   "anio": 1898
   },
   {
    "type": "persona",
@@ -17202,7 +15015,7 @@
     "NGR"
    ],
    "periodoOrden": 4,
-   "anio": 1820
+   "anio": 1825
   },
   {
    "type": "persona",
@@ -17212,15 +15025,15 @@
     "Margarita Marino de Botero"
    ],
    "mentions": 22,
-   "periodoCode": "FN",
+   "periodoCode": "CNA",
    "periods": [
     "FN",
     "CNA",
     "C91",
     "SDE"
    ],
-   "periodoOrden": 10,
-   "anio": 1971
+   "periodoOrden": 11,
+   "anio": 1985
   },
   {
    "type": "lugar",
@@ -17259,22 +15072,6 @@
   },
   {
    "type": "persona",
-   "slug": "pcn",
-   "name": "PCN",
-   "variants": [
-    "PCN"
-   ],
-   "mentions": 22,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1993
-  },
-  {
-   "type": "persona",
    "slug": "philip-alston",
    "name": "Philip Alston",
    "variants": [
@@ -17286,7 +15083,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2010
   },
   {
    "type": "idea",
@@ -17322,23 +15119,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1920
-  },
-  {
-   "type": "persona",
-   "slug": "renan-silva",
-   "name": "Renán Silva",
-   "variants": [
-    "Renán Silva"
-   ],
-   "mentions": 22,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "COL",
-    "REP_LIB",
-    "POS"
-   ],
-   "periodoOrden": 8,
-   "anio": 1938
   },
   {
    "type": "idea",
@@ -17561,7 +15341,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1984
+   "anio": 1985
   },
   {
    "type": "persona",
@@ -17577,7 +15357,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2008
+   "anio": 2005
   },
   {
    "type": "idea",
@@ -17622,7 +15402,7 @@
     "Diego Montaña Cuéllar"
    ],
    "mentions": 21,
-   "periodoCode": "REP_LIB",
+   "periodoCode": "FN",
    "periods": [
     "REG",
     "REP_LIB",
@@ -17630,62 +15410,8 @@
     "FN",
     "CNA"
    ],
-   "periodoOrden": 8,
-   "anio": 1940
-  },
-  {
-   "type": "persona",
-   "slug": "eduardo-posada-carbo",
-   "name": "Eduardo Posada Carbó",
-   "variants": [
-    "Eduardo Posada Carbó",
-    "Eduardo Posada-Carbó"
-   ],
-   "mentions": 21,
-   "periodoCode": "REG",
-   "periods": [
-    "REG",
-    "FN",
-    "POS"
-   ],
-   "periodoOrden": 7,
-   "anio": 1915
-  },
-  {
-   "type": "persona",
-   "slug": "eduardo-santa",
-   "name": "Eduardo Santa",
-   "variants": [
-    "Eduardo Santa"
-   ],
-   "mentions": 21,
-   "periodoCode": "FN",
-   "periods": [
-    "EUC",
-    "REG",
-    "VIO",
-    "FN"
-   ],
    "periodoOrden": 10,
-   "anio": 1965
-  },
-  {
-   "type": "persona",
-   "slug": "eric-hobsbawm",
-   "name": "Eric Hobsbawm",
-   "variants": [
-    "Eric Hobsbawm"
-   ],
-   "mentions": 21,
-   "periodoCode": "FN",
-   "periods": [
-    "VIO",
-    "FN",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 10,
-   "anio": 1966
+   "anio": 1970
   },
   {
    "type": "persona",
@@ -17703,7 +15429,7 @@
     "POS"
    ],
    "periodoOrden": 11,
-   "anio": 1983
+   "anio": 1988
   },
   {
    "type": "idea",
@@ -17753,7 +15479,7 @@
     "VIO"
    ],
    "periodoOrden": 8,
-   "anio": 1937
+   "anio": 1940
   },
   {
    "type": "idea",
@@ -17785,7 +15511,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 8,
-   "anio": 1938
+   "anio": 1928
   },
   {
    "type": "persona",
@@ -17801,41 +15527,7 @@
     "NGR"
    ],
    "periodoOrden": 4,
-   "anio": 1829
-  },
-  {
-   "type": "persona",
-   "slug": "madres-de-plaza-de-mayo",
-   "name": "Madres de Plaza de Mayo",
-   "variants": [
-    "Madres de Plaza de Mayo"
-   ],
-   "mentions": 21,
-   "periodoCode": "SDE",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
-   "type": "persona",
-   "slug": "magdala-velasquez",
-   "name": "Magdala Velásquez",
-   "variants": [
-    "Magdala Velásquez"
-   ],
-   "mentions": 21,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
+   "anio": 1830
   },
   {
    "type": "persona",
@@ -17850,7 +15542,7 @@
     "SDE"
    ],
    "periodoOrden": 13,
-   "anio": 2004
+   "anio": 2010
   },
   {
    "type": "persona",
@@ -17867,7 +15559,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2011
+   "anio": 2012
   },
   {
    "type": "idea",
@@ -17954,43 +15646,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1984
-  },
-  {
-   "type": "persona",
-   "slug": "pierre-bourdieu",
-   "name": "Pierre Bourdieu",
-   "variants": [
-    "Pierre Bourdieu"
-   ],
-   "mentions": 21,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "pierre-gilhodes",
-   "name": "Pierre Gilhodes",
-   "variants": [
-    "Pierre Gilhodes",
-    "Pierre Gilhodés",
-    "Pierre Gilhodès"
-   ],
-   "mentions": 21,
-   "periodoCode": "FN",
-   "periods": [
-    "REG",
-    "REP_LIB",
-    "VIO",
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1966
   },
   {
    "type": "idea",
@@ -18131,7 +15786,7 @@
     "SDE"
    ],
    "periodoOrden": 11,
-   "anio": 1990
+   "anio": 1989
   },
   {
    "type": "persona",
@@ -18147,23 +15802,7 @@
     "POS"
    ],
    "periodoOrden": 13,
-   "anio": 2013
-  },
-  {
-   "type": "persona",
-   "slug": "unidad-de-victimas",
-   "name": "Unidad de Víctimas",
-   "variants": [
-    "Unidad de Víctimas"
-   ],
-   "mentions": 21,
-   "periodoCode": "POS",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
+   "anio": 2012
   },
   {
    "type": "lugar",
@@ -18189,13 +15828,13 @@
     "Yanette Bautista"
    ],
    "mentions": 21,
-   "periodoCode": "C91",
+   "periodoCode": "CNA",
    "periods": [
     "CNA",
     "C91"
    ],
-   "periodoOrden": 12,
-   "anio": 1999
+   "periodoOrden": 11,
+   "anio": 1990
   },
   {
    "type": "idea",
@@ -18215,22 +15854,6 @@
   },
   {
    "type": "persona",
-   "slug": "albert-berry",
-   "name": "Albert Berry",
-   "variants": [
-    "Albert Berry"
-   ],
-   "mentions": 20,
-   "periodoCode": "FN",
-   "periods": [
-    "REP_LIB",
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1971
-  },
-  {
-   "type": "persona",
    "slug": "alfonso-lopez-trujillo",
    "name": "Alfonso López Trujillo",
    "variants": [
@@ -18243,39 +15866,7 @@
     "CNA"
    ],
    "periodoOrden": 10,
-   "anio": 1968
-  },
-  {
-   "type": "persona",
-   "slug": "amnistia-internacional",
-   "name": "Amnistía Internacional",
-   "variants": [
-    "Amnistía Internacional"
-   ],
-   "mentions": 20,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "ana-maria-falchetti",
-   "name": "Ana María Falchetti",
-   "variants": [
-    "Ana María Falchetti"
-   ],
-   "mentions": 20,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1300
+   "anio": 1972
   },
   {
    "type": "idea",
@@ -18396,24 +15987,6 @@
   },
   {
    "type": "persona",
-   "slug": "carl-langebaek",
-   "name": "Carl Langebaek",
-   "variants": [
-    "Carl Langebaek"
-   ],
-   "mentions": 20,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE",
-    "CON",
-    "REP_LIB",
-    "POS"
-   ],
-   "periodoOrden": 0,
-   "anio": 1400
-  },
-  {
-   "type": "persona",
    "slug": "carlos-andres-perez",
    "name": "Carlos Andrés Pérez",
    "variants": [
@@ -18427,7 +16000,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1983
+   "anio": 1989
   },
   {
    "type": "persona",
@@ -18493,7 +16066,7 @@
     "REP_LIB"
    ],
    "periodoOrden": 8,
-   "anio": 1936
+   "anio": 1940
   },
   {
    "type": "idea",
@@ -18527,7 +16100,7 @@
     "C91"
    ],
    "periodoOrden": 11,
-   "anio": 1979
+   "anio": 1990
   },
   {
    "type": "persona",
@@ -18542,7 +16115,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1996
+   "anio": 1995
   },
   {
    "type": "persona",
@@ -18573,7 +16146,7 @@
     "C91"
    ],
    "periodoOrden": 12,
-   "anio": 1993
+   "anio": 1995
   },
   {
    "type": "persona",
@@ -18590,7 +16163,7 @@
     "FN"
    ],
    "periodoOrden": 9,
-   "anio": 1953
+   "anio": 1955
   },
   {
    "type": "persona",
@@ -18625,7 +16198,7 @@
     "SDE"
    ],
    "periodoOrden": 1,
-   "anio": 1546
+   "anio": 1540
   },
   {
    "type": "persona",
@@ -18642,7 +16215,7 @@
     "EUC"
    ],
    "periodoOrden": 4,
-   "anio": 1819
+   "anio": 1820
   },
   {
    "type": "persona",
@@ -18658,7 +16231,7 @@
     "EUC"
    ],
    "periodoOrden": 5,
-   "anio": 1852
+   "anio": 1840
   },
   {
    "type": "idea",
@@ -18688,7 +16261,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1813
+   "anio": 1815
   },
   {
    "type": "persona",
@@ -18703,24 +16276,7 @@
     "FN"
    ],
    "periodoOrden": 10,
-   "anio": 1968
-  },
-  {
-   "type": "persona",
-   "slug": "martha-nubia-bello",
-   "name": "Martha Nubia Bello",
-   "variants": [
-    "Martha Nubia Bello"
-   ],
-   "mentions": 20,
-   "periodoCode": "POS",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
+   "anio": 1965
   },
   {
    "type": "idea",
@@ -18795,38 +16351,20 @@
   },
   {
    "type": "persona",
-   "slug": "myriam-jimeno",
-   "name": "Myriam Jimeno",
-   "variants": [
-    "Myriam Jimeno"
-   ],
-   "mentions": 20,
-   "periodoCode": "POS",
-   "periods": [
-    "VIO",
-    "CNA",
-    "C91",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
-  },
-  {
-   "type": "persona",
    "slug": "nicolas-tanco-armero",
    "name": "Nicolás Tanco Armero",
    "variants": [
     "Nicolás Tanco Armero"
    ],
    "mentions": 20,
-   "periodoCode": "REG",
+   "periodoCode": "NGR",
    "periods": [
     "NGR",
     "EUC",
     "REG"
    ],
-   "periodoOrden": 7,
-   "anio": 1888
+   "periodoOrden": 5,
+   "anio": 1860
   },
   {
    "type": "idea",
@@ -19717,21 +17255,6 @@
   },
   {
    "type": "persona",
-   "slug": "ivan-orozco-abad",
-   "name": "Iván Orozco Abad",
-   "variants": [
-    "Iván Orozco Abad"
-   ],
-   "mentions": 19,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2011
-  },
-  {
-   "type": "persona",
    "slug": "jesus-armando-arias-cabrales",
    "name": "Jesús Armando Arias Cabrales",
    "variants": [
@@ -19875,22 +17398,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "malcolm-deas",
-   "name": "Malcolm Deas",
-   "variants": [
-    "Malcolm Deas"
-   ],
-   "mentions": 19,
-   "periodoCode": "REG",
-   "periods": [
-    "REG",
-    "CNA"
-   ],
-   "periodoOrden": 7,
-   "anio": 1910
   },
   {
    "type": "persona",
@@ -20065,22 +17572,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2011
-  },
-  {
-   "type": "persona",
-   "slug": "ruta-pacifica",
-   "name": "Ruta Pacífica",
-   "variants": [
-    "Ruta Pacífica"
-   ],
-   "mentions": 19,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2012
   },
   {
    "type": "lugar",
@@ -20297,23 +17788,6 @@
    ],
    "periodoOrden": 5,
    "anio": 1854
-  },
-  {
-   "type": "persona",
-   "slug": "astrid-ulloa",
-   "name": "Astrid Ulloa",
-   "variants": [
-    "Astrid Ulloa"
-   ],
-   "mentions": 18,
-   "periodoCode": "POS",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "idea",
@@ -20644,25 +18118,6 @@
    "anio": 1985
   },
   {
-   "type": "persona",
-   "slug": "fernando-urrea",
-   "name": "Fernando Urrea",
-   "variants": [
-    "Fernando Urrea"
-   ],
-   "mentions": 18,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "CNA",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
    "type": "idea",
    "slug": "fumigacion-aerea",
    "name": "Fumigación aérea",
@@ -20691,7 +18146,7 @@
     "VIO"
    ],
    "periodoOrden": 8,
-   "anio": 1945
+   "anio": 1940
   },
   {
    "type": "idea",
@@ -20877,39 +18332,6 @@
    ],
    "periodoOrden": 5,
    "anio": 1851
-  },
-  {
-   "type": "persona",
-   "slug": "maria-teresa-ronderos",
-   "name": "María Teresa Ronderos",
-   "variants": [
-    "María Teresa Ronderos"
-   ],
-   "mentions": 18,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2007
-  },
-  {
-   "type": "persona",
-   "slug": "mauricio-pardo",
-   "name": "Mauricio Pardo",
-   "variants": [
-    "Mauricio Pardo"
-   ],
-   "mentions": 18,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1995
   },
   {
    "type": "persona",
@@ -21117,21 +18539,6 @@
    ],
    "periodoOrden": 1,
    "anio": 1538
-  },
-  {
-   "type": "persona",
-   "slug": "ruta-pacifica-de-las-mujeres",
-   "name": "Ruta Pacífica de las Mujeres",
-   "variants": [
-    "Ruta Pacífica de las Mujeres"
-   ],
-   "mentions": 18,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
   },
   {
    "type": "idea",
@@ -21872,14 +19279,15 @@
     "Jorge Enrique Robledo"
    ],
    "mentions": 17,
-   "periodoCode": "SDE",
+   "periodoCode": "TRANS",
    "periods": [
+    "TRANS",
     "C91",
     "SDE",
     "POS"
    ],
-   "periodoOrden": 13,
-   "anio": 2011
+   "periodoOrden": 15,
+   "anio": 2010
   },
   {
    "type": "persona",
@@ -22465,22 +19873,6 @@
    "anio": 2004
   },
   {
-   "type": "persona",
-   "slug": "camila-medina",
-   "name": "Camila Medina",
-   "variants": [
-    "Camila Medina"
-   ],
-   "mentions": 16,
-   "periodoCode": "POS",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
-  },
-  {
    "type": "idea",
    "slug": "capacidad-estatal",
    "name": "Capacidad estatal",
@@ -22563,22 +19955,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2012
-  },
-  {
-   "type": "persona",
-   "slug": "clemencia-plazas",
-   "name": "Clemencia Plazas",
-   "variants": [
-    "Clemencia Plazas"
-   ],
-   "mentions": 16,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE",
-    "FN"
-   ],
-   "periodoOrden": 0,
-   "anio": 1300
   },
   {
    "type": "idea",
@@ -22780,22 +20156,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "eduardo-londono",
-   "name": "Eduardo Londoño",
-   "variants": [
-    "Eduardo Londoño"
-   ],
-   "mentions": 16,
-   "periodoCode": "CON",
-   "periods": [
-    "PRE",
-    "CON"
-   ],
-   "periodoOrden": 1,
-   "anio": 1575
   },
   {
    "type": "idea",
@@ -23380,23 +20740,6 @@
   },
   {
    "type": "persona",
-   "slug": "patricia-lara",
-   "name": "Patricia Lara",
-   "variants": [
-    "Patricia Lara"
-   ],
-   "mentions": 16,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 11,
-   "anio": 1986
-  },
-  {
-   "type": "persona",
    "slug": "patricia-tobon",
    "name": "Patricia Tobón",
    "variants": [
@@ -23760,38 +21103,6 @@
   },
   {
    "type": "persona",
-   "slug": "alfonso-munera",
-   "name": "Alfonso Múnera",
-   "variants": [
-    "Alfonso Múnera"
-   ],
-   "mentions": 15,
-   "periodoCode": "IND",
-   "periods": [
-    "COL",
-    "IND",
-    "NGR"
-   ],
-   "periodoOrden": 4,
-   "anio": 1816
-  },
-  {
-   "type": "persona",
-   "slug": "alfredo-molano-bravo",
-   "name": "Alfredo Molano Bravo",
-   "variants": [
-    "Alfredo Molano Bravo"
-   ],
-   "mentions": 15,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2022
-  },
-  {
-   "type": "persona",
    "slug": "alvaro-cepeda-samudio",
    "name": "Álvaro Cepeda Samudio",
    "variants": [
@@ -24039,21 +21350,6 @@
    ],
    "periodoOrden": 5,
    "anio": 1853
-  },
-  {
-   "type": "persona",
-   "slug": "caroline-moser",
-   "name": "Caroline Moser",
-   "variants": [
-    "Caroline Moser"
-   ],
-   "mentions": 15,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
   },
   {
    "type": "idea",
@@ -24310,23 +21606,6 @@
   },
   {
    "type": "persona",
-   "slug": "elsa-blair",
-   "name": "Elsa Blair",
-   "variants": [
-    "Elsa Blair"
-   ],
-   "mentions": 15,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
-   "type": "persona",
    "slug": "ernesto-guevara",
    "name": "Ernesto Guevara",
    "variants": [
@@ -24566,23 +21845,6 @@
    "anio": 1993
   },
   {
-   "type": "persona",
-   "slug": "leon-zamosc",
-   "name": "León Zamosc",
-   "variants": [
-    "León Zamosc",
-    "Leon Zamosc"
-   ],
-   "mentions": 15,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1971
-  },
-  {
    "type": "idea",
    "slug": "libertad-de-vientres",
    "name": "Libertad de vientres",
@@ -24646,40 +21908,6 @@
    ],
    "periodoOrden": 5,
    "anio": 1853
-  },
-  {
-   "type": "persona",
-   "slug": "mara-viveros",
-   "name": "Mara Viveros",
-   "variants": [
-    "Mara Viveros"
-   ],
-   "mentions": 15,
-   "periodoCode": "POS",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
-  },
-  {
-   "type": "persona",
-   "slug": "medofilo-medina",
-   "name": "Medófilo Medina",
-   "variants": [
-    "Medófilo Medina"
-   ],
-   "mentions": 15,
-   "periodoCode": "CNA",
-   "periods": [
-    "REG",
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
   },
   {
    "type": "idea",
@@ -25894,23 +23122,6 @@
   },
   {
    "type": "persona",
-   "slug": "francisco-gutierrez",
-   "name": "Francisco Gutiérrez",
-   "variants": [
-    "Francisco Gutiérrez"
-   ],
-   "mentions": 14,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 1995
-  },
-  {
-   "type": "persona",
    "slug": "francisco-soto",
    "name": "Francisco Soto",
    "variants": [
@@ -26295,22 +23506,6 @@
   },
   {
    "type": "persona",
-   "slug": "luis-florez",
-   "name": "Luis Flórez",
-   "variants": [
-    "Luis Flórez"
-   ],
-   "mentions": 14,
-   "periodoCode": "VIO",
-   "periods": [
-    "VIO",
-    "FN"
-   ],
-   "periodoOrden": 9,
-   "anio": 1954
-  },
-  {
-   "type": "persona",
    "slug": "luis-guillermo-vasco",
    "name": "Luis Guillermo Vasco",
    "variants": [
@@ -26532,7 +23727,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1909
+   "anio": 1900
   },
   {
    "type": "idea",
@@ -27116,39 +24311,6 @@
   },
   {
    "type": "persona",
-   "slug": "andres-guhl",
-   "name": "Andrés Guhl",
-   "variants": [
-    "Andrés Guhl"
-   ],
-   "mentions": 13,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 10,
-   "anio": 1969
-  },
-  {
-   "type": "persona",
-   "slug": "antonio-caballero",
-   "name": "Antonio Caballero",
-   "variants": [
-    "Antonio Caballero"
-   ],
-   "mentions": 13,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
-   "type": "persona",
    "slug": "antonio-de-la-torre-y-miranda",
    "name": "Antonio de la Torre y Miranda",
    "variants": [
@@ -27553,22 +24715,6 @@
    "anio": 1882
   },
   {
-   "type": "persona",
-   "slug": "comision-nacional-de-reparacion",
-   "name": "Comisión Nacional de Reparación",
-   "variants": [
-    "Comisión Nacional de Reparación"
-   ],
-   "mentions": 13,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2007
-  },
-  {
    "type": "idea",
    "slug": "compadrazgo",
    "name": "Compadrazgo",
@@ -27814,7 +24960,7 @@
     "NGR"
    ],
    "periodoOrden": 5,
-   "anio": 1856
+   "anio": 1855
   },
   {
    "type": "idea",
@@ -28126,22 +25272,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "grupo-de-memoria-historica",
-   "name": "Grupo de Memoria Histórica",
-   "variants": [
-    "Grupo de Memoria Histórica"
-   ],
-   "mentions": 13,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2011
   },
   {
    "type": "idea",
@@ -29041,7 +26171,7 @@
     "REG"
    ],
    "periodoOrden": 6,
-   "anio": 1873
+   "anio": 1870
   },
   {
    "type": "persona",
@@ -29091,22 +26221,6 @@
    ],
    "periodoOrden": 9,
    "anio": 1948
-  },
-  {
-   "type": "persona",
-   "slug": "wade-davis",
-   "name": "Wade Davis",
-   "variants": [
-    "Wade Davis"
-   ],
-   "mentions": 13,
-   "periodoCode": "POS",
-   "periods": [
-    "FN",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "idea",
@@ -29191,25 +26305,6 @@
   },
   {
    "type": "persona",
-   "slug": "ana-maria-bidegain",
-   "name": "Ana María Bidegain",
-   "variants": [
-    "Ana María Bidegain",
-    "Ana María Bidegaín"
-   ],
-   "mentions": 12,
-   "periodoCode": "CON",
-   "periods": [
-    "CON",
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 1,
-   "anio": 1576
-  },
-  {
-   "type": "persona",
    "slug": "anibal-quijano",
    "name": "Aníbal Quijano",
    "variants": [
@@ -29289,23 +26384,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1970
-  },
-  {
-   "type": "persona",
-   "slug": "beatriz-gonzalez",
-   "name": "Beatriz González",
-   "variants": [
-    "Beatriz González"
-   ],
-   "mentions": 12,
-   "periodoCode": "SDE",
-   "periods": [
-    "FN",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2010
   },
   {
    "type": "idea",
@@ -29830,7 +26908,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1896
+   "anio": 1895
   },
   {
    "type": "persona",
@@ -29961,22 +27039,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1989
-  },
-  {
-   "type": "persona",
-   "slug": "german-castro-caycedo",
-   "name": "Germán Castro Caycedo",
-   "variants": [
-    "Germán Castro Caycedo"
-   ],
-   "mentions": 12,
-   "periodoCode": "CNA",
-   "periods": [
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1987
   },
   {
    "type": "persona",
@@ -30382,23 +27444,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2008
-  },
-  {
-   "type": "persona",
-   "slug": "marta-ines-villa",
-   "name": "Marta Inés Villa",
-   "variants": [
-    "Marta Inés Villa"
-   ],
-   "mentions": 12,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2003
   },
   {
    "type": "persona",
@@ -30865,7 +27910,7 @@
     "EUC"
    ],
    "periodoOrden": 5,
-   "anio": 1849
+   "anio": 1850
   },
   {
    "type": "idea",
@@ -30934,22 +27979,6 @@
    ],
    "periodoOrden": 14,
    "anio": 2018
-  },
-  {
-   "type": "persona",
-   "slug": "saul-franco",
-   "name": "Saúl Franco",
-   "variants": [
-    "Saúl Franco"
-   ],
-   "mentions": 12,
-   "periodoCode": "POS",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2022
   },
   {
    "type": "idea",
@@ -31886,39 +28915,6 @@
   },
   {
    "type": "persona",
-   "slug": "daniel-mejia",
-   "name": "Daniel Mejía",
-   "variants": [
-    "Daniel Mejía"
-   ],
-   "mentions": 11,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "daniel-samper-pizano",
-   "name": "Daniel Samper Pizano",
-   "variants": [
-    "Daniel Samper Pizano"
-   ],
-   "mentions": 11,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
-  },
-  {
-   "type": "persona",
    "slug": "daron-acemoglu",
    "name": "Daron Acemoglu",
    "variants": [
@@ -32500,22 +29496,6 @@
   },
   {
    "type": "persona",
-   "slug": "helka-quevedo",
-   "name": "Helka Quevedo",
-   "variants": [
-    "Helka Quevedo"
-   ],
-   "mentions": 11,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2015
-  },
-  {
-   "type": "persona",
    "slug": "herbert-braun",
    "name": "Herbert Braun",
    "variants": [
@@ -32708,23 +29688,6 @@
    "periods": [
     "FN",
     "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1971
-  },
-  {
-   "type": "persona",
-   "slug": "julio-carrizosa-umana",
-   "name": "Julio Carrizosa Umaña",
-   "variants": [
-    "Julio Carrizosa Umaña"
-   ],
-   "mentions": 11,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "C91",
-    "POS"
    ],
    "periodoOrden": 10,
    "anio": 1971
@@ -33899,22 +30862,6 @@
    "anio": 1993
   },
   {
-   "type": "persona",
-   "slug": "winifred-tate",
-   "name": "Winifred Tate",
-   "variants": [
-    "Winifred Tate"
-   ],
-   "mentions": 11,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
    "type": "lugar",
    "slug": "zaragoza",
    "name": "Zaragoza",
@@ -33994,39 +30941,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1964
-  },
-  {
-   "type": "persona",
-   "slug": "alvaro-camacho-guizado",
-   "name": "Álvaro Camacho Guizado",
-   "variants": [
-    "Álvaro Camacho Guizado"
-   ],
-   "mentions": 10,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "ana-maria-jaramillo",
-   "name": "Ana María Jaramillo",
-   "variants": [
-    "Ana María Jaramillo"
-   ],
-   "mentions": 10,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA",
-    "POS"
-   ],
-   "periodoOrden": 11,
-   "anio": 1988
   },
   {
    "type": "persona",
@@ -34219,22 +31133,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1890
-  },
-  {
-   "type": "persona",
-   "slug": "camilo-dominguez",
-   "name": "Camilo Domínguez",
-   "variants": [
-    "Camilo Domínguez"
-   ],
-   "mentions": 10,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
   },
   {
    "type": "lugar",
@@ -34503,21 +31401,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1994
-  },
-  {
-   "type": "persona",
-   "slug": "clara-ines-garcia",
-   "name": "Clara Inés García",
-   "variants": [
-    "Clara Inés García"
-   ],
-   "mentions": 10,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1968
   },
   {
    "type": "persona",
@@ -34922,7 +31805,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1900
+   "anio": 1885
   },
   {
    "type": "lugar",
@@ -35465,15 +32348,15 @@
     "José Antonio Osorio Lizarazo"
    ],
    "mentions": 10,
-   "periodoCode": "REG",
+   "periodoCode": "REP_LIB",
    "periods": [
     "REG",
     "REP_LIB",
     "VIO",
     "SDE"
    ],
-   "periodoOrden": 7,
-   "anio": 1923
+   "periodoOrden": 8,
+   "anio": 1940
   },
   {
    "type": "persona",
@@ -35556,22 +32439,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2012
-  },
-  {
-   "type": "persona",
-   "slug": "julio-carrizosa",
-   "name": "Julio Carrizosa",
-   "variants": [
-    "Julio Carrizosa"
-   ],
-   "mentions": 10,
-   "periodoCode": "REG",
-   "periods": [
-    "REG",
-    "SDE"
-   ],
-   "periodoOrden": 7,
-   "anio": 1912
   },
   {
    "type": "lugar",
@@ -35735,37 +32602,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1967
-  },
-  {
-   "type": "persona",
-   "slug": "mara-viveros-vigoya",
-   "name": "Mara Viveros Vigoya",
-   "variants": [
-    "Mara Viveros Vigoya"
-   ],
-   "mentions": 10,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1996
-  },
-  {
-   "type": "persona",
-   "slug": "marcos-martinon-torres",
-   "name": "Marcos Martinón-Torres",
-   "variants": [
-    "Marcos Martinón-Torres"
-   ],
-   "mentions": 10,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1425
   },
   {
    "type": "idea",
@@ -35990,7 +32826,7 @@
     "REG"
    ],
    "periodoOrden": 6,
-   "anio": 1882
+   "anio": 1880
   },
   {
    "type": "idea",
@@ -36108,22 +32944,6 @@
   },
   {
    "type": "persona",
-   "slug": "nazih-richani",
-   "name": "Nazih Richani",
-   "variants": [
-    "Nazih Richani"
-   ],
-   "mentions": 10,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
-   "type": "persona",
    "slug": "nicolas-esguerra",
    "name": "Nicolás Esguerra",
    "variants": [
@@ -36183,21 +33003,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1991
-  },
-  {
-   "type": "persona",
-   "slug": "pablo-rodriguez",
-   "name": "Pablo Rodríguez",
-   "variants": [
-    "Pablo Rodríguez"
-   ],
-   "mentions": 10,
-   "periodoCode": "COL",
-   "periods": [
-    "COL"
-   ],
-   "periodoOrden": 2,
-   "anio": 1700
   },
   {
    "type": "persona",
@@ -36627,22 +33432,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1993
-  },
-  {
-   "type": "persona",
-   "slug": "roberto-lleras",
-   "name": "Roberto Lleras",
-   "variants": [
-    "Roberto Lleras"
-   ],
-   "mentions": 10,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE",
-    "POS"
-   ],
-   "periodoOrden": 0,
-   "anio": 1150
   },
   {
    "type": "persona",
@@ -37484,21 +34273,6 @@
    ],
    "periodoOrden": 3,
    "anio": 1801
-  },
-  {
-   "type": "persona",
-   "slug": "carlos-mario-perea",
-   "name": "Carlos Mario Perea",
-   "variants": [
-    "Carlos Mario Perea"
-   ],
-   "mentions": 9,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1995
   },
   {
    "type": "persona",
@@ -38490,22 +35264,6 @@
    "anio": 2000
   },
   {
-   "type": "persona",
-   "slug": "gabriel-misas",
-   "name": "Gabriel Misas",
-   "variants": [
-    "Gabriel Misas"
-   ],
-   "mentions": 9,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1969
-  },
-  {
    "type": "idea",
    "slug": "genocidio-cultural",
    "name": "Genocidio cultural",
@@ -39025,22 +35783,6 @@
   },
   {
    "type": "persona",
-   "slug": "jorge-palacios-preciado",
-   "name": "Jorge Palacios Preciado",
-   "variants": [
-    "Jorge Palacios Preciado"
-   ],
-   "mentions": 9,
-   "periodoCode": "COL",
-   "periods": [
-    "CON",
-    "COL"
-   ],
-   "periodoOrden": 2,
-   "anio": 1700
-  },
-  {
-   "type": "persona",
    "slug": "jose-joaquin-salcedo",
    "name": "José Joaquín Salcedo",
    "variants": [
@@ -39548,23 +36290,6 @@
   },
   {
    "type": "persona",
-   "slug": "mario-aguilera",
-   "name": "Mario Aguilera",
-   "variants": [
-    "Mario Aguilera"
-   ],
-   "mentions": 9,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2001
-  },
-  {
-   "type": "persona",
    "slug": "mario-calderon",
    "name": "Mario Calderón",
    "variants": [
@@ -39611,22 +36336,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1994
-  },
-  {
-   "type": "persona",
-   "slug": "mercedes-lopez-rodriguez",
-   "name": "Mercedes López Rodríguez",
-   "variants": [
-    "Mercedes López Rodríguez"
-   ],
-   "mentions": 9,
-   "periodoCode": "CON",
-   "periods": [
-    "CON",
-    "COL"
-   ],
-   "periodoOrden": 1,
-   "anio": 1576
   },
   {
    "type": "idea",
@@ -40340,21 +37049,6 @@
    "anio": 1988
   },
   {
-   "type": "persona",
-   "slug": "roberto-pineda",
-   "name": "Roberto Pineda",
-   "variants": [
-    "Roberto Pineda"
-   ],
-   "mentions": 9,
-   "periodoCode": "REG",
-   "periods": [
-    "REG"
-   ],
-   "periodoOrden": 7,
-   "anio": 1905
-  },
-  {
    "type": "lugar",
    "slug": "san-rafael-de-lebrija",
    "name": "San Rafael de Lebrija",
@@ -40902,22 +37596,6 @@
    "anio": 2006
   },
   {
-   "type": "persona",
-   "slug": "william-ospina",
-   "name": "William Ospina",
-   "variants": [
-    "William Ospina"
-   ],
-   "mentions": 9,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "POS"
-   ],
-   "periodoOrden": 12,
-   "anio": 2001
-  },
-  {
    "type": "idea",
    "slug": "zona-de-reserva-campesina",
    "name": "Zona de Reserva Campesina",
@@ -41138,23 +37816,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1996
-  },
-  {
-   "type": "persona",
-   "slug": "alvaro-delgado",
-   "name": "Álvaro Delgado",
-   "variants": [
-    "Álvaro Delgado",
-    "Alvaro Delgado"
-   ],
-   "mentions": 8,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1994
   },
   {
    "type": "persona",
@@ -42914,22 +39575,6 @@
   },
   {
    "type": "persona",
-   "slug": "francois-correa",
-   "name": "François Correa",
-   "variants": [
-    "François Correa"
-   ],
-   "mentions": 8,
-   "periodoCode": "POS",
-   "periods": [
-    "FN",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
-  },
-  {
-   "type": "persona",
    "slug": "fray-marco-de-vances",
    "name": "Fray Marco de Vancés",
    "variants": [
@@ -43837,21 +40482,6 @@
   },
   {
    "type": "persona",
-   "slug": "maria-alicia-uribe-villegas",
-   "name": "María Alicia Uribe Villegas",
-   "variants": [
-    "María Alicia Uribe Villegas"
-   ],
-   "mentions": 8,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1425
-  },
-  {
-   "type": "persona",
    "slug": "maria-cristina-salazar",
    "name": "María Cristina Salazar",
    "variants": [
@@ -43881,22 +40511,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2010
-  },
-  {
-   "type": "persona",
-   "slug": "marianne-cardale",
-   "name": "Marianne Cardale",
-   "variants": [
-    "Marianne Cardale",
-    "Marianne Cárdale"
-   ],
-   "mentions": 8,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1450
   },
   {
    "type": "lugar",
@@ -44953,21 +41567,6 @@
    "anio": 2009
   },
   {
-   "type": "persona",
-   "slug": "ricardo-vargas",
-   "name": "Ricardo Vargas",
-   "variants": [
-    "Ricardo Vargas"
-   ],
-   "mentions": 8,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
    "type": "lugar",
    "slug": "rio-putumayo",
    "name": "Río Putumayo",
@@ -45142,38 +41741,6 @@
   },
   {
    "type": "persona",
-   "slug": "sandra-borda",
-   "name": "Sandra Borda",
-   "variants": [
-    "Sandra Borda"
-   ],
-   "mentions": 8,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2013
-  },
-  {
-   "type": "persona",
-   "slug": "santiago-giraldo",
-   "name": "Santiago Giraldo",
-   "variants": [
-    "Santiago Giraldo"
-   ],
-   "mentions": 8,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE",
-    "SDE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1300
-  },
-  {
-   "type": "persona",
    "slug": "santos-acosta",
    "name": "Santos Acosta",
    "variants": [
@@ -45233,21 +41800,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "sergio-camargo",
-   "name": "Sergio Camargo",
-   "variants": [
-    "Sergio Camargo"
-   ],
-   "mentions": 8,
-   "periodoCode": "EUC",
-   "periods": [
-    "EUC"
-   ],
-   "periodoOrden": 6,
-   "anio": 1878
   },
   {
    "type": "lugar",
@@ -45777,22 +42329,6 @@
    "anio": 1985
   },
   {
-   "type": "persona",
-   "slug": "yamile-salinas",
-   "name": "Yamile Salinas",
-   "variants": [
-    "Yamile Salinas"
-   ],
-   "mentions": 8,
-   "periodoCode": "POS",
-   "periods": [
-    "C91",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2014
-  },
-  {
    "type": "lugar",
    "slug": "yerbabuena",
    "name": "Yerbabuena",
@@ -46014,22 +42550,6 @@
   },
   {
    "type": "persona",
-   "slug": "alberto-mayor-mora",
-   "name": "Alberto Mayor Mora",
-   "variants": [
-    "Alberto Mayor Mora"
-   ],
-   "mentions": 7,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REG",
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1935
-  },
-  {
-   "type": "persona",
    "slug": "alberto-rojas-puyo",
    "name": "Alberto Rojas Puyo",
    "variants": [
@@ -46104,22 +42624,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "alvaro-villarraga-sarmiento",
-   "name": "Álvaro Villarraga Sarmiento",
-   "variants": [
-    "Álvaro Villarraga Sarmiento"
-   ],
-   "mentions": 7,
-   "periodoCode": "POS",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "persona",
@@ -46403,22 +42907,6 @@
    "anio": 1963
   },
   {
-   "type": "persona",
-   "slug": "ariel-avila",
-   "name": "Ariel Ávila",
-   "variants": [
-    "Ariel Ávila"
-   ],
-   "mentions": 7,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
    "type": "idea",
    "slug": "arrendamiento",
    "name": "Arrendamiento",
@@ -46481,22 +42969,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1910
-  },
-  {
-   "type": "persona",
-   "slug": "aurora-vergara-figueroa",
-   "name": "Aurora Vergara-Figueroa",
-   "variants": [
-    "Aurora Vergara-Figueroa"
-   ],
-   "mentions": 7,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2010
   },
   {
    "type": "idea",
@@ -46686,22 +43158,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1920
-  },
-  {
-   "type": "persona",
-   "slug": "betty-meggers",
-   "name": "Betty Meggers",
-   "variants": [
-    "Betty Meggers"
-   ],
-   "mentions": 7,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1968
   },
   {
    "type": "idea",
@@ -47145,22 +43601,6 @@
    "anio": 1986
   },
   {
-   "type": "persona",
-   "slug": "carlos-miguel-ortiz",
-   "name": "Carlos Miguel Ortiz",
-   "variants": [
-    "Carlos Miguel Ortiz"
-   ],
-   "mentions": 7,
-   "periodoCode": "VIO",
-   "periods": [
-    "VIO",
-    "C91"
-   ],
-   "periodoOrden": 9,
-   "anio": 1950
-  },
-  {
    "type": "lugar",
    "slug": "carmen-de-bolivar",
    "name": "Carmen de Bolívar",
@@ -47299,22 +43739,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1965
-  },
-  {
-   "type": "persona",
-   "slug": "claudia-mosquera",
-   "name": "Claudia Mosquera",
-   "variants": [
-    "Claudia Mosquera"
-   ],
-   "mentions": 7,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 13,
-   "anio": 2006
   },
   {
    "type": "idea",
@@ -48138,22 +44562,6 @@
    "anio": 1965
   },
   {
-   "type": "persona",
-   "slug": "eduardo-umana",
-   "name": "Eduardo Umaña",
-   "variants": [
-    "Eduardo Umaña"
-   ],
-   "mentions": 7,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
-  },
-  {
    "type": "idea",
    "slug": "educacion-popular",
    "name": "Educación popular",
@@ -48853,23 +45261,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1984
-  },
-  {
-   "type": "persona",
-   "slug": "gonzalo-correal",
-   "name": "Gonzalo Correal",
-   "variants": [
-    "Gonzalo Correal"
-   ],
-   "mentions": 7,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE",
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 0,
-   "anio": -235
   },
   {
    "type": "persona",
@@ -49802,22 +46193,6 @@
   },
   {
    "type": "persona",
-   "slug": "leonor-herrera",
-   "name": "Leonor Herrera",
-   "variants": [
-    "Leonor Herrera"
-   ],
-   "mentions": 7,
-   "periodoCode": "SDE",
-   "periods": [
-    "PRE",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2010
-  },
-  {
-   "type": "persona",
    "slug": "leopoldo-rother",
    "name": "Leopoldo Rother",
    "variants": [
@@ -49984,7 +46359,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1817
+   "anio": 1820
   },
   {
    "type": "persona",
@@ -50174,21 +46549,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1996
-  },
-  {
-   "type": "persona",
-   "slug": "mario-aguilera-pena",
-   "name": "Mario Aguilera Peña",
-   "variants": [
-    "Mario Aguilera Peña"
-   ],
-   "mentions": 7,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
   },
   {
    "type": "persona",
@@ -50787,22 +47147,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2013
-  },
-  {
-   "type": "persona",
-   "slug": "olivier-barbary",
-   "name": "Olivier Barbary",
-   "variants": [
-    "Olivier Barbary"
-   ],
-   "mentions": 7,
-   "periodoCode": "C91",
-   "periods": [
-    "FN",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
   },
   {
    "type": "persona",
@@ -52571,13 +48915,13 @@
     "Victoria Eugenia Henao"
    ],
    "mentions": 7,
-   "periodoCode": "POS",
+   "periodoCode": "CNA",
    "periods": [
     "CNA",
     "POS"
    ],
-   "periodoOrden": 14,
-   "anio": 2017
+   "periodoOrden": 11,
+   "anio": 1985
   },
   {
    "type": "lugar",
@@ -53044,23 +49388,6 @@
    "anio": 1953
   },
   {
-   "type": "persona",
-   "slug": "alvaro-camacho",
-   "name": "Álvaro Camacho",
-   "variants": [
-    "Álvaro Camacho",
-    "Alvaro Camacho"
-   ],
-   "mentions": 6,
-   "periodoCode": "SDE",
-   "periods": [
-    "CNA",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
-  },
-  {
    "type": "lugar",
    "slug": "amalfi",
    "name": "Amalfi",
@@ -53090,22 +49417,6 @@
    ],
    "periodoOrden": 3,
    "anio": 1781
-  },
-  {
-   "type": "persona",
-   "slug": "ana-maria-boada",
-   "name": "Ana María Boada",
-   "variants": [
-    "Ana María Boada"
-   ],
-   "mentions": 6,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE",
-    "POS"
-   ],
-   "periodoOrden": 0,
-   "anio": 1200
   },
   {
    "type": "idea",
@@ -53166,21 +49477,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1908
-  },
-  {
-   "type": "persona",
-   "slug": "angelika-rettberg",
-   "name": "Angelika Rettberg",
-   "variants": [
-    "Angelika Rettberg"
-   ],
-   "mentions": 6,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2012
   },
   {
    "type": "lugar",
@@ -56357,21 +52653,6 @@
    "anio": 1869
   },
   {
-   "type": "persona",
-   "slug": "gloria-triana",
-   "name": "Gloria Triana",
-   "variants": [
-    "Gloria Triana"
-   ],
-   "mentions": 6,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 2001
-  },
-  {
    "type": "idea",
    "slug": "golpe-de-opinion",
    "name": "Golpe de opinión",
@@ -57113,21 +53394,6 @@
   },
   {
    "type": "persona",
-   "slug": "jacobo-grajales",
-   "name": "Jacobo Grajales",
-   "variants": [
-    "Jacobo Grajales"
-   ],
-   "mentions": 6,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1997
-  },
-  {
-   "type": "persona",
    "slug": "jaime-humberto-uscategui",
    "name": "Jaime Humberto Uscátegui",
    "variants": [
@@ -57495,21 +53761,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2011
-  },
-  {
-   "type": "persona",
-   "slug": "juan-jose-echavarria",
-   "name": "Juan José Echavarría",
-   "variants": [
-    "Juan José Echavarría"
-   ],
-   "mentions": 6,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1936
   },
   {
    "type": "persona",
@@ -57941,21 +54192,6 @@
    "anio": 2011
   },
   {
-   "type": "persona",
-   "slug": "lucero-aristizabal",
-   "name": "Lucero Aristizábal",
-   "variants": [
-    "Lucero Aristizábal"
-   ],
-   "mentions": 6,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1400
-  },
-  {
    "type": "idea",
    "slug": "lucha-armada",
    "name": "Lucha armada",
@@ -58016,21 +54252,6 @@
    ],
    "periodoOrden": 9,
    "anio": 1958
-  },
-  {
-   "type": "persona",
-   "slug": "luz-marina-monzon",
-   "name": "Luz Marina Monzón",
-   "variants": [
-    "Luz Marina Monzón"
-   ],
-   "mentions": 6,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "persona",
@@ -59342,22 +55563,6 @@
    "anio": 1986
   },
   {
-   "type": "persona",
-   "slug": "pablo-jaramillo",
-   "name": "Pablo Jaramillo",
-   "variants": [
-    "Pablo Jaramillo"
-   ],
-   "mentions": 6,
-   "periodoCode": "POS",
-   "periods": [
-    "SDE",
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2015
-  },
-  {
    "type": "idea",
    "slug": "pacificacion-armada",
    "name": "Pacificación armada",
@@ -59590,22 +55795,6 @@
   },
   {
    "type": "persona",
-   "slug": "patricia-londono-vega",
-   "name": "Patricia Londoño-Vega",
-   "variants": [
-    "Patricia Londoño-Vega"
-   ],
-   "mentions": 6,
-   "periodoCode": "REG",
-   "periods": [
-    "REG",
-    "CNA"
-   ],
-   "periodoOrden": 7,
-   "anio": 1911
-  },
-  {
-   "type": "persona",
    "slug": "patricio-aylwin",
    "name": "Patricio Aylwin",
    "variants": [
@@ -59711,22 +55900,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1919
-  },
-  {
-   "type": "persona",
-   "slug": "pilar-riano-alcala",
-   "name": "Pilar Riaño-Alcalá",
-   "variants": [
-    "Pilar Riaño-Alcalá",
-    "Pilar Riaño Alcalá"
-   ],
-   "mentions": 6,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "persona",
@@ -60453,22 +56626,6 @@
   },
   {
    "type": "persona",
-   "slug": "rocio-londono",
-   "name": "Rocío Londoño",
-   "variants": [
-    "Rocío Londoño"
-   ],
-   "mentions": 6,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "POS"
-   ],
-   "periodoOrden": 10,
-   "anio": 1964
-  },
-  {
-   "type": "persona",
    "slug": "rodrigo-granda",
    "name": "Rodrigo Granda",
    "variants": [
@@ -60545,7 +56702,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1901
+   "anio": 1900
   },
   {
    "type": "lugar",
@@ -60949,21 +57106,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1998
-  },
-  {
-   "type": "persona",
-   "slug": "stefania-gallini",
-   "name": "Stefania Gallini",
-   "variants": [
-    "Stefania Gallini"
-   ],
-   "mentions": 6,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1935
   },
   {
    "type": "idea",
@@ -62065,21 +58207,6 @@
   },
   {
    "type": "persona",
-   "slug": "alberto-rivera",
-   "name": "Alberto Rivera",
-   "variants": [
-    "Alberto Rivera"
-   ],
-   "mentions": 5,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1986
-  },
-  {
-   "type": "persona",
    "slug": "alberto-salomon",
    "name": "Alberto Salomón",
    "variants": [
@@ -62386,21 +58513,6 @@
   },
   {
    "type": "persona",
-   "slug": "angela-iranzo",
-   "name": "Ángela Iranzo",
-   "variants": [
-    "Ángela Iranzo"
-   ],
-   "mentions": 5,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2014
-  },
-  {
-   "type": "persona",
    "slug": "anibal-munoz-duque",
    "name": "Aníbal Muñoz Duque",
    "variants": [
@@ -62474,21 +58586,6 @@
    ],
    "periodoOrden": 1,
    "anio": 1576
-  },
-  {
-   "type": "persona",
-   "slug": "antonio-cacua-prada",
-   "name": "Antonio Cacua Prada",
-   "variants": [
-    "Antonio Cacua Prada"
-   ],
-   "mentions": 5,
-   "periodoCode": "PRE_IND",
-   "periods": [
-    "PRE_IND"
-   ],
-   "periodoOrden": 3,
-   "anio": 1793
   },
   {
    "type": "persona",
@@ -62940,21 +59037,6 @@
    "anio": 2000
   },
   {
-   "type": "persona",
-   "slug": "beatriz-castro-carvajal",
-   "name": "Beatriz Castro Carvajal",
-   "variants": [
-    "Beatriz Castro Carvajal"
-   ],
-   "mentions": 5,
-   "periodoCode": "REG",
-   "periods": [
-    "REG"
-   ],
-   "periodoOrden": 7,
-   "anio": 1920
-  },
-  {
    "type": "lugar",
    "slug": "belalcazar",
    "name": "Belalcázar",
@@ -63382,21 +59464,6 @@
   },
   {
    "type": "persona",
-   "slug": "carlos-eduardo-jaramillo",
-   "name": "Carlos Eduardo Jaramillo",
-   "variants": [
-    "Carlos Eduardo Jaramillo"
-   ],
-   "mentions": 5,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1994
-  },
-  {
-   "type": "persona",
    "slug": "carlos-fernando-mateus-morales",
    "name": "Carlos Fernando Mateus Morales",
    "variants": [
@@ -63410,22 +59477,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2001
-  },
-  {
-   "type": "persona",
-   "slug": "carlos-jose-reyes",
-   "name": "Carlos José Reyes",
-   "variants": [
-    "Carlos José Reyes"
-   ],
-   "mentions": 5,
-   "periodoCode": "FN",
-   "periods": [
-    "FN",
-    "CNA"
-   ],
-   "periodoOrden": 10,
-   "anio": 1972
   },
   {
    "type": "persona",
@@ -63962,21 +60013,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2009
-  },
-  {
-   "type": "persona",
-   "slug": "clement-thibaud",
-   "name": "Clément Thibaud",
-   "variants": [
-    "Clément Thibaud"
-   ],
-   "mentions": 5,
-   "periodoCode": "IND",
-   "periods": [
-    "IND"
-   ],
-   "periodoOrden": 4,
-   "anio": 1823
   },
   {
    "type": "idea",
@@ -65674,21 +61710,6 @@
   },
   {
    "type": "persona",
-   "slug": "eduardo-calderon-saenz",
-   "name": "Eduardo Calderón Sáenz",
-   "variants": [
-    "Eduardo Calderón Sáenz"
-   ],
-   "mentions": 5,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
-   "type": "persona",
    "slug": "eduardo-galeano",
    "name": "Eduardo Galeano",
    "variants": [
@@ -66051,22 +62072,7 @@
     "SDE"
    ],
    "periodoOrden": 11,
-   "anio": 1983
-  },
-  {
-   "type": "persona",
-   "slug": "enrique-santos-calderon",
-   "name": "Enrique Santos Calderón",
-   "variants": [
-    "Enrique Santos Calderón"
-   ],
-   "mentions": 5,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
+   "anio": 1986
   },
   {
    "type": "persona",
@@ -66187,22 +62193,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1999
-  },
-  {
-   "type": "persona",
-   "slug": "esmeralda-prada",
-   "name": "Esmeralda Prada",
-   "variants": [
-    "Esmeralda Prada"
-   ],
-   "mentions": 5,
-   "periodoCode": "C91",
-   "periods": [
-    "CNA",
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1996
   },
   {
    "type": "idea",
@@ -66776,21 +62766,6 @@
   },
   {
    "type": "persona",
-   "slug": "francisco-barbosa",
-   "name": "Francisco Barbosa",
-   "variants": [
-    "Francisco Barbosa"
-   ],
-   "mentions": 5,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2020
-  },
-  {
-   "type": "persona",
    "slug": "francisco-galan",
    "name": "Francisco Galán",
    "variants": [
@@ -67229,21 +63204,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "gonzalo-hernandez-de-alba",
-   "name": "Gonzalo Hernández de Alba",
-   "variants": [
-    "Gonzalo Hernández de Alba"
-   ],
-   "mentions": 5,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1988
   },
   {
    "type": "persona",
@@ -68569,21 +64529,6 @@
   },
   {
    "type": "persona",
-   "slug": "juan-felipe-gaviria",
-   "name": "Juan Felipe Gaviria",
-   "variants": [
-    "Juan Felipe Gaviria"
-   ],
-   "mentions": 5,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1969
-  },
-  {
-   "type": "persona",
    "slug": "juan-florez-de-ocariz",
    "name": "Juan Flórez de Ocáriz",
    "variants": [
@@ -68658,21 +64603,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1968
-  },
-  {
-   "type": "persona",
-   "slug": "juan-pablo-barrientos",
-   "name": "Juan Pablo Barrientos",
-   "variants": [
-    "Juan Pablo Barrientos"
-   ],
-   "mentions": 5,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "persona",
@@ -69652,21 +65582,6 @@
   },
   {
    "type": "persona",
-   "slug": "maria-antonieta-corcione",
-   "name": "María Antonieta Corcione",
-   "variants": [
-    "María Antonieta Corcione"
-   ],
-   "mentions": 5,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1400
-  },
-  {
-   "type": "persona",
    "slug": "maria-tila-uribe",
    "name": "María Tila Uribe",
    "variants": [
@@ -69679,21 +65594,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1982
-  },
-  {
-   "type": "persona",
-   "slug": "marianne-cardale-de-schrimpff",
-   "name": "Marianne Cardale de Schrimpff",
-   "variants": [
-    "Marianne Cardale de Schrimpff"
-   ],
-   "mentions": 5,
-   "periodoCode": "CON",
-   "periods": [
-    "CON"
-   ],
-   "periodoOrden": 1,
-   "anio": 1575
   },
   {
    "type": "persona",
@@ -69803,21 +65703,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2008
-  },
-  {
-   "type": "persona",
-   "slug": "mauricio-archila-neira",
-   "name": "Mauricio Archila Neira",
-   "variants": [
-    "Mauricio Archila Neira"
-   ],
-   "mentions": 5,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1992
   },
   {
    "type": "idea",
@@ -72156,37 +68041,6 @@
   },
   {
    "type": "persona",
-   "slug": "ricardo-alvarez-leon",
-   "name": "Ricardo Álvarez-León",
-   "variants": [
-    "Ricardo Álvarez-León"
-   ],
-   "mentions": 5,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1983
-  },
-  {
-   "type": "persona",
-   "slug": "ricardo-ferrer-espinosa",
-   "name": "Ricardo Ferrer Espinosa",
-   "variants": [
-    "Ricardo Ferrer Espinosa"
-   ],
-   "mentions": 5,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
-   "type": "persona",
    "slug": "ricardo-palmera",
    "name": "Ricardo Palmera",
    "variants": [
@@ -72584,21 +68438,6 @@
   },
   {
    "type": "persona",
-   "slug": "santiago-castro-gomez",
-   "name": "Santiago Castro-Gómez",
-   "variants": [
-    "Santiago Castro-Gómez"
-   ],
-   "mentions": 5,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1966
-  },
-  {
-   "type": "persona",
    "slug": "santiago-garcia",
    "name": "Santiago García",
    "variants": [
@@ -72736,22 +68575,6 @@
    ],
    "periodoOrden": 1,
    "anio": 1557
-  },
-  {
-   "type": "persona",
-   "slug": "shawn-van-ausdal",
-   "name": "Shawn Van Ausdal",
-   "variants": [
-    "Shawn Van Ausdal"
-   ],
-   "mentions": 5,
-   "periodoCode": "REG",
-   "periods": [
-    "REG",
-    "FN"
-   ],
-   "periodoOrden": 7,
-   "anio": 1905
   },
   {
    "type": "lugar",
@@ -72953,21 +68776,6 @@
    "anio": 1984
   },
   {
-   "type": "persona",
-   "slug": "stephen-gudeman",
-   "name": "Stephen Gudeman",
-   "variants": [
-    "Stephen Gudeman"
-   ],
-   "mentions": 5,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1987
-  },
-  {
    "type": "idea",
    "slug": "sufragio-censitario",
    "name": "Sufragio censitario",
@@ -73075,21 +68883,6 @@
    ],
    "periodoOrden": 1,
    "anio": 1535
-  },
-  {
-   "type": "persona",
-   "slug": "teofilo-vasquez",
-   "name": "Teófilo Vásquez",
-   "variants": [
-    "Teófilo Vásquez"
-   ],
-   "mentions": 5,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2016
   },
   {
    "type": "idea",
@@ -74315,22 +70108,6 @@
   },
   {
    "type": "persona",
-   "slug": "alberto-donadio",
-   "name": "Alberto Donadío",
-   "variants": [
-    "Alberto Donadío",
-    "Alberto Donadio"
-   ],
-   "mentions": 4,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1974
-  },
-  {
-   "type": "persona",
    "slug": "alberto-romero-el-medico",
    "name": "Alberto Romero 'El Médico'",
    "variants": [
@@ -74343,21 +70120,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2003
-  },
-  {
-   "type": "persona",
-   "slug": "aldo-civico",
-   "name": "Aldo Civico",
-   "variants": [
-    "Aldo Civico"
-   ],
-   "mentions": 4,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
   },
   {
    "type": "persona",
@@ -74707,21 +70469,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1989
-  },
-  {
-   "type": "persona",
-   "slug": "andres-lopez",
-   "name": "Andrés López",
-   "variants": [
-    "Andrés López"
-   ],
-   "mentions": 4,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2006
   },
   {
    "type": "persona",
@@ -75387,36 +71134,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1928
-  },
-  {
-   "type": "persona",
-   "slug": "augusto-javier-gomez-lopez",
-   "name": "Augusto Javier Gómez López",
-   "variants": [
-    "Augusto Javier Gómez López"
-   ],
-   "mentions": 4,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2014
-  },
-  {
-   "type": "persona",
-   "slug": "augusto-oyuela-caycedo",
-   "name": "Augusto Oyuela-Caycedo",
-   "variants": [
-    "Augusto Oyuela-Caycedo"
-   ],
-   "mentions": 4,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1976
   },
   {
    "type": "persona",
@@ -76581,21 +72298,6 @@
   },
   {
    "type": "persona",
-   "slug": "carlos-uribe",
-   "name": "Carlos Uribe",
-   "variants": [
-    "Carlos Uribe"
-   ],
-   "mentions": 4,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1960
-  },
-  {
-   "type": "persona",
    "slug": "carlos-viafara",
    "name": "Carlos Viáfara",
    "variants": [
@@ -77020,21 +72722,6 @@
   },
   {
    "type": "persona",
-   "slug": "cesar-caballero",
-   "name": "César Caballero",
-   "variants": [
-    "César Caballero"
-   ],
-   "mentions": 4,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2014
-  },
-  {
-   "type": "persona",
    "slug": "cesar-castellanos",
    "name": "César Castellanos",
    "variants": [
@@ -77062,38 +72749,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2013
-  },
-  {
-   "type": "persona",
-   "slug": "cesar-rodriguez",
-   "name": "César Rodríguez",
-   "variants": [
-    "César Rodríguez",
-    "Cesar Rodríguez"
-   ],
-   "mentions": 4,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
-   "type": "persona",
-   "slug": "cesar-rodriguez-garavito",
-   "name": "César Rodríguez Garavito",
-   "variants": [
-    "César Rodríguez Garavito"
-   ],
-   "mentions": 4,
-   "periodoCode": "SDE",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
   },
   {
    "type": "persona",
@@ -78751,21 +74406,6 @@
   },
   {
    "type": "persona",
-   "slug": "daniela-castellanos",
-   "name": "Daniela Castellanos",
-   "variants": [
-    "Daniela Castellanos"
-   ],
-   "mentions": 4,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1300
-  },
-  {
-   "type": "persona",
    "slug": "darcy-ribeiro",
    "name": "Darcy Ribeiro",
    "variants": [
@@ -78809,21 +74449,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1987
-  },
-  {
-   "type": "persona",
-   "slug": "dario-mesa",
-   "name": "Darío Mesa",
-   "variants": [
-    "Darío Mesa"
-   ],
-   "mentions": 4,
-   "periodoCode": "REG",
-   "periods": [
-    "REG"
-   ],
-   "periodoOrden": 7,
-   "anio": 1906
   },
   {
    "type": "persona",
@@ -80177,7 +75802,7 @@
     "CNA"
    ],
    "periodoOrden": 11,
-   "anio": 1987
+   "anio": 1986
   },
   {
    "type": "persona",
@@ -80437,21 +76062,6 @@
    ],
    "periodoOrden": 6,
    "anio": 1872
-  },
-  {
-   "type": "persona",
-   "slug": "esteban-restrepo",
-   "name": "Esteban Restrepo",
-   "variants": [
-    "Esteban Restrepo"
-   ],
-   "mentions": 4,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
   },
   {
    "type": "idea",
@@ -80892,21 +76502,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "fernando-cepeda",
-   "name": "Fernando Cepeda",
-   "variants": [
-    "Fernando Cepeda"
-   ],
-   "mentions": 4,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1989
   },
   {
    "type": "persona",
@@ -81487,21 +77082,6 @@
   },
   {
    "type": "persona",
-   "slug": "gabriel-poveda-ramos",
-   "name": "Gabriel Poveda Ramos",
-   "variants": [
-    "Gabriel Poveda Ramos"
-   ],
-   "mentions": 4,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1934
-  },
-  {
-   "type": "persona",
    "slug": "gabriel-serrano-camargo",
    "name": "Gabriel Serrano Camargo",
    "variants": [
@@ -81743,21 +77323,6 @@
   },
   {
    "type": "persona",
-   "slug": "gloria-amparo-rodriguez",
-   "name": "Gloria Amparo Rodríguez",
-   "variants": [
-    "Gloria Amparo Rodríguez"
-   ],
-   "mentions": 4,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
-  },
-  {
-   "type": "persona",
    "slug": "gloria-florez",
    "name": "Gloria Flórez",
    "variants": [
@@ -81845,21 +77410,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1971
-  },
-  {
-   "type": "persona",
-   "slug": "gonzalo-catano",
-   "name": "Gonzalo Cataño",
-   "variants": [
-    "Gonzalo Cataño"
-   ],
-   "mentions": 4,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1961
   },
   {
    "type": "persona",
@@ -83469,21 +79019,6 @@
   },
   {
    "type": "persona",
-   "slug": "javier-ocampo-lopez",
-   "name": "Javier Ocampo López",
-   "variants": [
-    "Javier Ocampo López"
-   ],
-   "mentions": 4,
-   "periodoCode": "COL",
-   "periods": [
-    "COL"
-   ],
-   "periodoOrden": 2,
-   "anio": 1700
-  },
-  {
-   "type": "persona",
    "slug": "jean-linden",
    "name": "Jean Linden",
    "variants": [
@@ -83736,21 +79271,6 @@
    ],
    "periodoOrden": 1,
    "anio": 1560
-  },
-  {
-   "type": "persona",
-   "slug": "jorge-giraldo",
-   "name": "Jorge Giraldo",
-   "variants": [
-    "Jorge Giraldo"
-   ],
-   "mentions": 4,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2014
   },
   {
    "type": "persona",
@@ -84363,21 +79883,6 @@
   },
   {
    "type": "persona",
-   "slug": "julio-cesar-cubillos",
-   "name": "Julio César Cubillos",
-   "variants": [
-    "Julio César Cubillos"
-   ],
-   "mentions": 4,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1939
-  },
-  {
-   "type": "persona",
    "slug": "julio-londono-paredes",
    "name": "Julio Londoño Paredes",
    "variants": [
@@ -84633,22 +80138,6 @@
    ],
    "periodoOrden": 6,
    "anio": 1869
-  },
-  {
-   "type": "persona",
-   "slug": "klaus-meschkat",
-   "name": "Klaus Meschkat",
-   "variants": [
-    "Klaus Meschkat"
-   ],
-   "mentions": 4,
-   "periodoCode": "REG",
-   "periods": [
-    "REG",
-    "FN"
-   ],
-   "periodoOrden": 7,
-   "anio": 1929
   },
   {
    "type": "persona",
@@ -85585,21 +81074,6 @@
    "anio": 2007
   },
   {
-   "type": "persona",
-   "slug": "magdala-velasquez-toro",
-   "name": "Magdala Velásquez Toro",
-   "variants": [
-    "Magdala Velásquez Toro"
-   ],
-   "mentions": 4,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1990
-  },
-  {
    "type": "lugar",
    "slug": "magdalena-bananero",
    "name": "Magdalena bananero",
@@ -85967,21 +81441,6 @@
   },
   {
    "type": "persona",
-   "slug": "maria-alicia-uribe",
-   "name": "María Alicia Uribe",
-   "variants": [
-    "María Alicia Uribe"
-   ],
-   "mentions": 4,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1000
-  },
-  {
-   "type": "persona",
    "slug": "maria-concepcion-loperena",
    "name": "María Concepción Loperena",
    "variants": [
@@ -86296,21 +81755,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "mauricio-nieto",
-   "name": "Mauricio Nieto",
-   "variants": [
-    "Mauricio Nieto"
-   ],
-   "mentions": 4,
-   "periodoCode": "CON",
-   "periods": [
-    "CON"
-   ],
-   "periodoOrden": 1,
-   "anio": 1545
   },
   {
    "type": "idea",
@@ -87569,21 +83013,6 @@
   },
   {
    "type": "persona",
-   "slug": "nicolas-loaiza",
-   "name": "Nicolás Loaiza",
-   "variants": [
-    "Nicolás Loaiza"
-   ],
-   "mentions": 4,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1965
-  },
-  {
-   "type": "persona",
    "slug": "nidia-gongora",
    "name": "Nidia Góngora",
    "variants": [
@@ -88340,21 +83769,6 @@
    ],
    "periodoOrden": 4,
    "anio": 1820
-  },
-  {
-   "type": "persona",
-   "slug": "patricia-londono",
-   "name": "Patricia Londoño",
-   "variants": [
-    "Patricia Londoño"
-   ],
-   "mentions": 4,
-   "periodoCode": "VIO",
-   "periods": [
-    "VIO"
-   ],
-   "periodoOrden": 9,
-   "anio": 1955
   },
   {
    "type": "persona",
@@ -89536,21 +84950,6 @@
   },
   {
    "type": "persona",
-   "slug": "rafael-gutierrez-girardot",
-   "name": "Rafael Gutiérrez Girardot",
-   "variants": [
-    "Rafael Gutiérrez Girardot"
-   ],
-   "mentions": 4,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1970
-  },
-  {
-   "type": "persona",
    "slug": "rafael-jaramillo-ulloa",
    "name": "Rafael Jaramillo Ulloa",
    "variants": [
@@ -90578,21 +85977,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2010
-  },
-  {
-   "type": "persona",
-   "slug": "ruben-sierra-mejia",
-   "name": "Rubén Sierra Mejía",
-   "variants": [
-    "Rubén Sierra Mejía"
-   ],
-   "mentions": 4,
-   "periodoCode": "VIO",
-   "periods": [
-    "VIO"
-   ],
-   "periodoOrden": 9,
-   "anio": 1953
   },
   {
    "type": "idea",
@@ -91938,21 +87322,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1962
-  },
-  {
-   "type": "persona",
-   "slug": "tatiana-rincon",
-   "name": "Tatiana Rincón",
-   "variants": [
-    "Tatiana Rincón"
-   ],
-   "mentions": 4,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
   },
   {
    "type": "idea",
@@ -93866,21 +89235,6 @@
   },
   {
    "type": "persona",
-   "slug": "adolfo-meisel-roca",
-   "name": "Adolfo Meisel Roca",
-   "variants": [
-    "Adolfo Meisel Roca"
-   ],
-   "mentions": 3,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1934
-  },
-  {
-   "type": "persona",
    "slug": "adolfo-pacheco",
    "name": "Adolfo Pacheco",
    "variants": [
@@ -94167,36 +89521,6 @@
   },
   {
    "type": "persona",
-   "slug": "alanis-bello-ramirez",
-   "name": "Alanis Bello Ramírez",
-   "variants": [
-    "Alanis Bello Ramírez"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
-  },
-  {
-   "type": "persona",
-   "slug": "alberto-gomez-gutierrez",
-   "name": "Alberto Gómez Gutiérrez",
-   "variants": [
-    "Alberto Gómez Gutiérrez"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
-   "type": "persona",
    "slug": "alberto-santofimio-botero",
    "name": "Alberto Santofimio Botero",
    "variants": [
@@ -94421,21 +89745,6 @@
    "anio": 2009
   },
   {
-   "type": "persona",
-   "slug": "alhena-caicedo",
-   "name": "Alhena Caicedo",
-   "variants": [
-    "Alhena Caicedo"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
-  },
-  {
    "type": "idea",
    "slug": "alianza-del-pacifico",
    "name": "Alianza del Pacífico",
@@ -94494,21 +89803,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1929
-  },
-  {
-   "type": "persona",
-   "slug": "alicia-dussan-de-reichel",
-   "name": "Alicia Dussán de Reichel",
-   "variants": [
-    "Alicia Dussán de Reichel"
-   ],
-   "mentions": 3,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1968
   },
   {
    "type": "persona",
@@ -94723,21 +90017,6 @@
   },
   {
    "type": "persona",
-   "slug": "ana-carrigan",
-   "name": "Ana Carrigan",
-   "variants": [
-    "Ana Carrigan"
-   ],
-   "mentions": 3,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1986
-  },
-  {
-   "type": "persona",
    "slug": "ana-fabricia-cordoba",
    "name": "Ana Fabricia Córdoba",
    "variants": [
@@ -94856,21 +90135,6 @@
    ],
    "periodoOrden": 0,
    "anio": 1425
-  },
-  {
-   "type": "persona",
-   "slug": "andres-lopez-restrepo",
-   "name": "Andrés López Restrepo",
-   "variants": [
-    "Andrés López Restrepo"
-   ],
-   "mentions": 3,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1941
   },
   {
    "type": "persona",
@@ -95082,21 +90346,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2004
-  },
-  {
-   "type": "persona",
-   "slug": "ann-farnsworth-alvear",
-   "name": "Ann Farnsworth-Alvear",
-   "variants": [
-    "Ann Farnsworth-Alvear"
-   ],
-   "mentions": 3,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1935
   },
   {
    "type": "persona",
@@ -95458,21 +90707,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1999
-  },
-  {
-   "type": "persona",
-   "slug": "antonio-jose-cancino",
-   "name": "Antonio José Cancino",
-   "variants": [
-    "Antonio José Cancino"
-   ],
-   "mentions": 3,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1969
   },
   {
    "type": "persona",
@@ -96527,21 +91761,6 @@
    "anio": 1906
   },
   {
-   "type": "persona",
-   "slug": "axel-rojas",
-   "name": "Axel Rojas",
-   "variants": [
-    "Axel Rojas"
-   ],
-   "mentions": 3,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1986
-  },
-  {
    "type": "lugar",
    "slug": "ayapel",
    "name": "Ayapel",
@@ -97083,21 +92302,6 @@
   },
   {
    "type": "persona",
-   "slug": "bernardo-tovar-zambrano",
-   "name": "Bernardo Tovar Zambrano",
-   "variants": [
-    "Bernardo Tovar Zambrano"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1995
-  },
-  {
-   "type": "persona",
    "slug": "betsabe-espinal",
    "name": "Betsabé Espinal",
    "variants": [
@@ -97623,21 +92827,6 @@
    "anio": 1985
   },
   {
-   "type": "persona",
-   "slug": "bruce-hoffman",
-   "name": "Bruce Hoffman",
-   "variants": [
-    "Bruce Hoffman"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2007
-  },
-  {
    "type": "lugar",
    "slug": "buchado",
    "name": "Buchadó",
@@ -97962,12 +93151,13 @@
     "Calarcá"
    ],
    "mentions": 3,
-   "periodoCode": "COL",
+   "periodoCode": "CON",
    "periods": [
+    "CON",
     "COL"
    ],
-   "periodoOrden": 2,
-   "anio": 1655
+   "periodoOrden": 1,
+   "anio": 1560
   },
   {
    "type": "idea",
@@ -98074,36 +93264,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1905
-  },
-  {
-   "type": "persona",
-   "slug": "camilo-lopez",
-   "name": "Camilo López",
-   "variants": [
-    "Camilo López"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
-  },
-  {
-   "type": "persona",
-   "slug": "camilo-villamizar",
-   "name": "Camilo Villamizar",
-   "variants": [
-    "Camilo Villamizar"
-   ],
-   "mentions": 3,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "persona",
@@ -98408,36 +93568,6 @@
   },
   {
    "type": "persona",
-   "slug": "carlos-andres-duran",
-   "name": "Carlos Andrés Durán",
-   "variants": [
-    "Carlos Andrés Durán"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2005
-  },
-  {
-   "type": "persona",
-   "slug": "carlos-arboleda-mora",
-   "name": "Carlos Arboleda Mora",
-   "variants": [
-    "Carlos Arboleda Mora"
-   ],
-   "mentions": 3,
-   "periodoCode": "COL",
-   "periods": [
-    "COL"
-   ],
-   "periodoOrden": 2,
-   "anio": 1700
-  },
-  {
-   "type": "persona",
    "slug": "carlos-bermudez",
    "name": "Carlos Bermúdez",
    "variants": [
@@ -98450,21 +93580,6 @@
    ],
    "periodoOrden": 6,
    "anio": 1870
-  },
-  {
-   "type": "persona",
-   "slug": "carlos-davila",
-   "name": "Carlos Dávila",
-   "variants": [
-    "Carlos Dávila"
-   ],
-   "mentions": 3,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1972
   },
   {
    "type": "persona",
@@ -100094,21 +95209,6 @@
    "anio": 2018
   },
   {
-   "type": "persona",
-   "slug": "clemencia-rodriguez",
-   "name": "Clemencia Rodríguez",
-   "variants": [
-    "Clemencia Rodríguez"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
    "type": "idea",
    "slug": "clero-patriota",
    "name": "Clero patriota",
@@ -101348,21 +96448,6 @@
   },
   {
    "type": "persona",
-   "slug": "constanza-millan",
-   "name": "Constanza Millán",
-   "variants": [
-    "Constanza Millán"
-   ],
-   "mentions": 3,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
-  },
-  {
-   "type": "persona",
    "slug": "constanza-toquica",
    "name": "Constanza Toquica",
    "variants": [
@@ -102203,21 +97288,6 @@
    ],
    "periodoOrden": 8,
    "anio": 1940
-  },
-  {
-   "type": "persona",
-   "slug": "cristina-rojas",
-   "name": "Cristina Rojas",
-   "variants": [
-    "Cristina Rojas"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
   },
   {
    "type": "idea",
@@ -105024,21 +100094,6 @@
   },
   {
    "type": "persona",
-   "slug": "eduardo-lemaitre",
-   "name": "Eduardo Lemaitre",
-   "variants": [
-    "Eduardo Lemaitre"
-   ],
-   "mentions": 3,
-   "periodoCode": "REG",
-   "periods": [
-    "REG"
-   ],
-   "periodoOrden": 7,
-   "anio": 1919
-  },
-  {
-   "type": "persona",
    "slug": "eduardo-viveiros-de-castro",
    "name": "Eduardo Viveiros de Castro",
    "variants": [
@@ -105322,21 +100377,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2007
-  },
-  {
-   "type": "persona",
-   "slug": "eliecer-soto",
-   "name": "Eliécer Soto",
-   "variants": [
-    "Eliécer Soto"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
   },
   {
    "type": "persona",
@@ -105882,21 +100922,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1918
-  },
-  {
-   "type": "persona",
-   "slug": "enrique-sanchez",
-   "name": "Enrique Sánchez",
-   "variants": [
-    "Enrique Sánchez"
-   ],
-   "mentions": 3,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1987
   },
   {
    "type": "persona",
@@ -107042,21 +102067,6 @@
    "anio": 1869
   },
   {
-   "type": "persona",
-   "slug": "fals-borda",
-   "name": "Fals Borda",
-   "variants": [
-    "Fals Borda"
-   ],
-   "mentions": 3,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
-  },
-  {
    "type": "idea",
    "slug": "falso-positivo",
    "name": "Falso positivo",
@@ -108121,7 +103131,7 @@
     "IND"
    ],
    "periodoOrden": 4,
-   "anio": 1822
+   "anio": 1820
   },
   {
    "type": "persona",
@@ -108965,21 +103975,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1991
-  },
-  {
-   "type": "persona",
-   "slug": "german-rey",
-   "name": "Germán Rey",
-   "variants": [
-    "Germán Rey"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
   },
   {
    "type": "persona",
@@ -110620,21 +105615,6 @@
   },
   {
    "type": "persona",
-   "slug": "ignacio-briceno",
-   "name": "Ignacio Briceño",
-   "variants": [
-    "Ignacio Briceño"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
-   "type": "persona",
    "slug": "ignacio-gomez-jaramillo",
    "name": "Ignacio Gómez Jaramillo",
    "variants": [
@@ -111763,21 +106743,6 @@
   },
   {
    "type": "persona",
-   "slug": "james-j-parsons",
-   "name": "James J. Parsons",
-   "variants": [
-    "James J. Parsons"
-   ],
-   "mentions": 3,
-   "periodoCode": "REG",
-   "periods": [
-    "REG"
-   ],
-   "periodoOrden": 7,
-   "anio": 1912
-  },
-  {
-   "type": "persona",
    "slug": "james-lindsay",
    "name": "James Lindsay",
    "variants": [
@@ -111820,22 +106785,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2004
-  },
-  {
-   "type": "persona",
-   "slug": "jasmin-hristov",
-   "name": "Jasmin Hristov",
-   "variants": [
-    "Jasmin Hristov",
-    "Jasmín Hristov"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1997
   },
   {
    "type": "lugar",
@@ -112214,21 +107163,6 @@
   },
   {
    "type": "persona",
-   "slug": "john-jairo-rincon",
-   "name": "John Jairo Rincón",
-   "variants": [
-    "John Jairo Rincón"
-   ],
-   "mentions": 3,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
-  },
-  {
-   "type": "persona",
    "slug": "john-kerry",
    "name": "John Kerry",
    "variants": [
@@ -112241,21 +107175,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1988
-  },
-  {
-   "type": "persona",
-   "slug": "john-lynch",
-   "name": "John Lynch",
-   "variants": [
-    "John Lynch"
-   ],
-   "mentions": 3,
-   "periodoCode": "IND",
-   "periods": [
-    "IND"
-   ],
-   "periodoOrden": 4,
-   "anio": 1817
   },
   {
    "type": "persona",
@@ -112421,21 +107340,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1928
-  },
-  {
-   "type": "persona",
-   "slug": "jorge-augusto-gamboa",
-   "name": "Jorge Augusto Gamboa",
-   "variants": [
-    "Jorge Augusto Gamboa"
-   ],
-   "mentions": 3,
-   "periodoCode": "CON",
-   "periods": [
-    "CON"
-   ],
-   "periodoOrden": 1,
-   "anio": 1571
   },
   {
    "type": "persona",
@@ -112830,21 +107734,6 @@
   },
   {
    "type": "persona",
-   "slug": "jose-ivan-mojica",
-   "name": "José Iván Mojica",
-   "variants": [
-    "José Iván Mojica"
-   ],
-   "mentions": 3,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1965
-  },
-  {
-   "type": "persona",
    "slug": "jose-joaquin-borda",
    "name": "José Joaquín Borda",
    "variants": [
@@ -113070,21 +107959,6 @@
   },
   {
    "type": "persona",
-   "slug": "jose-olinto-rueda-plata",
-   "name": "José Olinto Rueda Plata",
-   "variants": [
-    "José Olinto Rueda Plata"
-   ],
-   "mentions": 3,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1970
-  },
-  {
-   "type": "persona",
    "slug": "jose-solis",
    "name": "José Solís",
    "variants": [
@@ -113295,21 +108169,6 @@
   },
   {
    "type": "persona",
-   "slug": "juan-gustavo-cobo-borda",
-   "name": "Juan Gustavo Cobo Borda",
-   "variants": [
-    "Juan Gustavo Cobo Borda"
-   ],
-   "mentions": 3,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1970
-  },
-  {
-   "type": "persona",
    "slug": "juan-jose-chaux",
    "name": "Juan José Chaux",
    "variants": [
@@ -113376,12 +108235,13 @@
     "Juan Manuel Santos Calderón"
    ],
    "mentions": 3,
-   "periodoCode": "FN",
+   "periodoCode": "SDE",
    "periods": [
+    "SDE",
     "FN"
    ],
-   "periodoOrden": 10,
-   "anio": 1962
+   "periodoOrden": 13,
+   "anio": 2012
   },
   {
    "type": "persona",
@@ -113908,21 +108768,6 @@
    ],
    "periodoOrden": 9,
    "anio": 1954
-  },
-  {
-   "type": "persona",
-   "slug": "lacydes-moreno-blanco",
-   "name": "Lácydes Moreno Blanco",
-   "variants": [
-    "Lácydes Moreno Blanco"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2010
   },
   {
    "type": "lugar",
@@ -115026,21 +109871,6 @@
   },
   {
    "type": "persona",
-   "slug": "luis-eduardo-perez",
-   "name": "Luis Eduardo Pérez",
-   "variants": [
-    "Luis Eduardo Pérez"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2007
-  },
-  {
-   "type": "persona",
    "slug": "luis-fernando-borja",
    "name": "Luis Fernando Borja",
    "variants": [
@@ -115188,21 +110018,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1977
-  },
-  {
-   "type": "persona",
-   "slug": "luz-amparo-sanchez",
-   "name": "Luz Amparo Sánchez",
-   "variants": [
-    "Luz Amparo Sánchez"
-   ],
-   "mentions": 3,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "persona",
@@ -115837,21 +110652,6 @@
   },
   {
    "type": "persona",
-   "slug": "marc-bechard",
-   "name": "Marc Bechard",
-   "variants": [
-    "Marc Bechard"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
-   "type": "persona",
    "slug": "marc-grossman",
    "name": "Marc Grossman",
    "variants": [
@@ -115988,21 +110788,6 @@
   },
   {
    "type": "persona",
-   "slug": "margarita-garrido",
-   "name": "Margarita Garrido",
-   "variants": [
-    "Margarita Garrido"
-   ],
-   "mentions": 3,
-   "periodoCode": "IND",
-   "periods": [
-    "IND"
-   ],
-   "periodoOrden": 4,
-   "anio": 1811
-  },
-  {
-   "type": "persona",
    "slug": "margarita-rosa-de-francisco",
    "name": "Margarita Rosa de Francisco",
    "variants": [
@@ -116135,21 +110920,6 @@
    ],
    "periodoOrden": 12,
    "anio": 1995
-  },
-  {
-   "type": "persona",
-   "slug": "maria-mercedes-maldonado",
-   "name": "María Mercedes Maldonado",
-   "variants": [
-    "María Mercedes Maldonado"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
   },
   {
    "type": "persona",
@@ -116348,21 +111118,6 @@
    "anio": 1997
   },
   {
-   "type": "persona",
-   "slug": "marixa-lasso",
-   "name": "Marixa Lasso",
-   "variants": [
-    "Marixa Lasso"
-   ],
-   "mentions": 3,
-   "periodoCode": "NGR",
-   "periods": [
-    "NGR"
-   ],
-   "periodoOrden": 5,
-   "anio": 1837
-  },
-  {
    "type": "idea",
    "slug": "marketing-urbano",
    "name": "Marketing urbano",
@@ -116436,36 +111191,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1983
-  },
-  {
-   "type": "persona",
-   "slug": "marta-saade",
-   "name": "Marta Saade",
-   "variants": [
-    "Marta Saade"
-   ],
-   "mentions": 3,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1941
-  },
-  {
-   "type": "persona",
-   "slug": "martha-cecilia-garcia",
-   "name": "Martha Cecilia García",
-   "variants": [
-    "Martha Cecilia García"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
   },
   {
    "type": "persona",
@@ -116662,36 +111387,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "mauricio-baron",
-   "name": "Mauricio Barón",
-   "variants": [
-    "Mauricio Barón"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2003
-  },
-  {
-   "type": "persona",
-   "slug": "mauricio-garcia",
-   "name": "Mauricio García",
-   "variants": [
-    "Mauricio García"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2004
   },
   {
    "type": "persona",
@@ -117503,21 +112198,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2001
-  },
-  {
-   "type": "persona",
-   "slug": "miguel-arturo-fajardo",
-   "name": "Miguel Arturo Fajardo",
-   "variants": [
-    "Miguel Arturo Fajardo"
-   ],
-   "mentions": 3,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
   },
   {
    "type": "persona",
@@ -119406,21 +114086,6 @@
   },
   {
    "type": "persona",
-   "slug": "pablo-vila",
-   "name": "Pablo Vila",
-   "variants": [
-    "Pablo Vila"
-   ],
-   "mentions": 3,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1967
-  },
-  {
-   "type": "persona",
    "slug": "pacho-galan",
    "name": "Pacho Galán",
    "variants": [
@@ -120023,21 +114688,6 @@
    ],
    "periodoOrden": 5,
    "anio": 1833
-  },
-  {
-   "type": "persona",
-   "slug": "patricia-linares-prieto",
-   "name": "Patricia Linares Prieto",
-   "variants": [
-    "Patricia Linares Prieto"
-   ],
-   "mentions": 3,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
   },
   {
    "type": "persona",
@@ -123620,21 +118270,6 @@
   },
   {
    "type": "persona",
-   "slug": "ricardo-rocha",
-   "name": "Ricardo Rocha",
-   "variants": [
-    "Ricardo Rocha"
-   ],
-   "mentions": 3,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
-  },
-  {
-   "type": "persona",
    "slug": "ricardo-tobon-restrepo",
    "name": "Ricardo Tobón Restrepo",
    "variants": [
@@ -123846,21 +118481,6 @@
   },
   {
    "type": "persona",
-   "slug": "robert-carneiro",
-   "name": "Robert Carneiro",
-   "variants": [
-    "Robert Carneiro"
-   ],
-   "mentions": 3,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 100
-  },
-  {
-   "type": "persona",
    "slug": "robert-lansing",
    "name": "Robert Lansing",
    "variants": [
@@ -123963,21 +118583,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1919
-  },
-  {
-   "type": "persona",
-   "slug": "roberto-steiner",
-   "name": "Roberto Steiner",
-   "variants": [
-    "Roberto Steiner"
-   ],
-   "mentions": 3,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2016
   },
   {
    "type": "persona",
@@ -128102,22 +122707,6 @@
   },
   {
    "type": "persona",
-   "slug": "victor-hugo",
-   "name": "Victor Hugo",
-   "variants": [
-    "Victor Hugo",
-    "Víctor Hugo"
-   ],
-   "mentions": 3,
-   "periodoCode": "NGR",
-   "periods": [
-    "NGR"
-   ],
-   "periodoOrden": 5,
-   "anio": 1847
-  },
-  {
-   "type": "persona",
    "slug": "victor-manuel-moncayo",
    "name": "Víctor Manuel Moncayo",
    "variants": [
@@ -128551,21 +123140,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1973
-  },
-  {
-   "type": "persona",
-   "slug": "william-elvis-plata",
-   "name": "William Elvis Plata",
-   "variants": [
-    "William Elvis Plata"
-   ],
-   "mentions": 3,
-   "periodoCode": "IND",
-   "periods": [
-    "IND"
-   ],
-   "periodoOrden": 4,
-   "anio": 1815
   },
   {
    "type": "persona",
@@ -130160,21 +124734,6 @@
   },
   {
    "type": "persona",
-   "slug": "alberto-gomez",
-   "name": "Alberto Gómez",
-   "variants": [
-    "Alberto Gómez"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1993
-  },
-  {
-   "type": "persona",
    "slug": "alberto-hernandez",
    "name": "Alberto Hernández",
    "variants": [
@@ -130217,21 +124776,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2007
-  },
-  {
-   "type": "persona",
-   "slug": "alberto-mayor",
-   "name": "Alberto Mayor",
-   "variants": [
-    "Alberto Mayor"
-   ],
-   "mentions": 2,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1944
   },
   {
    "type": "persona",
@@ -131454,21 +125998,6 @@
   },
   {
    "type": "persona",
-   "slug": "alvaro-tirado",
-   "name": "Álvaro Tirado",
-   "variants": [
-    "Álvaro Tirado"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
-   "type": "persona",
    "slug": "alvaro-umana",
    "name": "Álvaro Umaña",
    "variants": [
@@ -131876,21 +126405,6 @@
   },
   {
    "type": "persona",
-   "slug": "andrea-perez",
-   "name": "Andrea Pérez",
-   "variants": [
-    "Andrea Pérez"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1997
-  },
-  {
-   "type": "persona",
    "slug": "andrei-gomez-suarez",
    "name": "Andrei Gómez-Suárez",
    "variants": [
@@ -131918,51 +126432,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2003
-  },
-  {
-   "type": "persona",
-   "slug": "andres-cancimance",
-   "name": "Andrés Cancimance",
-   "variants": [
-    "Andrés Cancimance"
-   ],
-   "mentions": 2,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2011
-  },
-  {
-   "type": "persona",
-   "slug": "andres-felipe-de-pablos",
-   "name": "Andrés Felipe De Pablos",
-   "variants": [
-    "Andrés Felipe De Pablos"
-   ],
-   "mentions": 2,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1974
-  },
-  {
-   "type": "persona",
-   "slug": "andres-felipe-mora-cortes",
-   "name": "Andrés Felipe Mora Cortés",
-   "variants": [
-    "Andrés Felipe Mora Cortés"
-   ],
-   "mentions": 2,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2013
   },
   {
    "type": "persona",
@@ -132053,21 +126522,6 @@
    ],
    "periodoOrden": 2,
    "anio": 1620
-  },
-  {
-   "type": "persona",
-   "slug": "andres-solimano",
-   "name": "Andrés Solimano",
-   "variants": [
-    "Andrés Solimano"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
   },
   {
    "type": "persona",
@@ -133689,21 +128143,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2014
-  },
-  {
-   "type": "persona",
-   "slug": "armando-martinez-garnica",
-   "name": "Armando Martínez Garnica",
-   "variants": [
-    "Armando Martínez Garnica"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2019
   },
   {
    "type": "persona",
@@ -139758,36 +134197,6 @@
   },
   {
    "type": "persona",
-   "slug": "carlos-eduardo-lopez",
-   "name": "Carlos Eduardo López",
-   "variants": [
-    "Carlos Eduardo López"
-   ],
-   "mentions": 2,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1965
-  },
-  {
-   "type": "persona",
-   "slug": "carlos-esteban-posada",
-   "name": "Carlos Esteban Posada",
-   "variants": [
-    "Carlos Esteban Posada"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1994
-  },
-  {
-   "type": "persona",
    "slug": "carlos-f-leon",
    "name": "Carlos F. León",
    "variants": [
@@ -140193,21 +134602,6 @@
   },
   {
    "type": "persona",
-   "slug": "carmen-andrea-becerra",
-   "name": "Carmen Andrea Becerra",
-   "variants": [
-    "Carmen Andrea Becerra"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
-  },
-  {
-   "type": "persona",
    "slug": "carmen-balcells",
    "name": "Carmen Balcells",
    "variants": [
@@ -140600,36 +134994,6 @@
   },
   {
    "type": "persona",
-   "slug": "catalina-reyes",
-   "name": "Catalina Reyes",
-   "variants": [
-    "Catalina Reyes"
-   ],
-   "mentions": 2,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1940
-  },
-  {
-   "type": "persona",
-   "slug": "catalina-reyes-cardenas",
-   "name": "Catalina Reyes Cárdenas",
-   "variants": [
-    "Catalina Reyes Cárdenas"
-   ],
-   "mentions": 2,
-   "periodoCode": "VIO",
-   "periods": [
-    "VIO"
-   ],
-   "periodoOrden": 9,
-   "anio": 1954
-  },
-  {
-   "type": "persona",
    "slug": "catalina-toro-perez",
    "name": "Catalina Toro Pérez",
    "variants": [
@@ -140642,21 +135006,6 @@
    ],
    "periodoOrden": 14,
    "anio": 2016
-  },
-  {
-   "type": "persona",
-   "slug": "catalina-zorro",
-   "name": "Catalina Zorro",
-   "variants": [
-    "Catalina Zorro"
-   ],
-   "mentions": 2,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1400
   },
   {
    "type": "idea",
@@ -141529,21 +135878,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2010
-  },
-  {
-   "type": "persona",
-   "slug": "cesar-marquez",
-   "name": "César Márquez",
-   "variants": [
-    "César Márquez"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
   },
   {
    "type": "persona",
@@ -149087,21 +143421,6 @@
   },
   {
    "type": "persona",
-   "slug": "daniel-samper",
-   "name": "Daniel Samper",
-   "variants": [
-    "Daniel Samper"
-   ],
-   "mentions": 2,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1986
-  },
-  {
-   "type": "persona",
    "slug": "daniel-zamudio",
    "name": "Daniel Zamudio",
    "variants": [
@@ -149295,21 +143614,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1962
-  },
-  {
-   "type": "persona",
-   "slug": "dario-villamizar",
-   "name": "Darío Villamizar",
-   "variants": [
-    "Darío Villamizar"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "lugar",
@@ -150995,36 +145299,6 @@
    ],
    "periodoOrden": 7,
    "anio": 1913
-  },
-  {
-   "type": "persona",
-   "slug": "diana-paola-hernandez-fernandez",
-   "name": "Diana Paola Hernández Fernández",
-   "variants": [
-    "Diana Paola Hernández Fernández"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2019
-  },
-  {
-   "type": "persona",
-   "slug": "diana-rodriguez-franco",
-   "name": "Diana Rodríguez Franco",
-   "variants": [
-    "Diana Rodríguez Franco"
-   ],
-   "mentions": 2,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2008
   },
   {
    "type": "persona",
@@ -153431,21 +147705,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2009
-  },
-  {
-   "type": "persona",
-   "slug": "eduardo-diaz-ardila",
-   "name": "Eduardo Díaz Ardila",
-   "variants": [
-    "Eduardo Díaz Ardila"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
   },
   {
    "type": "persona",
@@ -158963,21 +153222,6 @@
   },
   {
    "type": "persona",
-   "slug": "federico-andreu-guzman",
-   "name": "Federico Andreu-Guzmán",
-   "variants": [
-    "Federico Andreu-Guzmán"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
-  },
-  {
-   "type": "persona",
    "slug": "federico-gonzalez-suarez",
    "name": "Federico González Suárez",
    "variants": [
@@ -160509,21 +154753,6 @@
   },
   {
    "type": "persona",
-   "slug": "francisco-gil-tovar",
-   "name": "Francisco Gil Tovar",
-   "variants": [
-    "Francisco Gil Tovar"
-   ],
-   "mentions": 2,
-   "periodoCode": "COL",
-   "periods": [
-    "COL"
-   ],
-   "periodoOrden": 2,
-   "anio": 1700
-  },
-  {
-   "type": "persona",
    "slug": "francisco-gil-y-lemos",
    "name": "Francisco Gil y Lemos",
    "variants": [
@@ -160581,21 +154810,6 @@
    ],
    "periodoOrden": 14,
    "anio": 2018
-  },
-  {
-   "type": "persona",
-   "slug": "francisco-javier-aceituno",
-   "name": "Francisco Javier Aceituno",
-   "variants": [
-    "Francisco Javier Aceituno"
-   ],
-   "mentions": 2,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1965
   },
   {
    "type": "persona",
@@ -161622,21 +155836,6 @@
   },
   {
    "type": "persona",
-   "slug": "fundacion-prolongar",
-   "name": "Fundación Prolongar",
-   "variants": [
-    "Fundación Prolongar"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2016
-  },
-  {
-   "type": "persona",
    "slug": "fundacion-renaser",
    "name": "Fundación Renaser",
    "variants": [
@@ -161997,21 +156196,6 @@
    ],
    "periodoOrden": 1,
    "anio": 1564
-  },
-  {
-   "type": "persona",
-   "slug": "garry-leech",
-   "name": "Garry Leech",
-   "variants": [
-    "Garry Leech"
-   ],
-   "mentions": 2,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2005
   },
   {
    "type": "persona",
@@ -162690,21 +156874,6 @@
   },
   {
    "type": "persona",
-   "slug": "german-patino",
-   "name": "Germán Patiño",
-   "variants": [
-    "Germán Patiño"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1997
-  },
-  {
-   "type": "persona",
    "slug": "german-rojas-nino",
    "name": "Germán Rojas Niño",
    "variants": [
@@ -162717,21 +156886,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1989
-  },
-  {
-   "type": "persona",
-   "slug": "german-tellez",
-   "name": "Germán Téllez",
-   "variants": [
-    "Germán Téllez"
-   ],
-   "mentions": 2,
-   "periodoCode": "COL",
-   "periods": [
-    "COL"
-   ],
-   "periodoOrden": 2,
-   "anio": 1700
   },
   {
    "type": "idea",
@@ -163350,21 +157504,6 @@
    "anio": 1542
   },
   {
-   "type": "persona",
-   "slug": "graciela-bolanos",
-   "name": "Graciela Bolaños",
-   "variants": [
-    "Graciela Bolaños"
-   ],
-   "mentions": 2,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1973
-  },
-  {
    "type": "lugar",
    "slug": "gramalote",
    "name": "Gramalote",
@@ -163498,21 +157637,6 @@
    ],
    "periodoOrden": 8,
    "anio": 1939
-  },
-  {
-   "type": "persona",
-   "slug": "greta-friedemann-sanchez",
-   "name": "Greta Friedemann-Sánchez",
-   "variants": [
-    "Greta Friedemann-Sánchez"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1996
   },
   {
    "type": "persona",
@@ -164720,21 +158844,6 @@
   },
   {
    "type": "persona",
-   "slug": "hector-riveros",
-   "name": "Héctor Riveros",
-   "variants": [
-    "Héctor Riveros"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 2003
-  },
-  {
-   "type": "persona",
    "slug": "hector-rojas-herazo",
    "name": "Héctor Rojas Herazo",
    "variants": [
@@ -165291,21 +159400,6 @@
   },
   {
    "type": "persona",
-   "slug": "hermann-trimborn",
-   "name": "Hermann Trimborn",
-   "variants": [
-    "Hermann Trimborn"
-   ],
-   "mentions": 2,
-   "periodoCode": "CON",
-   "periods": [
-    "CON"
-   ],
-   "periodoOrden": 1,
-   "anio": 1510
-  },
-  {
-   "type": "persona",
    "slug": "hermanos-bautista",
    "name": "Hermanos Bautista",
    "variants": [
@@ -165393,21 +159487,6 @@
    ],
    "periodoOrden": 9,
    "anio": 1954
-  },
-  {
-   "type": "persona",
-   "slug": "hernan-alonso-munoz-velez",
-   "name": "Hernán Alonso Muñoz Vélez",
-   "variants": [
-    "Hernán Alonso Muñoz Vélez"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2018
   },
   {
    "type": "persona",
@@ -168224,21 +162303,6 @@
   },
   {
    "type": "persona",
-   "slug": "ingrid-johanna-bolivar",
-   "name": "Ingrid Johanna Bolívar",
-   "variants": [
-    "Ingrid Johanna Bolívar"
-   ],
-   "mentions": 2,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1971
-  },
-  {
-   "type": "persona",
    "slug": "iniciativa-de-mujeres-por-la-paz",
    "name": "Iniciativa de Mujeres por la Paz",
    "variants": [
@@ -168690,10 +162754,10 @@
   {
    "type": "idea",
    "slug": "interetnicidad",
-   "name": "interetnicidad",
+   "name": "Interetnicidad",
    "variants": [
-    "interetnicidad",
-    "Interetnicidad"
+    "Interetnicidad",
+    "interetnicidad"
    ],
    "mentions": 2,
    "periodoCode": "TRANS",
@@ -169051,21 +163115,6 @@
   },
   {
    "type": "persona",
-   "slug": "iris-marin",
-   "name": "Iris Marín",
-   "variants": [
-    "Iris Marín"
-   ],
-   "mentions": 2,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2009
-  },
-  {
-   "type": "persona",
    "slug": "irma-franco",
    "name": "Irma Franco",
    "variants": [
@@ -169078,21 +163127,6 @@
    ],
    "periodoOrden": 11,
    "anio": 1985
-  },
-  {
-   "type": "persona",
-   "slug": "isabel-corpas-de-posada",
-   "name": "Isabel Corpas de Posada",
-   "variants": [
-    "Isabel Corpas de Posada"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1992
   },
   {
    "type": "persona",
@@ -169982,21 +164016,6 @@
   },
   {
    "type": "persona",
-   "slug": "james-d-henderson",
-   "name": "James D. Henderson",
-   "variants": [
-    "James D. Henderson"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 2001
-  },
-  {
-   "type": "persona",
    "slug": "james-ferguson",
    "name": "James Ferguson",
    "variants": [
@@ -170099,21 +164118,6 @@
    ],
    "periodoOrden": 4,
    "anio": 1827
-  },
-  {
-   "type": "persona",
-   "slug": "jane-m-rausch",
-   "name": "Jane M. Rausch",
-   "variants": [
-    "Jane M. Rausch"
-   ],
-   "mentions": 2,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1933
   },
   {
    "type": "persona",
@@ -170791,7 +164795,7 @@
     "REG"
    ],
    "periodoOrden": 7,
-   "anio": 1887
+   "anio": 1895
   },
   {
    "type": "persona",
@@ -171077,21 +165081,6 @@
    ],
    "periodoOrden": 15,
    "anio": 1863
-  },
-  {
-   "type": "persona",
-   "slug": "john-lindsay-poland",
-   "name": "John Lindsay-Poland",
-   "variants": [
-    "John Lindsay-Poland"
-   ],
-   "mentions": 2,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2004
   },
   {
    "type": "persona",
@@ -172505,21 +166494,6 @@
   },
   {
    "type": "persona",
-   "slug": "jose-olinto-rueda",
-   "name": "José Olinto Rueda",
-   "variants": [
-    "José Olinto Rueda"
-   ],
-   "mentions": 2,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1967
-  },
-  {
-   "type": "persona",
    "slug": "jose-olmedo-ocampo",
    "name": "José Olmedo Ocampo",
    "variants": [
@@ -172866,21 +166840,6 @@
   },
   {
    "type": "persona",
-   "slug": "juan-alberto-gomez",
-   "name": "Juan Alberto Gómez",
-   "variants": [
-    "Juan Alberto Gómez"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2014
-  },
-  {
-   "type": "persona",
    "slug": "juan-alomera",
    "name": "Juan Alomera",
    "variants": [
@@ -173076,21 +167035,6 @@
   },
   {
    "type": "persona",
-   "slug": "juan-carlos-guataqui",
-   "name": "Juan Carlos Guataquí",
-   "variants": [
-    "Juan Carlos Guataquí"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 2003
-  },
-  {
-   "type": "persona",
    "slug": "juan-carlos-rodriguez-raga",
    "name": "Juan Carlos Rodríguez Raga",
    "variants": [
@@ -173224,21 +167168,6 @@
    ],
    "periodoOrden": 2,
    "anio": 1675
-  },
-  {
-   "type": "persona",
-   "slug": "juan-diego-restrepo",
-   "name": "Juan Diego Restrepo",
-   "variants": [
-    "Juan Diego Restrepo"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2016
   },
   {
    "type": "persona",
@@ -173734,21 +167663,6 @@
    ],
    "periodoOrden": 2,
    "anio": 1675
-  },
-  {
-   "type": "persona",
-   "slug": "juanita-esguerra",
-   "name": "Juanita Esguerra",
-   "variants": [
-    "Juanita Esguerra"
-   ],
-   "mentions": 2,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2011
   },
   {
    "type": "persona",
@@ -175420,21 +169334,6 @@
    "anio": 1917
   },
   {
-   "type": "persona",
-   "slug": "leah-anne-carroll",
-   "name": "Leah Anne Carroll",
-   "variants": [
-    "Leah Anne Carroll"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2011
-  },
-  {
    "type": "idea",
    "slug": "lealtad-criolla",
    "name": "Lealtad criolla",
@@ -176623,21 +170522,6 @@
    "anio": 2001
   },
   {
-   "type": "persona",
-   "slug": "lina-maria-cespedes-baez",
-   "name": "Lina María Céspedes-Báez",
-   "variants": [
-    "Lina María Céspedes-Báez"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1998
-  },
-  {
    "type": "idea",
    "slug": "linaje",
    "name": "Linaje",
@@ -176891,21 +170775,6 @@
    ],
    "periodoOrden": 4,
    "anio": 1825
-  },
-  {
-   "type": "persona",
-   "slug": "liz-arevalo",
-   "name": "Liz Arévalo",
-   "variants": [
-    "Liz Arévalo"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
   },
   {
    "type": "persona",
@@ -177705,21 +171574,6 @@
   },
   {
    "type": "persona",
-   "slug": "luis-guillermo-baptiste",
-   "name": "Luis Guillermo Baptiste",
-   "variants": [
-    "Luis Guillermo Baptiste"
-   ],
-   "mentions": 2,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1965
-  },
-  {
-   "type": "persona",
    "slug": "luis-ignacio-andrade",
    "name": "Luis Ignacio Andrade",
    "variants": [
@@ -177837,21 +171691,6 @@
    ],
    "periodoOrden": 2,
    "anio": 1750
-  },
-  {
-   "type": "persona",
-   "slug": "luisa-mendoza",
-   "name": "Luisa Mendoza",
-   "variants": [
-    "Luisa Mendoza"
-   ],
-   "mentions": 2,
-   "periodoCode": "PRE",
-   "periods": [
-    "PRE"
-   ],
-   "periodoOrden": 0,
-   "anio": 1425
   },
   {
    "type": "persona",
@@ -178603,21 +172442,6 @@
    ],
    "periodoOrden": 5,
    "anio": 1852
-  },
-  {
-   "type": "persona",
-   "slug": "manuel-iturralde",
-   "name": "Manuel Iturralde",
-   "variants": [
-    "Manuel Iturralde"
-   ],
-   "mentions": 2,
-   "periodoCode": "TRANS",
-   "periods": [
-    "TRANS"
-   ],
-   "periodoOrden": 15,
-   "anio": 1974
   },
   {
    "type": "persona",
@@ -179807,21 +173631,6 @@
   },
   {
    "type": "persona",
-   "slug": "maria-elisa-pinto",
-   "name": "María Elisa Pinto",
-   "variants": [
-    "María Elisa Pinto"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
-  },
-  {
-   "type": "persona",
    "slug": "maria-emilia-yepes",
    "name": "María Emilia Yepes",
    "variants": [
@@ -179849,21 +173658,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2003
-  },
-  {
-   "type": "persona",
-   "slug": "maria-eugenia-ibarra",
-   "name": "María Eugenia Ibarra",
-   "variants": [
-    "María Eugenia Ibarra"
-   ],
-   "mentions": 2,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2007
   },
   {
    "type": "persona",
@@ -180059,21 +173853,6 @@
    ],
    "periodoOrden": 4,
    "anio": 1821
-  },
-  {
-   "type": "persona",
-   "slug": "maria-teresa-cristina",
-   "name": "María Teresa Cristina",
-   "variants": [
-    "María Teresa Cristina"
-   ],
-   "mentions": 2,
-   "periodoCode": "COL",
-   "periods": [
-    "COL"
-   ],
-   "periodoOrden": 2,
-   "anio": 1687
   },
   {
    "type": "persona",
@@ -180389,36 +174168,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1960
-  },
-  {
-   "type": "persona",
-   "slug": "mario-latorre",
-   "name": "Mario Latorre",
-   "variants": [
-    "Mario Latorre"
-   ],
-   "mentions": 2,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1973
-  },
-  {
-   "type": "persona",
-   "slug": "mario-mendoza",
-   "name": "Mario Mendoza",
-   "variants": [
-    "Mario Mendoza"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 2001
   },
   {
    "type": "persona",
@@ -181004,21 +174753,6 @@
    ],
    "periodoOrden": 13,
    "anio": 2003
-  },
-  {
-   "type": "persona",
-   "slug": "mauricio-avella",
-   "name": "Mauricio Avella",
-   "variants": [
-    "Mauricio Avella"
-   ],
-   "mentions": 2,
-   "periodoCode": "REG",
-   "periods": [
-    "REG"
-   ],
-   "periodoOrden": 7,
-   "anio": 1923
   },
   {
    "type": "persona",
@@ -182808,21 +176542,6 @@
    ],
    "periodoOrden": 9,
    "anio": 1956
-  },
-  {
-   "type": "persona",
-   "slug": "michael-francis",
-   "name": "Michael Francis",
-   "variants": [
-    "Michael Francis"
-   ],
-   "mentions": 2,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1985
   },
   {
    "type": "persona",
@@ -186001,21 +179720,6 @@
   },
   {
    "type": "persona",
-   "slug": "natalia-quiceno",
-   "name": "Natalia Quiceno",
-   "variants": [
-    "Natalia Quiceno"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2020
-  },
-  {
-   "type": "persona",
    "slug": "natalie-zemon-davis",
    "name": "Natalie Zemon Davis",
    "variants": [
@@ -186969,12 +180673,13 @@
     "Nutibara"
    ],
    "mentions": 2,
-   "periodoCode": "PRE",
+   "periodoCode": "CON",
    "periods": [
+    "CON",
     "PRE"
    ],
-   "periodoOrden": 0,
-   "anio": 1000
+   "periodoOrden": 1,
+   "anio": 1540
   },
   {
    "type": "idea",
@@ -191391,12 +185096,13 @@
     "Piedad Bonnett"
    ],
    "mentions": 2,
-   "periodoCode": "C91",
+   "periodoCode": "TRANS",
    "periods": [
+    "TRANS",
     "C91"
    ],
-   "periodoOrden": 12,
-   "anio": 1993
+   "periodoOrden": 15,
+   "anio": 2000
   },
   {
    "type": "persona",
@@ -196613,21 +190319,6 @@
   },
   {
    "type": "persona",
-   "slug": "renata-serna",
-   "name": "Renata Serna",
-   "variants": [
-    "Renata Serna"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2017
-  },
-  {
-   "type": "persona",
    "slug": "rene-girard",
    "name": "René Girard",
    "variants": [
@@ -197832,21 +191523,6 @@
   },
   {
    "type": "persona",
-   "slug": "ricardo-arias",
-   "name": "Ricardo Arias",
-   "variants": [
-    "Ricardo Arias"
-   ],
-   "mentions": 2,
-   "periodoCode": "REP_LIB",
-   "periods": [
-    "REP_LIB"
-   ],
-   "periodoOrden": 8,
-   "anio": 1938
-  },
-  {
-   "type": "persona",
    "slug": "ricardo-carrasquilla",
    "name": "Ricardo Carrasquilla",
    "variants": [
@@ -197905,36 +191581,6 @@
    ],
    "periodoOrden": 12,
    "anio": 2000
-  },
-  {
-   "type": "persona",
-   "slug": "ricardo-penaranda",
-   "name": "Ricardo Peñaranda",
-   "variants": [
-    "Ricardo Peñaranda"
-   ],
-   "mentions": 2,
-   "periodoCode": "SDE",
-   "periods": [
-    "SDE"
-   ],
-   "periodoOrden": 13,
-   "anio": 2002
-  },
-  {
-   "type": "persona",
-   "slug": "ricardo-sanchez",
-   "name": "Ricardo Sánchez",
-   "variants": [
-    "Ricardo Sánchez"
-   ],
-   "mentions": 2,
-   "periodoCode": "REG",
-   "periods": [
-    "REG"
-   ],
-   "periodoOrden": 7,
-   "anio": 1927
   },
   {
    "type": "persona",
@@ -198529,12 +192175,13 @@
     "Roberto Hinestrosa"
    ],
    "mentions": 2,
-   "periodoCode": "C91",
+   "periodoCode": "TRANS",
    "periods": [
+    "TRANS",
     "C91"
    ],
-   "periodoOrden": 12,
-   "anio": 1992
+   "periodoOrden": 15,
+   "anio": 1995
   },
   {
    "type": "persona",
@@ -198598,21 +192245,6 @@
   },
   {
    "type": "persona",
-   "slug": "robin-kirk",
-   "name": "Robin Kirk",
-   "variants": [
-    "Robin Kirk"
-   ],
-   "mentions": 2,
-   "periodoCode": "C91",
-   "periods": [
-    "C91"
-   ],
-   "periodoOrden": 12,
-   "anio": 1999
-  },
-  {
-   "type": "persona",
    "slug": "robinson-rueda",
    "name": "Robinson Rueda",
    "variants": [
@@ -198640,21 +192272,6 @@
    ],
    "periodoOrden": 2,
    "anio": 1773
-  },
-  {
-   "type": "persona",
-   "slug": "rocio-londono-botero",
-   "name": "Rocío Londoño Botero",
-   "variants": [
-    "Rocío Londoño Botero"
-   ],
-   "mentions": 2,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1987
   },
   {
    "type": "persona",
@@ -200371,21 +193988,6 @@
   },
   {
    "type": "persona",
-   "slug": "santiago-diaz-piedrahita",
-   "name": "Santiago Díaz Piedrahita",
-   "variants": [
-    "Santiago Díaz Piedrahita"
-   ],
-   "mentions": 2,
-   "periodoCode": "CNA",
-   "periods": [
-    "CNA"
-   ],
-   "periodoOrden": 11,
-   "anio": 1991
-  },
-  {
-   "type": "persona",
    "slug": "santiago-martin-eder",
    "name": "Santiago Martín Éder",
    "variants": [
@@ -200533,21 +194135,6 @@
    ],
    "periodoOrden": 14,
    "anio": 2018
-  },
-  {
-   "type": "persona",
-   "slug": "sara-victoria-alvarado",
-   "name": "Sara Victoria Alvarado",
-   "variants": [
-    "Sara Victoria Alvarado"
-   ],
-   "mentions": 2,
-   "periodoCode": "FN",
-   "periods": [
-    "FN"
-   ],
-   "periodoOrden": 10,
-   "anio": 1970
   },
   {
    "type": "idea",
@@ -203530,10 +197117,10 @@
   {
    "type": "idea",
    "slug": "subdesarrollo",
-   "name": "subdesarrollo",
+   "name": "Subdesarrollo",
    "variants": [
-    "subdesarrollo",
-    "Subdesarrollo"
+    "Subdesarrollo",
+    "subdesarrollo"
    ],
    "mentions": 2,
    "periodoCode": "FN",
@@ -206681,21 +200268,6 @@
    ],
    "periodoOrden": 10,
    "anio": 1962
-  },
-  {
-   "type": "persona",
-   "slug": "tulia-almanza",
-   "name": "Tulia Almanza",
-   "variants": [
-    "Tulia Almanza"
-   ],
-   "mentions": 2,
-   "periodoCode": "POS",
-   "periods": [
-    "POS"
-   ],
-   "periodoOrden": 14,
-   "anio": 2021
   },
   {
    "type": "persona",
