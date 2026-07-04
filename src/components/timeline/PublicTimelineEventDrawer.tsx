@@ -7,19 +7,20 @@ import { CATEGORIES, type CategoryCode, type PeriodCode, PERIODS } from "@/lib/d
 import type { TimelineLinkPiece, PeriodTimelineLinks } from "@/lib/public-data";
 import { fmtYearSpan, type TimelineEventData } from "./TimelineEventDrawer";
 
-/** Casa un evento con un hecho publicado por solape de años (mismo período). */
+/**
+ * Casa un evento con un hecho publicado. El hecho pertenece al evento si su AÑO
+ * PRINCIPAL cae dentro del tramo del evento (±1), no por mero solape de un rango
+ * largo — así un hecho de 1887 no se cuela como "el hecho" de un evento de
+ * 1899–1902 solo por compartir período. Sin match cercano → null (sin enlace).
+ */
 function matchHecho(ev: TimelineEventData, hechos: TimelineLinkPiece[]): TimelineLinkPiece | null {
   const s = ev.anioInicio;
   const e = ev.anioFin;
-  const overlap = hechos.filter((h) => {
-    if (h.anio == null) return false;
-    const he = h.anioFin ?? h.anio;
-    return h.anio <= e && he >= s;
-  });
-  if (overlap.length === 0) return null;
+  const inSpan = hechos.filter((h) => h.anio != null && h.anio >= s - 1 && h.anio <= e + 1);
+  if (inSpan.length === 0) return null;
   const mid = (s + e) / 2;
-  overlap.sort((a, b) => Math.abs((a.anio ?? mid) - mid) - Math.abs((b.anio ?? mid) - mid));
-  return overlap[0];
+  inSpan.sort((a, b) => Math.abs((a.anio ?? mid) - mid) - Math.abs((b.anio ?? mid) - mid));
+  return inSpan[0];
 }
 
 /**
@@ -31,11 +32,13 @@ export function PublicTimelineEventDrawer({
   event,
   periodoCode,
   links,
+  entityHrefs,
   onClose,
 }: {
   event: TimelineEventData | null;
   periodoCode: PeriodCode;
   links?: PeriodTimelineLinks;
+  entityHrefs?: Record<string, string>;
   onClose: () => void;
 }) {
   const open = event !== null;
@@ -81,7 +84,14 @@ export function PublicTimelineEventDrawer({
         }}
       >
         {event && (
-          <DrawerContent key={event.id} ev={event} periodoCode={periodoCode} links={links} onClose={onClose} />
+          <DrawerContent
+            key={event.id}
+            ev={event}
+            periodoCode={periodoCode}
+            links={links}
+            entityHrefs={entityHrefs}
+            onClose={onClose}
+          />
         )}
       </aside>
     </>
@@ -92,11 +102,13 @@ function DrawerContent({
   ev,
   periodoCode,
   links,
+  entityHrefs,
   onClose,
 }: {
   ev: TimelineEventData;
   periodoCode: PeriodCode;
   links?: PeriodTimelineLinks;
+  entityHrefs?: Record<string, string>;
   onClose: () => void;
 }) {
   const period = PERIODS[periodoCode];
@@ -229,21 +241,28 @@ function DrawerContent({
         {ev.entidadesClave.length > 0 && (
           <Section title="Entidades clave">
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {ev.entidadesClave.map((e) => (
-                <span
-                  key={e}
-                  className="mono"
-                  style={{
-                    padding: "4px 9px",
-                    fontSize: 10.5,
-                    border: "1px solid var(--line)",
-                    color: "var(--fg)",
-                    letterSpacing: "0.03em",
-                  }}
-                >
-                  {e}
-                </span>
-              ))}
+              {ev.entidadesClave.map((e) => {
+                const href = entityHrefs?.[e];
+                const chipStyle: React.CSSProperties = {
+                  padding: "4px 9px",
+                  fontSize: 10.5,
+                  border: `1px solid ${href ? "var(--line-strong)" : "var(--line)"}`,
+                  color: "var(--fg)",
+                  letterSpacing: "0.03em",
+                  textDecoration: "none",
+                };
+                // Las entidades publicadas se enlazan a su página (wiki); las demás
+                // quedan como texto — así el drawer siempre ofrece a dónde seguir.
+                return href ? (
+                  <Link key={e} href={href} className="mono" style={chipStyle}>
+                    {e}
+                  </Link>
+                ) : (
+                  <span key={e} className="mono" style={chipStyle}>
+                    {e}
+                  </span>
+                );
+              })}
             </div>
           </Section>
         )}

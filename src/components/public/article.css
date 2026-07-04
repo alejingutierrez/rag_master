@@ -50,7 +50,22 @@
 .art-figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); }
 .art-figure.portrait { max-width: 380px; }
 .art-figure.landscape img { aspect-ratio: 16 / 9; object-fit: cover; }
-.art-figure.portrait img { aspect-ratio: 9 / 16; object-fit: cover; }
+/* Retratos alineados ARRIBA para no cortar la cabeza. */
+.art-figure.portrait img { aspect-ratio: 3 / 4; object-fit: cover; object-position: top center; }
+
+/* Persona: foto a la DERECHA del título (encabezado en dos columnas). */
+.art-head-row { display: grid; grid-template-columns: 1fr minmax(190px, 290px); gap: 34px; align-items: start; margin: 0 0 6px; }
+.art-head-row .art-head { margin: 0; }
+.art-figure-side { margin: 4px 0 0; max-width: 290px; }
+.art-figure-side img { aspect-ratio: 4 / 5; object-fit: cover; object-position: top center; }
+@media (max-width: 640px) {
+  .art-head-row { grid-template-columns: 1fr; gap: 16px; }
+  .art-figure-side { max-width: 220px; }
+}
+
+/* Auto-enlace wiki dentro de la prosa: discreto, resalta al pasar el cursor. */
+.prose a.wikilink { color: inherit; text-decoration: none; border-bottom: 1px solid var(--line-strong); transition: color .12s ease, border-color .12s ease; }
+.prose a.wikilink:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 /* ── Ficha estructurada (datos de la tipología) ────────────────────────── */
 .ficha { border-top: 1px solid var(--fg); margin: 0 0 34px; }

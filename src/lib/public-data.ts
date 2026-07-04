@@ -18,8 +18,16 @@ import {
 } from "@/lib/typology-schemas";
 import { normalizeSeo, deriveSeo, type DeliverableSeo } from "@/lib/seo";
 import type { DeliverableTaxonomy } from "@/lib/taxonomy";
-import { resolveAnchor, periodStartYear, periodRank, type ContentAnchor } from "@/lib/content-anchor";
+import { resolveAnchor, periodStartYear, type ContentAnchor } from "@/lib/content-anchor";
 import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
+import {
+  loadEntityRegistry,
+  findRegistryEntity,
+  entityKey,
+  type RegistryEntity,
+  type EntityType,
+} from "@/lib/entities-registry";
+import { buildEntityLinker, type EntityLinker, type LinkableEntity } from "@/lib/entity-linker";
 
 /** WHERE base de todo lo publicable: pieza del Taller, completa y publicada. */
 const PUBLISHED_WHERE = {
@@ -641,52 +649,34 @@ function emptyPeriodLinks(): PeriodTimelineLinks {
   };
 }
 
-/** Piezas publicadas por período para la línea de tiempo pública. Solo lectura. */
+/** Piezas publicadas por período para la línea de tiempo pública. Solo lectura.
+ *  Consume las piezas ancladas (cacheadas): sin query ni resolveAnchor propios. */
 export async function getTimelineLinks(): Promise<TimelineLinks> {
   try {
-    const rows = await prisma.deliverable.findMany({
-      where: PUBLISHED_WHERE,
-      select: {
-        id: true,
-        structuredData: true,
-        metadata: true,
-        userQuestion: true,
-        question: { select: { periodoCode: true, yearPrincipal: true, pregunta: true } },
-      },
-    });
-
+    const pieces = await getAnchoredPieces();
     const out: TimelineLinks = {};
-    for (const r of rows) {
-      const s = normalizeStructured(r.structuredData);
-      const anchor = resolveAnchor({
-        structured: s,
-        taxonomy: taxOf(r.metadata),
-        fallbackPeriodo: r.question?.periodoCode,
-        fallbackYear: r.question?.yearPrincipal,
-      });
-      const code = anchor.periodCode;
+    for (const p of pieces) {
+      const code = p.periodCode;
       if (!code) continue;
 
       const bucket = (out[code] ??= emptyPeriodLinks());
-      const kind = s?.typology ?? "ensayo";
-      const titulo = s?.titulo ?? shortTitle(r.question?.pregunta ?? r.userQuestion ?? "Producción", 80);
       const piece: TimelineLinkPiece = {
-        href: s ? typologyPath(s) : `/ensayos/${r.id}`,
-        titulo,
-        kind,
-        anio: anchor.anio,
-        anioFin: anchor.anioFin,
+        href: p.href,
+        titulo: p.titulo,
+        kind: p.kind,
+        anio: p.anio,
+        anioFin: p.anioFin,
       };
 
       bucket.pieces.push(piece);
       bucket.counts.total++;
-      if (s?.typology === "hecho") {
+      if (p.kind === "hecho") {
         bucket.hechos.push(piece);
         bucket.counts.hechos++;
-      } else if (s?.typology === "epoca") {
+      } else if (p.kind === "epoca") {
         bucket.counts.epocas++;
-        if (!bucket.epoca) bucket.epoca = { href: piece.href, titulo, resumen: s.resumen };
-      } else if (s?.typology === "entidad") {
+        if (!bucket.epoca) bucket.epoca = { href: p.href, titulo: p.titulo, resumen: p.resumen };
+      } else if (p.kind === "entidad") {
         bucket.counts.entidades++;
       } else {
         bucket.counts.ensayos++;
@@ -712,7 +702,7 @@ export async function getTimelineLinks(): Promise<TimelineLinks> {
 // pieza publicada. Cero escritura a prod. Es el tejido que interconecta el sitio.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type EntityType = "persona" | "lugar" | "idea";
+export type { EntityType };
 
 export const ENTITY_TYPE_META: Record<
   EntityType,
@@ -729,9 +719,9 @@ export const ENTITY_TYPE_META: Record<
   idea: { plural: "Ideas", singular: "Idea", index: "/ideas", array: "ideas", color: "var(--p-cna)" },
 };
 
-/** Ruta del nodo público de una entidad (se conserva bajo /entidades para no romper URLs). */
-export function entityPath(slug: string): string {
-  return `/entidades/${slug}`;
+/** Ruta del nodo público de una entidad, por tipo: /personas · /lugares · /ideas. */
+export function entityPath(type: EntityType, slug: string): string {
+  return `${ENTITY_TYPE_META[type].index}/${slug}`;
 }
 
 /** Tipo público a partir del `tipo` de una ficha de entidad. */
@@ -805,6 +795,54 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
   return out;
 }
 
+// ── Caché en memoria: piezas ancladas + índice de entidades publicadas ────────
+// loadAnchoredPieces() escanea TODOS los deliverables publicados y resuelve el
+// ancla de cada uno: caro, y se llamaba 4+ veces al navegar entidades/timeline.
+// Es determinista hasta publicar/despublicar → cache de proceso con TTL corto.
+// Junto con el registro (que ya no escanea el corpus en cada request), elimina
+// el trabajo pesado que hacía lento el sitio.
+const ANCHORED_TTL_MS = 2 * 60 * 1000;
+let anchoredCache: { pieces: AnchoredPiece[]; at: number } | null = null;
+
+async function getAnchoredPieces(): Promise<AnchoredPiece[]> {
+  const now = Date.now();
+  if (anchoredCache && now - anchoredCache.at < ANCHORED_TTL_MS) return anchoredCache.pieces;
+  const pieces = await loadAnchoredPieces();
+  anchoredCache = { pieces, at: now };
+  return pieces;
+}
+
+interface PublishedEntityData {
+  index: EntityIndex;
+  /** slugs (canónicos + variantes) presentes en piezas PUBLICADAS, por tipo. */
+  publishedSlugs: Record<EntityType, Set<string>>;
+}
+let pubEntityCache: { data: PublishedEntityData; at: number } | null = null;
+
+/** Índice de entidades PUBLICADAS (para el gate) + co-ocurrencia, cacheado. */
+async function getPublishedEntityData(): Promise<PublishedEntityData> {
+  const now = Date.now();
+  if (pubEntityCache && now - pubEntityCache.at < ANCHORED_TTL_MS) return pubEntityCache.data;
+  const pieces = await getAnchoredPieces();
+  const index = buildEntityIndex(pieces);
+  const publishedSlugs: Record<EntityType, Set<string>> = {
+    persona: new Set(),
+    lugar: new Set(),
+    idea: new Set(),
+  };
+  for (const acc of index.byKey.values()) {
+    const set = publishedSlugs[acc.type];
+    set.add(acc.slug);
+    for (const v of acc.variants.keys()) {
+      const vs = slugify(v);
+      if (vs) set.add(vs);
+    }
+  }
+  const data: PublishedEntityData = { index, publishedSlugs };
+  pubEntityCache = { data, at: now };
+  return data;
+}
+
 // ── Época como HUB ───────────────────────────────────────────────────────────
 
 export interface HubPiece {
@@ -828,7 +866,7 @@ export interface PeriodHub {
   pieceCount: number;
 }
 
-function chipMap(map: Map<string, EntityChip>, names: string[]) {
+function chipMap(map: Map<string, EntityChip>, type: EntityType, names: string[]) {
   for (const raw of names) {
     const name = raw.trim();
     if (!name) continue;
@@ -836,7 +874,7 @@ function chipMap(map: Map<string, EntityChip>, names: string[]) {
     if (!slug) continue;
     const cur = map.get(slug);
     if (cur) cur.count++;
-    else map.set(slug, { name, slug, href: entityPath(slug), count: 1 });
+    else map.set(slug, { name, slug, href: entityPath(type, slug), count: 1 });
   }
 }
 
@@ -844,7 +882,7 @@ function chipMap(map: Map<string, EntityChip>, names: string[]) {
 export async function getPeriodHub(periodCode: string): Promise<PeriodHub> {
   const empty: PeriodHub = { hechos: [], ensayos: [], personas: [], lugares: [], ideas: [], pieceCount: 0 };
   try {
-    const pieces = (await loadAnchoredPieces()).filter((p) => p.periodCode === periodCode);
+    const pieces = (await getAnchoredPieces()).filter((p) => p.periodCode === periodCode);
     const hechos: HubPiece[] = [];
     const ensayos: HubPiece[] = [];
     const personas = new Map<string, EntityChip>();
@@ -854,9 +892,9 @@ export async function getPeriodHub(periodCode: string): Promise<PeriodHub> {
       const hp: HubPiece = { href: p.href, titulo: p.titulo, anio: p.anio, kind: p.kind };
       if (p.kind === "hecho") hechos.push(hp);
       else if (p.kind === "pregunta" || p.kind === "ensayo") ensayos.push(hp);
-      chipMap(personas, p.personas);
-      chipMap(lugares, p.lugares);
-      chipMap(ideas, p.ideas);
+      chipMap(personas, "persona", p.personas);
+      chipMap(lugares, "lugar", p.lugares);
+      chipMap(ideas, "idea", p.ideas);
     }
     const byYear = (a: HubPiece, b: HubPiece) =>
       (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es");
@@ -997,173 +1035,79 @@ export interface PublicEntity {
   resumen: string | null;
 }
 
-// ── Registro CANÓNICO de entidades (del corpus de preguntas) ─────────────────
-// Fuente de verdad: las entidades detectadas al generar las preguntas
-// (Question.entidadesPersonas/Lugares/Conceptos), agregadas y contadas — el
-// "conteo que ya existía". Personas/Lugares/Ideas salen de AQUÍ, no de las
-// piezas. Las piezas REFERENCIAN estas entidades (match por nombre/variante).
+// ── Entidades públicas: REGISTRO (época/nombre) ∩ PUBLICADO (visibilidad) ─────
+// El registro canónico (src/data/entities.json) aporta identidad y ÉPOCA de cada
+// entidad; el gate de solo-publicado decide cuáles se muestran: una entidad sale
+// en el sitio solo si aparece en ≥1 pieza PUBLICADA. Así los filtros de época
+// funcionan (época "hogar" curada, no la unión ruidosa de todos los períodos) y
+// no se listan lugares / ideas / personas sin contenido publicado.
 
-interface CorpusEntity {
-  key: string; // `${type}:${slug}`
-  type: EntityType;
-  slug: string;
-  variants: Map<string, number>;
-  questionIds: Set<string>;
-  periods: Set<string>;
-  periodoOrden: number;
-  anio: number | null;
-  related: Map<string, number>; // otra clave → # preguntas compartidas
+/** ¿La entidad del registro aparece en alguna pieza publicada de su tipo? */
+function isPublishedEntity(e: RegistryEntity, pub: Set<string>): boolean {
+  if (pub.has(e.slug)) return true;
+  for (const v of e.variants) if (pub.has(slugify(v))) return true;
+  return false;
 }
 
-/** Umbral: una entidad entra al registro público con ≥ N menciones en el corpus. */
-const CORPUS_MIN_MENTIONS = 2;
-
-interface CorpusIndex {
-  byKey: Map<string, CorpusEntity>;
-  variantSlugToKey: Map<string, string>;
-}
-
-// El registro (miles de entidades) se computa escaneando TODAS las preguntas —
-// caro (~8 s). No cambia entre requests, así que se cachea en memoria del proceso.
-// TTL amplio: solo cambia al regenerar preguntas (proceso batch, poco frecuente).
-let corpusCache: { data: CorpusIndex; at: number } | null = null;
-const CORPUS_TTL_MS = 15 * 60 * 1000;
-
-async function loadCorpusEntityIndex(): Promise<CorpusIndex> {
-  const now = Date.now();
-  if (corpusCache && now - corpusCache.at < CORPUS_TTL_MS) return corpusCache.data;
-
-  const questions = await prisma.question.findMany({
-    select: {
-      id: true,
-      entidadesPersonas: true,
-      entidadesLugares: true,
-      entidadesConceptos: true,
-      periodoCode: true,
-      yearPrincipal: true,
-    },
-  });
-
-  const byKey = new Map<string, CorpusEntity>();
-  const upsert = (type: EntityType, rawName: string): CorpusEntity | null => {
-    const name = rawName.trim();
-    if (!name) return null;
-    const slug = slugify(name);
-    if (!slug) return null;
-    const key = `${type}:${slug}`;
-    let e = byKey.get(key);
-    if (!e) {
-      e = { key, type, slug, variants: new Map(), questionIds: new Set(), periods: new Set(), periodoOrden: 99, anio: null, related: new Map() };
-      byKey.set(key, e);
-    }
-    e.variants.set(name, (e.variants.get(name) ?? 0) + 1);
-    return e;
-  };
-
-  for (const q of questions) {
-    const ents: CorpusEntity[] = [];
-    const seen = new Set<string>();
-    for (const [type, list] of [
-      ["persona", q.entidadesPersonas],
-      ["lugar", q.entidadesLugares],
-      ["idea", q.entidadesConceptos],
-    ] as const) {
-      for (const nm of list) {
-        const e = upsert(type, nm);
-        if (!e || seen.has(e.key)) continue;
-        seen.add(e.key);
-        e.questionIds.add(q.id);
-        if (q.periodoCode) e.periods.add(q.periodoCode);
-        const orden = periodRank(q.periodoCode);
-        if (orden < e.periodoOrden) e.periodoOrden = orden;
-        if (q.yearPrincipal != null && (e.anio == null || q.yearPrincipal < e.anio)) e.anio = q.yearPrincipal;
-        ents.push(e);
-      }
-    }
-    for (const a of ents) for (const b of ents) {
-      if (a.key !== b.key) a.related.set(b.key, (a.related.get(b.key) ?? 0) + 1);
-    }
+/** El acc del índice publicado que corresponde a esta entidad del registro. */
+function findPublishedAcc(e: RegistryEntity, index: EntityIndex): EntityAccum | null {
+  const slugs = new Set<string>([e.slug, ...e.variants.map((v) => slugify(v))]);
+  for (const vs of slugs) {
+    const acc = index.byKey.get(entityKey(e.type, vs));
+    if (acc) return acc;
   }
-
-  const filtered = new Map<string, CorpusEntity>();
-  const variantSlugToKey = new Map<string, string>();
-  for (const e of byKey.values()) {
-    if (e.questionIds.size < CORPUS_MIN_MENTIONS) continue;
-    filtered.set(e.key, e);
-    for (const v of e.variants.keys()) {
-      const vs = slugify(v);
-      if (vs && !variantSlugToKey.has(vs)) variantSlugToKey.set(vs, e.key);
-    }
-  }
-  const data: CorpusIndex = { byKey: filtered, variantSlugToKey };
-  corpusCache = { data, at: now };
-  return data;
+  return null;
 }
 
-function bestVariant(variants: Map<string, number>): string {
-  let best = "";
-  let n = -1;
-  for (const [v, c] of variants) if (c > n) { best = v; n = c; }
-  return best;
-}
-
-/** Todas las grafías (slugs) de una entidad — para casarla con las piezas. */
-function entityVariantSlugs(e: CorpusEntity): Set<string> {
-  const s = new Set<string>([e.slug]);
-  for (const v of e.variants.keys()) {
-    const vs = slugify(v);
-    if (vs) s.add(vs);
-  }
-  return s;
-}
-
-/** slug de entidad → resumen de su ficha publicada (si existe). */
-function fichaMapFrom(pieces: AnchoredPiece[]): Map<string, string> {
-  const m = new Map<string, string>();
-  for (const p of pieces) {
-    if (p.kind === "entidad" && p.entidadSlug) m.set(p.entidadSlug, p.resumen);
-  }
-  return m;
-}
-
-function corpusToPublic(e: CorpusEntity, fichas: Map<string, string>): PublicEntity {
-  let hasFicha = false;
-  let resumen: string | null = null;
-  for (const vs of entityVariantSlugs(e)) {
-    if (fichas.has(vs)) {
-      hasFicha = true;
-      resumen = fichas.get(vs) || resumen;
-      break;
-    }
-  }
+function registryToPublic(e: RegistryEntity, index: EntityIndex): PublicEntity {
+  const acc = findPublishedAcc(e, index);
   return {
-    name: bestVariant(e.variants),
+    name: e.name,
     slug: e.slug,
     type: e.type,
-    href: entityPath(e.slug),
-    mentions: e.questionIds.size,
-    periods: [...e.periods],
+    href: entityPath(e.type, e.slug),
+    mentions: e.mentions,
+    periods: e.periods,
     periodoOrden: e.periodoOrden,
     anio: e.anio,
-    hasFicha,
-    resumen,
+    hasFicha: acc?.hasFicha ?? false,
+    resumen: acc?.resumen ?? null,
   };
 }
 
-/** El corpus tiene miles de entidades; el índice muestra las más referenciadas. */
+/** Relaciones (co-ocurrencia en piezas PUBLICADAS) de un acc → EntityRelation[]. */
+function relatedFromAcc(acc: EntityAccum, index: EntityIndex): EntityRelation[] {
+  return [...acc.related.entries()]
+    .map(([k, shared]) => {
+      const o = index.byKey.get(k);
+      if (!o) return null;
+      return { name: canonicalName(o), slug: o.slug, type: o.type, href: entityPath(o.type, o.slug), shared } as EntityRelation;
+    })
+    .filter((x): x is EntityRelation => !!x)
+    .sort((a, b) => b.shared - a.shared || a.name.localeCompare(b.name, "es"))
+    .slice(0, 16);
+}
+
+/** El registro tiene miles de entidades; el índice muestra las más referenciadas. */
 export const ENTITY_DISPLAY_CAP = 300;
 
 /**
- * Índice público de entidades de un tipo, DESDE EL REGISTRO DEL CORPUS.
- * Devuelve las `ENTITY_DISPLAY_CAP` más mencionadas (prominencia); el filtro de
- * época y el buscador navegan dentro de ellas. El conteo total va en getEntityCounts.
+ * Índice público de entidades de un tipo: las del REGISTRO que además aparecen en
+ * piezas PUBLICADAS (gate). Ordenadas por prominencia (menciones del corpus),
+ * capadas a `ENTITY_DISPLAY_CAP`. El filtro de época navega dentro de ellas.
  */
 export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[]> {
   try {
-    const [{ byKey }, pieces] = await Promise.all([loadCorpusEntityIndex(), loadAnchoredPieces()]);
-    const fichas = fichaMapFrom(pieces);
+    const [reg, { index, publishedSlugs }] = await Promise.all([
+      loadEntityRegistry(),
+      getPublishedEntityData(),
+    ]);
+    const pub = publishedSlugs[type];
     const list: PublicEntity[] = [];
-    for (const e of byKey.values()) if (e.type === type) list.push(corpusToPublic(e, fichas));
+    for (const e of reg.entities) {
+      if (e.type !== type || !isPublishedEntity(e, pub)) continue;
+      list.push(registryToPublic(e, index));
+    }
     list.sort((a, b) => b.mentions - a.mentions || a.name.localeCompare(b.name, "es"));
     return list.slice(0, ENTITY_DISPLAY_CAP);
   } catch (err) {
@@ -1172,16 +1116,86 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
   }
 }
 
-/** Conteos por tipo (registro del corpus). */
+/** Conteos por tipo — entidades del registro presentes en piezas publicadas. */
 export async function getEntityCounts(): Promise<Record<EntityType, number>> {
   const empty: Record<EntityType, number> = { persona: 0, lugar: 0, idea: 0 };
   try {
-    const { byKey } = await loadCorpusEntityIndex();
-    for (const e of byKey.values()) empty[e.type]++;
+    const [reg, { publishedSlugs }] = await Promise.all([
+      loadEntityRegistry(),
+      getPublishedEntityData(),
+    ]);
+    for (const e of reg.entities) {
+      if (isPublishedEntity(e, publishedSlugs[e.type])) empty[e.type]++;
+    }
     return empty;
   } catch (err) {
     console.error("[public-data] getEntityCounts falló:", err);
     return empty;
+  }
+}
+
+// ── Auto-enlace de entidades en prosa ────────────────────────────────────────
+// Diccionario = entidades PUBLICADAS (registro ∩ piezas). Se pasa al renderer de
+// prosa para enlazar menciones a su página. Cacheado como el resto (TTL corto);
+// el registro viene ordenado por prominencia, así que en colisiones de superficie
+// gana la entidad más mencionada.
+let linkerCache: { linker: EntityLinker; at: number } | null = null;
+
+export async function getEntityLinker(): Promise<EntityLinker> {
+  const now = Date.now();
+  if (linkerCache && now - linkerCache.at < ANCHORED_TTL_MS) return linkerCache.linker;
+  try {
+    const [reg, { publishedSlugs }] = await Promise.all([
+      loadEntityRegistry(),
+      getPublishedEntityData(),
+    ]);
+    const entities: LinkableEntity[] = [];
+    for (const e of reg.entities) {
+      if (!isPublishedEntity(e, publishedSlugs[e.type])) continue;
+      entities.push({
+        key: entityKey(e.type, e.slug),
+        type: e.type,
+        slug: e.slug,
+        href: entityPath(e.type, e.slug),
+        surfaces: [e.name, ...e.variants],
+      });
+    }
+    const linker = buildEntityLinker(entities);
+    linkerCache = { linker, at: now };
+    return linker;
+  } catch (err) {
+    console.error("[public-data] getEntityLinker falló:", err);
+    return { regex: null, bySurface: new Map() };
+  }
+}
+
+/**
+ * Resuelve nombres de entidad → href de su página pública, SOLO si están
+ * publicadas. Para enlazar chips (p. ej. las entidades clave de un evento del
+ * timeline) a la wiki — así el drawer nunca queda sin caminos hacia dónde seguir.
+ */
+export async function resolveEntityHrefs(names: string[]): Promise<Record<string, string>> {
+  try {
+    const [reg, { publishedSlugs }] = await Promise.all([
+      loadEntityRegistry(),
+      getPublishedEntityData(),
+    ]);
+    const out: Record<string, string> = {};
+    for (const raw of names) {
+      const name = (raw ?? "").trim();
+      if (!name || out[name] !== undefined) continue;
+      const slug = slugify(name);
+      if (!slug) continue;
+      const key = reg.variantSlugToKey.get(slug);
+      const ent = key ? reg.byKey.get(key) : undefined;
+      if (ent && isPublishedEntity(ent, publishedSlugs[ent.type])) {
+        out[name] = entityPath(ent.type, ent.slug);
+      }
+    }
+    return out;
+  } catch (err) {
+    console.error("[public-data] resolveEntityHrefs falló:", err);
+    return {};
   }
 }
 
@@ -1204,48 +1218,41 @@ export interface EntityNode extends PublicEntity {
 }
 
 /**
- * Nodo wiki de una entidad por slug. Sale del REGISTRO DEL CORPUS; reúne las
- * piezas publicadas que la referencian (match por variante) y las entidades con
- * las que co-ocurre en el corpus. Fallback a piezas si la entidad aún no llegó
- * al registro (para no romper enlaces existentes).
+ * Nodo wiki de una entidad. Identidad + ÉPOCA salen del REGISTRO; las piezas que
+ * la referencian y sus entidades relacionadas salen de lo PUBLICADO (co-ocurrencia
+ * acotada). Gate: sin presencia publicada → null (404). Fallback a las piezas si
+ * la entidad no está en el registro (para no romper enlaces). `type` desambigua
+ * colisiones de slug (p. ej. Bolívar persona vs. departamento).
  */
-export async function getEntityNode(slug: string): Promise<EntityNode | null> {
+export async function getEntityNode(slug: string, type?: EntityType): Promise<EntityNode | null> {
   try {
-    const [{ byKey, variantSlugToKey }, pieces] = await Promise.all([
-      loadCorpusEntityIndex(),
-      loadAnchoredPieces(),
+    const [e, { index, publishedSlugs }] = await Promise.all([
+      findRegistryEntity(slug, type),
+      getPublishedEntityData(),
     ]);
+    if (!e) return pieceEntityNode(slug, index, type);
 
-    let e: CorpusEntity | null = null;
-    for (const x of byKey.values()) {
-      if (x.slug !== slug) continue;
-      if (!e || x.questionIds.size > e.questionIds.size) e = x;
-    }
-    if (!e) {
-      const k = variantSlugToKey.get(slug);
-      if (k) e = byKey.get(k) ?? null;
-    }
-    if (!e) return pieceEntityNode(slug, pieces);
+    // Gate CONSISTENTE con las listas y el auto-enlace: la entidad tiene página
+    // si aparece en ≥1 pieza publicada (por taxonomía) O tiene ficha propia — lo
+    // mismo que decide si se lista/enlaza. Sin esto, una entidad con solo ficha
+    // (que no la referencia otra pieza) se listaba y enlazaba pero su página 404.
+    if (!isPublishedEntity(e, publishedSlugs[e.type])) return null;
 
-    const fichas = fichaMapFrom(pieces);
-    const varSlugs = entityVariantSlugs(e);
+    const varSlugs = new Set<string>([e.slug, ...e.variants.map((v) => slugify(v))]);
+    const namesOf = (p: AnchoredPiece) =>
+      e.type === "persona" ? p.personas : e.type === "lugar" ? p.lugares : p.ideas;
 
-    const pieceRefs: EntityPieceRef[] = pieces
-      .filter((p) => [...p.personas, ...p.lugares, ...p.ideas].some((n) => varSlugs.has(slugify(n))))
+    const pieceRefs: EntityPieceRef[] = [...index.piecesById.values()]
+      .filter((p) => namesOf(p).some((n) => varSlugs.has(slugify(n))))
       .map((p) => ({ href: p.href, titulo: p.titulo, kind: p.kind, anio: p.anio }))
       .sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es"));
 
-    const related: EntityRelation[] = [...e.related.entries()]
-      .map(([k, shared]) => {
-        const o = byKey.get(k);
-        if (!o) return null;
-        return { name: bestVariant(o.variants), slug: o.slug, type: o.type, href: entityPath(o.slug), shared } as EntityRelation;
-      })
-      .filter((x): x is EntityRelation => !!x)
-      .sort((a, b) => b.shared - a.shared || a.name.localeCompare(b.name, "es"))
-      .slice(0, 16);
-
-    return { ...corpusToPublic(e, fichas), pieces: pieceRefs, related };
+    const acc = findPublishedAcc(e, index);
+    return {
+      ...registryToPublic(e, index),
+      pieces: pieceRefs,
+      related: acc ? relatedFromAcc(acc, index) : [],
+    };
   } catch (err) {
     console.error(`[public-data] getEntityNode(${slug}) falló:`, err);
     return null;
@@ -1253,11 +1260,11 @@ export async function getEntityNode(slug: string): Promise<EntityNode | null> {
 }
 
 /** Fallback: nodo de una entidad que aparece en piezas pero no está en el registro. */
-function pieceEntityNode(slug: string, pieces: AnchoredPiece[]): EntityNode | null {
-  const { byKey, piecesById } = buildEntityIndex(pieces);
+function pieceEntityNode(slug: string, index: EntityIndex, type?: EntityType): EntityNode | null {
+  const { byKey, piecesById } = index;
   let acc: EntityAccum | null = null;
   for (const a of byKey.values()) {
-    if (a.slug !== slug) continue;
+    if (a.slug !== slug || (type && a.type !== type)) continue;
     if (!acc || a.pieceIds.size > acc.pieceIds.size) acc = a;
   }
   if (!acc) return null;
@@ -1266,20 +1273,11 @@ function pieceEntityNode(slug: string, pieces: AnchoredPiece[]): EntityNode | nu
     .filter((p): p is AnchoredPiece => !!p)
     .map((p) => ({ href: p.href, titulo: p.titulo, kind: p.kind, anio: p.anio }))
     .sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es"));
-  const related: EntityRelation[] = [...acc.related.entries()]
-    .map(([k, shared]) => {
-      const o = byKey.get(k);
-      if (!o) return null;
-      return { name: canonicalName(o), slug: o.slug, type: o.type, href: entityPath(o.slug), shared } as EntityRelation;
-    })
-    .filter((x): x is EntityRelation => !!x)
-    .sort((a, b) => b.shared - a.shared || a.name.localeCompare(b.name, "es"))
-    .slice(0, 16);
   return {
     name: canonicalName(acc),
     slug: acc.slug,
     type: acc.type,
-    href: entityPath(acc.slug),
+    href: entityPath(acc.type, acc.slug),
     mentions: acc.pieceIds.size,
     periods: [...acc.periods],
     periodoOrden: acc.periodoOrden,
@@ -1287,7 +1285,7 @@ function pieceEntityNode(slug: string, pieces: AnchoredPiece[]): EntityNode | nu
     hasFicha: acc.hasFicha,
     resumen: acc.resumen,
     pieces: pieceRefs,
-    related,
+    related: relatedFromAcc(acc, index),
   };
 }
 
@@ -1300,7 +1298,7 @@ function pieceEntityNode(slug: string, pieces: AnchoredPiece[]): EntityNode | nu
  */
 export async function getEssaysIndex(): Promise<TypologyCard[]> {
   try {
-    const pieces = await loadAnchoredPieces();
+    const pieces = await getAnchoredPieces();
     const cards: TypologyCard[] = [];
     for (const p of pieces) {
       // Clasifica por FORMATO (lo que el autor produjo), no por la tipología que

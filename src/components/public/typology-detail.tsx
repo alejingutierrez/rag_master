@@ -5,6 +5,7 @@ import { renderProse } from "@/components/public/prose";
 import { getPeriodColor, periodInfo } from "@/lib/design-tokens";
 import { typologyLabel, type StructuredData, type Hito } from "@/lib/typology-schemas";
 import type { TypologyDetail } from "@/lib/public-data";
+import type { EntityLinker } from "@/lib/entity-linker";
 import "@/components/public/article.css";
 
 const INDEX_HREF: Record<StructuredData["typology"], { href: string; label: string }> = {
@@ -159,18 +160,48 @@ export function TypologyArticle({
   detail,
   extra,
   crumb,
+  linker,
+  selfKey,
 }: {
   detail: TypologyDetail;
   /** Contenido agregado (hub de época, conexiones de entidad) tras el cuerpo. */
   extra?: React.ReactNode;
   /** Sobrescribe el índice de retorno (p. ej. entidad → Personas). */
   crumb?: { href: string; label: string };
+  /** Diccionario para auto-enlazar entidades mencionadas en la prosa. */
+  linker?: EntityLinker | null;
+  /** `${type}:${slug}` de la entidad de esta página — no se auto-enlaza a sí misma. */
+  selfKey?: string;
 }) {
   const s = detail.structured;
   const idx = crumb ?? INDEX_HREF[s.typology];
   const dot = s.periodoCode ? getPeriodColor(s.periodoCode) : "var(--fg-dim)";
   const periodLabel = s.periodoCode ? periodInfo(s.periodoCode)?.label : null;
   const isPortrait = s.typology === "entidad" && s.tipo === "Persona";
+  // Retrato de persona: la foto va a la DERECHA del título (y alineada arriba, en
+  // CSS, para no cortar la cabeza). El resto de imágenes van full-width bajo el
+  // encabezado.
+  const portraitAside = isPortrait && !!detail.imageUrl;
+
+  const head = (
+    <header className="art-head">
+      <div className="art-kick">
+        <span className="art-dot" style={{ background: dot }} />
+        <span className="art-klabel">
+          {typologyLabel(s.typology)}
+          {periodLabel ? ` · ${periodLabel}` : ""}
+          {detail.yearRange ? ` · ${detail.yearRange}` : ""}
+        </span>
+      </div>
+      <h1 className="art-title">{s.titulo}</h1>
+      {s.resumen && <p className="art-stand">{s.resumen}</p>}
+      <div className="art-meta">
+        <b>Alejandro Gutiérrez</b> · {detail.dateLabel} ·{" "}
+        {detail.wordCount.toLocaleString("es-CO")} palabras
+        {detail.sources.length ? ` · ${detail.sources.length} fuentes` : ""}
+      </div>
+    </header>
+  );
 
   return (
     <PublicShell>
@@ -179,35 +210,30 @@ export function TypologyArticle({
           <Link href={idx.href}>{idx.label}</Link> · {typologyLabel(s.typology)}
         </div>
 
-        <header className="art-head">
-          <div className="art-kick">
-            <span className="art-dot" style={{ background: dot }} />
-            <span className="art-klabel">
-              {typologyLabel(s.typology)}
-              {periodLabel ? ` · ${periodLabel}` : ""}
-              {detail.yearRange ? ` · ${detail.yearRange}` : ""}
-            </span>
+        {portraitAside ? (
+          <div className="art-head-row">
+            {head}
+            <figure className="art-figure portrait art-figure-side">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={detail.imageUrl!} alt={s.titulo} loading="lazy" />
+            </figure>
           </div>
-          <h1 className="art-title">{s.titulo}</h1>
-          {s.resumen && <p className="art-stand">{s.resumen}</p>}
-          <div className="art-meta">
-            <b>Alejandro Gutiérrez</b> · {detail.dateLabel} ·{" "}
-            {detail.wordCount.toLocaleString("es-CO")} palabras
-            {detail.sources.length ? ` · ${detail.sources.length} fuentes` : ""}
-          </div>
-        </header>
-
-        {detail.imageUrl && (
-          <figure className={`art-figure ${isPortrait ? "portrait" : "landscape"}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={detail.imageUrl} alt={s.titulo} loading="lazy" />
-          </figure>
+        ) : (
+          <>
+            {head}
+            {detail.imageUrl && (
+              <figure className="art-figure landscape">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={detail.imageUrl} alt={s.titulo} loading="lazy" />
+              </figure>
+            )}
+          </>
         )}
 
         <div className="art-body">
           <div>
             <Ficha s={s} />
-            <div className="prose">{renderProse(detail.answer)}</div>
+            <div className="prose">{renderProse(detail.answer, { linker, selfKey })}</div>
           </div>
 
           <SourceApparatus sources={detail.sources} />

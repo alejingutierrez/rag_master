@@ -2,11 +2,34 @@
  * Render de markdown ligero → bloques de .prose para el sitio público.
  * Compartido por el detalle de ensayo y las fichas de tipología. Soporta
  * citas [#n]/[n] (ancla a fuentes), **negrita**, *itálica*, listas, blockquote.
+ *
+ * Auto-enlace wiki: si se pasa un `linker`, las menciones de entidades en el
+ * cuerpo (párrafos, listas, citas en bloque) se convierten en enlaces a su
+ * página — primera mención por pieza. Los encabezados NO se enlazan.
  */
 import type React from "react";
+import { linkText, type EntityLinker, type LinkCtx } from "@/lib/entity-linker";
 
-/** Inline: [#n]/[n] → cita superíndice, **negrita**, *itálica*. */
-export function renderInline(text: string) {
+export interface ProseOptions {
+  linker?: EntityLinker | null;
+  /** `${type}:${slug}` de la entidad de esta página — no auto-enlazar a sí misma. */
+  selfKey?: string;
+}
+
+/** Máximo de auto-enlaces por pieza (evita saturar una prosa larga). */
+const LINK_CAP = 60;
+
+interface InlineCtx extends LinkCtx {
+  linker: EntityLinker;
+}
+
+function emit(text: string, ctx: InlineCtx | null): React.ReactNode {
+  if (!ctx?.linker?.regex) return text;
+  return linkText(text, ctx.linker, ctx);
+}
+
+/** Inline: [#n]/[n] → cita superíndice, **negrita**, *itálica*, + auto-enlace. */
+export function renderInline(text: string, ctx: InlineCtx | null = null) {
   const parts: React.ReactNode[] = [];
   let r = text;
   let k = 0;
@@ -23,10 +46,10 @@ export function renderInline(text: string) {
       );
       r = r.slice(cMatch[0].length);
     } else if (bMatch) {
-      parts.push(<strong key={k++}>{bMatch[1]}</strong>);
+      parts.push(<strong key={k++}>{emit(bMatch[1], ctx)}</strong>);
       r = r.slice(bMatch[0].length);
     } else if (iMatch) {
-      parts.push(<em key={k++}>{iMatch[1]}</em>);
+      parts.push(<em key={k++}>{emit(iMatch[1], ctx)}</em>);
       r = r.slice(iMatch[0].length);
     } else {
       const nextC = r.search(/\[#?\d+\]/);
@@ -35,7 +58,7 @@ export function renderInline(text: string) {
       const cand = [nextC, nextB, nextI].filter((x) => x >= 0);
       const stop = cand.length ? Math.min(...cand) : r.length;
       const slice = r.slice(0, Math.max(stop, 1));
-      parts.push(<span key={k++}>{slice}</span>);
+      parts.push(<span key={k++}>{emit(slice, ctx)}</span>);
       r = r.slice(slice.length);
     }
   }
@@ -43,7 +66,11 @@ export function renderInline(text: string) {
 }
 
 /** Markdown ligero → bloques de .prose. El `#` de nivel 1 se degrada a h2. */
-export function renderProse(markdown: string) {
+export function renderProse(markdown: string, opts: ProseOptions = {}) {
+  const ctx: InlineCtx | null = opts.linker?.regex
+    ? { linker: opts.linker, linked: new Set(), selfKey: opts.selfKey, counter: { n: 0 }, cap: LINK_CAP }
+    : null;
+
   const lines = markdown.split("\n");
   const blocks: React.ReactNode[] = [];
   let bq: string[] = [];
@@ -53,7 +80,7 @@ export function renderProse(markdown: string) {
         <blockquote key={`bq${i}`}>
           {bq.map((l, j) => (
             <p key={j} style={{ margin: 0 }}>
-              {renderInline(l)}
+              {renderInline(l, ctx)}
             </p>
           ))}
         </blockquote>,
@@ -67,22 +94,23 @@ export function renderProse(markdown: string) {
       return;
     }
     flush(i);
+    // Encabezados sin auto-enlace (ctx omitido).
     if (line.startsWith("### ")) blocks.push(<h3 key={i}>{renderInline(line.slice(4))}</h3>);
     else if (line.startsWith("## ")) blocks.push(<h2 key={i}>{renderInline(line.slice(3))}</h2>);
     else if (line.startsWith("# ")) blocks.push(<h2 key={i}>{renderInline(line.slice(2))}</h2>);
     else if (line.startsWith("- ") || line.startsWith("* "))
       blocks.push(
         <li key={i} style={{ marginLeft: 20 }}>
-          {renderInline(line.slice(2))}
+          {renderInline(line.slice(2), ctx)}
         </li>,
       );
     else if (/^\d+\.\s/.test(line))
       blocks.push(
         <li key={i} style={{ marginLeft: 20 }}>
-          {renderInline(line.replace(/^\d+\.\s/, ""))}
+          {renderInline(line.replace(/^\d+\.\s/, ""), ctx)}
         </li>,
       );
-    else if (line.trim() !== "") blocks.push(<p key={i}>{renderInline(line)}</p>);
+    else if (line.trim() !== "") blocks.push(<p key={i}>{renderInline(line, ctx)}</p>);
   });
   flush(lines.length);
   return blocks;

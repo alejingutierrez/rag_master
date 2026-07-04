@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { TypologyArticle } from "@/components/public/typology-detail";
 import { JsonLd } from "@/components/public/json-ld";
-import { getTypologyDetail } from "@/lib/public-data";
+import { getTypologyDetail, getEntityLinker } from "@/lib/public-data";
 import { buildMetadata, detailJsonLd } from "@/lib/seo";
 import { typologyPath } from "@/lib/typology-schemas";
 import { TrackView } from "@/components/analytics/track-view";
@@ -26,6 +26,7 @@ export default async function HechoPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const detail = await getTypologyDetail("hecho", slug);
   if (!detail) notFound();
+  const linker = await getEntityLinker();
   return (
     <>
       <JsonLd data={detailJsonLd(detail)} />
@@ -34,7 +35,7 @@ export default async function HechoPage({ params }: { params: Promise<{ slug: st
         itemId={detail.structured.slug}
         itemName={detail.structured.titulo}
       />
-      <TypologyArticle detail={detail} />
+      <TypologyArticle detail={detail} linker={linker} />
     </>
   );
 }
