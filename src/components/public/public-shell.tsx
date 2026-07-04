@@ -119,10 +119,10 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           </div>
           <div style={footCol}>
             <div className="label" style={{ marginBottom: 12 }}>Épocas</div>
-            <Link href="/epocas/ind" style={footLink}>Independencia</Link>
-            <Link href="/epocas/reg" style={footLink}>Regeneración</Link>
-            <Link href="/epocas/vio" style={footLink}>La Violencia</Link>
-            <Link href="/epocas/pos" style={footLink}>Posconflicto</Link>
+            <Link href="/linea-de-tiempo?p=IND" style={footLink}>Independencia</Link>
+            <Link href="/linea-de-tiempo?p=REG" style={footLink}>Regeneración</Link>
+            <Link href="/linea-de-tiempo?p=VIO" style={footLink}>La Violencia</Link>
+            <Link href="/linea-de-tiempo?p=POS" style={footLink}>Posconflicto</Link>
           </div>
           <div style={footCol}>
             <div className="label" style={{ marginBottom: 12 }}>El proyecto</div>
