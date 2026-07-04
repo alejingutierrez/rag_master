@@ -1,0 +1,3 @@
+{
+ "_README": "Curación 'uno por uno' del backfill de época. Cada clave es `type:slug` (p. ej. \"persona:rafael-nunez\", \"lugar:bogota\", \"idea:federalismo\"). Valores: { periodoCode?: código PRE…POS|TRANS|null, anio?: número|null, hide?: true para excluir la entidad del sitio }. PISA la derivación automática del corpus. Reejecuta `npx tsx scripts/mine-entities.mts` para regenerar src/data/entities.json con estos overrides aplicados. Las claves que empiezan con _ se ignoran."
+}

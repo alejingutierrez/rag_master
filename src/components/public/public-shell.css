@@ -1,0 +1,65 @@
+/* Cabecera pública — menú + logo animado. */
+
+.ps-bar {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 34px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+/* Logo del menú: al aparecer (fuera del home) "regresa" al menú. */
+.ps-brand {
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1;
+  color: var(--fg);
+  text-decoration: none;
+  padding: 0;
+  white-space: nowrap;
+  view-transition-name: site-brand;
+  animation: brandReturn var(--duration-slow, 320ms) var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both;
+}
+.ps-brand-spacer { display: inline-block; width: 0; }
+
+@keyframes brandReturn {
+  from { opacity: 0; transform: translateY(-9px) scale(1.08); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Nav: scroll horizontal sin barra visible; se compacta en móvil. */
+.ps-nav {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.ps-nav::-webkit-scrollbar { display: none; }
+
+.ps-navlink {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--fg-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--duration-fast, 140ms) ease;
+}
+.ps-navlink:hover { color: var(--fg); }
+.ps-navlink[aria-current="page"] { color: var(--fg); }
+
+@media (max-width: 720px) {
+  .ps-bar { padding: 0 18px; gap: 14px; }
+  .ps-nav { gap: 15px; }
+  .ps-brand { font-size: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-brand { animation: none; }
+}

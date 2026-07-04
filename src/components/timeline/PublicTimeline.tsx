@@ -33,10 +33,13 @@ export function PublicTimeline({
   timeline,
   links,
   initialPeriod = "REG",
+  entityHrefs,
 }: {
   timeline: TimelineFile;
   links: TimelineLinks;
   initialPeriod?: PeriodCode;
+  /** nombre de entidad → href de su página (solo publicadas) para enlazar chips. */
+  entityHrefs?: Record<string, string>;
 }) {
   const [selected, setSelected] = useState<PeriodCode>(
     ORDER.includes(initialPeriod) ? initialPeriod : "REG",
@@ -345,6 +348,7 @@ export function PublicTimeline({
         event={selectedEvent}
         periodoCode={selected}
         links={periodLinks}
+        entityHrefs={entityHrefs}
         onClose={() => setSelectedEvent(null)}
       />
 

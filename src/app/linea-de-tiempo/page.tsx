@@ -2,7 +2,7 @@ import { PublicShell } from "@/components/public/public-shell";
 import { ComingSoon } from "@/components/public/coming-soon";
 import { PublicTimeline } from "@/components/timeline/PublicTimeline";
 import { loadTimeline, type TimelineFile } from "@/lib/timeline-data";
-import { getTimelineLinks, type TimelineLinks } from "@/lib/public-data";
+import { getTimelineLinks, resolveEntityHrefs, type TimelineLinks } from "@/lib/public-data";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { buildMetadata } from "@/lib/seo";
 
@@ -45,9 +45,17 @@ export default async function LineaDeTiempoPage({
     );
   }
 
+  // Resuelve las entidades clave de todos los eventos a sus páginas (solo las
+  // publicadas) para enlazar los chips del drawer — teje el timeline con la wiki.
+  const entityNames = new Set<string>();
+  for (const s of Object.values(timeline.periods)) {
+    for (const ev of s.events) for (const n of ev.entidadesClave) entityNames.add(n);
+  }
+  const entityHrefs = await resolveEntityHrefs([...entityNames]);
+
   return (
     <PublicShell>
-      <PublicTimeline timeline={timeline} links={links} initialPeriod={initial} />
+      <PublicTimeline timeline={timeline} links={links} initialPeriod={initial} entityHrefs={entityHrefs} />
     </PublicShell>
   );
 }

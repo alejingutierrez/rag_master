@@ -12,7 +12,9 @@
 
 .hp-mast { border-bottom: 1px solid var(--fg); padding: 40px 0 26px; }
 .hp-mast .row { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; }
-.hp-word { font-family: var(--font-display); font-weight: 400; font-size: clamp(46px, 9vw, 100px); line-height: .86; letter-spacing: -.03em; margin: 0; }
+/* Comparte view-transition-name con el logo del menú (.ps-brand): si se activa la
+   View Transitions API, el hero grande "se encoge" hacia el menú al navegar. */
+.hp-word { font-family: var(--font-display); font-weight: 400; font-size: clamp(46px, 9vw, 100px); line-height: .86; letter-spacing: -.03em; margin: 0; view-transition-name: site-brand; }
 .hp-tag { font-family: var(--font-display); font-style: italic; font-size: clamp(15px, 1.8vw, 19px); color: var(--fg-muted); margin: 13px 0 0; max-width: 34ch; line-height: 1.35; }
 .hp-stats { display: flex; flex-direction: column; gap: 6px; text-align: right; }
 .hp-stats .st { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); }

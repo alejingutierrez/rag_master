@@ -248,16 +248,23 @@ export function normalizeStructured(
   }
 }
 
-/** Ruta pública de la ficha según tipología. */
-export function typologyPath(s: Pick<StructuredData, "typology" | "slug">): string {
-  const seg =
-    s.typology === "hecho"
-      ? "hechos"
-      : s.typology === "epoca"
-        ? "epocas"
-        : s.typology === "entidad"
-          ? "entidades"
-          : "preguntas";
+/** Segmento de ruta para una ficha de entidad, según su tipo. */
+export function entidadSegment(tipo: EntidadTipo | null | undefined): "personas" | "lugares" | "ideas" {
+  if (tipo === "Lugar") return "lugares";
+  if (tipo === "Concepto" || tipo === "Institución") return "ideas";
+  return "personas";
+}
+
+/**
+ * Ruta pública de la ficha según tipología. Las entidades ya NO viven bajo
+ * /entidades: se enrutan por tipo (personas / lugares / ideas), coherente con la
+ * taxonomía del sitio (una persona no es una "entidad" genérica).
+ */
+export function typologyPath(s: Pick<StructuredData, "typology" | "slug"> & { tipo?: EntidadTipo }): string {
+  if (s.typology === "entidad") {
+    return `/${entidadSegment(s.tipo)}/${s.slug}`;
+  }
+  const seg = s.typology === "hecho" ? "hechos" : s.typology === "epoca" ? "epocas" : "preguntas";
   return `/${seg}/${s.slug}`;
 }
 

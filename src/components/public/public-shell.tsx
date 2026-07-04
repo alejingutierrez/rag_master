@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/public/brand-mark";
+import "@/components/public/public-shell.css";
 
 const NAV = [
   { href: "/", label: "Portada" },
@@ -9,16 +11,6 @@ const NAV = [
   { href: "/ideas", label: "Ideas" },
   { href: "/ensayos", label: "Ensayos" },
 ];
-
-const navLink: React.CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  textTransform: "uppercase",
-  letterSpacing: "0.09em",
-  color: "var(--fg-muted)",
-  textDecoration: "none",
-  whiteSpace: "nowrap",
-};
 
 const footCol: React.CSSProperties = {
   display: "flex",
@@ -49,32 +41,15 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
           borderBottom: "1px solid var(--line)",
         }}
       >
-        <div
-          style={{
-            maxWidth: 1180,
-            margin: "0 auto",
-            padding: "0 34px",
-            height: 52,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 20,
-          }}
-        >
-          <Link
-            href="/"
-            className="display"
-            style={{ fontSize: 21, lineHeight: 1, color: "var(--fg)", textDecoration: "none", padding: 0 }}
-          >
-            Historia Colombiana
-          </Link>
-          <nav style={{ display: "flex", gap: 20, alignItems: "center", overflowX: "auto" }}>
+        <div className="ps-bar">
+          <BrandMark />
+          <nav className="ps-nav">
             {NAV.map((item) => (
-              <Link key={item.href} href={item.href} style={navLink}>
+              <Link key={item.href} href={item.href} className="ps-navlink">
                 {item.label}
               </Link>
             ))}
-            <Link href="/acerca" style={navLink}>
+            <Link href="/acerca" className="ps-navlink">
               Acerca
             </Link>
           </nav>
