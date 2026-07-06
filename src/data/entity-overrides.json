@@ -121,8 +121,8 @@
   "_motivo": "academico"
  },
  "persona:fidel-castro": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:dario-fajardo": {
   "hide": true,
@@ -329,8 +329,8 @@
   "_motivo": "academico"
  },
  "persona:quintin-lame": {
-  "periodoCode": "REG",
-  "anio": 1920
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel Quintín Lame\""
  },
  "persona:leon-valencia": {
   "hide": true,
@@ -449,7 +449,7 @@
   "_motivo": "institucion"
  },
  "persona:jorge-enrique-robledo": {
-  "periodoCode": "TRANS",
+  "periodoCode": "SDE",
   "anio": 2010
  },
  "persona:camila-medina": {
@@ -609,8 +609,8 @@
   "_motivo": "academico"
  },
  "persona:miguel-cane": {
-  "periodoCode": "EUC",
-  "anio": 1880
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:nazih-richani": {
   "hide": true,
@@ -789,8 +789,8 @@
   "_motivo": "academico"
  },
  "persona:ruben-dario": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:stefania-gallini": {
   "hide": true,
@@ -933,8 +933,8 @@
   "_motivo": "academico"
  },
  "persona:enrique-parejo": {
-  "periodoCode": "CNA",
-  "anio": 1986
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Enrique Parejo González\""
  },
  "persona:esteban-restrepo": {
   "hide": true,
@@ -1133,8 +1133,8 @@
   "_motivo": "academico"
  },
  "persona:juan-manuel-santos-calderon": {
-  "periodoCode": "SDE",
-  "anio": 2012
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan Manuel Santos\""
  },
  "persona:lacydes-moreno-blanco": {
   "hide": true,
@@ -1441,7 +1441,7 @@
   "_motivo": "academico"
  },
  "persona:piedad-bonnett": {
-  "periodoCode": "TRANS",
+  "periodoCode": "C91",
   "anio": 2000
  },
  "persona:renata-serna": {
@@ -1461,7 +1461,7 @@
   "_motivo": "academico"
  },
  "persona:roberto-hinestrosa": {
-  "periodoCode": "TRANS",
+  "periodoCode": "C91",
   "anio": 1995
  },
  "persona:robin-kirk": {
@@ -1521,7 +1521,7 @@
   "anio": 1989
  },
  "persona:manuel-marulanda": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1990
  },
  "persona:belisario-betancur": {
@@ -1533,8 +1533,8 @@
   "anio": 1950
  },
  "persona:alvaro-uribe": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Álvaro Uribe Vélez\""
  },
  "persona:mariano-ospina-perez": {
   "periodoCode": "VIO",
@@ -1577,8 +1577,8 @@
   "anio": 1965
  },
  "persona:manuel-marulanda-velez": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel Marulanda\""
  },
  "persona:francisco-de-paula-santander": {
   "periodoCode": "IND",
@@ -1661,8 +1661,8 @@
   "anio": 1972
  },
  "persona:misael-pastrana": {
-  "periodoCode": "FN",
-  "anio": 1972
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Misael Pastrana Borrero\""
  },
  "persona:jaime-pardo-leal": {
   "periodoCode": "CNA",
@@ -1713,7 +1713,7 @@
   "anio": 1538
  },
  "persona:gabriel-garcia-marquez": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1970
  },
  "persona:auc": {
@@ -1741,8 +1741,8 @@
   "anio": 1990
  },
  "persona:hugo-chavez": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:corte-constitucional": {
   "hide": true,
@@ -1761,7 +1761,7 @@
   "_motivo": "academico"
  },
  "persona:manuel-zapata-olivella": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:rodrigo-tovar-pupo": {
@@ -1793,8 +1793,8 @@
   "anio": 1878
  },
  "persona:julio-cesar-turbay-ayala": {
-  "periodoCode": "CNA",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Julio César Turbay\""
  },
  "persona:ramon-isaza": {
   "periodoCode": "SDE",
@@ -1821,8 +1821,8 @@
   "_motivo": "institucion"
  },
  "persona:bernardo-jaramillo": {
-  "periodoCode": "CNA",
-  "anio": 1989
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Bernardo Jaramillo Ossa\""
  },
  "persona:carlos-e-restrepo": {
   "periodoCode": "REG",
@@ -1889,8 +1889,8 @@
   "anio": 1943
  },
  "persona:george-w-bush": {
-  "periodoCode": "SDE",
-  "anio": 2003
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:ivan-roberto-duque": {
   "periodoCode": "SDE",
@@ -1913,8 +1913,8 @@
   "anio": 1994
  },
  "persona:jorge-40": {
-  "periodoCode": "SDE",
-  "anio": 2003
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Tovar Pupo\""
  },
  "persona:fabio-vasquez-castano": {
   "periodoCode": "FN",
@@ -2041,8 +2041,8 @@
   "_motivo": "institucion"
  },
  "persona:john-f-kennedy": {
-  "periodoCode": "FN",
-  "anio": 1962
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:mario-uribe": {
   "periodoCode": "SDE",
@@ -2061,8 +2061,8 @@
   "anio": 1924
  },
  "persona:lazaro-cardenas": {
-  "periodoCode": "REP_LIB",
-  "anio": 1936
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:alberto-ruiz-novoa": {
   "periodoCode": "FN",
@@ -2129,8 +2129,8 @@
   "anio": 1995
  },
  "persona:juan-domingo-peron": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:luis-duque-gomez": {
   "hide": true,
@@ -2145,15 +2145,15 @@
   "_motivo": "institucion"
  },
  "persona:augusto-pinochet": {
-  "periodoCode": "CNA",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:benjamin-herrera": {
   "periodoCode": "REG",
   "anio": 1902
  },
  "persona:manuel-perez-martinez": {
-  "periodoCode": "FN",
+  "periodoCode": "CNA",
   "anio": 1985
  },
  "persona:paul-rivet": {
@@ -2221,24 +2221,24 @@
   "anio": 2000
  },
  "persona:carlos-cortes-vargas": {
-  "periodoCode": "REG",
-  "anio": 1928
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Cortés Vargas\""
  },
  "persona:daniel-rendon-herrera": {
   "periodoCode": "SDE",
   "anio": 2009
  },
  "persona:gustavo-gutierrez": {
-  "periodoCode": "FN",
-  "anio": 1971
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:rafael-correa": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:ronald-reagan": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:aquiles-escalante": {
   "hide": true,
@@ -2337,12 +2337,12 @@
   "anio": 1999
  },
  "persona:diego-murillo-bejarano": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Don Berna\""
  },
  "persona:evo-morales": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:ezequiel-rojas": {
   "periodoCode": "NGR",
@@ -2357,8 +2357,8 @@
   "anio": 1995
  },
  "persona:victor-raul-haya-de-la-torre": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:francisco-leal-buitrago": {
   "hide": true,
@@ -2385,8 +2385,8 @@
   "_motivo": "academico"
  },
  "persona:alberto-fujimori": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:alvaro-garcia-romero": {
   "periodoCode": "SDE",
@@ -2397,8 +2397,8 @@
   "_motivo": "institucion"
  },
  "persona:jaime-bateman-cayon": {
-  "periodoCode": "CNA",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jaime Bateman\""
  },
  "persona:juan-francisco-berbeo": {
   "periodoCode": "PRE_IND",
@@ -2417,8 +2417,8 @@
   "_motivo": "academico"
  },
  "persona:nicolas-maduro": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:yolanda-becerra": {
   "periodoCode": "C91",
@@ -2453,8 +2453,8 @@
   "_motivo": "institucion"
  },
  "persona:antonio-navarro": {
-  "periodoCode": "C91",
-  "anio": 1991
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Antonio Navarro Wolff\""
  },
  "persona:fernando-vallejo": {
   "periodoCode": "CNA",
@@ -2501,7 +2501,7 @@
   "anio": 1994
  },
  "persona:candelario-obeso": {
-  "periodoCode": "NGR",
+  "periodoCode": "EUC",
   "anio": 1877
  },
  "persona:carlos-holguin": {
@@ -2517,16 +2517,16 @@
   "anio": 1987
  },
  "persona:mono-jojoy": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jorge Briceño\""
  },
  "persona:baldomero-sanin-cano": {
   "periodoCode": "REG",
   "anio": 1920
  },
  "persona:diego-fernando-murillo": {
-  "periodoCode": "SDE",
-  "anio": 2006
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Don Berna\""
  },
  "persona:diego-luis-cordoba": {
   "periodoCode": "REP_LIB",
@@ -2645,8 +2645,8 @@
   "_motivo": "institucion"
  },
  "persona:richard-nixon": {
-  "periodoCode": "CNA",
-  "anio": 1972
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:stathis-kalyvas": {
   "hide": true,
@@ -2737,8 +2737,8 @@
   "anio": 1540
  },
  "persona:cesar-gaviria-trujillo": {
-  "periodoCode": "C91",
-  "anio": 1992
+  "hide": true,
+  "_motivo": "QA: duplicado de \"César Gaviria\""
  },
  "persona:compania-de-jesus": {
   "hide": true,
@@ -2793,8 +2793,8 @@
   "anio": 1910
  },
  "persona:daniel-ortega": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:enrique-penalosa": {
   "periodoCode": "C91",
@@ -2833,16 +2833,16 @@
   "anio": 2000
  },
  "persona:barack-obama": {
-  "periodoCode": "SDE",
-  "anio": 2012
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:carlos-gaviria-diaz": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Gaviria\""
  },
  "persona:edwin-walter-kemmerer": {
-  "periodoCode": "REG",
-  "anio": 1923
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Edwin Kemmerer\""
  },
  "persona:fernando-botero": {
   "periodoCode": "C91",
@@ -2913,8 +2913,8 @@
   "_motivo": "institucion"
  },
  "persona:diego-murillo": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Don Berna\""
  },
  "persona:francisco-silvestre": {
   "periodoCode": "COL",
@@ -2985,12 +2985,12 @@
   "anio": 1988
  },
  "persona:getulio-vargas": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:jose-carlos-mariategui": {
-  "periodoCode": "REP_LIB",
-  "anio": 1928
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:juan-jose-flores": {
   "periodoCode": "IND",
@@ -3045,8 +3045,8 @@
   "_motivo": "academico"
  },
  "persona:carlos-andres-perez": {
-  "periodoCode": "CNA",
-  "anio": 1989
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:daniel-samper-ortega": {
   "periodoCode": "REP_LIB",
@@ -3097,12 +3097,12 @@
   "anio": 1870
  },
  "persona:ezequiel-moreno-diaz": {
-  "periodoCode": "REG",
-  "anio": 1895
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ezequiel Moreno\""
  },
  "persona:jose-prudencio-padilla": {
-  "periodoCode": "IND",
-  "anio": 1823
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José Padilla\""
  },
  "persona:betty-meggers": {
   "hide": true,
@@ -3133,7 +3133,7 @@
   "_motivo": "academico"
  },
  "persona:calarca": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1560
  },
  "persona:francisco-tomas-morales": {
@@ -3149,7 +3149,7 @@
   "anio": 1895
  },
  "persona:nutibara": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1540
  },
  "persona:michel-foucault": {
@@ -3169,8 +3169,8 @@
   "anio": 1995
  },
  "persona:abimael-guzman": {
-  "periodoCode": "C91",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:ambrosio-lopez": {
   "periodoCode": "NGR",
@@ -3181,8 +3181,8 @@
   "anio": 2005
  },
  "persona:carlos-mario-jimenez-macaco": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Mario Jiménez\""
  },
  "persona:dairo-antonio-usuga": {
   "periodoCode": "SDE",
@@ -3193,8 +3193,8 @@
   "_motivo": "academico"
  },
  "persona:diego-murillo-don-berna": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Don Berna\""
  },
  "persona:freddy-rendon-herrera": {
   "periodoCode": "C91",
@@ -3281,8 +3281,8 @@
   "anio": 2010
  },
  "persona:diego-fernando-murillo-don-berna": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Don Berna\""
  },
  "persona:diocesis-de-quibdo": {
   "hide": true,
@@ -3293,7 +3293,7 @@
   "anio": 1952
  },
  "persona:efrain-gonzalez": {
-  "periodoCode": "VIO",
+  "periodoCode": "FN",
   "anio": 1960
  },
  "persona:ezequiel-moreno": {
@@ -3301,8 +3301,8 @@
   "anio": 1900
  },
  "persona:fernando-landazabal-reyes": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Fernando Landazábal\""
  },
  "persona:iglesia-catolica": {
   "hide": true,
@@ -3361,8 +3361,8 @@
   "anio": 1525
  },
  "persona:tirofijo": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro Antonio Marín\""
  },
  "persona:uso": {
   "hide": true,
@@ -3409,8 +3409,8 @@
   "anio": 1815
  },
  "persona:hernan-giraldo-serna": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Hernán Giraldo\""
  },
  "persona:hernando-caicedo": {
   "periodoCode": "REG",
@@ -3477,8 +3477,8 @@
   "anio": 1965
  },
  "persona:carlos-castano-gil": {
-  "periodoCode": "C91",
-  "anio": 1998
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Castaño\""
  },
  "persona:cecilia-lopez": {
   "periodoCode": "SDE",
@@ -3505,8 +3505,8 @@
   "_motivo": "institucion"
  },
  "persona:jorge-rafael-videla": {
-  "periodoCode": "CNA",
-  "anio": 1978
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:jorge-zalamea": {
   "periodoCode": "VIO",
@@ -3525,8 +3525,8 @@
   "anio": 1878
  },
  "persona:karl-marx": {
-  "periodoCode": "NGR",
-  "anio": 1860
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:kimberly-theidon": {
   "hide": true,
@@ -3553,8 +3553,8 @@
   "_motivo": "academico"
  },
  "persona:patricia-tobon": {
-  "periodoCode": "POS",
-  "anio": 2020
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Patricia Tobón Yagarí\""
  },
  "persona:pedro-a-lopez": {
   "periodoCode": "REG",
@@ -3601,8 +3601,8 @@
   "anio": 1850
  },
  "persona:arnubio-triana-botalon": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Arnubio Triana\""
  },
  "persona:atanael-matajudios": {
   "hide": true,
@@ -3617,8 +3617,8 @@
   "anio": 2018
  },
  "persona:carlos-pizarro-leongomez": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Pizarro\""
  },
  "persona:carmelo-fernandez": {
   "periodoCode": "NGR",
@@ -3641,8 +3641,8 @@
   "anio": 2005
  },
  "persona:ernesto-guevara": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:fidel-de-montclar": {
   "periodoCode": "REG",
@@ -3701,7 +3701,7 @@
   "_motivo": "academico"
  },
  "persona:tisquesusa": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1537
  },
  "persona:veena-das": {
@@ -3741,7 +3741,7 @@
   "anio": 1999
  },
  "persona:carlos-ardila-lulle": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1990
  },
  "persona:carlos-martin-beristain": {
@@ -3777,8 +3777,8 @@
   "anio": 1970
  },
  "persona:ernesto-samper-pizano": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ernesto Samper\""
  },
  "persona:ferdinand-de-lesseps": {
   "periodoCode": "REG",
@@ -3797,12 +3797,12 @@
   "anio": 1947
  },
  "persona:helder-camara": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:henry-de-jesus-perez": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Henry Pérez\""
  },
  "persona:james-scott": {
   "hide": true,
@@ -3845,8 +3845,8 @@
   "_motivo": "academico"
  },
  "persona:luis-sanchez-cerro": {
-  "periodoCode": "REP_LIB",
-  "anio": 1931
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:mision-capuchina": {
   "hide": true,
@@ -3881,8 +3881,8 @@
   "anio": 2004
  },
  "persona:tupac-amaru-ii": {
-  "periodoCode": "PRE_IND",
-  "anio": 1781
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:vicente-adamo": {
   "periodoCode": "REG",
@@ -3965,20 +3965,20 @@
   "anio": 1955
  },
  "persona:desmond-tutu": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:domingo-bioho": {
-  "periodoCode": "COL",
-  "anio": 1620
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Benkos Biohó\""
  },
  "persona:epl": {
   "hide": true,
   "_motivo": "institucion"
  },
  "persona:ernesto-sabato": {
-  "periodoCode": "TRANS",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:eutiquio-timote": {
   "periodoCode": "REG",
@@ -3993,8 +3993,8 @@
   "anio": 1710
  },
  "persona:fredy-rendon-herrera": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Freddy Rendón Herrera\""
  },
  "persona:gilberto-molina": {
   "periodoCode": "CNA",
@@ -4013,16 +4013,16 @@
   "_motivo": "academico"
  },
  "persona:juan-pablo-ii": {
-  "periodoCode": "TRANS",
-  "anio": 1986
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:luis-camilo-osorio": {
   "periodoCode": "SDE",
   "anio": 2003
  },
  "persona:macaco": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Mario Jiménez\""
  },
  "persona:martin-llanos": {
   "periodoCode": "SDE",
@@ -4037,7 +4037,7 @@
   "anio": 1538
  },
  "persona:nydia-erika-bautista": {
-  "periodoCode": "REG",
+  "periodoCode": "CNA",
   "anio": 1987
  },
  "persona:oscar-naranjo": {
@@ -4069,8 +4069,8 @@
   "anio": 1910
  },
  "persona:salvador-allende": {
-  "periodoCode": "FN",
-  "anio": 1972
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:santiago-eder": {
   "periodoCode": "REG",
@@ -4165,8 +4165,8 @@
   "anio": 1830
  },
  "persona:don-mario": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Daniel Rendón Herrera\""
  },
  "persona:eduardo-posada": {
   "periodoCode": "REG",
@@ -4185,24 +4185,24 @@
   "anio": 1720
  },
  "persona:franklin-d-roosevelt": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:george-dahl": {
   "periodoCode": "FN",
   "anio": 1965
  },
  "persona:george-h-w-bush": {
-  "periodoCode": "CNA",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:gonzalo-fernandez-de-oviedo": {
   "periodoCode": "CON",
   "anio": 1540
  },
  "persona:hebert-veloza": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Éver Veloza\""
  },
  "persona:hector-abad-gomez": {
   "periodoCode": "CNA",
@@ -4221,8 +4221,8 @@
   "_motivo": "academico"
  },
  "persona:jorge-cuarenta": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Tovar Pupo\""
  },
  "persona:jorge-hernandez-camacho": {
   "hide": true,
@@ -4257,8 +4257,8 @@
   "anio": 2005
  },
  "persona:mario-uribe-escobar": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Mario Uribe\""
  },
  "persona:marta-ruiz": {
   "hide": true,
@@ -4273,8 +4273,8 @@
   "anio": 2005
  },
  "persona:patrick-leahy": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:pedro-de-aguado": {
   "periodoCode": "CON",
@@ -4293,8 +4293,8 @@
   "anio": 1900
  },
  "persona:salvador-mancuso": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Salvatore Mancuso\""
  },
  "persona:silvio-villegas": {
   "periodoCode": "REP_LIB",
@@ -4305,7 +4305,7 @@
   "_motivo": "institucion"
  },
  "persona:teofilo-rojas-chispas": {
-  "periodoCode": "VIO",
+  "periodoCode": "FN",
   "anio": 1960
  },
  "persona:thomas-van-der-hammen": {
@@ -4321,8 +4321,8 @@
   "_motivo": "institucion"
  },
  "persona:virgilio-barco-vargas": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Virgilio Barco\""
  },
  "persona:walter-ochoa": {
   "periodoCode": "C91",
@@ -4333,7 +4333,7 @@
   "anio": 2000
  },
  "persona:yamid-amat": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1990
  },
  "persona:yidis-medina": {
@@ -4345,8 +4345,8 @@
   "_motivo": "institucion"
  },
  "persona:alfredo-vazquez-cobo": {
-  "periodoCode": "REG",
-  "anio": 1920
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alfredo Vásquez Cobo\""
  },
  "persona:ana-teresa-bernal": {
   "periodoCode": "C91",
@@ -4369,8 +4369,8 @@
   "_motivo": "institucion"
  },
  "persona:caballero-y-gongora": {
-  "periodoCode": "COL",
-  "anio": 1785
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Antonio Caballero y Góngora\""
  },
  "persona:carlos-duran-castro": {
   "periodoCode": "REP_LIB",
@@ -4385,8 +4385,8 @@
   "_motivo": "institucion"
  },
  "persona:charro-negro": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jacobo Prías Alape\""
  },
  "persona:chiquita-brands": {
   "hide": true,
@@ -4425,15 +4425,15 @@
   "anio": 1985
  },
  "persona:efrain-rios-montt": {
-  "periodoCode": "CNA",
-  "anio": 1982
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:enrique-santos-castillo": {
-  "periodoCode": "TRANS"
+  "periodoCode": "C91"
  },
  "persona:ernesto-baez": {
-  "periodoCode": "SDE",
-  "anio": 2003
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Iván Roberto Duque\""
  },
  "persona:eugenio-diaz-castro": {
   "periodoCode": "NGR",
@@ -4444,8 +4444,8 @@
   "anio": 2019
  },
  "persona:fidel-castano-gil": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Fidel Castaño\""
  },
  "persona:francisco-jose-chaux": {
   "periodoCode": "REP_LIB",
@@ -4492,19 +4492,19 @@
   "anio": 2005
  },
  "persona:jorge-briceno-mono-jojoy": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jorge Briceño\""
  },
  "persona:jose-joaquin-matallana": {
   "periodoCode": "FN",
   "anio": 1965
  },
  "persona:jose-raquel-mercado": {
-  "periodoCode": "FN",
+  "periodoCode": "CNA",
   "anio": 1976
  },
  "persona:julio-mario-santo-domingo": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:jurisdiccion-especial-para-la-paz": {
@@ -4572,7 +4572,7 @@
   "_motivo": "institucion"
  },
  "persona:rafael-escalona": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1960
  },
  "persona:regis-debray": {
@@ -4580,36 +4580,36 @@
   "_motivo": "academico"
  },
  "persona:rigoberta-menchu": {
-  "periodoCode": "SDE",
-  "anio": 1992
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:roberto-escobar": {
   "periodoCode": "CNA",
   "anio": 1989
  },
  "persona:rogelio-salmona": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:romulo-betancourt": {
-  "periodoCode": "FN",
-  "anio": 1960
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:rosso-jose-serrano": {
   "periodoCode": "C91",
   "anio": 1995
  },
  "persona:salomon-lerner": {
-  "periodoCode": "POS",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:sylvia-broadbent": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:timochenko": {
-  "periodoCode": "POS",
-  "anio": 2016
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Londoño\""
  },
  "persona:tyrell-moore": {
   "hide": true,
@@ -4644,8 +4644,8 @@
   "anio": 2014
  },
  "persona:carlos-chardon": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:ciro-antonio-diaz-amado": {
   "periodoCode": "C91",
@@ -4692,8 +4692,8 @@
   "anio": 1935
  },
  "persona:francisco-pizarro": {
-  "periodoCode": "CON",
-  "anio": 1533
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:francois-houtart": {
   "hide": true,
@@ -4708,8 +4708,8 @@
   "anio": 1993
  },
  "persona:harry-truman": {
-  "periodoCode": "VIO",
-  "anio": 1948
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:hermanos-castano": {
   "hide": true,
@@ -4724,8 +4724,8 @@
   "anio": 2022
  },
  "persona:ivan-roberto-duque-ernesto-baez": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (C91)"
  },
  "persona:jorge-carrillo": {
   "periodoCode": "CNA",
@@ -4760,7 +4760,7 @@
   "anio": 1999
  },
  "persona:luis-eduardo-guerra": {
-  "periodoCode": "C91",
+  "periodoCode": "SDE",
   "anio": 2005
  },
  "persona:luis-eduardo-nieto-caballero": {
@@ -4772,12 +4772,12 @@
   "anio": 2010
  },
  "persona:manuel-mejia-vallejo": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:mao-tse-tung": {
-  "periodoCode": "TRANS",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:maria-currea-de-aya": {
   "periodoCode": "VIO",
@@ -4796,8 +4796,8 @@
   "anio": 1985
  },
  "persona:mario-montoya-uribe": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Mario Montoya\""
  },
  "persona:nicolas-esguerra": {
   "periodoCode": "REG",
@@ -4828,7 +4828,7 @@
   "anio": 1915
  },
  "persona:plinio-apuleyo-mendoza": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1985
  },
  "persona:procuraduria": {
@@ -4836,8 +4836,8 @@
   "_motivo": "institucion"
  },
  "persona:raul-mahecha": {
-  "periodoCode": "REG",
-  "anio": 1928
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Raúl Eduardo Mahecha\""
  },
  "persona:roberto-romero": {
   "periodoCode": "CNA",
@@ -4848,8 +4848,8 @@
   "_motivo": "institucion"
  },
  "persona:salvador-arana": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Salvatore Mancuso\""
  },
  "persona:salvatore-mancuso-gomez": {
   "periodoCode": "C91",
@@ -4876,7 +4876,7 @@
   "anio": 1985
  },
  "persona:alfredo-vazquez-carrizosa": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1975
  },
  "persona:andres-diaz-venero-de-leiva": {
@@ -4896,8 +4896,8 @@
   "anio": 2000
  },
  "persona:benito-juarez": {
-  "periodoCode": "NGR",
-  "anio": 1865
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:bernardo-rueda-vargas": {
   "periodoCode": "REP_LIB",
@@ -4948,8 +4948,8 @@
   "_motivo": "institucion"
  },
  "persona:daniel-rendon": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Daniel Rendón Herrera\""
  },
  "persona:dario-acevedo": {
   "hide": true,
@@ -4968,8 +4968,8 @@
   "anio": 1813
  },
  "persona:eduardo-cifuentes-munoz": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Eduardo Cifuentes\""
  },
  "persona:eduardo-montealegre": {
   "periodoCode": "SDE",
@@ -4992,8 +4992,8 @@
   "_motivo": "academico"
  },
  "persona:eugenio-diaz": {
-  "periodoCode": "NGR",
-  "anio": 1858
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Eugenio Díaz Castro\""
  },
  "persona:familia-eder": {
   "hide": true,
@@ -5016,8 +5016,8 @@
   "_motivo": "academico"
  },
  "persona:friedrich-nietzsche": {
-  "periodoCode": "REG",
-  "anio": 1885
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:georgina-fletcher": {
   "periodoCode": "REP_LIB",
@@ -5076,8 +5076,8 @@
   "anio": 1960
  },
  "persona:jose-vasconcelos": {
-  "periodoCode": "REG",
-  "anio": 1925
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:josefina-valencia": {
   "periodoCode": "VIO",
@@ -5108,16 +5108,16 @@
   "anio": 1998
  },
  "persona:juan-velasco-alvarado": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:juan-vicente-gomez": {
   "periodoCode": "REG",
   "anio": 1920
  },
  "persona:julian-bolivar": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Pérez Alzate\""
  },
  "persona:julio-cesar-prieto": {
   "periodoCode": "SDE",
@@ -5168,8 +5168,8 @@
   "anio": 1965
  },
  "persona:porfirio-diaz": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:ramon-torres-mendez": {
   "periodoCode": "NGR",
@@ -5184,8 +5184,8 @@
   "anio": 1925
  },
  "persona:roberto-d-aubuisson": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:saul-castaneda": {
   "periodoCode": "CNA",
@@ -5216,8 +5216,8 @@
   "anio": 1975
  },
  "persona:alberto-lleras": {
-  "periodoCode": "FN",
-  "anio": 1960
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alberto Lleras Camargo\""
  },
  "persona:alcides-jimenez": {
   "periodoCode": "C91",
@@ -5232,16 +5232,16 @@
   "_motivo": "academico"
  },
  "persona:alfredo-vasquez-carrizosa": {
-  "periodoCode": "TRANS",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alfredo Vázquez Carrizosa\""
  },
  "persona:almudena-mazarrasa": {
   "periodoCode": "C91",
   "anio": 2000
  },
  "persona:alvaro-gomez": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Álvaro Gómez Hurtado\""
  },
  "persona:anibal-gaviria": {
   "periodoCode": "SDE",
@@ -5252,8 +5252,8 @@
   "anio": 1740
  },
  "persona:antonio-guzman-blanco": {
-  "periodoCode": "EUC",
-  "anio": 1875
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:antonio-larrota": {
   "periodoCode": "FN",
@@ -5312,7 +5312,7 @@
   "anio": 1870
  },
  "persona:delia-zapata-olivella": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:diego-de-torres": {
@@ -5328,8 +5328,8 @@
   "anio": 2015
  },
  "persona:domingo-faustino-sarmiento": {
-  "periodoCode": "EUC",
-  "anio": 1870
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:eliecer-silva-celis": {
   "hide": true,
@@ -5340,8 +5340,8 @@
   "anio": 1995
  },
  "persona:ernesto-che-guevara": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ernesto Guevara\""
  },
  "persona:fabio-sanchez": {
   "hide": true,
@@ -5360,16 +5360,16 @@
   "_motivo": "academico"
  },
  "persona:felipe-gonzalez": {
-  "periodoCode": "C91",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:fensuagro": {
   "hide": true,
   "_motivo": "institucion"
  },
  "persona:fernando-henrique-cardoso": {
-  "periodoCode": "C91",
-  "anio": 1998
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:fiscalia-general-de-la-nacion": {
   "hide": true,
@@ -5384,12 +5384,12 @@
   "anio": 2000
  },
  "persona:francisca-josefa-del-castillo": {
-  "periodoCode": "COL",
-  "anio": 1710
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Francisca Josefa de Castillo\""
  },
  "persona:francisco-de-vitoria": {
-  "periodoCode": "CON",
-  "anio": 1540
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:francisco-zuluaga": {
   "hide": true,
@@ -5400,8 +5400,8 @@
   "anio": 1650
  },
  "persona:fredy-rendon": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Freddy Rendón Herrera\""
  },
  "persona:friedrich-von-schenck": {
   "periodoCode": "REG",
@@ -5428,8 +5428,8 @@
   "_motivo": "academico"
  },
  "persona:hernando-de-soto": {
-  "periodoCode": "CON",
-  "anio": 1540
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:ivan-rios": {
   "periodoCode": "C91",
@@ -5480,15 +5480,15 @@
   "anio": 1730
  },
  "persona:lucho-bermudez": {
-  "periodoCode": "TRANS",
+  "periodoCode": "VIO",
   "anio": 1950
  },
  "persona:luis-alberto-acuna": {
-  "periodoCode": "TRANS",
+  "periodoCode": "VIO",
   "anio": 1950
  },
  "persona:luis-carlos-sarmiento-angulo": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1990
  },
  "persona:luis-otero": {
@@ -5496,16 +5496,16 @@
   "anio": 1985
  },
  "persona:luiz-inacio-lula-da-silva": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:luz-marina-bernal": {
   "periodoCode": "SDE",
   "anio": 2010
  },
  "persona:mancuso": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Salvatore Mancuso Gómez\""
  },
  "persona:manuel-carvajal": {
   "periodoCode": "REG",
@@ -5520,8 +5520,8 @@
   "_motivo": "academico"
  },
  "persona:mao-zedong": {
-  "periodoCode": "FN",
-  "anio": 1960
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:marco-tulio-perez-guzman": {
   "periodoCode": "C91",
@@ -5612,8 +5612,8 @@
   "anio": 1986
  },
  "persona:rafael-samudio-molina": {
-  "periodoCode": "CNA",
-  "anio": 1986
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rafael Samudio\""
  },
  "persona:ramiro-vanoy": {
   "periodoCode": "C91",
@@ -5644,8 +5644,8 @@
   "_motivo": "academico"
  },
  "persona:rojas-pinilla": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gustavo Rojas Pinilla\""
  },
  "persona:ronald-schwarz": {
   "hide": true,
@@ -5660,8 +5660,8 @@
   "anio": 1840
  },
  "persona:sanchez-cerro": {
-  "periodoCode": "REP_LIB",
-  "anio": 1932
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Luis Sánchez Cerro\""
  },
  "persona:santos-acosta": {
   "periodoCode": "EUC",
@@ -5680,20 +5680,20 @@
   "anio": 1880
  },
  "persona:sor-juana-ines-de-la-cruz": {
-  "periodoCode": "COL",
-  "anio": 1680
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:stefano-farne": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:toto-la-momposina": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1990
  },
  "persona:toussaint-louverture": {
-  "periodoCode": "PRE_IND",
-  "anio": 1800
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:tulio-cuevas": {
   "periodoCode": "FN",
@@ -5708,8 +5708,8 @@
   "_motivo": "academico"
  },
  "persona:vladimir-lenin": {
-  "periodoCode": "REG",
-  "anio": 1917
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:weildler-guerra-curvelo": {
   "hide": true,
@@ -5752,8 +5752,8 @@
   "anio": 2006
  },
  "persona:alvaro-ulcue": {
-  "periodoCode": "CNA",
-  "anio": 1984
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Álvaro Ulcué Chocué\""
  },
  "persona:ana-maria-groot": {
   "hide": true,
@@ -5764,8 +5764,8 @@
   "_motivo": "academico"
  },
  "persona:andres-pastrana-arango": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Andrés Pastrana\""
  },
  "persona:anglogold-ashanti": {
   "hide": true,
@@ -5832,8 +5832,8 @@
   "anio": 1995
  },
  "persona:carlos-mario-jimenez-naranjo": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Mario Jiménez\""
  },
  "persona:carlos-medina-gallego": {
   "hide": true,
@@ -5852,12 +5852,12 @@
   "_motivo": "institucion"
  },
  "persona:cordell-hull": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:coronel-borja": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:corte-idh": {
   "hide": true,
@@ -5872,16 +5872,16 @@
   "_motivo": "academico"
  },
  "persona:daniel-florencio-o-leary": {
-  "periodoCode": "IND",
-  "anio": 1820
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Daniel O'Leary\""
  },
  "persona:daniel-garcia-pena": {
   "periodoCode": "C91",
   "anio": 1995
  },
  "persona:daniel-rendon-don-mario": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Daniel Rendón Herrera\""
  },
  "persona:das": {
   "hide": true,
@@ -5912,8 +5912,8 @@
   "_motivo": "academico"
  },
  "persona:donald-trump": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:edgar-londono": {
   "periodoCode": "FN",
@@ -5944,8 +5944,8 @@
   "anio": 1935
  },
  "persona:ever-veloza-hh": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Éver Veloza\""
  },
  "persona:familia-medina-charry": {
   "hide": true,
@@ -5964,8 +5964,8 @@
   "anio": 1586
  },
  "persona:francisco-franco": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:francisco-javier-vergara-y-velasco": {
   "periodoCode": "REG",
@@ -6020,8 +6020,8 @@
   "anio": 1925
  },
  "persona:herbert-spencer": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:hernan-jaramillo-ocampo": {
   "periodoCode": "FN",
@@ -6040,7 +6040,7 @@
   "anio": 1985
  },
  "persona:jacinto-cruz-usma-sangrenegra": {
-  "periodoCode": "VIO",
+  "periodoCode": "FN",
   "anio": 1960
  },
  "persona:jaime-lasprilla": {
@@ -6084,8 +6084,8 @@
   "anio": 1940
  },
  "persona:jorge-briceno-suarez": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jorge Briceño\""
  },
  "persona:jorge-franco": {
   "periodoCode": "C91",
@@ -6108,12 +6108,12 @@
   "anio": 1820
  },
  "persona:jose-enrique-rodo": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:jose-gumilla": {
-  "periodoCode": "COL",
-  "anio": 1740
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Joseph Gumilla\""
  },
  "persona:jose-maria-vergara": {
   "periodoCode": "NGR",
@@ -6124,8 +6124,8 @@
   "_motivo": "academico"
  },
  "persona:josefina-valencia-de-hubach": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Josefina Valencia\""
  },
  "persona:juan-de-dios-restrepo": {
   "periodoCode": "EUC",
@@ -6136,8 +6136,8 @@
   "anio": 1995
  },
  "persona:kimy-pernia": {
-  "periodoCode": "C91",
-  "anio": 2001
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Kimy Pernía Domicó\""
  },
  "persona:leonardo-gomez-serna": {
   "periodoCode": "C91",
@@ -6172,8 +6172,8 @@
   "anio": 1815
  },
  "persona:lula-da-silva": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:luz-perly-cordoba": {
   "periodoCode": "C91",
@@ -6196,8 +6196,8 @@
   "_motivo": "academico"
  },
  "persona:maria-cristina-de-habsburgo": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:maria-jimena-duzan": {
   "hide": true,
@@ -6236,8 +6236,8 @@
   "anio": 1925
  },
  "persona:nelson-mandela": {
-  "periodoCode": "SDE",
-  "anio": 1994
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:nestor-humberto-martinez": {
   "periodoCode": "POS",
@@ -6300,8 +6300,8 @@
   "anio": 1995
  },
  "persona:rafael-caldera": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:rafael-garcia": {
   "periodoCode": "SDE",
@@ -6312,12 +6312,12 @@
   "anio": 1910
  },
  "persona:rafael-pardo-buelvas": {
-  "periodoCode": "FN",
+  "periodoCode": "CNA",
   "anio": 1978
  },
  "persona:rafael-rangel-gomez": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rafael Rangel\""
  },
  "persona:robert-beyer": {
   "hide": true,
@@ -6336,7 +6336,7 @@
   "_motivo": "institucion"
  },
  "persona:sagipa": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1539
  },
  "persona:sergio-fernandez": {
@@ -6352,8 +6352,8 @@
   "_motivo": "academico"
  },
  "persona:sigmund-freud": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:sofonias-yacup": {
   "periodoCode": "REG",
@@ -6384,8 +6384,8 @@
   "_motivo": "institucion"
  },
  "persona:aida-abella": {
-  "periodoCode": "CNA",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Aída Avella\""
  },
  "persona:al-gore": {
   "periodoCode": "C91",
@@ -6400,8 +6400,8 @@
   "anio": 1995
  },
  "persona:alcides-arguedas": {
-  "periodoCode": "REG",
-  "anio": 1915
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:alcira-izquierdo": {
   "periodoCode": "POS",
@@ -6496,8 +6496,8 @@
   "anio": 1985
  },
  "persona:camilo-torres-tenorio": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Camilo Torres\""
  },
  "persona:campesinos-cocaleros": {
   "hide": true,
@@ -6524,8 +6524,8 @@
   "anio": 1940
  },
  "persona:carlos-restrepo": {
-  "periodoCode": "REG",
-  "anio": 1912
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos E. Restrepo\""
  },
  "persona:carlos-rua": {
   "periodoCode": "SDE",
@@ -6540,8 +6540,8 @@
   "_motivo": "institucion"
  },
  "persona:cesare-lombroso": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:claude-levi-strauss": {
   "hide": true,
@@ -6552,8 +6552,8 @@
   "_motivo": "academico"
  },
  "persona:colin-powell": {
-  "periodoCode": "SDE",
-  "anio": 2003
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:comision-intereclesial-justicia-y-paz": {
   "hide": true,
@@ -6580,8 +6580,8 @@
   "_motivo": "institucion"
  },
  "persona:daniel-rendon-herrera-don-mario": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Daniel Rendón Herrera\""
  },
  "persona:david-tomkins": {
   "periodoCode": "CNA",
@@ -6596,8 +6596,8 @@
   "anio": 1995
  },
  "persona:diego-rivera": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:diego-vecino": {
   "periodoCode": "C91",
@@ -6680,8 +6680,8 @@
   "anio": 1650
  },
  "persona:francisco-de-toledo": {
-  "periodoCode": "CON",
-  "anio": 1570
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:francisco-montalvo": {
   "periodoCode": "IND",
@@ -6696,8 +6696,8 @@
   "_motivo": "academico"
  },
  "persona:freddy-rendon": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Freddy Rendón Herrera\""
  },
  "persona:gabriel-gatti": {
   "hide": true,
@@ -6708,7 +6708,7 @@
   "_motivo": "academico"
  },
  "persona:german-samper": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:gilberto-alzate-avendano": {
@@ -6724,8 +6724,8 @@
   "_motivo": "academico"
  },
  "persona:gonzalo-pizarro": {
-  "periodoCode": "CON",
-  "anio": 1545
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:gregor-macgregor": {
   "periodoCode": "IND",
@@ -6736,7 +6736,7 @@
   "anio": 1920
  },
  "persona:gustavo-alvarez-gardeazabal": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1990
  },
  "persona:gustavo-perez": {
@@ -6744,11 +6744,11 @@
   "anio": 1965
  },
  "persona:hector-mondragon": {
-  "periodoCode": "TRANS",
+  "periodoCode": "C91",
   "anio": 2000
  },
  "persona:helena-araujo": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:hernan-toro-agudelo": {
@@ -6760,7 +6760,7 @@
   "_motivo": "academico"
  },
  "persona:hernando-valencia-goelkel": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:higinio-cualla": {
@@ -6804,8 +6804,8 @@
   "_motivo": "institucion"
  },
  "persona:jaime-humberto-uscategui": {
-  "periodoCode": "C91",
-  "anio": 1997
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jaime Uscátegui\""
  },
  "persona:jakeline-romero": {
   "periodoCode": "POS",
@@ -6820,8 +6820,8 @@
   "anio": 2010
  },
  "persona:jimenez-de-quesada": {
-  "periodoCode": "CON",
-  "anio": 1540
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gonzalo Jiménez de Quesada\""
  },
  "persona:joaquin-gutierrez": {
   "periodoCode": "IND",
@@ -6844,20 +6844,20 @@
   "anio": 1815
  },
  "persona:jose-gonzalo-rodriguez-gacha": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gonzalo Rodríguez Gacha\""
  },
  "persona:jose-maria-arguedas": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:jose-maria-cabal": {
   "periodoCode": "IND",
   "anio": 1815
  },
  "persona:jose-marti": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:jose-miguel-narvaez": {
   "periodoCode": "C91",
@@ -6968,8 +6968,8 @@
   "_motivo": "academico"
  },
  "persona:marcos-perez-jimenez": {
-  "periodoCode": "FN",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:maria-angela-salazar": {
   "periodoCode": "POS",
@@ -6992,8 +6992,8 @@
   "anio": 1825
  },
  "persona:mariano-ospina": {
-  "periodoCode": "NGR",
-  "anio": 1857
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Mariano Ospina Rodríguez\""
  },
  "persona:mario-diego-romero": {
   "hide": true,
@@ -7064,8 +7064,8 @@
   "_motivo": "academico"
  },
  "persona:nicolas-de-federmann": {
-  "periodoCode": "CON",
-  "anio": 1538
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Nicolás de Federmán\""
  },
  "persona:norvey-ortiz-bermudez": {
   "periodoCode": "SDE",
@@ -7100,16 +7100,16 @@
   "anio": 1995
  },
  "persona:pablo-emilio-guarin": {
-  "periodoCode": "CNA",
-  "anio": 1987
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pablo Guarín\""
  },
  "persona:papa-francisco": {
-  "periodoCode": "POS",
-  "anio": 2017
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:patricio-aylwin": {
-  "periodoCode": "C91",
-  "anio": 1993
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:pedro-castro-monsalvo": {
   "periodoCode": "FN",
@@ -7128,8 +7128,8 @@
   "anio": 1920
  },
  "persona:pio-xi": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:profamilia": {
   "hide": true,
@@ -7180,8 +7180,8 @@
   "_motivo": "ruido"
  },
  "persona:salomon-lerner-febres": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Salomón Lerner\""
  },
  "persona:salvador-rizo": {
   "periodoCode": "PRE_IND",
@@ -7208,8 +7208,8 @@
   "_motivo": "academico"
  },
  "persona:tomas-de-aquino": {
-  "periodoCode": "PRE",
-  "anio": 1250
+  "hide": true,
+  "_motivo": "teólogo europeo (s. XIII), no colombiano"
  },
  "persona:tomas-funes": {
   "periodoCode": "REG",
@@ -7256,16 +7256,16 @@
   "anio": 1855
  },
  "persona:agustin-de-iturbide": {
-  "periodoCode": "IND",
-  "anio": 1821
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:aime-bonpland": {
   "periodoCode": "PRE_IND",
   "anio": 1800
  },
  "persona:aime-cesaire": {
-  "periodoCode": "TRANS",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:alberto-salomon": {
   "periodoCode": "REG",
@@ -7336,16 +7336,16 @@
   "anio": 1719
  },
  "persona:antonio-guterres": {
-  "periodoCode": "SDE",
-  "anio": 2017
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:antonio-leocadio-guzman": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:antonio-maceo": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:antonio-villavicencio": {
   "periodoCode": "IND",
@@ -7400,8 +7400,8 @@
   "anio": 1985
  },
  "persona:berta-caceres": {
-  "periodoCode": "SDE",
-  "anio": 2015
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:betty-laura-vallejo": {
   "hide": true,
@@ -7440,8 +7440,8 @@
   "_motivo": "academico"
  },
  "persona:carlos-salinas-de-gortari": {
-  "periodoCode": "C91",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:carlos-sanz-de-santamaria": {
   "periodoCode": "VIO",
@@ -7568,8 +7568,8 @@
   "anio": 2005
  },
  "persona:dwight-eisenhower": {
-  "periodoCode": "FN",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:edouard-andre": {
   "periodoCode": "EUC",
@@ -7600,16 +7600,16 @@
   "anio": 1998
  },
  "persona:eloy-alfaro": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:elsy-marulanda": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:enilce-lopez": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Enilse López\""
  },
  "persona:erika-diettes": {
   "periodoCode": "POS",
@@ -7648,8 +7648,8 @@
   "anio": 1900
  },
  "persona:fabio-vasquez": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Fabio Vásquez Castaño\""
  },
  "persona:familia-arboleda": {
   "hide": true,
@@ -7664,8 +7664,8 @@
   "_motivo": "academico"
  },
  "persona:felipe-calderon": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:feliza-bursztyn": {
   "periodoCode": "FN",
@@ -7688,32 +7688,32 @@
   "anio": 1995
  },
  "persona:francisco-suarez": {
-  "periodoCode": "COL",
-  "anio": 1600
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:francisco-tulande": {
   "periodoCode": "C91",
   "anio": 1995
  },
  "persona:fray-fidel-de-montclar": {
-  "periodoCode": "REG",
-  "anio": 1915
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Fidel de Montclar\""
  },
  "persona:fray-juan-de-santa-gertrudis": {
-  "periodoCode": "COL",
-  "anio": 1760
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan de Santa Gertrudis\""
  },
  "persona:freddy-rendon-herrera-el-aleman": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Freddy Rendón Herrera\""
  },
  "persona:friedrich-engels": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:frutos-joaquin-gutierrez": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Joaquín Gutiérrez\""
  },
  "persona:gabriel-lizardi": {
   "periodoCode": "REG",
@@ -7776,8 +7776,8 @@
   "anio": 1998
  },
  "persona:harry-anslinger": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:helio-pacheco": {
   "periodoCode": "C91",
@@ -7788,8 +7788,8 @@
   "anio": 1985
  },
  "persona:henry-kissinger": {
-  "periodoCode": "FN",
-  "anio": 1972
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:henry-price": {
   "periodoCode": "NGR",
@@ -7816,8 +7816,8 @@
   "anio": 1820
  },
  "persona:hernan-cortes": {
-  "periodoCode": "CON",
-  "anio": 1520
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:hernando-agudelo-villa": {
   "periodoCode": "FN",
@@ -7844,24 +7844,24 @@
   "anio": 2010
  },
  "persona:ignacio-de-marquez": {
-  "periodoCode": "NGR",
-  "anio": 1840
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José Ignacio de Márquez\""
  },
  "persona:ignacio-torres": {
   "periodoCode": "IND",
   "anio": 1815
  },
  "persona:ivan-cepeda-castro": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Iván Cepeda\""
  },
  "persona:jacinto-maria-de-quito": {
   "periodoCode": "REG",
   "anio": 1910
  },
  "persona:jacobo-arbenz": {
-  "periodoCode": "VIO",
-  "anio": 1953
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:jaime-jaramillo-escobar": {
   "periodoCode": "FN",
@@ -7884,8 +7884,8 @@
   "_motivo": "academico"
  },
  "persona:jean-paul-sartre": {
-  "periodoCode": "FN",
-  "anio": 1960
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:jesus-martin-barbero": {
   "hide": true,
@@ -7912,12 +7912,12 @@
   "anio": 1995
  },
  "persona:jorge-noguera-cotes": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jorge Noguera\""
  },
  "persona:jorge-videla": {
-  "periodoCode": "CNA",
-  "anio": 1978
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:jorge-visbal-martelo": {
   "periodoCode": "SDE",
@@ -7932,8 +7932,8 @@
   "anio": 1820
  },
  "persona:jose-felix-restrepo": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José Félix de Restrepo\""
  },
  "persona:jose-fernando-de-mier-y-guerra": {
   "periodoCode": "COL",
@@ -7984,8 +7984,8 @@
   "anio": 1815
  },
  "persona:juan-gines-de-sepulveda": {
-  "periodoCode": "CON",
-  "anio": 1550
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:juan-lozano-y-lozano": {
   "periodoCode": "REP_LIB",
@@ -8016,8 +8016,8 @@
   "anio": 2000
  },
  "persona:laureano-vallenilla-lanz": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:laurentino-munoz": {
   "periodoCode": "REG",
@@ -8028,8 +8028,8 @@
   "anio": 1910
  },
  "persona:leon-duguit": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:leonardo-gallego": {
   "periodoCode": "SDE",
@@ -8100,8 +8100,8 @@
   "anio": 1904
  },
  "persona:manuel-antonio-noriega": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel Noriega\""
  },
  "persona:manuel-gomez-rueda": {
   "periodoCode": "REP_LIB",
@@ -8128,12 +8128,12 @@
   "anio": 2010
  },
  "persona:maria-tila-uribe": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:mario-vargas-llosa": {
-  "periodoCode": "TRANS",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:marleny-charry": {
   "periodoCode": "C91",
@@ -8160,8 +8160,8 @@
   "anio": 1985
  },
  "persona:mijail-gorbachov": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:ministerio-de-agricultura": {
   "hide": true,
@@ -8188,8 +8188,8 @@
   "_motivo": "academico"
  },
  "persona:nestor-kirchner": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:nicolas-saenz": {
   "periodoCode": "REG",
@@ -8212,12 +8212,12 @@
   "_motivo": "academico"
  },
  "persona:olaya-herrera": {
-  "periodoCode": "REP_LIB",
-  "anio": 1932
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Enrique Olaya Herrera\""
  },
  "persona:omar-torrijos": {
-  "periodoCode": "FN",
-  "anio": 1975
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:organizacion-femenina-popular": {
   "hide": true,
@@ -8232,16 +8232,16 @@
   "anio": 1995
  },
  "persona:oscar-arias": {
-  "periodoCode": "CNA",
-  "anio": 1987
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:oscar-benavides": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:oscar-romero": {
-  "periodoCode": "CNA",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:pablo-de-greiff": {
   "hide": true,
@@ -8252,8 +8252,8 @@
   "anio": 1910
  },
  "persona:padre-javier-giraldo": {
-  "periodoCode": "TRANS",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Javier Giraldo\""
  },
  "persona:paola": {
   "hide": true,
@@ -8268,7 +8268,7 @@
   "anio": 1970
  },
  "persona:patricia-ariza": {
-  "periodoCode": "TRANS",
+  "periodoCode": "C91",
   "anio": 2000
  },
  "persona:pedro-acevedo-tejada": {
@@ -8288,8 +8288,8 @@
   "anio": 1765
  },
  "persona:pedro-oliveiro-guerrero": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro Oliverio Guerrero\""
  },
  "persona:pietro-cantini": {
   "periodoCode": "REG",
@@ -8300,15 +8300,15 @@
   "anio": 1965
  },
  "persona:primo-levi": {
-  "periodoCode": "REP_LIB",
-  "anio": 1945
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:prospero-pereira-gamba": {
   "periodoCode": "NGR",
   "anio": 1850
  },
  "persona:quemuenchatocha": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1537
  },
  "persona:rafa-putumayo": {
@@ -8324,8 +8324,8 @@
   "anio": 1995
  },
  "persona:raul-castro": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:reinhart-van-lansberge": {
   "periodoCode": "IND",
@@ -8360,8 +8360,8 @@
   "_motivo": "academico"
  },
  "persona:rodrigo-londono-timochenko": {
-  "periodoCode": "POS",
-  "anio": 2017
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Londoño\""
  },
  "persona:rogelio-correa-campos": {
   "periodoCode": "CNA",
@@ -8396,8 +8396,8 @@
   "_motivo": "institucion"
  },
  "persona:susana-villaran": {
-  "periodoCode": "SDE",
-  "anio": 2012
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:t-lynn-smith": {
   "hide": true,
@@ -8420,7 +8420,7 @@
   "anio": 1900
  },
  "persona:tundama": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1539
  },
  "persona:unipa": {
@@ -8440,8 +8440,8 @@
   "anio": 1830
  },
  "persona:victor-paz-estenssoro": {
-  "periodoCode": "TRANS",
-  "anio": 1960
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:victor-suarez": {
   "periodoCode": "C91",
@@ -8592,7 +8592,7 @@
   "anio": 1995
  },
  "persona:andres-escobar": {
-  "periodoCode": "CNA",
+  "periodoCode": "C91",
   "anio": 1994
  },
  "persona:andres-penate": {
@@ -8700,12 +8700,12 @@
   "anio": 1840
  },
  "persona:augusto-b-leguia": {
-  "periodoCode": "REG",
-  "anio": 1920
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:augusto-cesar-sandino": {
-  "periodoCode": "REG",
-  "anio": 1928
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:augusto-ramirez-cardona": {
   "periodoCode": "CNA",
@@ -8740,8 +8740,8 @@
   "anio": 1915
  },
  "persona:bernardo-elias": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Bernardo 'Ñoño' Elías\""
  },
  "persona:bernardo-macaya": {
   "periodoCode": "COL",
@@ -8756,8 +8756,8 @@
   "anio": 1760
  },
  "persona:bernie-aronson": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (diplomático EE.UU.)"
  },
  "persona:bloque-metro": {
   "hide": true,
@@ -8768,7 +8768,7 @@
   "_motivo": "institucion"
  },
  "persona:bogota-zipa": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1538
  },
  "persona:bruno-violi": {
@@ -8788,8 +8788,8 @@
   "_motivo": "academico"
  },
  "persona:carl-von-clausewitz": {
-  "periodoCode": "IND",
-  "anio": 1820
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:carlos-alberto-ospina": {
   "periodoCode": "SDE",
@@ -8812,8 +8812,8 @@
   "anio": 1850
  },
  "persona:carlos-coriolano-amador": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Coriolano Amador\""
  },
  "persona:carlos-cuervo-marquez": {
   "periodoCode": "REG",
@@ -8840,8 +8840,8 @@
   "anio": 2010
  },
  "persona:carlos-salinas": {
-  "periodoCode": "C91",
-  "anio": 1992
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Salinas de Gortari\""
  },
  "persona:carlos-viafara": {
   "hide": true,
@@ -8964,8 +8964,8 @@
   "_motivo": "institucion"
  },
  "persona:dairo-antonio-usuga-otoniel": {
-  "periodoCode": "POS",
-  "anio": 2015
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Otoniel\""
  },
  "persona:darcy-ribeiro": {
   "hide": true,
@@ -8988,8 +8988,8 @@
   "anio": 1940
  },
  "persona:debora-barros-fince": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Débora Barros\""
  },
  "persona:diana-bocarejo": {
   "hide": true,
@@ -9040,8 +9040,8 @@
   "_motivo": "academico"
  },
  "persona:duarte-blum": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alfredo Duarte Blum\""
  },
  "persona:edgar-moreno": {
   "periodoCode": "POS",
@@ -9060,8 +9060,8 @@
   "anio": 2008
  },
  "persona:edward-cobos-tellez": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Diego Vecino\""
  },
  "persona:edward-lansdale": {
   "periodoCode": "FN",
@@ -9088,8 +9088,8 @@
   "anio": 1870
  },
  "persona:emiliano-zapata": {
-  "periodoCode": "REG",
-  "anio": 1915
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:emiro-kastos": {
   "periodoCode": "NGR",
@@ -9116,8 +9116,8 @@
   "anio": 2000
  },
  "persona:ever-veloza-garcia": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Éver Veloza alias HH\""
  },
  "persona:fabio-ochoa": {
   "periodoCode": "CNA",
@@ -9132,7 +9132,7 @@
   "_motivo": "institucion"
  },
  "persona:fanny-buitrago": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:fecode": {
@@ -9208,8 +9208,8 @@
   "_motivo": "academico"
  },
  "persona:franklin-roosevelt": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Franklin D. Roosevelt\""
  },
  "persona:frantz-fanon": {
   "hide": true,
@@ -9232,8 +9232,8 @@
   "anio": 1985
  },
  "persona:gabriel-garcia-moreno": {
-  "periodoCode": "EUC",
-  "anio": 1865
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:gabriel-gutierrez-de-pineres": {
   "periodoCode": "PRE_IND",
@@ -9248,8 +9248,8 @@
   "anio": 1940
  },
  "persona:galeotto-cey": {
-  "periodoCode": "CON",
-  "anio": 1550
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:gaspar-morcote": {
   "periodoCode": "C91",
@@ -9280,28 +9280,28 @@
   "anio": 1900
  },
  "persona:guillermo-cano-isaza": {
-  "periodoCode": "CNA",
-  "anio": 1986
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Guillermo Cano\""
  },
  "persona:guillermo-gaviria": {
   "periodoCode": "SDE",
   "anio": 2002
  },
  "persona:guillermo-gaviria-correa": {
-  "periodoCode": "SDE",
-  "anio": 2002
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Guillermo Gaviria\""
  },
  "persona:guillermo-hernandez-rodriguez": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:guillermo-i-de-orange": {
-  "periodoCode": "CON",
-  "anio": 1570
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:gustavo-bell": {
-  "periodoCode": "C91",
-  "anio": 1998
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gustavo Bell Lemus\""
  },
  "persona:gustavo-gaviria": {
   "periodoCode": "CNA",
@@ -9312,12 +9312,12 @@
   "_motivo": "institucion"
  },
  "persona:hebe-de-bonafini": {
-  "periodoCode": "TRANS",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:hebert-veloza-garcia": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Éver Veloza\""
  },
  "persona:hector-abad-faciolince": {
   "periodoCode": "C91",
@@ -9344,8 +9344,8 @@
   "anio": 1910
  },
  "persona:henry-morgan": {
-  "periodoCode": "COL",
-  "anio": 1670
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:heriberto-pelufo": {
   "periodoCode": "CNA",
@@ -9380,8 +9380,8 @@
   "anio": 2005
  },
  "persona:hillary-clinton": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:hrdag": {
   "hide": true,
@@ -9404,8 +9404,8 @@
   "anio": 2010
  },
  "persona:ignacio-de-loyola": {
-  "periodoCode": "CON",
-  "anio": 1540
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:inge-valencia": {
   "hide": true,
@@ -9428,8 +9428,8 @@
   "anio": 1985
  },
  "persona:jacinto-cruz-usma": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jacinto Cruz Usma (Sangrenegra)\""
  },
  "persona:jaime-arenas": {
   "periodoCode": "FN",
@@ -9452,7 +9452,7 @@
   "anio": 2010
  },
  "persona:jean-linden": {
-  "periodoCode": "REG",
+  "periodoCode": "NGR",
   "anio": 1860
  },
  "persona:jesus-alfonso-florez": {
@@ -9468,24 +9468,24 @@
   "anio": 1990
  },
  "persona:jimmy-carter": {
-  "periodoCode": "CNA",
-  "anio": 1978
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:joaquin-de-mier": {
   "periodoCode": "IND",
   "anio": 1830
  },
  "persona:joaquin-el-chapo-guzman": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:joaquin-pablo-posada": {
   "periodoCode": "NGR",
   "anio": 1855
  },
  "persona:jody-williams": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:joe-toft": {
   "periodoCode": "C91",
@@ -9520,8 +9520,8 @@
   "_motivo": "academico"
  },
  "persona:jorge-gnecco-cerchar": {
-  "periodoCode": "C91",
-  "anio": 1998
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jorge Gnecco\""
  },
  "persona:jorge-ivan-ospina": {
   "periodoCode": "SDE",
@@ -9580,8 +9580,8 @@
   "anio": 1850
  },
  "persona:jose-domingo-duquesne": {
-  "periodoCode": "PRE_IND",
-  "anio": 1795
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Domingo Duquesne\""
  },
  "persona:jose-domingo-espinar": {
   "periodoCode": "IND",
@@ -9596,8 +9596,8 @@
   "anio": 1940
  },
  "persona:jose-joaquin-camacho": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Joaquín Camacho\""
  },
  "persona:jose-maria-barros-chema-bala": {
   "periodoCode": "SDE",
@@ -9652,8 +9652,8 @@
   "anio": 1850
  },
  "persona:juan-de-samano": {
-  "periodoCode": "IND",
-  "anio": 1817
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan Sámano\""
  },
  "persona:juan-de-valcarcel": {
   "periodoCode": "COL",
@@ -9684,8 +9684,8 @@
   "anio": 2010
  },
  "persona:julio-mario-santodomingo": {
-  "periodoCode": "TRANS",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Julio Mario Santo Domingo\""
  },
  "persona:junta-monetaria": {
   "hide": true,
@@ -9700,8 +9700,8 @@
   "anio": 1995
  },
  "persona:karina-elda-mosquera": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Karina\""
  },
  "persona:karmen-ramirez-boscan": {
   "periodoCode": "SDE",
@@ -9716,7 +9716,7 @@
   "_motivo": "ruido"
  },
  "persona:la-gaitana": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1540
  },
  "persona:lawrence-j-sacks": {
@@ -9780,8 +9780,8 @@
   "anio": 2005
  },
  "persona:lucho-garzon": {
-  "periodoCode": "SDE",
-  "anio": 2007
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Luis Eduardo Garzón\""
  },
  "persona:luis-antonio-escobar": {
   "periodoCode": "FN",
@@ -9792,8 +9792,8 @@
   "anio": 1970
  },
  "persona:luis-carlos-sarmiento": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Luis Carlos Sarmiento Angulo\""
  },
  "persona:luis-eduardo-echavarria": {
   "periodoCode": "SDE",
@@ -9864,8 +9864,8 @@
   "anio": 1815
  },
  "persona:manuel-del-castillo-y-rada": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel del Castillo\""
  },
  "persona:manuel-gaona-cruz": {
   "periodoCode": "CNA",
@@ -9876,8 +9876,8 @@
   "anio": 1910
  },
  "persona:manuel-jose-bonett": {
-  "periodoCode": "C91",
-  "anio": 1998
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel José Bonnet\""
  },
  "persona:manuel-mejia-jaramillo": {
   "periodoCode": "REG",
@@ -9896,8 +9896,8 @@
   "anio": 1820
  },
  "persona:marcelino-menendez-y-pelayo": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:marcelo-bucheli": {
   "hide": true,
@@ -9932,8 +9932,8 @@
   "_motivo": "academico"
  },
  "persona:mariana-garces": {
-  "periodoCode": "SDE",
-  "anio": 2013
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Mariana Garcés Córdoba\""
  },
  "persona:mario-agudelo": {
   "periodoCode": "C91",
@@ -9992,8 +9992,8 @@
   "_motivo": "institucion"
  },
  "persona:napoleon-bonaparte": {
-  "periodoCode": "PRE_IND",
-  "anio": 1805
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:napoleon-garcia-anaya": {
   "periodoCode": "C91",
@@ -10008,8 +10008,8 @@
   "anio": 1920
  },
  "persona:nicanor-restrepo-santamaria": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Nicanor Restrepo\""
  },
  "persona:nidia-gongora": {
   "periodoCode": "SDE",
@@ -10032,8 +10032,8 @@
   "anio": 1985
  },
  "persona:oliver-north": {
-  "periodoCode": "CNA",
-  "anio": 1986
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:olivo-saldana": {
   "periodoCode": "SDE",
@@ -10056,7 +10056,7 @@
   "anio": 2010
  },
  "persona:pantaleon-german-ribon": {
-  "periodoCode": "PRE_IND",
+  "periodoCode": "IND",
   "anio": 1810
  },
  "persona:patrice-gueniffey": {
@@ -10128,7 +10128,7 @@
   "_motivo": "institucion"
  },
  "persona:rafael-garcia-herreros": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:rafael-gomez-hoyos": {
@@ -10148,12 +10148,12 @@
   "_motivo": "academico"
  },
  "persona:raul-alfonsin": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:raul-e-mahecha": {
-  "periodoCode": "REG",
-  "anio": 1928
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Raúl Eduardo Mahecha\""
  },
  "persona:raul-gomez-jattin": {
   "periodoCode": "CNA",
@@ -10188,16 +10188,16 @@
   "_motivo": "academico"
  },
  "persona:rita-ivonne-tobon": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rita Tobón\""
  },
  "persona:robert-daza": {
   "periodoCode": "SDE",
   "anio": 2010
  },
  "persona:robert-mcnamara": {
-  "periodoCode": "TRANS",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:roberta-cohen": {
   "hide": true,
@@ -10224,8 +10224,8 @@
   "anio": 1995
  },
  "persona:rodrigo-tovar": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Tovar Pupo\""
  },
  "persona:rodrigo-turbay-cote": {
   "periodoCode": "C91",
@@ -10268,12 +10268,12 @@
   "_motivo": "academico"
  },
  "persona:schafik-handal": {
-  "periodoCode": "TRANS",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:sebastian-pinera": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:simon-trinidad": {
   "periodoCode": "SDE",
@@ -10308,16 +10308,16 @@
   "anio": 2000
  },
  "persona:spruille-braden": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:superintendencia-de-notariado": {
   "hide": true,
   "_motivo": "institucion"
  },
  "persona:sylvia-duzan": {
-  "periodoCode": "CNA",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Silvia Duzán\""
  },
  "persona:taita-querubin-queta": {
   "periodoCode": "SDE",
@@ -10392,16 +10392,16 @@
   "_motivo": "academico"
  },
  "persona:virrey-ezpeleta": {
-  "periodoCode": "PRE_IND",
-  "anio": 1795
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José de Ezpeleta\""
  },
  "persona:vladimiro-montesinos": {
   "periodoCode": "C91",
   "anio": 1995
  },
  "persona:walter-ochoa-gurre": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Walter Ochoa\""
  },
  "persona:walter-raleigh": {
   "periodoCode": "CON",
@@ -10420,8 +10420,8 @@
   "anio": 2000
  },
  "persona:william-pitt": {
-  "periodoCode": "PRE_IND",
-  "anio": 1790
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:yolanda-pulecio": {
   "periodoCode": "C91",
@@ -10464,28 +10464,28 @@
   "anio": 1985
  },
  "persona:adam-smith": {
-  "periodoCode": "PRE_IND",
-  "anio": 1776
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:adelinda-gomez": {
   "periodoCode": "SDE",
   "anio": 2013
  },
  "persona:adolf-hitler": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:adolfo-aristizabal": {
   "periodoCode": "FN",
   "anio": 1970
  },
  "persona:adolfo-pacheco": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:adolfo-paz": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Don Berna\""
  },
  "persona:adolfo-samper": {
   "periodoCode": "REG",
@@ -10516,8 +10516,8 @@
   "anio": 2000
  },
  "persona:alberto-santofimio-botero": {
-  "periodoCode": "TRANS",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alberto Santofimio\""
  },
  "persona:aldemar-echavarria": {
   "periodoCode": "C91",
@@ -10540,8 +10540,8 @@
   "anio": 2010
  },
  "persona:alejandro-sanz": {
-  "periodoCode": "CNA",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:alejandro-vi": {
   "periodoCode": "CON",
@@ -10556,8 +10556,8 @@
   "_motivo": "academico"
  },
  "persona:alexis-de-tocqueville": {
-  "periodoCode": "NGR",
-  "anio": 1840
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:alfonso-guzman-acevedo": {
   "periodoCode": "VIO",
@@ -10580,11 +10580,11 @@
   "anio": 1985
  },
  "persona:alvaro-leyva": {
-  "periodoCode": "TRANS",
+  "periodoCode": "C91",
   "anio": 1990
  },
  "persona:alvaro-vasquez-del-real": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:alvaro-velandia-hurtado": {
@@ -10596,8 +10596,8 @@
   "anio": 1985
  },
  "persona:amado-carrillo": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:ambrosio-alfinger": {
   "periodoCode": "CON",
@@ -10660,8 +10660,8 @@
   "anio": 2018
  },
  "persona:angela-salazar": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: duplicado de \"María Ángela Salazar\""
  },
  "persona:angelica-ortiz": {
   "periodoCode": "CNA",
@@ -10708,8 +10708,8 @@
   "anio": 1590
  },
  "persona:antonio-de-la-pedrosa": {
-  "periodoCode": "COL",
-  "anio": 1719
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Antonio de la Pedroza y Guerrero\""
  },
  "persona:antonio-de-lebrija": {
   "periodoCode": "CON",
@@ -10720,12 +10720,12 @@
   "anio": 1790
  },
  "persona:antonio-de-narvaez-y-la-torre": {
-  "periodoCode": "PRE_IND",
-  "anio": 1790
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Antonio de Narváez\""
  },
  "persona:antonio-de-villavicencio": {
-  "periodoCode": "IND",
-  "anio": 1810
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Antonio Villavicencio\""
  },
  "persona:antonio-fuentes": {
   "periodoCode": "REG",
@@ -10764,7 +10764,7 @@
   "anio": 1965
  },
  "persona:aquiminzaque": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1540
  },
  "persona:aristomeno-porras": {
@@ -10772,8 +10772,8 @@
   "anio": 1950
  },
  "persona:arlex-arango": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Luis Árlex Arango\""
  },
  "persona:armada-nacional": {
   "hide": true,
@@ -10788,8 +10788,8 @@
   "anio": 2010
  },
  "persona:arzobispo-caballero-y-gongora": {
-  "periodoCode": "COL",
-  "anio": 1785
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Antonio Caballero y Góngora\""
  },
  "persona:asoinca": {
   "hide": true,
@@ -10808,8 +10808,8 @@
   "_motivo": "ruido"
  },
  "persona:atahualpa": {
-  "periodoCode": "CON",
-  "anio": 1532
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:atanasio-girardot": {
   "periodoCode": "IND",
@@ -10832,8 +10832,8 @@
   "anio": 1910
  },
  "persona:augusto-boal": {
-  "periodoCode": "TRANS",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:augusto-galan": {
   "periodoCode": "C91",
@@ -10844,8 +10844,8 @@
   "anio": 2010
  },
  "persona:augusto-leguia": {
-  "periodoCode": "REP_LIB",
-  "anio": 1925
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:augusto-oyuela": {
   "hide": true,
@@ -10860,8 +10860,8 @@
   "_motivo": "institucion"
  },
  "persona:ban-ki-moon": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:banco-ganadero": {
   "hide": true,
@@ -10896,7 +10896,7 @@
   "_motivo": "academico"
  },
  "persona:beniamino-stella": {
-  "periodoCode": "TRANS",
+  "periodoCode": "C91",
   "anio": 2000
  },
  "persona:benjamin-saldana-roca": {
@@ -10916,8 +10916,8 @@
   "anio": 1970
  },
  "persona:bernardo-herrera": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Bernardo Herrera Restrepo\""
  },
  "persona:bernardo-merizalde": {
   "periodoCode": "REG",
@@ -10932,8 +10932,8 @@
   "anio": 1965
  },
  "persona:betsabe-espinal": {
-  "periodoCode": "REG",
-  "anio": 1920
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Betsabé Espinosa\""
  },
  "persona:bettina-ng-weno": {
   "hide": true,
@@ -10968,8 +10968,8 @@
   "_motivo": "academico"
  },
  "persona:byron": {
-  "periodoCode": "IND",
-  "anio": 1820
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:cabildo-muisca-de-bosa": {
   "hide": true,
@@ -10980,7 +10980,7 @@
   "_motivo": "institucion"
  },
  "persona:calixto-ochoa": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:camila-loboguerrero": {
@@ -11020,12 +11020,12 @@
   "anio": 2010
  },
  "persona:carlos-ospina": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Alberto Ospina\""
  },
  "persona:carlos-ospina-ovalle": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Alberto Ospina\""
  },
  "persona:carlos-palacino": {
   "periodoCode": "C91",
@@ -11036,8 +11036,8 @@
   "anio": 1910
  },
  "persona:carlos-pizarro-leon-gomez": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Pizarro\""
  },
  "persona:carlos-restrepo-piedrahita": {
   "hide": true,
@@ -11116,16 +11116,16 @@
   "anio": 2008
  },
  "persona:cesar-julio-valencia-copete": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"César Julio Valencia\""
  },
  "persona:cesar-pachon": {
   "periodoCode": "SDE",
   "anio": 2013
  },
  "persona:cesare-ripa": {
-  "periodoCode": "CON",
-  "anio": 1600
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:charles-olaya-nieto": {
   "hide": true,
@@ -11152,8 +11152,8 @@
   "anio": 1995
  },
  "persona:ciro-trujillo-castano": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ciro Trujillo\""
  },
  "persona:cisca": {
   "hide": true,
@@ -11252,20 +11252,20 @@
   "_motivo": "academico"
  },
  "persona:consuelo-araujo": {
-  "periodoCode": "CNA",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Consuelo Araújonoguera\""
  },
  "persona:cornelio-reyes": {
   "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:cornelius-de-pauw": {
-  "periodoCode": "PRE_IND",
-  "anio": 1780
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:cuco-vanoy": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ramiro Vanoy\""
  },
  "persona:cynthia-arnson": {
   "hide": true,
@@ -11284,8 +11284,8 @@
   "anio": 2010
  },
  "persona:daniel-arcila-cardona": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Daniel Arcila\""
  },
  "persona:daniel-barrera": {
   "periodoCode": "SDE",
@@ -11296,8 +11296,8 @@
   "anio": 1985
  },
  "persona:daniel-f-o-leary": {
-  "periodoCode": "IND",
-  "anio": 1825
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Daniel O'Leary\""
  },
  "persona:daniel-feierstein": {
   "hide": true,
@@ -11324,8 +11324,8 @@
   "_motivo": "academico"
  },
  "persona:david-petraeus": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:david-sowell": {
   "hide": true,
@@ -11392,8 +11392,8 @@
   "_motivo": "academico"
  },
  "persona:diego-portales": {
-  "periodoCode": "NGR",
-  "anio": 1835
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:diocesis-de-apartado": {
   "hide": true,
@@ -11424,8 +11424,8 @@
   "anio": 2010
  },
  "persona:donald-rumsfeld": {
-  "periodoCode": "SDE",
-  "anio": 2003
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:doris-gil-santamaria": {
   "hide": true,
@@ -11452,8 +11452,8 @@
   "anio": 1820
  },
  "persona:dwight-d-eisenhower": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:dyncorp": {
   "hide": true,
@@ -11472,12 +11472,12 @@
   "_motivo": "academico"
  },
  "persona:edgar-cobos": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Edwar Cobos Téllez\""
  },
  "persona:edgar-fierro-florez": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Edgar Ignacio Fierro\""
  },
  "persona:edgar-gutierrez": {
   "periodoCode": "FN",
@@ -11508,16 +11508,16 @@
   "anio": 1910
  },
  "persona:eduardo-frei-montalva": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:eduardo-viveiros-de-castro": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:edwar-cobos": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Edwar Cobos Téllez\""
  },
  "persona:edward-said": {
   "hide": true,
@@ -11544,8 +11544,8 @@
   "anio": 2010
  },
  "persona:elda-neyis-mosquera-karina": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Karina\""
  },
  "persona:eliecer-sallesman": {
   "periodoCode": "SDE",
@@ -11628,8 +11628,8 @@
   "anio": 1950
  },
  "persona:ernesto-zedillo": {
-  "periodoCode": "C91",
-  "anio": 1996
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:erving-goffman": {
   "hide": true,
@@ -11672,8 +11672,8 @@
   "anio": 1965
  },
  "persona:eva-peron": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:evelio-bolanos": {
   "periodoCode": "C91",
@@ -11748,8 +11748,8 @@
   "anio": 1650
  },
  "persona:felipe-quispe": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:felipe-salgar": {
   "periodoCode": "NGR",
@@ -11784,8 +11784,8 @@
   "anio": 2010
  },
  "persona:fernando-londono-hoyos": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Fernando Londoño\""
  },
  "persona:fernando-ortiz": {
   "hide": true,
@@ -11856,8 +11856,8 @@
   "anio": 1850
  },
  "persona:francisco-garcia-calderon": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:francisco-gutierrez-de-pineres": {
   "periodoCode": "PRE_IND",
@@ -11884,8 +11884,8 @@
   "anio": 2010
  },
  "persona:francisco-santos-calderon": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Francisco Santos\""
  },
  "persona:francisco-villalba": {
   "periodoCode": "C91",
@@ -11900,24 +11900,24 @@
   "anio": 1825
  },
  "persona:fray-luis-zapata-de-cardenas": {
-  "periodoCode": "CON",
-  "anio": 1580
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Luis Zapata de Cárdenas\""
  },
  "persona:fred-t-ley": {
   "periodoCode": "REG",
   "anio": 1925
  },
  "persona:freddy-padilla": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Freddy Padilla de León\""
  },
  "persona:freddy-rendon-el-aleman": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Freddy Rendón Herrera\""
  },
  "persona:frederic-bastiat": {
-  "periodoCode": "NGR",
-  "anio": 1845
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:frederic-masse": {
   "hide": true,
@@ -11928,8 +11928,8 @@
   "_motivo": "academico"
  },
  "persona:frederick-douglass": {
-  "periodoCode": "EUC",
-  "anio": 1870
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:frederick-von-schenck": {
   "periodoCode": "EUC",
@@ -11948,16 +11948,16 @@
   "anio": 1955
  },
  "persona:gabriel-gutierrez-pineres": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gabriel Piñeres\""
  },
  "persona:gabriel-vargas-santos": {
   "periodoCode": "REG",
   "anio": 1900
  },
  "persona:garcia-de-toledo": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José María García de Toledo\""
  },
  "persona:garry-drummond": {
   "periodoCode": "POS",
@@ -11980,7 +11980,7 @@
   "_motivo": "academico"
  },
  "persona:german-espinosa": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:german-gomez-pelaez": {
@@ -12096,8 +12096,8 @@
   "_motivo": "academico"
  },
  "persona:henri-bergson": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:henri-lefebvre": {
   "hide": true,
@@ -12108,8 +12108,8 @@
   "anio": 1990
  },
  "persona:henry-morton-stanley": {
-  "periodoCode": "EUC",
-  "anio": 1875
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:henry-salgado": {
   "hide": true,
@@ -12124,8 +12124,8 @@
   "anio": 1876
  },
  "persona:hermanos-calle-serna": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:hermogenes-mosquera": {
   "periodoCode": "C91",
@@ -12148,8 +12148,8 @@
   "anio": 1920
  },
  "persona:hernando-turbay": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Hernando Turbay Turbay\""
  },
  "persona:heyne-mogollon": {
   "periodoCode": "C91",
@@ -12168,8 +12168,8 @@
   "_motivo": "academico"
  },
  "persona:horacio-serpa-uribe": {
-  "periodoCode": "C91",
-  "anio": 1998
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Horacio Serpa\""
  },
  "persona:hubertus-de-stuers": {
   "periodoCode": "IND",
@@ -12180,8 +12180,8 @@
   "anio": 2005
  },
  "persona:hugo-banzer": {
-  "periodoCode": "CNA",
-  "anio": 1975
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:hugo-palacios-mejia": {
   "periodoCode": "CNA",
@@ -12208,16 +12208,16 @@
   "anio": 1815
  },
  "persona:ignacio-tejada": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ignacio Sánchez de Tejada\""
  },
  "persona:indalecio-lievano": {
   "periodoCode": "EUC",
   "anio": 1870
  },
  "persona:indira-gandhi": {
-  "periodoCode": "CNA",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:ines-de-hinojosa": {
   "periodoCode": "CON",
@@ -12232,24 +12232,24 @@
   "_motivo": "institucion"
  },
  "persona:iosif-stalin": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:isabel-i-de-castilla": {
-  "periodoCode": "PRE",
-  "anio": 1490
+  "hide": true,
+  "_motivo": "duplicado de Isabel la Católica (Conquista)"
  },
  "persona:isaias-medina-angarita": {
-  "periodoCode": "REP_LIB",
-  "anio": 1943
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:isaias-tristancho": {
   "periodoCode": "C91",
   "anio": 1995
  },
  "persona:ivan-roberto-duque-baez": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Iván Roberto Duque\""
  },
  "persona:j-m-ots-capdequi": {
   "hide": true,
@@ -12288,8 +12288,8 @@
   "anio": 1995
  },
  "persona:jaime-caycedo": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jaime Caicedo\""
  },
  "persona:jaime-eduardo-rueda-rocha": {
   "periodoCode": "CNA",
@@ -12300,12 +12300,12 @@
   "anio": 1965
  },
  "persona:jaime-prieto": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jaime Prieto Amaya\""
  },
  "persona:jair-bolsonaro": {
-  "periodoCode": "POS",
-  "anio": 2019
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:james-clifford": {
   "hide": true,
@@ -12340,8 +12340,8 @@
   "_motivo": "academico"
  },
  "persona:jean-jacques-rousseau": {
-  "periodoCode": "COL",
-  "anio": 1760
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:jeronimo-argaez": {
   "periodoCode": "REG",
@@ -12356,8 +12356,8 @@
   "anio": 2014
  },
  "persona:jesus-armando-arias": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jesús Armando Arias Cabrales\""
  },
  "persona:jesus-carvajal": {
   "periodoCode": "REG",
@@ -12412,8 +12412,8 @@
   "anio": 2010
  },
  "persona:john-kerry": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:john-milton-rodriguez": {
   "periodoCode": "POS",
@@ -12484,8 +12484,8 @@
   "_motivo": "academico"
  },
  "persona:jorge-ivan-laverde-zapata": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jorge Iván Laverde\""
  },
  "persona:jorge-lozano-de-peralta": {
   "periodoCode": "PRE_IND",
@@ -12560,8 +12560,8 @@
   "anio": 2000
  },
  "persona:jose-guadalupe-salcedo": {
-  "periodoCode": "VIO",
-  "anio": 1953
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Guadalupe Salcedo\""
  },
  "persona:jose-joaquin-borda": {
   "periodoCode": "EUC",
@@ -12584,12 +12584,12 @@
   "anio": 1820
  },
  "persona:jose-maria-barros": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José María Barros (Chema Bala)\""
  },
  "persona:jose-maria-castillo-y-rada": {
-  "periodoCode": "IND",
-  "anio": 1820
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José María del Castillo y Rada\""
  },
  "persona:jose-maria-estevez": {
   "periodoCode": "IND",
@@ -12616,24 +12616,24 @@
   "anio": 2010
  },
  "persona:jose-mujica": {
-  "periodoCode": "SDE",
-  "anio": 2012
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:jose-noe-rios": {
   "periodoCode": "CNA",
   "anio": 1990
  },
  "persona:jose-solis": {
-  "periodoCode": "COL",
-  "anio": 1760
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José Solís Folch de Cardona\""
  },
  "persona:jose-vicente-ayerbe": {
   "periodoCode": "VIO",
   "anio": 1950
  },
  "persona:josef-de-ezpeleta": {
-  "periodoCode": "PRE_IND",
-  "anio": 1795
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José de Ezpeleta\""
  },
  "persona:joseph-lancaster": {
   "periodoCode": "IND",
@@ -12644,24 +12644,24 @@
   "anio": 1985
  },
  "persona:juan-bautista-alberdi": {
-  "periodoCode": "NGR",
-  "anio": 1855
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:juan-carlos-abadia": {
   "periodoCode": "SDE",
   "anio": 2010
  },
  "persona:juan-carlos-martinez": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan Carlos Martínez Sinisterra\""
  },
  "persona:juan-de-dios-uribe": {
   "periodoCode": "EUC",
   "anio": 1880
  },
  "persona:juan-de-solorzano": {
-  "periodoCode": "CON",
-  "anio": 1620
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:juan-gabriel-vasquez": {
   "periodoCode": "SDE",
@@ -12684,8 +12684,8 @@
   "anio": 2008
  },
  "persona:juan-jose-chaux-mosquera": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan José Chaux\""
  },
  "persona:juan-lozano": {
   "periodoCode": "SDE",
@@ -12700,8 +12700,8 @@
   "anio": 1840
  },
  "persona:juan-pablo-escobar": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Sebastián Marroquín\""
  },
  "persona:juana-camacho": {
   "hide": true,
@@ -12728,8 +12728,8 @@
   "anio": 2010
  },
  "persona:julio-arana": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Julio César Arana\""
  },
  "persona:julio-garavito-armero": {
   "periodoCode": "REG",
@@ -12740,8 +12740,8 @@
   "anio": 1510
  },
  "persona:julissa-mantilla": {
-  "periodoCode": "POS",
-  "anio": 2020
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:junta-militar": {
   "hide": true,
@@ -12768,8 +12768,8 @@
   "_motivo": "academico"
  },
  "persona:klein-yair-mazo": {
-  "periodoCode": "CNA",
-  "anio": 1989
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Yair Klein\""
  },
  "persona:klim": {
   "hide": true,
@@ -12788,8 +12788,8 @@
   "_motivo": "academico"
  },
  "persona:leon-maria-lozano-el-condor": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: duplicado de \"León María Lozano\""
  },
  "persona:leon-xii": {
   "periodoCode": "IND",
@@ -12844,12 +12844,12 @@
   "_motivo": "academico"
  },
  "persona:lucio-gutierrez": {
-  "periodoCode": "C91",
-  "anio": 2003
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:luis-alfonso-plazas-vega": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alfonso Plazas Vega\""
  },
  "persona:luis-alfonso-sanchez": {
   "periodoCode": "REP_LIB",
@@ -12884,8 +12884,8 @@
   "anio": 2015
  },
  "persona:luis-de-gongora": {
-  "periodoCode": "COL",
-  "anio": 1610
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:luis-eduardo-mora-osejo": {
   "hide": true,
@@ -12908,8 +12908,8 @@
   "anio": 2010
  },
  "persona:luis-otero-cifuentes": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Luis Otero\""
  },
  "persona:luis-patino-camargo": {
   "periodoCode": "REG",
@@ -12920,8 +12920,8 @@
   "anio": 2010
  },
  "persona:luis-perez-gutierrez": {
-  "periodoCode": "SDE",
-  "anio": 2016
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Luis Pérez\""
  },
  "persona:luisa-cuellar": {
   "periodoCode": "NGR",
@@ -12964,8 +12964,8 @@
   "anio": 1820
  },
  "persona:manuel-antonio-velandia": {
-  "periodoCode": "CNA",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel Velandia\""
  },
  "persona:manuel-bedoya": {
   "periodoCode": "FN",
@@ -13004,8 +13004,8 @@
   "anio": 1985
  },
  "persona:manuel-marulanda-tirofijo": {
-  "periodoCode": "TRANS",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel Marulanda\""
  },
  "persona:manuel-marzal": {
   "hide": true,
@@ -13020,8 +13020,8 @@
   "anio": 1855
  },
  "persona:manuel-ugarte": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:manuel-ussa": {
   "periodoCode": "REG",
@@ -13060,8 +13060,8 @@
   "anio": 1985
  },
  "persona:marco-avirama": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Marcos Avirama\""
  },
  "persona:marco-tulio-perez-el-oso": {
   "periodoCode": "SDE",
@@ -13076,7 +13076,7 @@
   "_motivo": "ruido"
  },
  "persona:margarita-rosa-de-francisco": {
-  "periodoCode": "TRANS",
+  "periodoCode": "C91",
   "anio": 1990
  },
  "persona:maria-eugenia-urrutia": {
@@ -13116,8 +13116,8 @@
   "_motivo": "academico"
  },
  "persona:marie-poussepin": {
-  "periodoCode": "COL",
-  "anio": 1700
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:marie-danielle-demelas": {
   "hide": true,
@@ -13128,8 +13128,8 @@
   "anio": 2000
  },
  "persona:mario-benedetti": {
-  "periodoCode": "TRANS",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:mario-blaser": {
   "hide": true,
@@ -13156,7 +13156,7 @@
   "anio": 1995
  },
  "persona:marta-rodriguez": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:martha-nieves-ochoa": {
@@ -13256,7 +13256,7 @@
   "anio": 1910
  },
  "persona:miguel-pascuas": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1980
  },
  "persona:milciades-chaves": {
@@ -13272,8 +13272,8 @@
   "_motivo": "institucion"
  },
  "persona:mireya-moscoso": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:miriam-jimeno": {
   "hide": true,
@@ -13296,16 +13296,16 @@
   "_motivo": "academico"
  },
  "persona:monsenor-gerardo-valencia-cano": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gerardo Valencia Cano\""
  },
  "persona:monsenor-hector-epalza": {
   "periodoCode": "SDE",
   "anio": 2010
  },
  "persona:monsenor-jaime-prieto": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jaime Prieto Amaya\""
  },
  "persona:movimiento-civico-del-oriente": {
   "hide": true,
@@ -13328,8 +13328,8 @@
   "anio": 1945
  },
  "persona:nelly-rivas": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:nevaldo-perea": {
   "periodoCode": "C91",
@@ -13340,24 +13340,24 @@
   "anio": 1965
  },
  "persona:nicolas-federman": {
-  "periodoCode": "CON",
-  "anio": 1539
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Nicolás de Federmán\""
  },
  "persona:nicolas-gomez-davila": {
   "periodoCode": "FN",
   "anio": 1970
  },
  "persona:nicolas-guillen": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:nicolas-rincon-gille": {
   "periodoCode": "SDE",
   "anio": 2010
  },
  "persona:nicolas-rodriguez": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Nicolás Rodríguez Bautista\""
  },
  "persona:nina-friedemann": {
   "hide": true,
@@ -13428,8 +13428,8 @@
   "anio": 2010
  },
  "persona:pablo-escobar-gaviria": {
-  "periodoCode": "CNA",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pablo Escobar\""
  },
  "persona:pablo-f-gomez": {
   "hide": true,
@@ -13440,20 +13440,20 @@
   "_motivo": "academico"
  },
  "persona:pacho-galan": {
-  "periodoCode": "REP_LIB",
+  "periodoCode": "VIO",
   "anio": 1955
  },
  "persona:padre-manuel-roman": {
-  "periodoCode": "COL",
-  "anio": 1744
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel Román\""
  },
  "persona:padre-vazquez": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (Frente Nacional (FN, 1958-1974))"
  },
  "persona:pajaro": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:parmenio-cardenas": {
   "periodoCode": "REP_LIB",
@@ -13504,8 +13504,8 @@
   "anio": 1985
  },
  "persona:pedro-aguado": {
-  "periodoCode": "CON",
-  "anio": 1575
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro de Aguado\""
  },
  "persona:pedro-becaria": {
   "periodoCode": "PRE_IND",
@@ -13524,8 +13524,8 @@
   "anio": 1560
  },
  "persona:pedro-juan-moreno-villa": {
-  "periodoCode": "C91",
-  "anio": 1997
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro Juan Moreno\""
  },
  "persona:pedro-leon-arboleda": {
   "periodoCode": "FN",
@@ -13536,16 +13536,16 @@
   "anio": 1795
  },
  "persona:pedro-messia-de-la-cerda": {
-  "periodoCode": "COL",
-  "anio": 1765
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro Mesía de la Cerda\""
  },
  "persona:pedro-nikken": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:pedro-oliverio-guerrero-cuchillo": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro Oliverio Guerrero\""
  },
  "persona:pedro-pablo-camargo": {
   "hide": true,
@@ -13580,8 +13580,8 @@
   "anio": 1989
  },
  "persona:peter-pace": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:pierre-d-espagnat": {
   "periodoCode": "REG",
@@ -13600,8 +13600,8 @@
   "anio": 1875
  },
  "persona:plutarco-elias-calles": {
-  "periodoCode": "REG",
-  "anio": 1925
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:pnud": {
   "hide": true,
@@ -13660,8 +13660,8 @@
   "anio": 2010
  },
  "persona:raul-sendic": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:raul-zibechi": {
   "hide": true,
@@ -13712,7 +13712,7 @@
   "_motivo": "academico"
  },
  "persona:roberto-gerlein": {
-  "periodoCode": "TRANS",
+  "periodoCode": "C91",
   "anio": 1990
  },
  "persona:roberto-gonzalez-echevarria": {
@@ -13732,8 +13732,8 @@
   "anio": 1995
  },
  "persona:rodrigo-garcia-alias-doblecero": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Doble Cero\""
  },
  "persona:rodrigo-mercado-pelufo-cadena": {
   "periodoCode": "SDE",
@@ -13748,8 +13748,8 @@
   "anio": 1995
  },
  "persona:rodriguez-gacha": {
-  "periodoCode": "C91",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gonzalo Rodríguez Gacha\""
  },
  "persona:romana": {
   "periodoCode": "C91",
@@ -13780,20 +13780,20 @@
   "_motivo": "academico"
  },
  "persona:rudolph-hommes": {
-  "periodoCode": "C91",
-  "anio": 1992
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rudolf Hommes\""
  },
  "persona:rufino-cuervo-y-barreto": {
-  "periodoCode": "NGR",
-  "anio": 1845
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rufino Cuervo\""
  },
  "persona:rupert-hand": {
   "periodoCode": "NGR",
   "anio": 1850
  },
  "persona:sabas-pretelt-de-la-vega": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Sabas Pretelt\""
  },
  "persona:saguanmachica": {
   "periodoCode": "PRE",
@@ -13808,7 +13808,7 @@
   "anio": 1795
  },
  "persona:salvo-basile": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1985
  },
  "persona:samuel-ruiz": {
@@ -13824,15 +13824,15 @@
   "_motivo": "academico"
  },
  "persona:sangrenegra": {
-  "periodoCode": "VIO",
-  "anio": 1960
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jacinto Cruz Usma (Sangrenegra)\""
  },
  "persona:santiago-arroyo": {
   "periodoCode": "IND",
   "anio": 1820
  },
  "persona:santiago-martinez-delgado": {
-  "periodoCode": "REG",
+  "periodoCode": "REP_LIB",
   "anio": 1940
  },
  "persona:sara-ordonez": {
@@ -13852,7 +13852,7 @@
   "_motivo": "academico"
  },
  "persona:sergio-restrepo": {
-  "periodoCode": "C91",
+  "periodoCode": "CNA",
   "anio": 1989
  },
  "persona:servio-tulio-sanchez": {
@@ -13928,12 +13928,12 @@
   "_motivo": "academico"
  },
  "persona:subcomandante-marcos": {
-  "periodoCode": "C91",
-  "anio": 1994
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:sumner-welles": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:sutti-ortiz": {
   "hide": true,
@@ -13976,8 +13976,8 @@
   "anio": 2000
  },
  "persona:tila-uribe": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: duplicado de \"María Tila Uribe\""
  },
  "persona:timothy-plowman": {
   "hide": true,
@@ -13996,8 +13996,8 @@
   "anio": 1815
  },
  "persona:toussaint-l-ouverture": {
-  "periodoCode": "PRE_IND",
-  "anio": 1800
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Toussaint Louverture\""
  },
  "persona:trino-luna": {
   "periodoCode": "SDE",
@@ -14044,12 +14044,12 @@
   "_motivo": "institucion"
  },
  "persona:velasco-alvarado": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan Velasco Alvarado\""
  },
  "persona:venustiano-carranza": {
-  "periodoCode": "REG",
-  "anio": 1917
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:vere-gordon-childe": {
   "hide": true,
@@ -14104,8 +14104,8 @@
   "anio": 1914
  },
  "persona:william-walker": {
-  "periodoCode": "NGR",
-  "anio": 1856
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:wilson-borja": {
   "periodoCode": "C91",
@@ -14128,16 +14128,16 @@
   "_motivo": "academico"
  },
  "persona:yesid-reyes-alvarado": {
-  "periodoCode": "SDE",
-  "anio": 2015
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Yesid Reyes\""
  },
  "persona:yolanda-mora-de-jaramillo": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:abdias-do-nascimento": {
-  "periodoCode": "TRANS",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:abdon-espinosa-valderrama": {
   "periodoCode": "FN",
@@ -14148,12 +14148,12 @@
   "anio": 1970
  },
  "persona:abraham-lincoln": {
-  "periodoCode": "NGR",
-  "anio": 1863
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:abraham-ortelius": {
-  "periodoCode": "CON",
-  "anio": 1570
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:accion-cultural-popular": {
   "hide": true,
@@ -14224,8 +14224,8 @@
   "anio": 1870
  },
  "persona:agualongo": {
-  "periodoCode": "IND",
-  "anio": 1823
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Agustín Agualongo\""
  },
  "persona:aguila": {
   "hide": true,
@@ -14252,8 +14252,8 @@
   "_motivo": "institucion"
  },
  "persona:alan-garcia": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:alan-gilbert": {
   "hide": true,
@@ -14280,12 +14280,12 @@
   "anio": 1922
  },
  "persona:albert-kikkert": {
-  "periodoCode": "COL",
-  "anio": 1770
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:albert-niemann": {
-  "periodoCode": "EUC",
-  "anio": 1870
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:alberto-giraldo-jaramillo": {
   "hide": true,
@@ -14336,16 +14336,16 @@
   "_motivo": "academico"
  },
  "persona:alejandro-de-humboldt": {
-  "periodoCode": "PRE_IND",
-  "anio": 1801
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alexander von Humboldt\""
  },
  "persona:alejandro-eder-garces": {
-  "periodoCode": "SDE",
-  "anio": 2015
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alejandro Eder\""
  },
  "persona:alejandro-galvis": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alejandro Galvis Galvis\""
  },
  "persona:alejandro-guidi": {
   "hide": true,
@@ -14376,20 +14376,20 @@
   "_motivo": "academico"
  },
  "persona:alejo-carpentier": {
-  "periodoCode": "TRANS",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:alex-char": {
   "periodoCode": "POS",
   "anio": 2018
  },
  "persona:alexander-chayanov": {
-  "periodoCode": "REG",
-  "anio": 1920
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:alexander-cochrane": {
-  "periodoCode": "PRE_IND",
-  "anio": 1805
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:alexandra-uran": {
   "hide": true,
@@ -14420,12 +14420,12 @@
   "anio": 1985
  },
  "persona:alfonso-patino-roselli": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1960
  },
  "persona:alfonso-reyes": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:alfonso-roman": {
   "periodoCode": "CNA",
@@ -14452,11 +14452,11 @@
   "anio": 1880
  },
  "persona:alfredo-correa": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alfredo Correa de Andréis\""
  },
  "persona:alfredo-di-stefano": {
-  "periodoCode": "TRANS",
+  "periodoCode": "VIO",
   "anio": 1955
  },
  "persona:alfredo-garcia-cadena": {
@@ -14484,20 +14484,20 @@
   "_motivo": "academico"
  },
  "persona:allan-kardec": {
-  "periodoCode": "EUC",
-  "anio": 1860
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:allen-ginsberg": {
-  "periodoCode": "TRANS",
-  "anio": 1960
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:alma-guillermoprieto": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:alonso-de-ercilla": {
-  "periodoCode": "CON",
-  "anio": 1570
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:alonso-de-montesinos": {
   "periodoCode": "CON",
@@ -14528,8 +14528,8 @@
   "_motivo": "academico"
  },
  "persona:alvaro-araujo": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Álvaro Araújo Castro\""
  },
  "persona:alvaro-ashton": {
   "periodoCode": "SDE",
@@ -14552,8 +14552,8 @@
   "_motivo": "academico"
  },
  "persona:alvaro-leyva-duran": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Álvaro Leyva\""
  },
  "persona:alvaro-salazar": {
   "periodoCode": "CNA",
@@ -14628,8 +14628,8 @@
   "anio": 1550
  },
  "persona:andres-maria-rosillo": {
-  "periodoCode": "IND",
-  "anio": 1810
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Andrés Rosillo\""
  },
  "persona:andres-moya": {
   "hide": true,
@@ -14644,8 +14644,8 @@
   "anio": 2005
  },
  "persona:andres-venero-de-leiva": {
-  "periodoCode": "CON",
-  "anio": 1565
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Andrés Díaz Venero de Leiva\""
  },
  "persona:andrew-preston": {
   "hide": true,
@@ -14720,8 +14720,8 @@
   "anio": 1780
  },
  "persona:antonio-de-pedrosa": {
-  "periodoCode": "COL",
-  "anio": 1700
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Antonio de la Pedroza y Guerrero\""
  },
  "persona:antonio-de-vargas": {
   "periodoCode": "COL",
@@ -14840,8 +14840,8 @@
   "anio": 2005
  },
  "persona:ardila-lulle": {
-  "periodoCode": "TRANS",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Ardila Lülle\""
  },
  "persona:arjun-appadurai": {
   "hide": true,
@@ -14856,8 +14856,8 @@
   "anio": 2010
  },
  "persona:armando-norman": {
-  "periodoCode": "REG",
-  "anio": 1920
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Armando Normand\""
  },
  "persona:arnulfo-briceno": {
   "periodoCode": "FN",
@@ -14872,8 +14872,8 @@
   "anio": 2010
  },
  "persona:arthur-de-gobineau": {
-  "periodoCode": "NGR",
-  "anio": 1855
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:arturo-acevedo": {
   "periodoCode": "REP_LIB",
@@ -14924,8 +14924,8 @@
   "anio": 1970
  },
  "persona:athanasius-kircher": {
-  "periodoCode": "COL",
-  "anio": 1650
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:auc-bloque-calima": {
   "hide": true,
@@ -14956,8 +14956,8 @@
   "anio": 1940
  },
  "persona:augusto-roa-bastos": {
-  "periodoCode": "TRANS",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:aurelino-quejada": {
   "periodoCode": "CNA",
@@ -15016,8 +15016,8 @@
   "anio": 1965
  },
  "persona:bartolome-esteban-murillo": {
-  "periodoCode": "COL",
-  "anio": 1660
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:bartolome-salom": {
   "periodoCode": "IND",
@@ -15056,16 +15056,16 @@
   "anio": 1985
  },
  "persona:belisario-betancur-cuartas": {
-  "periodoCode": "CNA",
-  "anio": 1984
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Belisario Betancur\""
  },
  "persona:benedicto-mejia": {
   "periodoCode": "C91",
   "anio": 1995
  },
  "persona:benedicto-xvi": {
-  "periodoCode": "POS",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:benigno-a-gutierrez": {
   "periodoCode": "REG",
@@ -15080,16 +15080,16 @@
   "anio": 1815
  },
  "persona:benjamin-franklin": {
-  "periodoCode": "PRE_IND",
-  "anio": 1780
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:benjamin-saldana-rocca": {
-  "periodoCode": "REG",
-  "anio": 1907
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Benjamín Saldaña Roca\""
  },
  "persona:berito-kuwaru-wa": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Berito Cobaría\""
  },
  "persona:bernard-desjeans-pointis": {
   "periodoCode": "COL",
@@ -15104,16 +15104,16 @@
   "anio": 1820
  },
  "persona:bernardino-de-sahagun": {
-  "periodoCode": "CON",
-  "anio": 1560
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:bernardino-medina": {
   "periodoCode": "EUC",
   "anio": 1875
  },
  "persona:bernardino-rivadavia": {
-  "periodoCode": "IND",
-  "anio": 1826
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:bernardo-arias-trujillo": {
   "periodoCode": "REP_LIB",
@@ -15148,8 +15148,8 @@
   "anio": 1985
  },
  "persona:bernardo-o-higgins": {
-  "periodoCode": "IND",
-  "anio": 1818
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:bernardo-romero-pereiro": {
   "periodoCode": "CNA",
@@ -15196,12 +15196,12 @@
   "anio": 1950
  },
  "persona:blanca-ochoa-de-molina": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Blanca Ochoa\""
  },
  "persona:blasco-nunez-vela": {
-  "periodoCode": "CON",
-  "anio": 1544
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:bloque-catatumbo": {
   "hide": true,
@@ -15292,7 +15292,7 @@
   "anio": 1650
  },
  "persona:cacique-de-bogota": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1537
  },
  "persona:cacique-de-guatavita": {
@@ -15300,7 +15300,7 @@
   "anio": 1490
  },
  "persona:cacique-de-tunja": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1537
  },
  "persona:cacique-taricura": {
@@ -15312,11 +15312,11 @@
   "_motivo": "academico"
  },
  "persona:cajar": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (C91)"
  },
  "persona:calambas": {
-  "periodoCode": "CON",
+  "periodoCode": "PRE",
   "anio": 1540
  },
  "persona:calimas": {
@@ -15328,8 +15328,8 @@
   "anio": 1850
  },
  "persona:camila-vallejo": {
-  "periodoCode": "SDE",
-  "anio": 2011
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:camilo-borrero": {
   "hide": true,
@@ -15352,8 +15352,8 @@
   "anio": 1985
  },
  "persona:camilo-torres-y-tenorio": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Camilo Torres\""
  },
  "persona:campana-colombiana-contra-minas": {
   "hide": true,
@@ -15372,24 +15372,24 @@
   "_motivo": "institucion"
  },
  "persona:caporinche": {
-  "periodoCode": "COL",
-  "anio": 1650
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Cacique Caporinche\""
  },
  "persona:capuchinos": {
   "hide": true,
   "_motivo": "institucion"
  },
  "persona:cardenal-pedro-rubiano": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro Rubiano\""
  },
  "persona:cargill": {
   "hide": true,
   "_motivo": "institucion"
  },
  "persona:carl-lindner": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:carl-luer": {
   "hide": true,
@@ -15456,7 +15456,7 @@
   "anio": 1985
  },
  "persona:carlos-cortes": {
-  "periodoCode": "TRANS",
+  "periodoCode": "VIO",
   "anio": 1950
  },
  "persona:carlos-del-cairo": {
@@ -15472,12 +15472,12 @@
   "anio": 1915
  },
  "persona:carlos-fuentes": {
-  "periodoCode": "TRANS",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:carlos-gardel": {
-  "periodoCode": "REP_LIB",
-  "anio": 1930
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:carlos-gordillo": {
   "periodoCode": "SDE",
@@ -15504,8 +15504,8 @@
   "_motivo": "academico"
  },
  "persona:carlos-lemos": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Lemos Simmonds\""
  },
  "persona:carlos-lopez-castano": {
   "hide": true,
@@ -15544,8 +15544,8 @@
   "anio": 1700
  },
  "persona:carlos-uran": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Carlos Horacio Urán\""
  },
  "persona:carlos-uribe-garzon": {
   "periodoCode": "REP_LIB",
@@ -15576,8 +15576,8 @@
   "_motivo": "ruido"
  },
  "persona:carmen-balcells": {
-  "periodoCode": "TRANS",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:carmenza-cardona-londono": {
   "periodoCode": "CNA",
@@ -15600,8 +15600,8 @@
   "_motivo": "institucion"
  },
  "persona:cecil-rhodes": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:cecilia-alvarez": {
   "periodoCode": "SDE",
@@ -15652,8 +15652,8 @@
   "anio": 2010
  },
  "persona:cesare-beccaria": {
-  "periodoCode": "COL",
-  "anio": 1770
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:cesare-sighinolfi": {
   "periodoCode": "REG",
@@ -15668,8 +15668,8 @@
   "_motivo": "academico"
  },
  "persona:charles-baudelaire": {
-  "periodoCode": "EUC",
-  "anio": 1860
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:charles-clement": {
   "periodoCode": "TRANS",
@@ -15680,8 +15680,8 @@
   "_motivo": "academico"
  },
  "persona:charles-goodyear": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:charles-keiser": {
   "hide": true,
@@ -15704,8 +15704,8 @@
   "anio": 1985
  },
  "persona:chispas": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Teófilo Rojas Chispas\""
  },
  "persona:christian-moreno": {
   "periodoCode": "VIO",
@@ -15720,16 +15720,16 @@
   "_motivo": "academico"
  },
  "persona:christopher-isherwood": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:cielo-gnecco": {
   "periodoCode": "SDE",
   "anio": 2010
  },
  "persona:ciro-angarita-baron": {
-  "periodoCode": "C91",
-  "anio": 1992
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ciro Angarita\""
  },
  "persona:ciro-galindo": {
   "periodoCode": "C91",
@@ -15756,8 +15756,8 @@
   "anio": 1985
  },
  "persona:claude-bernard": {
-  "periodoCode": "EUC",
-  "anio": 1870
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:claude-vericel": {
   "periodoCode": "REP_LIB",
@@ -15768,8 +15768,8 @@
   "_motivo": "academico"
  },
  "persona:clemencia-anmucic": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Clemencia García de Useche\""
  },
  "persona:clemencia-garcia-de-useche": {
   "periodoCode": "C91",
@@ -15996,12 +15996,12 @@
   "_motivo": "institucion"
  },
  "persona:coronel-birgo": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (IND)"
  },
  "persona:coronel-colon": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:corporacion-democracia": {
   "hide": true,
@@ -16032,8 +16032,8 @@
   "anio": 1560
  },
  "persona:cristiano-luque": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Crisanto Luque\""
  },
  "persona:cristina-carrizosa": {
   "periodoCode": "POS",
@@ -16052,8 +16052,8 @@
   "anio": 1700
  },
  "persona:cristobal-de-mosquera-figueroa": {
-  "periodoCode": "COL",
-  "anio": 1700
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Cristóbal de Mosquera\""
  },
  "persona:cristobal-puertas": {
   "periodoCode": "C91",
@@ -16088,8 +16088,8 @@
   "anio": 1875
  },
  "persona:daniel-barrera-barrera": {
-  "periodoCode": "SDE",
-  "anio": 2012
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Daniel Barrera\""
  },
  "persona:daniel-cosio-villegas": {
   "hide": true,
@@ -16148,8 +16148,8 @@
   "anio": 1980
  },
  "persona:dario-castrillon-hoyos": {
-  "periodoCode": "CNA",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Darío Castrillón\""
  },
  "persona:dario-gaitan": {
   "periodoCode": "REG",
@@ -16220,8 +16220,8 @@
   "_motivo": "academico"
  },
  "persona:diana-spencer": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:diario-del-huila": {
   "hide": true,
@@ -16264,12 +16264,12 @@
   "anio": 1995
  },
  "persona:diego-murillo-alias-don-berna": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Don Berna\""
  },
  "persona:diego-murillo-bejarano-don-berna": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Don Berna\""
  },
  "persona:diego-palacio": {
   "periodoCode": "SDE",
@@ -16312,20 +16312,20 @@
   "anio": 1850
  },
  "persona:domingo-de-monteverde": {
-  "periodoCode": "IND",
-  "anio": 1812
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Domingo Monteverde\""
  },
  "persona:domingo-f-sarmiento": {
-  "periodoCode": "NGR",
-  "anio": 1860
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:domingo-rincon": {
   "periodoCode": "CNA",
   "anio": 1985
  },
  "persona:don-luis": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (CNA)"
  },
  "persona:donald-worster": {
   "hide": true,
@@ -16352,8 +16352,8 @@
   "_motivo": "institucion"
  },
  "persona:earl-browder": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:earl-j-hamilton": {
   "hide": true,
@@ -16372,8 +16372,8 @@
   "anio": 2018
  },
  "persona:edgar-fierro": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Edgar Ignacio Fierro\""
  },
  "persona:edgar-morin": {
   "hide": true,
@@ -16436,7 +16436,7 @@
   "anio": 2010
  },
  "persona:eduardo-escobar": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:eduardo-mathieu": {
@@ -16468,8 +16468,8 @@
   "_motivo": "academico"
  },
  "persona:eduardo-santos-montejo": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Eduardo Santos\""
  },
  "persona:eduardo-sarmiento": {
   "hide": true,
@@ -16480,8 +16480,8 @@
   "anio": 1910
  },
  "persona:edwar-cobos-diego-vecino": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Edwar Cobos Téllez\""
  },
  "persona:edward-p-thompson": {
   "hide": true,
@@ -16492,8 +16492,8 @@
   "anio": 1845
  },
  "persona:edward-walter-kemmerer": {
-  "periodoCode": "REG",
-  "anio": 1923
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Edwin Kemmerer\""
  },
  "persona:edwin-carvajal-rodas": {
   "hide": true,
@@ -16604,8 +16604,8 @@
   "anio": 1995
  },
  "persona:emmanuel-serviez": {
-  "periodoCode": "IND",
-  "anio": 1815
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel Serviez\""
  },
  "persona:empresa-urra-s-a": {
   "hide": true,
@@ -16684,8 +16684,8 @@
   "_motivo": "academico"
  },
  "persona:ernesto-cardenal": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:ernesto-cristancho": {
   "periodoCode": "SDE",
@@ -16712,8 +16712,8 @@
   "anio": 1815
  },
  "persona:esteban-gil-borges": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:ester-varela": {
   "periodoCode": "C91",
@@ -16728,8 +16728,8 @@
   "_motivo": "academico"
  },
  "persona:eugene-sue": {
-  "periodoCode": "NGR",
-  "anio": 1845
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:eugenio-baena": {
   "periodoCode": "EUC",
@@ -16760,8 +16760,8 @@
   "_motivo": "academico"
  },
  "persona:ever-veloza-alias-h-h": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Éver Veloza alias HH\""
  },
  "persona:exxon": {
   "hide": true,
@@ -16772,8 +16772,8 @@
   "anio": 1870
  },
  "persona:ezequiel-moreno-y-diaz": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ezequiel Moreno\""
  },
  "persona:ezequiel-vitonas": {
   "periodoCode": "SDE",
@@ -16852,7 +16852,7 @@
   "_motivo": "institucion"
  },
  "persona:fanny-mikey": {
-  "periodoCode": "TRANS",
+  "periodoCode": "C91",
   "anio": 1990
  },
  "persona:farc-frente-vi": {
@@ -16860,20 +16860,20 @@
   "_motivo": "institucion"
  },
  "persona:farouk-yanine": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Farouk Yanine Díaz\""
  },
  "persona:faruk-yanine-diaz": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Farouk Yanine Díaz\""
  },
  "persona:fasol": {
   "hide": true,
   "_motivo": "institucion"
  },
  "persona:fatou-bensouda": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:faustino-gomez": {
   "periodoCode": "FN",
@@ -16908,16 +16908,16 @@
   "_motivo": "institucion"
  },
  "persona:federico-gonzalez-suarez": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:federico-lleras-acosta": {
   "periodoCode": "REG",
   "anio": 1920
  },
  "persona:federico-mayor-zaragoza": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:federico-rios": {
   "hide": true,
@@ -16932,11 +16932,11 @@
   "_motivo": "academico"
  },
  "persona:felipe-guaman-poma": {
-  "periodoCode": "CON",
-  "anio": 1600
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:felipe-lopez-caballero": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1990
  },
  "persona:felipe-paul": {
@@ -16984,12 +16984,12 @@
   "anio": 1991
  },
  "persona:fernando-de-aragon": {
-  "periodoCode": "PRE",
-  "anio": 1490
+  "hide": true,
+  "_motivo": "duplicado de Fernando el Católico (Conquista)"
  },
  "persona:fernando-de-szyszlo": {
-  "periodoCode": "TRANS",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:fernando-del-toro": {
   "periodoCode": "IND",
@@ -17020,8 +17020,8 @@
   "anio": 2018
  },
  "persona:filippo-grandi": {
-  "periodoCode": "POS",
-  "anio": 2020
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:fiscalia": {
   "hide": true,
@@ -17060,8 +17060,8 @@
   "anio": 1820
  },
  "persona:francis-lieber": {
-  "periodoCode": "NGR",
-  "anio": 1860
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:francisco": {
   "hide": true,
@@ -17072,16 +17072,16 @@
   "anio": 1850
  },
  "persona:francisco-bilbao": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:francisco-carmona": {
   "periodoCode": "NGR",
   "anio": 1850
  },
  "persona:francisco-de-orellana": {
-  "periodoCode": "CON",
-  "anio": 1541
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:francisco-de-paula-perez": {
   "periodoCode": "REG",
@@ -17108,8 +17108,8 @@
   "anio": 1700
  },
  "persona:francisco-i": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Papa Francisco\""
  },
  "persona:francisco-javier-zaldua": {
   "periodoCode": "NGR",
@@ -17148,12 +17148,12 @@
   "anio": 1850
  },
  "persona:francois-quesnay": {
-  "periodoCode": "COL",
-  "anio": 1760
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:francois-rene-de-chateaubriand": {
-  "periodoCode": "IND",
-  "anio": 1820
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:frank-b-kellogg": {
   "periodoCode": "REG",
@@ -17184,20 +17184,20 @@
   "anio": 1815
  },
  "persona:fray-juan-de-los-barrios": {
-  "periodoCode": "CON",
-  "anio": 1560
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan de los Barrios\""
  },
  "persona:fray-manuel-de-moya": {
   "periodoCode": "COL",
   "anio": 1700
  },
  "persona:fray-pedro-aguado": {
-  "periodoCode": "CON",
-  "anio": 1575
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro de Aguado\""
  },
  "persona:fray-pedro-de-aguado": {
-  "periodoCode": "CON",
-  "anio": 1575
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro de Aguado\""
  },
  "persona:fray-tomas-ortiz": {
   "periodoCode": "CON",
@@ -17224,8 +17224,8 @@
   "_motivo": "institucion"
  },
  "persona:fulgencio-batista": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:fundacion-ideas-para-la-paz": {
   "hide": true,
@@ -17248,8 +17248,8 @@
   "anio": 1940
  },
  "persona:gabriel-boric": {
-  "periodoCode": "POS",
-  "anio": 2022
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:gabriel-de-torres": {
   "periodoCode": "IND",
@@ -17292,8 +17292,8 @@
   "_motivo": "academico"
  },
  "persona:gaspar-de-carvajal": {
-  "periodoCode": "CON",
-  "anio": 1542
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:gaspar-morcote-rios": {
   "hide": true,
@@ -17308,8 +17308,8 @@
   "anio": 1995
  },
  "persona:george-kennan": {
-  "periodoCode": "FN",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:george-reid-andrews": {
   "hide": true,
@@ -17368,16 +17368,16 @@
   "anio": 1700
  },
  "persona:gerry-adams": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:gerson-arias": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:gertrudis-gomez-de-avellaneda": {
-  "periodoCode": "EUC",
-  "anio": 1860
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:gil-de-cabrera-y-davalos": {
   "periodoCode": "COL",
@@ -17388,8 +17388,8 @@
   "anio": 2003
  },
  "persona:gilberto-echeverri-mejia": {
-  "periodoCode": "SDE",
-  "anio": 2003
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gilberto Echeverri\""
  },
  "persona:gilma-mora-de-tovar": {
   "hide": true,
@@ -17464,8 +17464,8 @@
   "anio": 1550
  },
  "persona:gregorio-vasquez-de-arce": {
-  "periodoCode": "COL",
-  "anio": 1680
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gregorio Vásquez de Arce y Ceballos\""
  },
  "persona:griselda-blanco": {
   "periodoCode": "CNA",
@@ -17484,12 +17484,12 @@
   "_motivo": "institucion"
  },
  "persona:guillermo-abadia": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1950
  },
  "persona:guillermo-abadia-morales": {
-  "periodoCode": "TRANS",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Guillermo Abadía\""
  },
  "persona:guillermo-acevedo-menemene": {
   "hide": true,
@@ -17528,7 +17528,7 @@
   "_motivo": "academico"
  },
  "persona:guillermo-valencia-salgado": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1960
  },
  "persona:guiomar-duenas": {
@@ -17584,16 +17584,16 @@
   "_motivo": "academico"
  },
  "persona:hans-tofte": {
-  "periodoCode": "VIO",
-  "anio": 1952
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:harry-s-truman": {
-  "periodoCode": "VIO",
-  "anio": 1948
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Harry Truman\""
  },
  "persona:hebert-veloza-hh": {
-  "periodoCode": "SDE",
-  "anio": 2003
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Éver Veloza\""
  },
  "persona:hector-albeidis-arboleda": {
   "periodoCode": "SDE",
@@ -17632,32 +17632,32 @@
   "anio": 2018
  },
  "persona:heitor-villa-lobos": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:helena-alviar-garcia": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:helena-blavatsky": {
-  "periodoCode": "EUC",
-  "anio": 1880
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:helena-paez-de-tavera": {
   "periodoCode": "C91",
   "anio": 1995
  },
  "persona:helena-rubinstein": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:henri-christophe": {
-  "periodoCode": "IND",
-  "anio": 1811
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:henri-de-saint-simon": {
-  "periodoCode": "PRE_IND",
-  "anio": 1820
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:henri-pittier": {
   "periodoCode": "REG",
@@ -17708,8 +17708,8 @@
   "_motivo": "academico"
  },
  "persona:heriberto-lazcano": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:heriberto-rivas": {
   "periodoCode": "REP_LIB",
@@ -17724,24 +17724,24 @@
   "_motivo": "institucion"
  },
  "persona:hermann-karsten": {
-  "periodoCode": "REG",
+  "periodoCode": "NGR",
   "anio": 1860
  },
  "persona:hermann-keyserling": {
-  "periodoCode": "REP_LIB",
-  "anio": 1930
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:hermanos-bautista": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (VIO)"
  },
  "persona:hermanos-di-domenico": {
-  "periodoCode": "REG",
-  "anio": 1915
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (REG)"
  },
  "persona:hermanos-nule": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:hermes-corena": {
   "periodoCode": "POS",
@@ -17760,12 +17760,12 @@
   "anio": 2018
  },
  "persona:hernan-mejia": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Hernán Mejía Gutiérrez\""
  },
  "persona:hernan-orozco-castro": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Hernán Orozco\""
  },
  "persona:hernan-quinones-olarte": {
   "periodoCode": "VIO",
@@ -17812,8 +17812,8 @@
   "anio": 1910
  },
  "persona:hernando-santos-castillo": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Hernando Santos\""
  },
  "persona:hipolito-jaramillo": {
   "periodoCode": "REG",
@@ -17824,8 +17824,8 @@
   "anio": 1800
  },
  "persona:hipolito-yrigoyen": {
-  "periodoCode": "REG",
-  "anio": 1920
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:hoffman-philip": {
   "periodoCode": "REG",
@@ -17836,8 +17836,8 @@
   "_motivo": "academico"
  },
  "persona:home-popham": {
-  "periodoCode": "PRE_IND",
-  "anio": 1806
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:horacio-triana": {
   "periodoCode": "SDE",
@@ -17848,8 +17848,8 @@
   "anio": 2018
  },
  "persona:hugo-blanco": {
-  "periodoCode": "CNA",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:hugues-rodriguez-fuentes": {
   "periodoCode": "C91",
@@ -17884,16 +17884,16 @@
   "anio": 1815
  },
  "persona:immanuel-kant": {
-  "periodoCode": "COL",
-  "anio": 1780
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:immanuel-wallerstein": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:inca-garcilaso": {
-  "periodoCode": "CON",
-  "anio": 1580
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:indigenas-kofan": {
   "hide": true,
@@ -17960,8 +17960,8 @@
   "anio": 1989
  },
  "persona:isidro-caballero-delgado": {
-  "periodoCode": "CNA",
-  "anio": 1989
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Isidro Caballero\""
  },
  "persona:isidro-carreno": {
   "periodoCode": "C91",
@@ -17976,8 +17976,8 @@
   "anio": 2018
  },
  "persona:ivan-duque-marquez": {
-  "periodoCode": "POS",
-  "anio": 2019
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Iván Duque\""
  },
  "persona:ivan-gerardo-guerrero": {
   "periodoCode": "C91",
@@ -18024,8 +18024,8 @@
   "anio": 1985
  },
  "persona:jacobo-prias-alape-charronegro": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jacobo Prías Alape\""
  },
  "persona:jacqueline-nova": {
   "periodoCode": "FN",
@@ -18036,12 +18036,12 @@
   "anio": 1995
  },
  "persona:jacques-chirac": {
-  "periodoCode": "TRANS",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:jacques-chonchol": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:jacques-derrida": {
   "hide": true,
@@ -18056,8 +18056,8 @@
   "anio": 1985
  },
  "persona:jaime-balmes": {
-  "periodoCode": "NGR",
-  "anio": 1845
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:jaime-bernal-cuellar": {
   "hide": true,
@@ -18068,12 +18068,12 @@
   "anio": 2018
  },
  "persona:jaime-guaracas": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:jaime-humberto-uzcategui": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jaime Uscátegui\""
  },
  "persona:jaime-lasprilla-villamizar": {
   "periodoCode": "POS",
@@ -18084,8 +18084,8 @@
   "anio": 1985
  },
  "persona:jaime-michelsen": {
-  "periodoCode": "CNA",
-  "anio": 1982
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jaime Michelsen Uribe\""
  },
  "persona:jaime-polania-puyo": {
   "periodoCode": "VIO",
@@ -18136,7 +18136,7 @@
   "anio": 2010
  },
  "persona:jairo-varela": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1990
  },
  "persona:james-blaine": {
@@ -18160,8 +18160,8 @@
   "anio": 1995
  },
  "persona:james-madison": {
-  "periodoCode": "PRE_IND",
-  "anio": 1810
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:james-mina-ballesteros": {
   "periodoCode": "C91",
@@ -18188,7 +18188,7 @@
   "anio": 2020
  },
  "persona:javier-de-nicolo": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1975
  },
  "persona:javier-florez": {
@@ -18196,8 +18196,8 @@
   "anio": 2010
  },
  "persona:javier-giraldo-sj": {
-  "periodoCode": "TRANS",
-  "anio": 1990
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Padre Javier Giraldo\""
  },
  "persona:javier-guerrero-baron": {
   "hide": true,
@@ -18224,8 +18224,8 @@
   "anio": 1840
  },
  "persona:jean-jacques-dessalines": {
-  "periodoCode": "IND",
-  "anio": 1804
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:jefferson-caffery": {
   "periodoCode": "REP_LIB",
@@ -18292,8 +18292,8 @@
   "anio": 1952
  },
  "persona:jesus-maria-oviedo-mariachi": {
-  "periodoCode": "VIO",
-  "anio": 1952
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jesús María Oviedo\""
  },
  "persona:jesus-sanin": {
   "periodoCode": "REP_LIB",
@@ -18308,8 +18308,8 @@
   "_motivo": "academico"
  },
  "persona:joaquim-nabuco": {
-  "periodoCode": "NGR",
-  "anio": 1880
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:joaquin-barriga": {
   "periodoCode": "NGR",
@@ -18332,12 +18332,12 @@
   "anio": 1935
  },
  "persona:joaquin-guzman": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Joaquín El Chapo Guzmán\""
  },
  "persona:joaquin-guzman-loera": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:joaquin-mayorga": {
   "periodoCode": "C91",
@@ -18384,20 +18384,20 @@
   "anio": 1950
  },
  "persona:john-brown": {
-  "periodoCode": "NGR",
-  "anio": 1855
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:john-comaroff": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:john-d-rockefeller": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:john-foster-dulles": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:john-hawkins": {
   "periodoCode": "CON",
@@ -18408,12 +18408,12 @@
   "_motivo": "academico"
  },
  "persona:john-stuart-mill": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:jonathan-powell": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:jong-sung-you": {
   "hide": true,
@@ -18440,8 +18440,8 @@
   "anio": 2010
  },
  "persona:jorge-bergoglio": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Papa Francisco\""
  },
  "persona:jorge-boshell-manrique": {
   "periodoCode": "REP_LIB",
@@ -18516,7 +18516,7 @@
   "anio": 1940
  },
  "persona:jorge-ramirez-ocampo": {
-  "periodoCode": "TRANS",
+  "periodoCode": "CNA",
   "anio": 1980
  },
  "persona:jorge-roa": {
@@ -18548,11 +18548,11 @@
   "anio": 2000
  },
  "persona:jorge-villalonga": {
-  "periodoCode": "COL",
-  "anio": 1720
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jorge de Villalonga\""
  },
  "persona:jorge-villamil": {
-  "periodoCode": "TRANS",
+  "periodoCode": "FN",
   "anio": 1970
  },
  "persona:jorge-w-price": {
@@ -18560,8 +18560,8 @@
   "anio": 1900
  },
  "persona:jose-antonio-aponte": {
-  "periodoCode": "IND",
-  "anio": 1812
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:jose-antonio-beltran": {
   "periodoCode": "C91",
@@ -18604,8 +18604,8 @@
   "anio": 1900
  },
  "persona:jose-de-espeleta": {
-  "periodoCode": "PRE_IND",
-  "anio": 1795
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José de Ezpeleta\""
  },
  "persona:jose-de-fabrega": {
   "periodoCode": "IND",
@@ -18648,8 +18648,8 @@
   "anio": 2010
  },
  "persona:jose-ezequiel-rojas": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ezequiel Rojas\""
  },
  "persona:jose-felix-fuenmayor": {
   "periodoCode": "REP_LIB",
@@ -18688,8 +18688,8 @@
   "anio": 1900
  },
  "persona:jose-ignacio-marquez": {
-  "periodoCode": "NGR",
-  "anio": 1840
+  "hide": true,
+  "_motivo": "QA: duplicado de \"José Ignacio de Márquez\""
  },
  "persona:jose-inocente-fonseca": {
   "periodoCode": "REG",
@@ -18808,12 +18808,12 @@
   "anio": 2018
  },
  "persona:jose-santos-zelaya": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:jose-tadeo-monagas": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:jose-vicente-mogollon": {
   "periodoCode": "C91",
@@ -18836,12 +18836,12 @@
   "anio": 1870
  },
  "persona:joseph-cardijn": {
-  "periodoCode": "TRANS",
-  "anio": 1930
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (TRANS)"
  },
  "persona:joseph-conrad": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:joseph-de-brettes": {
   "periodoCode": "REG",
@@ -18852,16 +18852,16 @@
   "anio": 1700
  },
  "persona:joseph-de-maistre": {
-  "periodoCode": "IND",
-  "anio": 1810
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:joseph-maria-moreno": {
   "periodoCode": "COL",
   "anio": 1750
  },
  "persona:joseph-mccarthy": {
-  "periodoCode": "VIO",
-  "anio": 1953
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:joseph-stiglitz": {
   "hide": true,
@@ -18892,8 +18892,8 @@
   "anio": 1650
  },
  "persona:juan-barros": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:juan-bautista-arizmendi": {
   "periodoCode": "IND",
@@ -18936,8 +18936,8 @@
   "anio": 2012
  },
  "persona:juan-de-herrera": {
-  "periodoCode": "COL",
-  "anio": 1580
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:juan-de-la-cruz-gomez-plata": {
   "periodoCode": "NGR",
@@ -18960,12 +18960,12 @@
   "anio": 1620
  },
  "persona:juan-francisco-gomez": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Kiko Gómez\""
  },
  "persona:juan-francisco-kiko-gomez": {
-  "periodoCode": "SDE",
-  "anio": 2012
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Kiko Gómez\""
  },
  "persona:juan-gabriel-tokatlian": {
   "hide": true,
@@ -18976,16 +18976,16 @@
   "anio": 1995
  },
  "persona:juan-gomez-plata": {
-  "periodoCode": "NGR",
-  "anio": 1840
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan de la Cruz Gómez Plata\""
  },
  "persona:juan-gregorio-palechor": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Gregorio Palechor\""
  },
  "persona:juan-guaido": {
-  "periodoCode": "POS",
-  "anio": 2019
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:juan-guiral-velon": {
   "periodoCode": "CON",
@@ -19012,8 +19012,8 @@
   "anio": 1580
  },
  "persona:juan-lopez-de-palacios-rubios": {
-  "periodoCode": "CON",
-  "anio": 1512
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:juan-luis-isaza": {
   "periodoCode": "SDE",
@@ -19028,8 +19028,8 @@
   "anio": 1900
  },
  "persona:juan-manuel-de-rosas": {
-  "periodoCode": "NGR",
-  "anio": 1840
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:juan-manuel-fernandez": {
   "periodoCode": "SDE",
@@ -19056,12 +19056,12 @@
   "anio": 1590
  },
  "persona:juan-pablo-rodriguez": {
-  "periodoCode": "SDE",
-  "anio": 2015
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan Pablo Rodríguez Barragán\""
  },
  "persona:juan-ramon-matta-ballesteros": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:juan-ruiz-de-orejuela": {
   "periodoCode": "CON",
@@ -19072,8 +19072,8 @@
   "anio": 1985
  },
  "persona:juan-valcarcel": {
-  "periodoCode": "COL",
-  "anio": 1700
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan de Valcárcel\""
  },
  "persona:juan-zapata-olivella": {
   "periodoCode": "CNA",
@@ -19088,8 +19088,8 @@
   "_motivo": "academico"
  },
  "persona:juana-ines-de-la-cruz": {
-  "periodoCode": "COL",
-  "anio": 1680
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Sor Juana Inés de la Cruz\""
  },
  "persona:juco": {
   "hide": true,
@@ -19128,8 +19128,8 @@
   "anio": 1910
  },
  "persona:julio-antonio-mella": {
-  "periodoCode": "REG",
-  "anio": 1925
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:julio-bertin": {
   "periodoCode": "EUC",
@@ -19196,12 +19196,12 @@
   "anio": 1900
  },
  "persona:justo-pastor-perafan": {
-  "periodoCode": "SDE",
+  "periodoCode": "CNA",
   "anio": 2000
  },
  "persona:justo-sierra": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:justus-schottelius": {
   "periodoCode": "REP_LIB",
@@ -19220,7 +19220,7 @@
   "_motivo": "academico"
  },
  "persona:karina-elda-neyis-mosquera": {
-  "periodoCode": "CNA",
+  "periodoCode": "SDE",
   "anio": 2005
  },
  "persona:karina-elda-neyis": {
@@ -19232,8 +19232,8 @@
   "anio": 1965
  },
  "persona:karl-haushofer": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:karl-polanyi": {
   "hide": true,
@@ -19260,8 +19260,8 @@
   "anio": 1990
  },
  "persona:lara-bonilla": {
-  "periodoCode": "CNA",
-  "anio": 1984
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Lara Bonilla\""
  },
  "persona:larissa-brewer-garcia": {
   "hide": true,
@@ -19300,8 +19300,8 @@
   "anio": 1970
  },
  "persona:leopoldo-ii": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:leopoldo-mora": {
   "periodoCode": "VIO",
@@ -19340,8 +19340,8 @@
   "_motivo": "academico"
  },
  "persona:liliana-uv": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:lina-cahuasqui": {
   "periodoCode": "C91",
@@ -19352,8 +19352,8 @@
   "_motivo": "academico"
  },
  "persona:lino-hernando-sanchez": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Lino Sánchez\""
  },
  "persona:litsy": {
   "hide": true,
@@ -19364,20 +19364,20 @@
   "anio": 1995
  },
  "persona:lobo-d-almada": {
-  "periodoCode": "COL",
-  "anio": 1780
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:lola-g-luna": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:lord-palmerston": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:lord-wellesley": {
-  "periodoCode": "PRE_IND",
-  "anio": 1800
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (PRE_IND)"
  },
  "persona:loren-miller": {
   "hide": true,
@@ -19400,20 +19400,20 @@
   "_motivo": "institucion"
  },
  "persona:louis-ducoudray-holstein": {
-  "periodoCode": "IND",
-  "anio": 1820
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ducoudray Holstein\""
  },
  "persona:louis-lebret": {
-  "periodoCode": "FN",
-  "anio": 1960
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Louis-Joseph Lebret\""
  },
  "persona:louise-fawcett": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:luc-besson": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:lucas-caballero-calderon": {
   "periodoCode": "FN",
@@ -19468,8 +19468,8 @@
   "anio": 2018
  },
  "persona:luis-aury": {
-  "periodoCode": "IND",
-  "anio": 1818
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Louis Aury\""
  },
  "persona:luis-bernal": {
   "periodoCode": "EUC",
@@ -19480,16 +19480,16 @@
   "_motivo": "academico"
  },
  "persona:luis-carlos-galan-sarmiento": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Luis Carlos Galán\""
  },
  "persona:luis-carlos-galvis-salazar": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:luis-carlos-prestes": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:luis-cuervo-marquez": {
   "periodoCode": "REG",
@@ -19524,7 +19524,7 @@
   "anio": 2012
  },
  "persona:luis-francisco-cuellar": {
-  "periodoCode": "C91",
+  "periodoCode": "SDE",
   "anio": 2009
  },
  "persona:luis-ignacio-andrade": {
@@ -19580,12 +19580,12 @@
   "_motivo": "institucion"
  },
  "persona:madre-francisca-josefa-de-castillo": {
-  "periodoCode": "COL",
-  "anio": 1700
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Francisca Josefa de Castillo\""
  },
  "persona:madre-laura-montoya": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Laura Montoya Upegui\""
  },
  "persona:madres-de-falsos-positivos": {
   "hide": true,
@@ -19600,8 +19600,8 @@
   "anio": 1940
  },
  "persona:mahatma-gandhi": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:mama-transito-buesaquillo": {
   "periodoCode": "POS",
@@ -19652,8 +19652,8 @@
   "anio": 1995
  },
  "persona:manuel-grisales": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel María Grisales\""
  },
  "persona:manuel-h-pena": {
   "periodoCode": "NGR",
@@ -19664,12 +19664,12 @@
   "anio": 1855
  },
  "persona:manuel-jose-caicedo": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel José Caycedo\""
  },
  "persona:manuel-jose-cayzedo": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel José Caycedo\""
  },
  "persona:manuel-jose-cepeda-espinosa": {
   "periodoCode": "C91",
@@ -19680,8 +19680,8 @@
   "_motivo": "academico"
  },
  "persona:manuel-jose-quintin-lame": {
-  "periodoCode": "REG",
-  "anio": 1915
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel Quintín Lame\""
  },
  "persona:manuel-josef-de-escobar": {
   "periodoCode": "COL",
@@ -19724,12 +19724,12 @@
   "anio": 1910
  },
  "persona:manuel-perez-eln": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuel Pérez\""
  },
  "persona:manuel-picornell": {
-  "periodoCode": "PRE_IND",
-  "anio": 1800
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Juan Bautista Picornell\""
  },
  "persona:manuel-pulido": {
   "periodoCode": "IND",
@@ -19768,20 +19768,20 @@
   "anio": 1800
  },
  "persona:manuel-trino-morales": {
-  "periodoCode": "FN",
-  "anio": 1971
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Trino Morales\""
  },
  "persona:manuel-velez-barrientos": {
   "periodoCode": "EUC",
   "anio": 1875
  },
  "persona:manuel-zelaya": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:manuelita-saenz": {
-  "periodoCode": "IND",
-  "anio": 1825
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Manuela Sáenz\""
  },
  "persona:manzano": {
   "hide": true,
@@ -19812,8 +19812,8 @@
   "anio": 1910
  },
  "persona:marcelo-odebrecht": {
-  "periodoCode": "POS",
-  "anio": 2016
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:marcelo-pakman": {
   "hide": true,
@@ -19828,8 +19828,8 @@
   "anio": 1910
  },
  "persona:marco-tulio-perez": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Marco Tulio Pérez El Oso\""
  },
  "persona:marcos-bambaque": {
   "periodoCode": "REG",
@@ -19840,8 +19840,8 @@
   "anio": 2010
  },
  "persona:marcos-mcgrath": {
-  "periodoCode": "FN",
-  "anio": 1968
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:marcus-kurtz": {
   "hide": true,
@@ -19872,8 +19872,8 @@
   "anio": 1985
  },
  "persona:margoth-epinayu": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Margoth Fince Epinayú\""
  },
  "persona:maria-angela-holguin": {
   "periodoCode": "SDE",
@@ -19972,8 +19972,8 @@
   "anio": 1841
  },
  "persona:maria-moliner": {
-  "periodoCode": "REP_LIB",
-  "anio": 1940
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:maria-ofelia-restrepo": {
   "hide": true,
@@ -20048,8 +20048,8 @@
   "anio": 1995
  },
  "persona:mario-firmenich": {
-  "periodoCode": "CNA",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:mario-florez": {
   "periodoCode": "C91",
@@ -20172,16 +20172,16 @@
   "anio": 2010
  },
  "persona:max-factor": {
-  "periodoCode": "REP_LIB",
-  "anio": 1930
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:maximiliano-bonilla": {
   "periodoCode": "SDE",
   "anio": 2010
  },
  "persona:maximiliano-bonilla-valenciano": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Maximiliano Bonilla\""
  },
  "persona:maximo-calvo": {
   "periodoCode": "REG",
@@ -20216,8 +20216,8 @@
   "_motivo": "institucion"
  },
  "persona:meyer-lansky": {
-  "periodoCode": "VIO",
-  "anio": 1950
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:michael-hartmann": {
   "hide": true,
@@ -20236,8 +20236,8 @@
   "anio": 2010
  },
  "persona:miguel-achury-penuela": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Miguel Achury\""
  },
  "persona:miguel-angel-centeno": {
   "hide": true,
@@ -20252,16 +20252,16 @@
   "anio": 1910
  },
  "persona:miguel-de-la-madrid": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:miguel-fornaguera": {
   "periodoCode": "FN",
   "anio": 1965
  },
  "persona:miguel-hidalgo": {
-  "periodoCode": "IND",
-  "anio": 1810
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:miguel-lopez-pumarejo": {
   "periodoCode": "REP_LIB",
@@ -20272,8 +20272,8 @@
   "anio": 2010
  },
  "persona:miguel-triana-ruiz-de-cote": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Miguel Triana\""
  },
  "persona:mijail-bajtin": {
   "hide": true,
@@ -20300,8 +20300,8 @@
   "_motivo": "institucion"
  },
  "persona:minor-c-keith": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Minor Keith\""
  },
  "persona:mision-claretiana": {
   "hide": true,
@@ -20340,8 +20340,8 @@
   "anio": 1995
  },
  "persona:monsenor-pedro-rubiano": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Pedro Rubiano\""
  },
  "persona:monterrey-forestal": {
   "hide": true,
@@ -20368,8 +20368,8 @@
   "_motivo": "institucion"
  },
  "persona:mutsuhito-meiji": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:nacho-vives": {
   "periodoCode": "FN",
@@ -20388,8 +20388,8 @@
   "_motivo": "academico"
  },
  "persona:nancy-pelosi": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:naomi-klein": {
   "hide": true,
@@ -20416,8 +20416,8 @@
   "anio": 1985
  },
  "persona:nele-kantule": {
-  "periodoCode": "REP_LIB",
-  "anio": 1925
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:nelson-restrepo": {
   "periodoCode": "SDE",
@@ -20444,16 +20444,16 @@
   "anio": 1995
  },
  "persona:neyla-soto-ruiz": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Neyla Soto\""
  },
  "persona:nicolas-de-bari-hermoza": {
-  "periodoCode": "FN",
-  "anio": 1993
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:nicolas-federmann": {
-  "periodoCode": "CON",
-  "anio": 1538
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Nicolás de Federmán\""
  },
  "persona:nicolas-hernandez": {
   "periodoCode": "SDE",
@@ -20468,16 +20468,16 @@
   "anio": 1940
  },
  "persona:nicolas-sarkozy": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:nigeria-renteria": {
   "periodoCode": "POS",
   "anio": 2017
  },
  "persona:nikolaus-federmann": {
-  "periodoCode": "CON",
-  "anio": 1538
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Nicolás de Federmán\""
  },
  "persona:nina-de-friedemann": {
   "hide": true,
@@ -20496,8 +20496,8 @@
   "_motivo": "institucion"
  },
  "persona:octavio-paz": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:octavio-ramirez": {
   "periodoCode": "CNA",
@@ -20528,20 +20528,20 @@
   "anio": 1965
  },
  "persona:oliverio-lara-borrero": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Oliverio Lara\""
  },
  "persona:olivier-ihl": {
   "hide": true,
   "_motivo": "academico"
  },
  "persona:olivier-megaton": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:omaira-montoya-henao": {
-  "periodoCode": "CNA",
-  "anio": 1977
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Omaira Montoya\""
  },
  "persona:omar-franco": {
   "periodoCode": "C91",
@@ -20568,7 +20568,7 @@
   "_motivo": "institucion"
  },
  "persona:orlando-sierra": {
-  "periodoCode": "SDE",
+  "periodoCode": "C91",
   "anio": 2002
  },
  "persona:orlando-valencia": {
@@ -20600,8 +20600,8 @@
   "anio": 1995
  },
  "persona:oscar-r-benavides": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Óscar Benavides\""
  },
  "persona:osvaldo-valdes": {
   "periodoCode": "VIO",
@@ -20612,8 +20612,8 @@
   "anio": 1995
  },
  "persona:otoniel-dairo-antonio-usuga": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Otoniel\""
  },
  "persona:p-l-bell": {
   "hide": true,
@@ -20652,16 +20652,16 @@
   "anio": 1700
  },
  "persona:padre-sterling-londono": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:padre-vicente": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (C91)"
  },
  "persona:pan-de-leche": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (NGR)"
  },
  "persona:paola-galindo": {
   "periodoCode": "SDE",
@@ -20672,8 +20672,8 @@
   "anio": 2010
  },
  "persona:papa-alejandro-vi": {
-  "periodoCode": "CON",
-  "anio": 1495
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Alejandro VI\""
  },
  "persona:pascual-enrile": {
   "periodoCode": "IND",
@@ -20740,8 +20740,8 @@
   "anio": 1630
  },
  "persona:paula-marcela-moreno": {
-  "periodoCode": "SDE",
-  "anio": 2008
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Paula Moreno\""
  },
  "persona:pauline-boss": {
   "hide": true,
@@ -20780,7 +20780,7 @@
   "anio": 1815
  },
  "persona:pedro-arguello": {
-  "periodoCode": "PRE",
+  "periodoCode": "CON",
   "anio": 1490
  },
  "persona:pedro-briceno": {
@@ -20800,8 +20800,8 @@
   "anio": 1550
  },
  "persona:pedro-de-la-gasca": {
-  "periodoCode": "CON",
-  "anio": 1550
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:pedro-de-saucedo": {
   "periodoCode": "CON",
@@ -20828,8 +20828,8 @@
   "anio": 1600
  },
  "persona:pedro-i-de-brasil": {
-  "periodoCode": "IND",
-  "anio": 1822
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:pedro-jose-amaranto": {
   "periodoCode": "IND",
@@ -20932,16 +20932,16 @@
   "anio": 1815
  },
  "persona:pierre-kropotkin": {
-  "periodoCode": "REG",
-  "anio": 1890
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:pietro-gori": {
-  "periodoCode": "REG",
-  "anio": 1900
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:pietro-parolin": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:pietro-tenerani": {
   "periodoCode": "NGR",
@@ -20956,8 +20956,8 @@
   "_motivo": "ruido"
  },
  "persona:popeye": {
-  "periodoCode": "CNA",
-  "anio": 1988
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Jhon Jairo Velásquez\""
  },
  "persona:procurador-general": {
   "hide": true,
@@ -21024,8 +21024,8 @@
   "anio": 1925
  },
  "persona:rafael-caro-quintero": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:rafael-del-castillo": {
   "periodoCode": "REG",
@@ -21052,8 +21052,8 @@
   "anio": 1970
  },
  "persona:rafael-maria-baralt": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (NGR)"
  },
  "persona:rafael-navarro-y-eusse": {
   "periodoCode": "REG",
@@ -21076,8 +21076,8 @@
   "anio": 1985
  },
  "persona:ramiro-vanoy-cuco": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ramiro Vanoy\""
  },
  "persona:ramon-emilio-arcila": {
   "periodoCode": "CNA",
@@ -21108,8 +21108,8 @@
   "anio": 2010
  },
  "persona:raul-roa": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:raul-varela-martinez": {
   "periodoCode": "REP_LIB",
@@ -21144,8 +21144,8 @@
   "anio": 2010
  },
  "persona:reinhard-gehlen": {
-  "periodoCode": "VIO",
-  "anio": 1955
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (VIO)"
  },
  "persona:remedios-fajardo": {
   "periodoCode": "CNA",
@@ -21184,8 +21184,8 @@
   "_motivo": "institucion"
  },
  "persona:reyes-catolicos": {
-  "periodoCode": "CON",
-  "anio": 1492
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (CON)"
  },
  "persona:reyes-gonzalez": {
   "periodoCode": "REG",
@@ -21212,8 +21212,8 @@
   "anio": 1995
  },
  "persona:ricardo-tobon": {
-  "periodoCode": "POS",
-  "anio": 2018
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ricardo Tobón Restrepo\""
  },
  "persona:richard": {
   "hide": true,
@@ -21228,8 +21228,8 @@
   "anio": 1855
  },
  "persona:rigo-tovar": {
-  "periodoCode": "FN",
-  "anio": 1975
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:rigoberto-quintero": {
   "periodoCode": "CNA",
@@ -21272,8 +21272,8 @@
   "_motivo": "academico"
  },
  "persona:roberto-cobaria": {
-  "periodoCode": "C91",
-  "anio": 1995
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Berito Cobaría\""
  },
  "persona:roberto-cortazar": {
   "hide": true,
@@ -21300,8 +21300,8 @@
   "anio": 2010
  },
  "persona:roderick-hills": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:rodolfo-campo-soto": {
   "periodoCode": "SDE",
@@ -21316,8 +21316,8 @@
   "anio": 1985
  },
  "persona:rodolfo-walsh": {
-  "periodoCode": "FN",
-  "anio": 1970
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:rodrigo-botero-montoya": {
   "periodoCode": "FN",
@@ -21344,16 +21344,16 @@
   "anio": 2010
  },
  "persona:rodrigo-lara": {
-  "periodoCode": "CNA",
-  "anio": 1984
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Lara Bonilla\""
  },
  "persona:rodrigo-lara-restrepo": {
   "periodoCode": "SDE",
   "anio": 2010
  },
  "persona:rodrigo-mercado-peluffo": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Mercado Pelufo (Cadena)\""
  },
  "persona:rodrigo-pardo-dasmarinas": {
   "periodoCode": "CON",
@@ -21368,8 +21368,8 @@
   "anio": 1595
  },
  "persona:rodrigo-tovar-jorge-40": {
-  "periodoCode": "SDE",
-  "anio": 2005
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rodrigo Tovar Pupo\""
  },
  "persona:rogelio-testimonio": {
   "hide": true,
@@ -21380,8 +21380,8 @@
   "anio": 1910
  },
  "persona:romulo-gallegos": {
-  "periodoCode": "REG",
-  "anio": 1925
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:ronald-dworkin": {
   "hide": true,
@@ -21392,8 +21392,8 @@
   "_motivo": "academico"
  },
  "persona:rosa-de-lima": {
-  "periodoCode": "COL",
-  "anio": 1610
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:rosa-elena-toconas": {
   "periodoCode": "C91",
@@ -21448,16 +21448,16 @@
   "_motivo": "academico"
  },
  "persona:rufino-blanco-fombona": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:rufino-gutierrez": {
   "periodoCode": "NGR",
   "anio": 1850
  },
  "persona:ruggero-deodato": {
-  "periodoCode": "CNA",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:ruperto-ferreira": {
   "periodoCode": "REG",
@@ -21468,7 +21468,7 @@
   "_motivo": "academico"
  },
  "persona:sady-gonzalez": {
-  "periodoCode": "REP_LIB",
+  "periodoCode": "VIO",
   "anio": 1948
  },
  "persona:salomon-brainski": {
@@ -21488,8 +21488,8 @@
   "anio": 1995
  },
  "persona:salomon-lozano": {
-  "periodoCode": "REP_LIB",
-  "anio": 1935
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:samuel-jaramillo": {
   "hide": true,
@@ -21528,7 +21528,7 @@
   "anio": 2000
  },
  "persona:sandra-viviana-cuellar": {
-  "periodoCode": "C91",
+  "periodoCode": "SDE",
   "anio": 2011
  },
  "persona:sandro-perez": {
@@ -21560,8 +21560,8 @@
   "anio": 2000
  },
  "persona:santiago-uribe-velez": {
-  "periodoCode": "SDE",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Santiago Uribe\""
  },
  "persona:santos-cifuentes": {
   "periodoCode": "REG",
@@ -21596,8 +21596,8 @@
   "anio": 1790
  },
  "persona:sebastian-lopez-ruiz": {
-  "periodoCode": "PRE_IND",
-  "anio": 1790
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Sebastián José López Ruiz\""
  },
  "persona:sebastian-romero-acosta": {
   "periodoCode": "REG",
@@ -21720,16 +21720,16 @@
   "anio": 1940
  },
  "persona:sor-concepcion-ospina-vasquez": {
-  "periodoCode": "REG",
-  "anio": 1910
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Concepción Ospina Vásquez\""
  },
  "persona:sor-francisca-josefa-de-castillo": {
-  "periodoCode": "COL",
-  "anio": 1700
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Francisca Josefa de Castillo\""
  },
  "persona:sor-francisca-josefa-del-castillo": {
-  "periodoCode": "COL",
-  "anio": 1700
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Francisca Josefa de Castillo\""
  },
  "persona:soraima-gonzalez": {
   "hide": true,
@@ -21776,8 +21776,8 @@
   "anio": 2018
  },
  "persona:taita-rafael": {
-  "periodoCode": "TRANS",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: ruido/no-persona (TRANS)"
  },
  "persona:talcott-parsons": {
   "hide": true,
@@ -21808,12 +21808,12 @@
   "anio": 1950
  },
  "persona:teresa-de-avila": {
-  "periodoCode": "CON",
-  "anio": 1570
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:teresa-de-jesus": {
-  "periodoCode": "CON",
-  "anio": 1570
+  "hide": true,
+  "_motivo": "fuera de ámbito (no neogranadino)"
  },
  "persona:teresa-yarce": {
   "periodoCode": "SDE",
@@ -21840,28 +21840,28 @@
   "anio": 1900
  },
  "persona:thomas-hobbes": {
-  "periodoCode": "COL",
-  "anio": 1650
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (COL)"
  },
  "persona:thomas-jefferson": {
-  "periodoCode": "IND",
-  "anio": 1800
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (IND)"
  },
  "persona:thomas-mann": {
-  "periodoCode": "REP_LIB",
-  "anio": 1930
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (República Liberal (1930-1946) — REP_LIB)"
  },
  "persona:thomas-wenski": {
-  "periodoCode": "POS",
-  "anio": 2015
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (POS)"
  },
  "persona:thomas-whiffen": {
   "periodoCode": "REG",
   "anio": 1908
  },
  "persona:timothy-leary": {
-  "periodoCode": "FN",
-  "anio": 1965
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (Frente Nacional (FN, 1958-1974))"
  },
  "persona:timothy-wickham-crowley": {
   "hide": true,
@@ -21880,16 +21880,16 @@
   "_motivo": "academico"
  },
  "persona:tomas-reed": {
-  "periodoCode": "NGR",
-  "anio": 1850
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Thomas Reed\""
  },
  "persona:tomasico-aguirre": {
   "periodoCode": "IND",
   "anio": 1815
  },
  "persona:tony-blair": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (C91)"
  },
  "persona:trabajadores-bananeros": {
   "hide": true,
@@ -21908,7 +21908,7 @@
   "anio": 1965
  },
  "persona:tulio-botero-salazar": {
-  "periodoCode": "REG",
+  "periodoCode": "FN",
   "anio": 1960
  },
  "persona:tyrrel-moore": {
@@ -21928,8 +21928,8 @@
   "anio": 1910
  },
  "persona:umberto-lenzi": {
-  "periodoCode": "CNA",
-  "anio": 1980
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (CNA)"
  },
  "persona:unidad-victimas": {
   "hide": true,
@@ -21960,16 +21960,16 @@
   "_motivo": "institucion"
  },
  "persona:v-i-lenin": {
-  "periodoCode": "REG",
-  "anio": 1917
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:valentin-arcia": {
   "periodoCode": "IND",
   "anio": 1815
  },
  "persona:valeriano-weyler": {
-  "periodoCode": "REG",
-  "anio": 1895
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (REG)"
  },
  "persona:verdad-abierta": {
   "hide": true,
@@ -22000,8 +22000,8 @@
   "anio": 1810
  },
  "persona:vicente-fox": {
-  "periodoCode": "SDE",
-  "anio": 2003
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:vicente-olarte-camacho": {
   "periodoCode": "REG",
@@ -22044,8 +22044,8 @@
   "anio": 1995
  },
  "persona:victor-suarez-mono-jojoy": {
-  "periodoCode": "SDE",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Víctor Julio Suárez\""
  },
  "persona:victor-tokman": {
   "hide": true,
@@ -22080,8 +22080,8 @@
   "_motivo": "academico"
  },
  "persona:walter-fratini": {
-  "periodoCode": "CNA",
-  "anio": 1985
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Walter Frattini Lobascio\""
  },
  "persona:walter-gaviria": {
   "periodoCode": "SDE",
@@ -22108,16 +22108,16 @@
   "_motivo": "academico"
  },
  "persona:william-angel-aranguren": {
-  "periodoCode": "FN",
-  "anio": 1962
+  "hide": true,
+  "_motivo": "QA: duplicado de \"William Aranguren 'Desquite'\""
  },
  "persona:william-angel-aranguren-desquite": {
-  "periodoCode": "FN",
-  "anio": 1962
+  "hide": true,
+  "_motivo": "QA: duplicado de \"William Aranguren 'Desquite'\""
  },
  "persona:william-gladstone": {
-  "periodoCode": "EUC",
-  "anio": 1870
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (EUC)"
  },
  "persona:william-mauricio-beltran": {
   "hide": true,
@@ -22152,8 +22152,8 @@
   "anio": 1970
  },
  "persona:william-wood": {
-  "periodoCode": "SDE",
-  "anio": 2010
+  "hide": true,
+  "_motivo": "QA: fuera de la historia colombiana (SDE — Seguridad Democrática (2002-2016))"
  },
  "persona:wilson-castaneda": {
   "periodoCode": "CNA",
@@ -22242,5 +22242,41 @@
  "persona:zulema-jattin": {
   "periodoCode": "SDE",
   "anio": 2010
+ },
+ "lugar:tierradentro": {
+  "periodoCode": "PRE"
+ },
+ "lugar:san-agustin": {
+  "periodoCode": "PRE"
+ },
+ "lugar:hunza": {
+  "periodoCode": "PRE"
+ },
+ "lugar:bacata": {
+  "periodoCode": "PRE"
+ },
+ "lugar:ciudad-perdida": {
+  "periodoCode": "PRE"
+ },
+ "lugar:altiplano-muisca": {
+  "periodoCode": "PRE"
+ },
+ "lugar:guatavita": {
+  "periodoCode": "PRE"
+ },
+ "idea:cacicazgo-muisca": {
+  "periodoCode": "PRE"
+ },
+ "idea:confederacion-muisca": {
+  "periodoCode": "PRE"
+ },
+ "idea:camellones-zenues": {
+  "periodoCode": "PRE"
+ },
+ "idea:el-dorado": {
+  "periodoCode": "PRE"
+ },
+ "idea:calendario-muisca": {
+  "periodoCode": "PRE"
  }
 }
