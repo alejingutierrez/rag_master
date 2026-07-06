@@ -4,6 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader, FilterTabs, SearchInput, primaryBtn, ghostBtn } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
+import type { LongitudId } from "@/lib/atelier-formats";
+import {
+  SERIES_DEFAULT_LONGITUD,
+  SERIES_REQUIRE_IMAGE,
+  evaluateSeriesPoll,
+} from "@/lib/atelier/series";
 import {
   fichaFormatForKind,
   kindLabel,
@@ -22,7 +28,7 @@ import { fmtYearSpan } from "@/components/timeline/TimelineEventDrawer";
 // que rellena los cupos vive en el cliente (cada pieza corre server-side).
 // ─────────────────────────────────────────────────────────────────────────────
 
-type RunStatus = "idle" | "queued" | "running" | "done" | "error";
+type RunStatus = "idle" | "queued" | "running" | "imaging" | "done" | "error";
 
 interface SerieItem {
   key: string;
@@ -42,6 +48,12 @@ const KINDS: { kind: SourceKind; label: string }[] = [
   { kind: "hecho", label: "Hechos" },
   { kind: "entidad", label: "Entidades" },
   { kind: "epoca", label: "Épocas" },
+];
+
+const LONGITUDES: { value: LongitudId; label: string }[] = [
+  { value: "compacta", label: "Compacta" },
+  { value: "normal", label: "Normal" },
+  { value: "extensa", label: "Extensa" },
 ];
 
 /** Concatena varias páginas de un endpoint paginado (cap defensivo). */
@@ -135,6 +147,8 @@ export default function SeriePage() {
   const [hideProduced, setHideProduced] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [concurrency, setConcurrency] = useState(3);
+  const [longitud, setLongitud] = useState<LongitudId>(SERIES_DEFAULT_LONGITUD);
+  const [requireImage, setRequireImage] = useState(SERIES_REQUIRE_IMAGE);
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState<Record<string, RunStatus>>({});
   const cancelRef = useRef(false);
@@ -197,7 +211,7 @@ export default function SeriePage() {
           const r = await fetch(`/api/preguntas-madre/${item.key}/produce`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ formatId: "ficha-pregunta" }),
+            body: JSON.stringify({ formatId: "ficha-pregunta", longitud }),
           });
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           deliverableId = (await r.json()).deliverableId;
@@ -208,7 +222,7 @@ export default function SeriePage() {
             body: JSON.stringify({
               intent: item.intent,
               formatId: fichaFormatForKind(kind),
-              longitud: "normal",
+              longitud,
               sourceRef: { kind, key: item.key, label: item.label },
               questionId: kind === "pregunta" ? item.key : undefined,
             }),
@@ -221,20 +235,45 @@ export default function SeriePage() {
         }
         if (!deliverableId) throw new Error("sin deliverableId");
 
-        // Poll hasta COMPLETE/ERROR (las piezas tardan varios minutos).
+        let imageKickoffStarted = false;
+        let imageRetries = 0;
+
+        // Poll hasta COMPLETE/ERROR; si la serie exige portada, espera también
+        // metadata.image ok o imageUrl/imageKey persistidos.
         for (;;) {
           if (cancelRef.current) return; // se cortó: deja de esperar (la pieza sigue server-side)
           await new Promise((res) => setTimeout(res, 5000));
           const pr = await fetch(`/api/deliverables/${deliverableId}`).catch(() => null);
           if (!pr || !pr.ok) continue;
           const d = await pr.json();
-          if (d.status === "COMPLETE") {
+          const action = evaluateSeriesPoll(d, {
+            requireImage,
+            imageRetries,
+            imageKickoffStarted,
+          });
+          if (action.kind === "done") {
             setStatus((s) => ({ ...s, [item.key]: "done" }));
             return;
           }
-          if (d.status === "ERROR") {
+          if (action.kind === "error") {
             setStatus((s) => ({ ...s, [item.key]: "error" }));
             return;
+          }
+          if (action.kind === "trigger-image") {
+            setStatus((s) => ({ ...s, [item.key]: "imaging" }));
+            if (!imageKickoffStarted || action.reason === "image-error") {
+              const ir = await fetch(`/api/deliverables/${deliverableId}/generate-image`, {
+                method: "POST",
+              }).catch(() => null);
+              if (!ir || (!ir.ok && ir.status !== 409)) {
+                const err = await ir?.json().catch(() => ({}));
+                throw new Error((err as { error?: string }).error ?? "No se pudo iniciar la imagen");
+              }
+              imageKickoffStarted = true;
+              if (action.reason === "image-error") imageRetries++;
+            }
+          } else if (action.reason === "image-running" || action.reason === "image-kickoff-running") {
+            setStatus((s) => ({ ...s, [item.key]: "imaging" }));
           }
         }
       } catch (e) {
@@ -242,7 +281,7 @@ export default function SeriePage() {
         console.warn(`[serie] ${item.key}:`, (e as Error).message);
       }
     },
-    [kind],
+    [kind, longitud, requireImage],
   );
 
   const start = useCallback(async () => {
@@ -254,7 +293,11 @@ export default function SeriePage() {
     cancelRef.current = false;
     setRunning(true);
     setStatus(Object.fromEntries(queue.map((it) => [it.key, "queued" as RunStatus])));
-    toast.success(`Produciendo ${queue.length} ${kindLabel(kind)}(s) en serie · concurrencia ${concurrency}`);
+    toast.success(
+      `Produciendo ${queue.length} ${kindLabel(kind)}(s) en serie · ${longitud} · concurrencia ${concurrency}${
+        requireImage ? " · con portada" : ""
+      }`,
+    );
 
     // Pool acotado: mantiene `concurrency` producciones en vuelo, rellenando al terminar.
     let idx = 0;
@@ -269,7 +312,7 @@ export default function SeriePage() {
     setRunning(false);
     await loadProduced(kind);
     if (!cancelRef.current) toast.success("Serie terminada.");
-  }, [items, selected, concurrency, kind, produceOne, loadProduced]);
+  }, [items, selected, concurrency, kind, longitud, requireImage, produceOne, loadProduced]);
 
   const stop = () => {
     cancelRef.current = true;
@@ -282,6 +325,7 @@ export default function SeriePage() {
     return {
       queued: vals.filter((v) => v === "queued").length,
       running: vals.filter((v) => v === "running").length,
+      imaging: vals.filter((v) => v === "imaging").length,
       done: vals.filter((v) => v === "done").length,
       error: vals.filter((v) => v === "error").length,
     };
@@ -335,6 +379,20 @@ export default function SeriePage() {
             {concurrency}
           </span>
         </div>
+        <FilterTabs<LongitudId>
+          value={longitud}
+          onChange={(v) => !running && setLongitud(v)}
+          options={LONGITUDES}
+        />
+        <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, color: "var(--fg-muted)" }}>
+          <input
+            type="checkbox"
+            checked={requireImage}
+            disabled={running}
+            onChange={(e) => setRequireImage(e.target.checked)}
+          />
+          Esperar portada
+        </label>
         <button type="button" onClick={selectAllVisible} style={{ ...ghostBtn, fontSize: 12 }}>
           Todos (visibles)
         </button>
@@ -363,6 +421,7 @@ export default function SeriePage() {
         <section style={{ padding: "0 56px 8px", maxWidth: 1100 }}>
           <div className="mono" style={{ fontSize: 12, color: "var(--fg-muted)", display: "flex", gap: 18, flexWrap: "wrap" }}>
             <span>◐ en curso: {stats.running}</span>
+            <span>▧ portada: {stats.imaging}</span>
             <span>· en cola: {stats.queued}</span>
             <span style={{ color: "var(--success)" }}>✓ listas: {stats.done}</span>
             {stats.error > 0 && <span style={{ color: "var(--danger)" }}>✕ error: {stats.error}</span>}
@@ -430,6 +489,7 @@ export default function SeriePage() {
 
 function RunGlyph({ status, produced }: { status: RunStatus; produced: boolean }) {
   if (status === "running") return <span className="mono" style={{ fontSize: 12, color: "var(--accent)" }}>◐ produciendo…</span>;
+  if (status === "imaging") return <span className="mono" style={{ fontSize: 12, color: "var(--accent)" }}>▧ portada…</span>;
   if (status === "queued") return <span className="mono" style={{ fontSize: 12, color: "var(--fg-faint)" }}>· en cola</span>;
   if (status === "done") return <span className="mono" style={{ fontSize: 12, color: "var(--success)" }}>✓ listo</span>;
   if (status === "error") return <span className="mono" style={{ fontSize: 12, color: "var(--danger)" }}>✕ error</span>;

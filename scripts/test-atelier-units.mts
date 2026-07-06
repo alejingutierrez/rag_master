@@ -12,9 +12,14 @@ import {
   stripScaffolding,
 } from "../src/lib/atelier/aparato";
 import { normalizeTaxonomy, reconcilePeriodo } from "../src/lib/taxonomy";
-import { ATELIER_FORMAT_LIST, isValidFormatId } from "../src/lib/atelier-formats";
+import { ATELIER_FORMAT_LIST, isValidFormatId, targetWords } from "../src/lib/atelier-formats";
 import { getFormatConfig } from "../src/lib/atelier/format-config";
 import { getFormatPrompt } from "../src/lib/atelier/formats";
+import {
+  SERIES_DEFAULT_LONGITUD,
+  SERIES_REQUIRE_IMAGE,
+  evaluateSeriesPoll,
+} from "../src/lib/atelier/series";
 import type { SearchResult } from "../src/lib/vector-search";
 import type { VerifiedClaim, AtelierBrief } from "../src/lib/atelier/types";
 
@@ -394,6 +399,60 @@ test("cada formato construye un writer prompt no vacío y con # H1", () => {
     // La espina argumental con tesis alternas debe filtrarse al prompt.
     assert.ok(sys.includes("otra lectura plausible"), `${id}: no integra tesisAlternas`);
   }
+});
+
+// ── 8. Producción en serie: extensión + cierre de imagen ─────────────
+group("producción en serie");
+
+test("la producción en serie usa longitud extensa por defecto para todos los formatos", () => {
+  assert.equal(SERIES_DEFAULT_LONGITUD, "extensa");
+  for (const { id } of ATELIER_FORMAT_LIST) {
+    assert.ok(
+      targetWords(id, SERIES_DEFAULT_LONGITUD) > targetWords(id, "normal"),
+      `${id}: la serie no sube extensión frente a normal`,
+    );
+  }
+});
+
+test("la serie exige imagen completa antes de marcar una pieza como lista", () => {
+  assert.equal(SERIES_REQUIRE_IMAGE, true);
+  const action = evaluateSeriesPoll({
+    status: "COMPLETE",
+    metadata: { atelier: { stage: "complete" } },
+    imageUrl: null,
+    imageKey: null,
+  });
+  assert.equal(action.kind, "trigger-image");
+});
+
+test("la serie marca lista una producción COMPLETE con imagen ok o imageUrl persistida", () => {
+  assert.equal(
+    evaluateSeriesPoll({ status: "COMPLETE", metadata: { image: { status: "ok" } } }).kind,
+    "done",
+  );
+  assert.equal(
+    evaluateSeriesPoll({ status: "COMPLETE", metadata: {}, imageUrl: "/api/public-image/abc" }).kind,
+    "done",
+  );
+});
+
+test("la serie reintenta una imagen fallida una vez y luego reporta error", () => {
+  assert.equal(
+    evaluateSeriesPoll({ status: "COMPLETE", metadata: { image: { status: "error" } } }, { imageRetries: 0 }).kind,
+    "trigger-image",
+  );
+  assert.equal(
+    evaluateSeriesPoll({ status: "COMPLETE", metadata: { image: { status: "error" } } }, { imageRetries: 1 }).kind,
+    "error",
+  );
+});
+
+test("la serie sigue esperando piezas GENERATING e imagen generando", () => {
+  assert.equal(evaluateSeriesPoll({ status: "GENERATING" }).kind, "wait");
+  assert.equal(
+    evaluateSeriesPoll({ status: "COMPLETE", metadata: { image: { status: "generando" } } }).kind,
+    "wait",
+  );
 });
 
 // ── Resumen ──────────────────────────────────────────────────────────
