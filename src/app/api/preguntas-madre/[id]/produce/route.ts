@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { runAtelier } from "@/lib/atelier/orchestrator";
 import { isValidFormatId, type LongitudId } from "@/lib/atelier-formats";
 import type { AtelierMetadata, AtelierQuestionMeta } from "@/lib/atelier/types";
+import { generateAndStoreImage, isOpenAIConfigured } from "@/lib/atelier/image";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 3600; // El Taller en after(), igual que /api/atelier (capítulo/extensa cruza cientos de fuentes)
@@ -135,9 +136,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           status: "COMPLETE",
           answer: result.answer,
           chunksUsed: result.chunksUsed as unknown as object,
-          metadata: { atelier: finalMeta, masterId: master.id, sourceRef } as unknown as object,
+          metadata: {
+            atelier: finalMeta,
+            ...(result.seo ? { seo: result.seo } : {}),
+            masterId: master.id,
+            sourceRef,
+          } as unknown as object,
+          ...(result.structuredData
+            ? { structuredData: result.structuredData as unknown as object }
+            : {}),
         },
       });
+
+      if (isOpenAIConfigured()) {
+        try {
+          const { imageUrl } = await generateAndStoreImage(deliverable.id);
+          console.log(`[mq ${deliverable.id}] imagen lista · ${imageUrl}`);
+        } catch (e) {
+          console.warn(`[mq ${deliverable.id}] imagen falló:`, (e as Error).message);
+        }
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error desconocido";
       console.error(`[mq ${deliverable.id}] FAILED:`, msg);
