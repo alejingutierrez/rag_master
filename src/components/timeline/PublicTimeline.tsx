@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { SectionHeader } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
+import { PeriodRibbon } from "@/components/public/period-ribbon";
 import type { TimelineFile } from "@/lib/timeline-data";
 import type { TimelineLinks } from "@/lib/public-data";
 import { TimelineDensityStrip } from "./TimelineDensityStrip";
@@ -15,12 +16,6 @@ const ORDER: PeriodCode[] = [
   "PRE", "CON", "COL", "PRE_IND", "IND", "NGR", "EUC", "REG",
   "REP_LIB", "VIO", "FN", "CNA", "C91", "SDE", "POS",
 ];
-const YEAR_START: Record<string, number> = {
-  PRE: 1480, CON: 1499, COL: 1600, PRE_IND: 1780, IND: 1810, NGR: 1831,
-  EUC: 1863, REG: 1886, REP_LIB: 1930, VIO: 1946, FN: 1958, CNA: 1974,
-  C91: 1991, SDE: 2002, POS: 2016,
-};
-
 const KIND_LABEL: Record<string, string> = {
   hecho: "Hecho",
   epoca: "Época",
@@ -77,102 +72,15 @@ export function PublicTimeline({
 
       <hr className="hairline" style={{ margin: "0 34px", maxWidth: 1180 }} />
 
-      {/* Selector de períodos */}
+      {/* Selector de períodos — cinta cronológica compartida (modo navegación). */}
       <section style={{ padding: "40px 34px 20px", maxWidth: 1180, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
-          <div className="label">Períodos canónicos · seleccione uno</div>
-          <div className="mono" style={{ fontSize: 12, color: `var(--p-${period.slug})`, letterSpacing: "0.04em", fontWeight: 600 }}>
-            {String(ORDER.indexOf(selected) + 1).padStart(2, "0")} · {period.label} · {period.yearRange}
-          </div>
-        </div>
-
-        <div style={{ paddingTop: 18, paddingBottom: 34 }}>
-          <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-            {ORDER.map((code) => {
-              const active = code === selected;
-              return (
-                <div
-                  key={code}
-                  className="mono num"
-                  style={{
-                    flex: 1,
-                    textAlign: "center",
-                    fontSize: 10,
-                    color: active ? `var(--p-${PERIODS[code].slug})` : "var(--fg-subtle)",
-                    fontWeight: active ? 600 : 400,
-                  }}
-                >
-                  {YEAR_START[code]}
-                </div>
-              );
-            })}
-          </div>
-
-          <div style={{ display: "flex", gap: 4, alignItems: "flex-start" }}>
-            {ORDER.map((code, i) => {
-              const p = PERIODS[code];
-              const active = code === selected;
-              const n = String(i + 1).padStart(2, "0");
-              return (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => selectPeriod(code)}
-                  title={`${n} · ${p.label} · ${p.yearRange}`}
-                  aria-label={`${p.label}, ${p.yearRange}`}
-                  style={{
-                    flex: 1,
-                    height: active ? 28 : 12,
-                    background: active ? `var(--p-${p.slug})` : "var(--bg-muted)",
-                    border: 0,
-                    padding: 0,
-                    cursor: "pointer",
-                    transition: "all 200ms var(--ease-out-custom)",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) e.currentTarget.style.background = "var(--fg-faint)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.background = "var(--bg-muted)";
-                  }}
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-          {ORDER.map((code) => {
-            const p = PERIODS[code];
-            const active = code === selected;
-            return (
-              <button
-                key={code}
-                type="button"
-                onClick={() => selectPeriod(code)}
-                style={{
-                  appearance: "none",
-                  background: active ? "var(--fg)" : "transparent",
-                  color: active ? "var(--bg)" : "var(--fg-muted)",
-                  border: "1px solid " + (active ? "var(--fg)" : "var(--line-strong)"),
-                  borderRadius: 999,
-                  padding: "5px 11px",
-                  fontSize: 11.5,
-                  fontFamily: "var(--font-mono)",
-                  cursor: "pointer",
-                  letterSpacing: "0.02em",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <span style={{ width: 5, height: 5, borderRadius: "50%", background: `var(--p-${p.slug})` }} />
-                {p.label}
-              </button>
-            );
-          })}
-        </div>
+        <PeriodRibbon
+          order={ORDER}
+          selected={selected}
+          onSelect={(c) => c && selectPeriod(c as PeriodCode)}
+          label="Períodos canónicos · seleccione uno"
+          mode="nav"
+        />
       </section>
 
       <hr className="hairline" style={{ margin: "12px 34px 0", maxWidth: 1180 }} />

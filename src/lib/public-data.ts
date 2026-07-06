@@ -731,6 +731,14 @@ function entityTypeFromTipo(tipo: string | null | undefined): EntityType {
   return "persona";
 }
 
+/** Tipo público a partir del vocabulario de `sourceRef` de entidad (person/place/concept). */
+function sourceEntityType(t: string): EntityType | null {
+  if (t === "person") return "persona";
+  if (t === "place") return "lugar";
+  if (t === "concept") return "idea";
+  return null;
+}
+
 export interface AnchoredPiece {
   id: string;
   href: string;
@@ -748,6 +756,9 @@ export interface AnchoredPiece {
   ideas: string[];
   entidadTipo: string | null; // Persona|Lugar|Concepto|Institución (solo fichas de entidad)
   entidadSlug: string | null; // slug de la ficha de entidad, si aplica
+  /** Ítem del archivo del que se produjo la pieza ({ kind, key }). Marca a una
+   *  pieza como DEDICADA a una entidad cuando kind==="entidad" (ver dedicatedSlugs). */
+  sourceRef: { kind: string; key: string } | null;
 }
 
 /** Carga todas las piezas publicadas con su ancla resuelta. Base de la wikización. */
@@ -773,6 +784,13 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       fallbackPeriodo: r.question?.periodoCode,
       fallbackYear: r.question?.yearPrincipal,
     });
+    const rawRef = (r.metadata as Record<string, unknown> | null)?.sourceRef as
+      | { kind?: unknown; key?: unknown }
+      | undefined;
+    const sourceRef =
+      rawRef && typeof rawRef.kind === "string" && typeof rawRef.key === "string"
+        ? { kind: rawRef.kind, key: rawRef.key }
+        : null;
     out.push({
       id: r.id,
       href: s ? typologyPath(s) : `/ensayos/${r.id}`,
@@ -790,6 +808,7 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       ideas: anchor.ideas,
       entidadTipo: s?.typology === "entidad" ? s.tipo : null,
       entidadSlug: s?.typology === "entidad" ? s.slug : null,
+      sourceRef,
     });
   }
   return out;
@@ -814,8 +833,12 @@ async function getAnchoredPieces(): Promise<AnchoredPiece[]> {
 
 interface PublishedEntityData {
   index: EntityIndex;
-  /** slugs (canónicos + variantes) presentes en piezas PUBLICADAS, por tipo. */
+  /** slugs (canónicos + variantes) presentes en piezas PUBLICADAS, por tipo.
+   *  Gate LAXO: mención en cualquier pieza — habilita ruta + auto-enlace. */
   publishedSlugs: Record<EntityType, Set<string>>;
+  /** slugs con ≥1 pieza DEDICADA publicada (su ficha, o una pieza producida desde
+   *  la entidad vía sourceRef). Gate ESTRICTO: decide qué se LISTA en el índice. */
+  dedicatedSlugs: Record<EntityType, Set<string>>;
 }
 let pubEntityCache: { data: PublishedEntityData; at: number } | null = null;
 
@@ -838,7 +861,31 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
       if (vs) set.add(vs);
     }
   }
-  const data: PublishedEntityData = { index, publishedSlugs };
+  // Piezas DEDICADAS: una ficha de entidad, o cualquier pieza producida DESDE una
+  // entidad (crónica/ensayo con sourceRef.kind==="entidad"). Es la señal precisa
+  // de "tiene su historia publicada" — sin heurística de título.
+  const dedicatedSlugs: Record<EntityType, Set<string>> = {
+    persona: new Set(),
+    lugar: new Set(),
+    idea: new Set(),
+  };
+  for (const p of pieces) {
+    if (p.kind === "entidad" && p.entidadTipo) {
+      const t = entityTypeFromTipo(p.entidadTipo);
+      if (p.entidadSlug) dedicatedSlugs[t].add(p.entidadSlug);
+      const ts = slugify(p.titulo);
+      if (ts) dedicatedSlugs[t].add(ts);
+    }
+    if (p.sourceRef?.kind === "entidad") {
+      const i = p.sourceRef.key.indexOf(":");
+      if (i > 0) {
+        const t = sourceEntityType(p.sourceRef.key.slice(0, i));
+        const slug = p.sourceRef.key.slice(i + 1);
+        if (t && slug) dedicatedSlugs[t].add(slug);
+      }
+    }
+  }
+  const data: PublishedEntityData = { index, publishedSlugs, dedicatedSlugs };
   pubEntityCache = { data, at: now };
   return data;
 }
@@ -1037,15 +1084,30 @@ export interface PublicEntity {
 
 // ── Entidades públicas: REGISTRO (época/nombre) ∩ PUBLICADO (visibilidad) ─────
 // El registro canónico (src/data/entities.json) aporta identidad y ÉPOCA de cada
-// entidad; el gate de solo-publicado decide cuáles se muestran: una entidad sale
-// en el sitio solo si aparece en ≥1 pieza PUBLICADA. Así los filtros de época
-// funcionan (época "hogar" curada, no la unión ruidosa de todos los períodos) y
-// no se listan lugares / ideas / personas sin contenido publicado.
+// entidad. El gate tiene DOS niveles:
+//   · ESTRICTO (dedicatedSlugs) — decide qué se LISTA en el índice: la entidad
+//     tiene ≥1 pieza DEDICADA publicada (su ficha, o una pieza producida desde
+//     ella vía sourceRef). "Tiene su historia", no una simple mención.
+//   · LAXO (publishedSlugs) — mención en cualquier pieza publicada: habilita la
+//     RUTA (/personas/[slug]) y el auto-enlace en prosa, sin featurearla en el
+//     índice. Así "puede existir la ruta, pero solo se lista si tiene su historia".
+// Personas: además una sola época "hogar" (ver registryToPublic), no la unión.
 
 /** ¿La entidad del registro aparece en alguna pieza publicada de su tipo? */
 function isPublishedEntity(e: RegistryEntity, pub: Set<string>): boolean {
   if (pub.has(e.slug)) return true;
   for (const v of e.variants) if (pub.has(slugify(v))) return true;
+  return false;
+}
+
+/**
+ * ¿La entidad tiene ≥1 pieza DEDICADA publicada (su ficha, o una pieza producida
+ * desde ella)? Gate ESTRICTO — decide qué se LISTA en el índice público. Distinto
+ * de `isPublishedEntity` (mención), que solo habilita la ruta y el auto-enlace.
+ */
+function isDedicatedEntity(e: RegistryEntity, ded: Set<string>): boolean {
+  if (ded.has(e.slug)) return true;
+  for (const v of e.variants) if (ded.has(slugify(v))) return true;
   return false;
 }
 
@@ -1067,7 +1129,11 @@ function registryToPublic(e: RegistryEntity, index: EntityIndex): PublicEntity {
     type: e.type,
     href: entityPath(e.type, e.slug),
     mentions: e.mentions,
-    periods: e.periods,
+    // Una PERSONA pertenece a UNA sola época — su "hogar" (moda del corpus, ya
+    // curada por overrides/clasificador) — y no debe filtrarse en varias. Los
+    // lugares/ideas transversales (Bogotá, el liberalismo) sí conservan sus
+    // períodos y siguen filtrando en cada uno donde son relevantes.
+    periods: e.type === "persona" ? (e.periodoCode ? [e.periodoCode] : []) : e.periods,
     periodoOrden: e.periodoOrden,
     anio: e.anio,
     hasFicha: acc?.hasFicha ?? false,
@@ -1098,14 +1164,14 @@ export const ENTITY_DISPLAY_CAP = 300;
  */
 export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[]> {
   try {
-    const [reg, { index, publishedSlugs }] = await Promise.all([
+    const [reg, { index, dedicatedSlugs }] = await Promise.all([
       loadEntityRegistry(),
       getPublishedEntityData(),
     ]);
-    const pub = publishedSlugs[type];
+    const ded = dedicatedSlugs[type];
     const list: PublicEntity[] = [];
     for (const e of reg.entities) {
-      if (e.type !== type || !isPublishedEntity(e, pub)) continue;
+      if (e.type !== type || !isDedicatedEntity(e, ded)) continue;
       list.push(registryToPublic(e, index));
     }
     list.sort((a, b) => b.mentions - a.mentions || a.name.localeCompare(b.name, "es"));
@@ -1116,16 +1182,16 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
   }
 }
 
-/** Conteos por tipo — entidades del registro presentes en piezas publicadas. */
+/** Conteos por tipo — entidades del registro con ≥1 pieza DEDICADA publicada. */
 export async function getEntityCounts(): Promise<Record<EntityType, number>> {
   const empty: Record<EntityType, number> = { persona: 0, lugar: 0, idea: 0 };
   try {
-    const [reg, { publishedSlugs }] = await Promise.all([
+    const [reg, { dedicatedSlugs }] = await Promise.all([
       loadEntityRegistry(),
       getPublishedEntityData(),
     ]);
     for (const e of reg.entities) {
-      if (isPublishedEntity(e, publishedSlugs[e.type])) empty[e.type]++;
+      if (isDedicatedEntity(e, dedicatedSlugs[e.type])) empty[e.type]++;
     }
     return empty;
   } catch (err) {
@@ -1226,17 +1292,21 @@ export interface EntityNode extends PublicEntity {
  */
 export async function getEntityNode(slug: string, type?: EntityType): Promise<EntityNode | null> {
   try {
-    const [e, { index, publishedSlugs }] = await Promise.all([
+    const [e, { index, publishedSlugs, dedicatedSlugs }] = await Promise.all([
       findRegistryEntity(slug, type),
       getPublishedEntityData(),
     ]);
     if (!e) return pieceEntityNode(slug, index, type);
 
-    // Gate CONSISTENTE con las listas y el auto-enlace: la entidad tiene página
-    // si aparece en ≥1 pieza publicada (por taxonomía) O tiene ficha propia — lo
-    // mismo que decide si se lista/enlaza. Sin esto, una entidad con solo ficha
-    // (que no la referencia otra pieza) se listaba y enlazaba pero su página 404.
-    if (!isPublishedEntity(e, publishedSlugs[e.type])) return null;
+    // La RUTA existe si la entidad se menciona en ≥1 pieza publicada (auto-enlace)
+    // O tiene pieza dedicada (está listada). El OR con dedicatedSlugs garantiza que
+    // nada listado en el índice caiga en 404 (p. ej. una crónica con sourceRef cuya
+    // entidad no quedó en el ancla de menciones). "Puede existir la ruta".
+    if (
+      !isPublishedEntity(e, publishedSlugs[e.type]) &&
+      !isDedicatedEntity(e, dedicatedSlugs[e.type])
+    )
+      return null;
 
     const varSlugs = new Set<string>([e.slug, ...e.variants.map((v) => slugify(v))]);
     const namesOf = (p: AnchoredPiece) =>
