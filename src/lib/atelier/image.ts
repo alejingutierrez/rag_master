@@ -47,6 +47,12 @@ import {
   type ReferenceContext,
   type ReferenceSearchResult,
 } from "./reference-search";
+import {
+  applyDocumentaryScenePlan,
+  buildReferenceBriefs,
+  inferDocumentaryScenePlan,
+  type DocumentaryScenePlan,
+} from "./scene-plan";
 
 export { isOpenAIConfigured };
 
@@ -86,6 +92,16 @@ export interface ImageMeta {
     razon?: string;
   };
   encuadre?: EncuadreId;
+  /** Escena documental que gobierna la composición, elegida antes del acento. */
+  escena?: {
+    modo?: string;
+    referenciaPrincipal?: ImageMetaReference & { indice: number };
+    ancla?: string;
+    anclaEn?: string;
+    movimientoCreativo?: string;
+    restricciones?: string[];
+    advertencias?: string[];
+  };
   referencias?: ImageMetaReference[];
   /** Diagnóstico del buscador. */
   queries?: string[];
@@ -117,6 +133,39 @@ function refsToMeta(search: ReferenceSearchResult): ImageMetaReference[] {
     fuente: r.meta.provider,
     score: r.meta.score,
   }));
+}
+
+function sceneToMeta(
+  direction: ArtDirection,
+  search: ReferenceSearchResult,
+  fallbackPlan: DocumentaryScenePlan | null
+): ImageMeta["escena"] | undefined {
+  const index = direction.primaryReferenceIndex ?? fallbackPlan?.primaryReferenceIndex;
+  const ref = index ? search.refs[index - 1] : undefined;
+  const ancla = direction.sceneAnchorEs ?? fallbackPlan?.anchorEs;
+  const anclaEn = direction.sceneAnchor ?? fallbackPlan?.anchorEn;
+  if (!direction.sceneMode && !ancla && !ref) return undefined;
+  return {
+    modo: direction.sceneMode ?? fallbackPlan?.mode,
+    referenciaPrincipal: ref
+      ? {
+          indice: index!,
+          titulo: ref.meta.title,
+          url: ref.meta.url,
+          pagina: ref.meta.page,
+          fuente: ref.meta.provider,
+          score: ref.meta.score,
+        }
+      : undefined,
+    ancla,
+    anclaEn,
+    movimientoCreativo: direction.creativeMove ?? fallbackPlan?.creativeMove,
+    restricciones:
+      direction.historicalConstraints && direction.historicalConstraints.length
+        ? direction.historicalConstraints
+        : fallbackPlan?.constraints,
+    advertencias: direction.warnings?.length ? direction.warnings : undefined,
+  };
 }
 
 function existingAccentTarget(metadata: unknown): string | null {
@@ -212,6 +261,8 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
   const referenceHints = search.refs.map(
     (r) => `${r.meta.title || "referencia visual"} — ${r.meta.provider}, score ${r.meta.score}`
   );
+  const referenceBriefs = buildReferenceBriefs(search.refs, refCtx);
+  const scenePlan = structured ? inferDocumentaryScenePlan(structured, refCtx, referenceBriefs) : null;
   const avoidAccentTargets = await siblingAccentTargets(deliverableId, structured);
 
   // 2. Director de arte (con respaldo neutro si el LLM falla). Corre DESPUÉS
@@ -222,19 +273,28 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
   try {
     direction = structured
       ? await directArt(
-          artDirectorArgsFromStructured(structured, subject, periodoLabel, referenceHints, avoidAccentTargets)
+          artDirectorArgsFromStructured(
+            structured,
+            subject,
+            periodoLabel,
+            referenceHints,
+            referenceBriefs,
+            avoidAccentTargets
+          )
         )
       : await directArt({
           titulo: refCtx.titulo,
           resumen: refCtx.resumen,
           subjectText: subject,
           referenceHints,
+          referenceBriefs,
           avoidAccentTargets,
         });
   } catch (e) {
     console.warn(`[imagen ${deliverableId}] director de arte falló: ${(e as Error).message}`);
     direction = fallbackDirection({ esPersona });
   }
+  direction = applyDocumentaryScenePlan(direction, scenePlan, structured?.typology) as ArtDirection;
 
   // Diagnóstico común del buscador para persistir en cualquier salida.
   const searchDiag = {
@@ -249,6 +309,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     objetivoEn: direction.accentTarget,
     razon: direction.razon,
   };
+  const escenaMeta = sceneToMeta(direction, search, scenePlan);
 
   // 3. Generación con reintentos (la moderación es estocástica). Con referencias
   //    → images/edits; sin ninguna usable → generación anclada solo en el texto.
@@ -291,6 +352,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
       ancla,
       acento: acentoMeta,
       encuadre: direction.encuadre,
+      escena: escenaMeta,
       referencias: refsToMeta(search),
       ...searchDiag,
       intentos: attempts,
@@ -316,6 +378,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     ancla,
     acento: acentoMeta,
     encuadre: direction.encuadre,
+    escena: escenaMeta,
     referencias: refsToMeta(search),
     ...searchDiag,
     intentos: attempts,

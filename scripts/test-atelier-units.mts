@@ -33,6 +33,11 @@ import {
 } from "../src/lib/atelier/art-director";
 import { buildStyledPrompt } from "../src/lib/atelier/image-prompt";
 import {
+  applyDocumentaryScenePlan,
+  buildReferenceBriefs,
+  inferDocumentaryScenePlan,
+} from "../src/lib/atelier/scene-plan";
+import {
   REFERENCE_PROVIDER_NAMES,
   SCORE_BATCH_SIZE,
   buildCandidateScoreBatches,
@@ -546,6 +551,144 @@ test("el prompt final declara las referencias seleccionadas antes del estilo", (
 
   assert.match(prompt, /DOCUMENTARY REFERENCE SELECTION/i);
   assert.ok(prompt.indexOf("Alberto Lleras Camargo portrait") < prompt.indexOf("STYLE:"));
+});
+
+test("el tablero de referencias reconoce escenas políticas con personas como ancla principal de época", () => {
+  const ctx = {
+    titulo: "El Frente Nacional",
+    resumen: "Alternancia bipartidista y cierre político.",
+    typology: "época",
+    periodoLabel: "1958-1974",
+    visualIntent: "epoca-material" as const,
+    visualAnchors: [
+      "Carlos Lleras Restrepo",
+      "Alberto Lleras Camargo",
+      "Misael Pastrana Borrero",
+      "Bogotá",
+    ],
+    lugares: ["Bogotá"],
+  };
+  const refs = buildReferenceBriefs(
+    [
+      {
+        meta: {
+          title: "Parlamentarios del Partido Liberal junto al Presidente Colombiano Carlos Lleras Restrepo",
+          provider: "wikimedia",
+          url: "https://example.com/ref1.jpg",
+          score: 9,
+        },
+      },
+      {
+        meta: {
+          title: "Misael Pastrana.JPG",
+          provider: "wikimedia",
+          url: "https://example.com/ref2.jpg",
+          score: 8,
+        },
+      },
+      {
+        meta: {
+          title: "Bogotá : Avenida de la República",
+          provider: "rijksmuseum",
+          url: "https://example.com/ref3.jpg",
+          score: 6,
+        },
+      },
+    ],
+    ctx
+  );
+  const plan = inferDocumentaryScenePlan(
+    {
+      typology: "epoca",
+      slug: "frente-nacional",
+      titulo: "El Frente Nacional",
+      resumen: "Alternancia bipartidista y cierre político.",
+      periodoCode: "FN",
+      rango: "1958-1974",
+      panorama: "Pacto bipartidista, gobiernos alternados y cierre institucional.",
+      hitos: [],
+      actores: [],
+      transformaciones: [],
+      legado: "Dejó una democracia estable pero excluyente.",
+    },
+    ctx,
+    refs
+  );
+
+  assert.equal(refs[0].role, "people-scene");
+  assert.equal(plan?.mode, "public-scene");
+  assert.equal(plan?.primaryReferenceIndex, 1);
+  assert.match(plan?.anchorEs ?? "", /Parlamentarios/i);
+  assert.match(plan?.constraints.join(" ") ?? "", /no reemplazarla por una metáfora/i);
+});
+
+test("la guardia documental evita que una época con escena política derive en bodegón de tintero", () => {
+  const plan = {
+    mode: "public-scene" as const,
+    primaryReferenceIndex: 1,
+    primaryReferenceTitle: "Parlamentarios del Partido Liberal junto al Presidente Colombiano Carlos Lleras Restrepo",
+    anchorEs:
+      "Escena política pública de mediados del siglo XX anclada en parlamentarios y presidentes del Frente Nacional.",
+    anchorEn:
+      "A mid-20th-century Colombian political gathering anchored in the parliamentarians and presidents from the main reference.",
+    creativeMove: "A tense medium shot with formal suits, official room light and rigid institutional body language.",
+    constraints: [
+      "La escena principal debe venir de la referencia #1; no reemplazarla por una metáfora u objeto aislado.",
+      "Debe haber figuras humanas de época; no bodegón sin personas.",
+    ],
+    warnings: [],
+  };
+  const direction = applyDocumentaryScenePlan(
+    {
+      accentColor: "azul",
+      accentTarget:
+        "a glass inkwell filled with blue-black ink on a government desk covered with stamped bureaucratic folders",
+      accentTargetEs:
+        "un tintero de vidrio con tinta azul-negra sobre un escritorio de madera cubierto de carpetas burocráticas selladas",
+      encuadre: "interior",
+      razon: "Condensa el pacto burocrático.",
+    },
+    plan,
+    "epoca"
+  );
+
+  assert.equal(direction.sceneMode, "public-scene");
+  assert.equal(direction.primaryReferenceIndex, 1);
+  assert.equal(direction.encuadre, "plano-medio");
+  assert.doesNotMatch(direction.accentTarget, /inkwell|desk|folders/i);
+  assert.match(direction.escena ?? "", /political gathering/i);
+  assert.ok(direction.warnings?.includes("accent-target-replaced-by-documentary-scene-guard"));
+});
+
+test("el prompt final pone la escena documental principal antes del acento y subordina el color", () => {
+  const prompt = buildStyledPrompt({
+    subject: "A documentary scene of Colombian bipartisan politics in the 1960s.",
+    direction: {
+      accentColor: "azul",
+      accentTarget: "one small blue period detail held by a figure inside the political gathering",
+      accentTargetEs: "un pequeño detalle azul dentro de la escena política",
+      encuadre: "plano-medio",
+      razon: "El azul sugiere el expediente institucional sin desplazar la escena pública.",
+      sceneMode: "public-scene",
+      primaryReferenceIndex: 1,
+      sceneAnchor:
+        "A mid-20th-century Colombian political gathering anchored in the parliamentarians and presidents from the main reference.",
+      sceneAnchorEs:
+        "Escena política pública de mediados del siglo XX anclada en parlamentarios y presidentes del Frente Nacional.",
+      creativeMove: "A tense medium shot with formal suits and official room light.",
+      historicalConstraints: ["Debe haber figuras humanas de época; no bodegón sin personas."],
+    },
+    withReferences: true,
+    referenceNotes: [
+      "Parlamentarios del Partido Liberal junto al Presidente Colombiano Carlos Lleras Restrepo — wikimedia, score 9",
+      "Misael Pastrana.JPG — wikimedia, score 8",
+    ],
+  });
+
+  assert.match(prompt, /MAIN DOCUMENTARY ANCHOR/i);
+  assert.match(prompt, /The color accent is secondary/i);
+  assert.ok(prompt.indexOf("MAIN DOCUMENTARY ANCHOR") < prompt.indexOf("STYLE:"));
+  assert.ok(prompt.indexOf("MAIN DOCUMENTARY ANCHOR") < prompt.indexOf("Plus ONE restrained accent"));
 });
 
 // ── 7. Contrato de formatos del Taller ───────────────────────────────

@@ -72,6 +72,15 @@ interface ImageMetaLite {
   ancla?: "documental" | "parcial" | "solo-texto";
   acento?: { color?: "rojo" | "amarillo" | "azul"; objetivo?: string; razon?: string };
   encuadre?: string;
+  escena?: {
+    modo?: string;
+    referenciaPrincipal?: { indice?: number; titulo?: string; pagina?: string; url?: string; fuente?: string; score?: number };
+    ancla?: string;
+    anclaEn?: string;
+    movimientoCreativo?: string;
+    restricciones?: string[];
+    advertencias?: string[];
+  };
   referencias?: { titulo?: string; url?: string; pagina?: string; fuente?: string; score?: number }[];
   relevantes?: number;
   candidatos?: number;
@@ -983,10 +992,45 @@ function ImageDirectionPanel({ meta }: { meta: ImageMetaLite }) {
   const [showRefs, setShowRefs] = useState(false);
   const color = meta.acento?.color;
   const refs = meta.referencias ?? [];
+  const scene = meta.escena;
   if (meta.status !== "ok" && refs.length === 0 && !meta.acento) return null;
 
   return (
     <div style={{ marginBottom: 14 }}>
+      {scene?.ancla && (
+        <div
+          style={{
+            border: "1px solid var(--line)",
+            padding: "8px 10px",
+            marginBottom: 8,
+            fontSize: 11.5,
+            lineHeight: 1.45,
+            color: "var(--fg-muted)",
+          }}
+        >
+          <div className="mono" style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
+            Escena ancla
+            {scene.modo ? ` · ${scene.modo}` : ""}
+          </div>
+          <div style={{ color: "var(--fg)" }}>{scene.ancla}</div>
+          {scene.referenciaPrincipal && (
+            <a
+              href={scene.referenciaPrincipal.pagina ?? scene.referenciaPrincipal.url}
+              target="_blank"
+              rel="noreferrer"
+              style={{ display: "inline-block", marginTop: 5, color: "var(--fg-muted)", textDecoration: "none" }}
+            >
+              Ref #{scene.referenciaPrincipal.indice}: {scene.referenciaPrincipal.titulo ?? "referencia"} ↗
+            </a>
+          )}
+          {scene.advertencias?.length ? (
+            <div className="mono" style={{ marginTop: 5, fontSize: 9.5, color: "#a87b00" }}>
+              Ajustes: {scene.advertencias.join(" · ")}
+            </div>
+          ) : null}
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
         {color && (
           <span

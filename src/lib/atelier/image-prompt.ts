@@ -46,6 +46,25 @@ function negativeClause(d: ArtDirection): string {
   return `Avoid: any color other than the single ${colorEn} accent, rainbow palettes, cartoon, 3D render, glossy digital art, text, signatures, modern clothing.`;
 }
 
+function documentarySceneClause(d: ArtDirection): string | null {
+  const anchor = d.sceneAnchor?.trim();
+  if (!anchor) return null;
+  const lines = [
+    "MAIN DOCUMENTARY ANCHOR:",
+    d.primaryReferenceIndex
+      ? `Use reference #${d.primaryReferenceIndex} as the primary visual anchor.`
+      : "Use the strongest authentic reference as the primary visual anchor.",
+    `Scene: ${anchor}`,
+    d.sceneAnchorEs ? `Editorial audit note (Spanish): ${d.sceneAnchorEs}` : "",
+    d.creativeMove ? `Creative composition: ${d.creativeMove}` : "",
+    d.historicalConstraints?.length
+      ? `Historical constraints:\n${d.historicalConstraints.map((c) => `- ${c}`).join("\n")}`
+      : "",
+    "The color accent is secondary: it must live inside this anchored scene and must never replace the main historical subject with a metaphorical still-life.",
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
 /** Cláusula de referencias: se añade SOLO cuando van imágenes adjuntas (edits). */
 export const REFERENCE_CLAUSE =
   "The attached images are authentic references: period photographs, paintings, museum artifacts and real places related to this subject. Use them ONLY as documentary grounding for faces, costumes, artifacts, architecture, landscape and atmosphere. Do NOT copy any reference literally, do NOT reproduce their captions, lettering or painterly style; compose an entirely NEW photographic scene.";
@@ -157,7 +176,9 @@ export function buildStyledPrompt(args: StyledPromptArgs): string {
   const escena = d.escena ? ` ${d.escena}` : "";
   const context = args.contextText?.trim();
   const referenceNotes = (args.referenceNotes ?? []).filter((r) => r.trim()).slice(0, 8);
+  const documentaryScene = documentarySceneClause(d);
   const parts = [
+    ...(documentaryScene ? [documentaryScene] : []),
     `${args.subject}${escena}`,
     ...(context
       ? [
