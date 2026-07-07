@@ -63,3 +63,52 @@
 @media (prefers-reduced-motion: reduce) {
   .ps-brand { animation: none; }
 }
+
+/* Footer público: misma retícula editorial, con colapso real en móvil. */
+.ps-footer {
+  border-top: 1px solid var(--fg);
+  margin-top: 44px;
+}
+
+.ps-footer-grid {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 36px 34px 60px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 26px;
+}
+
+.ps-foot-col {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.ps-foot-link {
+  margin-bottom: 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.ps-foot-link:hover { color: var(--accent); }
+
+@media (max-width: 760px) {
+  .ps-footer-grid {
+    padding: 32px 18px 48px;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 22px;
+  }
+
+  .ps-footer-grid > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 430px) {
+  .ps-footer-grid {
+    grid-template-columns: 1fr;
+  }
+}

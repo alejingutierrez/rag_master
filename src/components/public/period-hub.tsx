@@ -3,6 +3,9 @@ import { getPeriodColor } from "@/lib/design-tokens";
 import type { PeriodHub, HubPiece, EntityChip } from "@/lib/public-data";
 import "@/components/public/wiki.css";
 
+const PIECE_PREVIEW_LIMIT = 4;
+const ENTITY_PREVIEW_LIMIT = 6;
+
 const KIND_LABEL: Record<string, string> = {
   hecho: "Hecho",
   pregunta: "Ensayo",
@@ -47,17 +50,29 @@ function ChipRow({ items, color }: { items: EntityChip[]; color: string }) {
 function Section({
   title,
   count,
+  shown,
+  exploreHref,
   children,
 }: {
   title: string;
   count?: number;
+  shown?: number;
+  exploreHref?: string;
   children: React.ReactNode;
 }) {
+  const hasMore = count != null && shown != null && count > shown;
   return (
-    <section className="wiki-sec">
+    <section className="wiki-sec" data-hub-section={title}>
       <div className="wiki-sec-h">
         <span className="wiki-sec-t">{title}</span>
-        {count != null && <span className="wiki-sec-n">{count}</span>}
+        <span className="wiki-sec-actions">
+          {count != null && <span className="wiki-sec-n">{count}</span>}
+          {exploreHref && (
+            <Link href={exploreHref} className="wiki-sec-all">
+              {hasMore ? "Explorar" : "Ver índice"}
+            </Link>
+          )}
+        </span>
       </div>
       {children}
     </section>
@@ -77,6 +92,12 @@ export function PeriodHubSections({
   periodCode: string | null;
 }) {
   const color = periodCode ? getPeriodColor(periodCode) : "var(--fg-dim)";
+  const hechos = hub.hechos.slice(0, PIECE_PREVIEW_LIMIT);
+  const ensayos = hub.ensayos.slice(0, PIECE_PREVIEW_LIMIT);
+  const personas = hub.personas.slice(0, ENTITY_PREVIEW_LIMIT);
+  const lugares = hub.lugares.slice(0, ENTITY_PREVIEW_LIMIT);
+  const ideas = hub.ideas.slice(0, ENTITY_PREVIEW_LIMIT);
+  const periodQuery = periodCode ? `?periodo=${encodeURIComponent(periodCode)}` : "";
   const nothing =
     hub.hechos.length === 0 &&
     hub.ensayos.length === 0 &&
@@ -104,28 +125,53 @@ export function PeriodHubSections({
       )}
 
       {hub.hechos.length > 0 && (
-        <Section title="Hechos" count={hub.hechos.length}>
-          <PieceList items={hub.hechos} />
+        <Section
+          title="Hechos"
+          count={hub.counts.hechos}
+          shown={hechos.length}
+          exploreHref={periodCode ? `/hechos${periodQuery}` : "/hechos"}
+        >
+          <PieceList items={hechos} />
         </Section>
       )}
       {hub.ensayos.length > 0 && (
-        <Section title="Ensayos" count={hub.ensayos.length}>
-          <PieceList items={hub.ensayos} />
+        <Section
+          title="Ensayos"
+          count={hub.counts.ensayos}
+          shown={ensayos.length}
+          exploreHref={periodCode ? `/ensayos${periodQuery}` : "/ensayos"}
+        >
+          <PieceList items={ensayos} />
         </Section>
       )}
       {hub.personas.length > 0 && (
-        <Section title="Personas" count={hub.personas.length}>
-          <ChipRow items={hub.personas} color={color} />
+        <Section
+          title="Personas"
+          count={hub.counts.personas}
+          shown={personas.length}
+          exploreHref={periodCode ? `/personas${periodQuery}` : "/personas"}
+        >
+          <ChipRow items={personas} color={color} />
         </Section>
       )}
       {hub.lugares.length > 0 && (
-        <Section title="Lugares" count={hub.lugares.length}>
-          <ChipRow items={hub.lugares} color={color} />
+        <Section
+          title="Lugares"
+          count={hub.counts.lugares}
+          shown={lugares.length}
+          exploreHref={periodCode ? `/lugares${periodQuery}` : "/lugares"}
+        >
+          <ChipRow items={lugares} color={color} />
         </Section>
       )}
       {hub.ideas.length > 0 && (
-        <Section title="Ideas" count={hub.ideas.length}>
-          <ChipRow items={hub.ideas} color={color} />
+        <Section
+          title="Ideas"
+          count={hub.counts.ideas}
+          shown={ideas.length}
+          exploreHref={periodCode ? `/ideas${periodQuery}` : "/ideas"}
+        >
+          <ChipRow items={ideas} color={color} />
         </Section>
       )}
 

@@ -7,20 +7,21 @@
 .wiki-sec-t { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; color: var(--fg-faint); font-weight: 500; }
 .wiki-sec-n { font-family: var(--font-mono); font-size: 10.5px; color: var(--fg-faint); }
 .wiki-sec-all { font-family: var(--font-mono); font-size: 10.5px; color: var(--accent); text-decoration: none; }
+.wiki-sec-actions { display: inline-flex; align-items: baseline; gap: 12px; flex-shrink: 0; }
 
 /* Chips de entidad (personas/lugares/ideas) */
-.wiki-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-.wiki-chip { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 4px 11px; font-family: var(--font-sans); font-size: 13px; color: var(--fg); text-decoration: none; transition: border-color .12s ease, color .12s ease; white-space: nowrap; }
+.wiki-chips { display: flex; flex-wrap: wrap; gap: 7px; max-width: 100%; min-width: 0; }
+.wiki-chip { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; border: 1px solid var(--line-strong); border-radius: 999px; padding: 4px 11px; font-family: var(--font-sans); font-size: 13px; line-height: 1.35; color: var(--fg); text-decoration: none; transition: border-color .12s ease, color .12s ease; white-space: normal; overflow-wrap: anywhere; }
 .wiki-chip:hover { border-color: var(--accent); color: var(--accent); }
 .wiki-chip .c { font-family: var(--font-mono); font-size: 10px; color: var(--fg-faint); }
 .wiki-chip .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
 /* Lista de piezas (hecho/ensayo) con año a la izquierda */
 .wiki-list { display: flex; flex-direction: column; }
-.wiki-item { display: grid; grid-template-columns: 64px 1fr; gap: 16px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line); text-decoration: none; }
+.wiki-item { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line); text-decoration: none; }
 .wiki-item:first-child { border-top: 0; }
 .wiki-item .y { font-family: var(--font-mono); font-size: 12px; color: var(--fg-muted); font-variant-numeric: tabular-nums; }
-.wiki-item .t { font-family: var(--font-display); font-size: 18px; line-height: 1.25; color: var(--fg); }
+.wiki-item .t { font-family: var(--font-display); font-size: 18px; line-height: 1.25; color: var(--fg); overflow-wrap: break-word; }
 .wiki-item:hover .t { color: var(--accent); }
 .wiki-item .k { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--fg-faint); margin-top: 3px; }
 

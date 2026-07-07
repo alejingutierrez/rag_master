@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SearchInput } from "@/components/editorial";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { PeriodSelector } from "@/components/public/period-selector";
+import { useUrlState } from "@/lib/use-url-state";
 import type { PublicEntity } from "@/lib/public-data";
 import "@/components/public/typology-index.css";
 import "@/components/public/wiki.css";
@@ -34,7 +35,11 @@ export function EntityBrowser({
   /** Tamaño total del registro del corpus (para "N de total"). */
   total?: number;
 }) {
-  const [periodo, setPeriodo] = useState<string | null>(null);
+  const [periodo, setPeriodo] = useUrlState<string | null>({
+    key: "periodo",
+    default: null,
+    debounceMs: 0,
+  });
   const [q, setQ] = useState("");
 
   // Épocas presentes, en orden cronológico (por el periodoOrden mínimo de la entidad).
@@ -51,18 +56,19 @@ export function EntityBrowser({
       .filter((code) => PERIODS[code as PeriodCode]);
   }, [entities]);
 
+  const selectedPeriodo = periodo && periods.includes(periodo) ? periodo : null;
   const nq = norm(q.trim());
   const filtered = useMemo(
     () =>
       entities.filter((e) => {
-        if (periodo && !e.periods.includes(periodo)) return false;
+        if (selectedPeriodo && !e.periods.includes(selectedPeriodo)) return false;
         if (nq && !norm(`${e.name} ${e.resumen ?? ""}`).includes(nq)) return false;
         return true;
       }),
-    [entities, periodo, nq],
+    [entities, selectedPeriodo, nq],
   );
 
-  const showFilters = entities.length >= 6;
+  const showFilters = entities.length >= 6 || selectedPeriodo != null || q.trim().length > 0;
 
   return (
     <div className="tix-wrap">
@@ -74,8 +80,8 @@ export function EntityBrowser({
 
       {showFilters && (
         <div className="tix-filters">
-          {periods.length >= 2 && (
-            <PeriodSelector present={new Set(periods)} selected={periodo} onSelect={setPeriodo} />
+          {periods.length >= 1 && (
+            <PeriodSelector present={new Set(periods)} selected={selectedPeriodo} onSelect={setPeriodo} />
           )}
           <div className="tix-searchrow">
             <SearchInput value={q} onChange={setQ} placeholder={`Buscar ${title.toLowerCase()}…`} width={260} />
@@ -84,7 +90,9 @@ export function EntityBrowser({
       )}
 
       <div className="tix-count">
-        {filtered.length === entities.length
+        {selectedPeriodo || nq
+          ? `${filtered.length} de ${entities.length}`
+          : filtered.length === entities.length
           ? total && total > entities.length
             ? `${entities.length.toLocaleString("es-CO")} más referenciadas · ${total.toLocaleString("es-CO")} en el corpus`
             : `${entities.length} ${entities.length === 1 ? "registrada" : "registradas"}`

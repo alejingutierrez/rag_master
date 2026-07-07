@@ -12,19 +12,6 @@ const NAV = [
   { href: "/ensayos", label: "Ensayos" },
 ];
 
-const footCol: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-};
-
-const footLink: React.CSSProperties = {
-  fontFamily: "var(--font-sans)",
-  fontSize: 13,
-  color: "var(--fg-muted)",
-  textDecoration: "none",
-  marginBottom: 8,
-};
-
 /**
  * Chrome público del sitio (cabecera + pie), separado del AppShell del admin.
  * Reusa los tokens Archivo (var(--*)) y las fuentes reales.
@@ -58,17 +45,8 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
 
       <main>{children}</main>
 
-      <footer style={{ borderTop: "1px solid var(--fg)", marginTop: 44 }}>
-        <div
-          style={{
-            maxWidth: 1180,
-            margin: "0 auto",
-            padding: "36px 34px 60px",
-            display: "grid",
-            gridTemplateColumns: "1.6fr 1fr 1fr 1fr",
-            gap: 26,
-          }}
-        >
+      <footer className="ps-footer">
+        <div className="ps-footer-grid">
           <div>
             <div className="display" style={{ fontSize: 24, color: "var(--fg)", marginBottom: 8 }}>
               Historia Colombiana
@@ -83,26 +61,26 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
               Escrito por Alejandro Gutiérrez
             </div>
           </div>
-          <div style={footCol}>
+          <div className="ps-foot-col">
             <div className="label" style={{ marginBottom: 12 }}>Secciones</div>
-            <Link href="/" style={footLink}>Portada</Link>
-            <Link href="/epocas" style={footLink}>Épocas</Link>
-            <Link href="/linea-de-tiempo" style={footLink}>Línea de tiempo</Link>
-            <Link href="/personas" style={footLink}>Personas</Link>
-            <Link href="/lugares" style={footLink}>Lugares</Link>
-            <Link href="/ideas" style={footLink}>Ideas</Link>
+            <Link href="/" className="ps-foot-link">Portada</Link>
+            <Link href="/epocas" className="ps-foot-link">Épocas</Link>
+            <Link href="/linea-de-tiempo" className="ps-foot-link">Línea de tiempo</Link>
+            <Link href="/personas" className="ps-foot-link">Personas</Link>
+            <Link href="/lugares" className="ps-foot-link">Lugares</Link>
+            <Link href="/ideas" className="ps-foot-link">Ideas</Link>
           </div>
-          <div style={footCol}>
+          <div className="ps-foot-col">
             <div className="label" style={{ marginBottom: 12 }}>Épocas</div>
-            <Link href="/linea-de-tiempo?p=IND" style={footLink}>Independencia</Link>
-            <Link href="/linea-de-tiempo?p=REG" style={footLink}>Regeneración</Link>
-            <Link href="/linea-de-tiempo?p=VIO" style={footLink}>La Violencia</Link>
-            <Link href="/linea-de-tiempo?p=POS" style={footLink}>Posconflicto</Link>
+            <Link href="/linea-de-tiempo?p=IND" className="ps-foot-link">Independencia</Link>
+            <Link href="/linea-de-tiempo?p=REG" className="ps-foot-link">Regeneración</Link>
+            <Link href="/linea-de-tiempo?p=VIO" className="ps-foot-link">La Violencia</Link>
+            <Link href="/linea-de-tiempo?p=POS" className="ps-foot-link">Posconflicto</Link>
           </div>
-          <div style={footCol}>
+          <div className="ps-foot-col">
             <div className="label" style={{ marginBottom: 12 }}>El proyecto</div>
-            <Link href="/acerca" style={footLink}>Acerca</Link>
-            <Link href="/acerca#metodo" style={footLink}>Método y fuentes</Link>
+            <Link href="/acerca" className="ps-foot-link">Acerca</Link>
+            <Link href="/acerca#metodo" className="ps-foot-link">Método y fuentes</Link>
           </div>
         </div>
       </footer>

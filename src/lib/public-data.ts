@@ -911,6 +911,13 @@ export interface PeriodHub {
   lugares: EntityChip[];
   ideas: EntityChip[];
   pieceCount: number;
+  counts: {
+    hechos: number;
+    ensayos: number;
+    personas: number;
+    lugares: number;
+    ideas: number;
+  };
 }
 
 function chipMap(map: Map<string, EntityChip>, type: EntityType, names: string[]) {
@@ -927,7 +934,15 @@ function chipMap(map: Map<string, EntityChip>, type: EntityType, names: string[]
 
 /** Todo lo publicado anclado a un período: hechos, ensayos y entidades. */
 export async function getPeriodHub(periodCode: string): Promise<PeriodHub> {
-  const empty: PeriodHub = { hechos: [], ensayos: [], personas: [], lugares: [], ideas: [], pieceCount: 0 };
+  const empty: PeriodHub = {
+    hechos: [],
+    ensayos: [],
+    personas: [],
+    lugares: [],
+    ideas: [],
+    pieceCount: 0,
+    counts: { hechos: 0, ensayos: 0, personas: 0, lugares: 0, ideas: 0 },
+  };
   try {
     const pieces = (await getAnchoredPieces()).filter((p) => p.periodCode === periodCode);
     const hechos: HubPiece[] = [];
@@ -956,6 +971,13 @@ export async function getPeriodHub(periodCode: string): Promise<PeriodHub> {
       lugares: top(lugares),
       ideas: top(ideas),
       pieceCount: pieces.length,
+      counts: {
+        hechos: hechos.length,
+        ensayos: ensayos.length,
+        personas: personas.size,
+        lugares: lugares.size,
+        ideas: ideas.size,
+      },
     };
   } catch (err) {
     console.error(`[public-data] getPeriodHub(${periodCode}) falló:`, err);
@@ -1178,6 +1200,37 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
     return list.slice(0, ENTITY_DISPLAY_CAP);
   } catch (err) {
     console.error(`[public-data] getEntityUniverse(${type}) falló:`, err);
+    return [];
+  }
+}
+
+/**
+ * Índice contextual de una época: muestra las entidades MENCIONADAS en piezas
+ * publicadas de ese período. No cambia el índice general, que sigue usando el
+ * gate estricto de piezas dedicadas.
+ */
+export async function getPeriodEntityUniverse(type: EntityType, periodCode: string): Promise<PublicEntity[]> {
+  try {
+    const pieces = (await getAnchoredPieces()).filter((p) => p.periodCode === periodCode);
+    const { byKey } = buildEntityIndex(pieces);
+    const list = [...byKey.values()]
+      .filter((acc) => acc.type === type)
+      .map((acc) => ({
+        name: canonicalName(acc),
+        slug: acc.slug,
+        type: acc.type,
+        href: entityPath(acc.type, acc.slug),
+        mentions: acc.pieceIds.size,
+        periods: [...acc.periods],
+        periodoOrden: acc.periodoOrden,
+        anio: acc.anio,
+        hasFicha: acc.hasFicha,
+        resumen: acc.resumen,
+      }));
+    list.sort((a, b) => b.mentions - a.mentions || a.name.localeCompare(b.name, "es"));
+    return list.slice(0, ENTITY_DISPLAY_CAP);
+  } catch (err) {
+    console.error(`[public-data] getPeriodEntityUniverse(${type}, ${periodCode}) falló:`, err);
     return [];
   }
 }

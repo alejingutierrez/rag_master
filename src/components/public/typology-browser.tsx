@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SearchInput } from "@/components/editorial";
 import { getPeriodColor } from "@/lib/design-tokens";
 import { PeriodSelector } from "@/components/public/period-selector";
+import { useUrlState } from "@/lib/use-url-state";
 import type { TypologyCard } from "@/lib/public-data";
 
 function norm(s: string): string {
@@ -38,7 +39,11 @@ export function TypologyBrowser({
   cards: TypologyCard[];
   emptyNote: string;
 }) {
-  const [periodo, setPeriodo] = useState<string | null>(null);
+  const [periodo, setPeriodo] = useUrlState<string | null>({
+    key: "periodo",
+    default: null,
+    debounceMs: 0,
+  });
   const [q, setQ] = useState("");
 
   // Épocas presentes, en el orden cronológico de las tarjetas.
@@ -50,23 +55,24 @@ export function TypologyBrowser({
     return [...seen.entries()].sort((a, b) => a[1] - b[1]).map(([code]) => code);
   }, [cards]);
 
+  const selectedPeriodo = periodo && periods.includes(periodo) ? periodo : null;
   const nq = norm(q.trim());
   const filtered = useMemo(() => {
     return cards.filter((c) => {
-      if (periodo && c.periodCode !== periodo) return false;
+      if (selectedPeriodo && c.periodCode !== selectedPeriodo) return false;
       if (nq && !haystack(c).includes(nq)) return false;
       return true;
     });
-  }, [cards, periodo, nq]);
+  }, [cards, selectedPeriodo, nq]);
 
-  const showFilters = cards.length >= 4;
+  const showFilters = cards.length >= 4 || selectedPeriodo != null || q.trim().length > 0;
 
   return (
     <>
       {showFilters && (
         <div className="tix-filters">
-          {periods.length >= 2 && (
-            <PeriodSelector present={new Set(periods)} selected={periodo} onSelect={setPeriodo} />
+          {periods.length >= 1 && (
+            <PeriodSelector present={new Set(periods)} selected={selectedPeriodo} onSelect={setPeriodo} />
           )}
           <div className="tix-searchrow">
             <SearchInput value={q} onChange={setQ} placeholder="Buscar por nombre, entidad…" width={260} />
@@ -75,7 +81,9 @@ export function TypologyBrowser({
       )}
 
       <div className="tix-count">
-        {filtered.length === cards.length
+        {selectedPeriodo || nq
+          ? `${filtered.length} de ${cards.length}`
+          : filtered.length === cards.length
           ? `${cards.length} ${cards.length === 1 ? "publicada" : "publicadas"}`
           : `${filtered.length} de ${cards.length}`}
       </div>
