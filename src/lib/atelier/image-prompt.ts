@@ -6,7 +6,8 @@
  *   - Tinta de grabador al 35% ("sombras y bordes"): la foto domina, el rayado
  *     vive solo en sombras profundas y contornos.
  *   - UN acento de color con significado (rojo/amarillo/azul) sobre UN elemento
- *     que subraya el momento histórico. Sin fugas a objetos vecinos.
+ *     que subraya el momento histórico. La variedad está en el objetivo concreto
+ *     del acento y la escena, no en salir del tricolor. Sin fugas a objetos vecinos.
  *   - Encuadre elegido por el director de arte (rotan libremente; Persona = retrato).
  *   - Referencias reales adjuntas vía images/edits (≥5) como ancla documental.
  *
@@ -33,7 +34,10 @@ function accentClause(d: ArtDirection): string {
     `Plus ONE restrained accent of ${colorEn} spot ink, applied like a lithographer's second plate ONLY on ${d.accentTarget}; ` +
     `every other element of the image stays strictly monochrome. The accent must NOT bleed onto neighboring objects — ` +
     `similar items nearby (other ceramics, textiles, flames, flags) stay black-and-white. Render the accented element with ` +
-    `historical precision; do not invent emblems, patterns or variants.`
+    `historical precision; do not invent emblems, patterns or variants. Do not default to gold, flags or uniforms; use them ` +
+    `only when the subject specifically requires them. Treat secondary candidates from the references as better accent targets: ` +
+    `paper edges without readable text, wax seals, ceramic glaze, indigo textile borders, river water, candlelight, maize, ` +
+    `tools, architectural paint, ritual flowers or one exact garment detail.`
   );
 }
 

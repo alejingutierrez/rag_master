@@ -119,6 +119,46 @@ function refsToMeta(search: ReferenceSearchResult): ImageMetaReference[] {
   }));
 }
 
+function existingAccentTarget(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const image = (metadata as { image?: { acento?: { objetivo?: unknown } } }).image;
+  const target = image?.acento?.objetivo;
+  return typeof target === "string" && target.trim() ? target.trim() : null;
+}
+
+async function siblingAccentTargets(deliverableId: string, structured: ReturnType<typeof normalizeStructured>): Promise<string[]> {
+  if (!structured) return [];
+  const rows = await prisma.deliverable.findMany({
+    where: {
+      id: { not: deliverableId },
+      status: "COMPLETE",
+      publishedAt: { not: null },
+    },
+    select: {
+      structuredData: true,
+      metadata: true,
+      imageGeneratedAt: true,
+      updatedAt: true,
+    },
+    orderBy: [{ imageGeneratedAt: "desc" }, { updatedAt: "desc" }],
+    take: 50,
+  });
+  const seen = new Set<string>();
+  const targets: string[] = [];
+  for (const row of rows) {
+    const sibling = normalizeStructured(row.structuredData);
+    if (!sibling || sibling.typology !== structured.typology) continue;
+    const target = existingAccentTarget(row.metadata);
+    if (!target) continue;
+    const key = target.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    targets.push(target);
+    if (targets.length >= 10) break;
+  }
+  return targets;
+}
+
 /** Genera + sube + persiste la imagen. Lanza en error (el caller decide). */
 export async function generateAndStoreImage(deliverableId: string): Promise<ImageResult> {
   if (!isOpenAIConfigured()) throw new Error("OPENAI_API_KEY no configurado");
@@ -155,19 +195,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     refCtx = { titulo: titleFallback, resumen: excerpt.slice(0, 300) };
   }
 
-  // 1. Director de arte (con respaldo neutro si el LLM falla).
-  const esPersona = structured?.typology === "entidad" && structured.tipo === "Persona";
-  let direction: ArtDirection;
-  try {
-    direction = structured
-      ? await directArt(artDirectorArgsFromStructured(structured, subject, periodoLabel))
-      : await directArt({ titulo: refCtx.titulo, resumen: refCtx.resumen, subjectText: subject });
-  } catch (e) {
-    console.warn(`[imagen ${deliverableId}] director de arte falló: ${(e as Error).message}`);
-    direction = fallbackDirection({ esPersona });
-  }
-
-  // 2. Referencias reales (mejor esfuerzo) + NIVEL de anclaje.
+  // 1. Referencias reales (mejor esfuerzo) + NIVEL de anclaje.
   //    Piso editorial en 3 niveles, no todo-o-nada: si no se junta el ideal de
   //    ≥5 relevantes, NO se abandona la imagen — se degrada con transparencia y
   //    se apoya en el texto de la pieza dentro del prompt (proyecto, 2026-07).
@@ -179,6 +207,32 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     console.warn(
       `[imagen ${deliverableId}] ancla ${ancla}: ${search.relevant}/${MIN_RELEVANT_REFS} relevantes, ${search.refs.length} adjuntas (de ${search.considered} candidatas). Se genera con apoyo del texto de la pieza.`
     );
+  }
+  const referenceHints = search.refs.map(
+    (r) => `${r.meta.title || "referencia visual"} — ${r.meta.provider}, score ${r.meta.score}`
+  );
+  const avoidAccentTargets = await siblingAccentTargets(deliverableId, structured);
+
+  // 2. Director de arte (con respaldo neutro si el LLM falla). Corre DESPUÉS
+  //    de la búsqueda para que el acento pueda salir de referentes reales y no
+  //    de símbolos obvios repetidos (oro/banderas/uniformes).
+  const esPersona = structured?.typology === "entidad" && structured.tipo === "Persona";
+  let direction: ArtDirection;
+  try {
+    direction = structured
+      ? await directArt(
+          artDirectorArgsFromStructured(structured, subject, periodoLabel, referenceHints, avoidAccentTargets)
+        )
+      : await directArt({
+          titulo: refCtx.titulo,
+          resumen: refCtx.resumen,
+          subjectText: subject,
+          referenceHints,
+          avoidAccentTargets,
+        });
+  } catch (e) {
+    console.warn(`[imagen ${deliverableId}] director de arte falló: ${(e as Error).message}`);
+    direction = fallbackDirection({ esPersona });
   }
 
   // Diagnóstico común del buscador para persistir en cualquier salida.

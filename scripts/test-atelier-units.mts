@@ -26,6 +26,14 @@ import {
   evaluateSeriesPoll,
   shouldFetchSeriesCatalogPage,
 } from "../src/lib/atelier/series";
+import {
+  ACCENT_COLOR_EN,
+  buildArtDirectorUserPrompt,
+  type ArtDirection,
+} from "../src/lib/atelier/art-director";
+import { buildStyledPrompt } from "../src/lib/atelier/image-prompt";
+import { REFERENCE_PROVIDER_NAMES, referenceContextFromStructured } from "../src/lib/atelier/reference-search";
+import type { StructuredData } from "../src/lib/typology-schemas";
 import type { SearchResult } from "../src/lib/vector-search";
 import type { VerifiedClaim, AtelierBrief } from "../src/lib/atelier/types";
 
@@ -334,6 +342,106 @@ test("normalizeTaxonomy: enums inválidos → null", () => {
 test("normalizeTaxonomy: categoría inválida → fallback HIS", () => {
   const t = normalizeTaxonomy({ periodoCode: "TRANS", categoriaCode: "NOPE" });
   assert.equal(t.categoriaCode, "HIS");
+});
+
+// ── 7. Imagen editorial: dirección de arte + referentes ─────────────
+group("imagen editorial");
+
+test("la paleta de acento queda estrictamente en la bandera colombiana", () => {
+  const colors = Object.keys(ACCENT_COLOR_EN);
+  assert.deepEqual(colors.sort(), ["amarillo", "azul", "rojo"]);
+});
+
+test("el prompt desalienta oro, banderas y uniformes como default", () => {
+  const direction: ArtDirection = {
+    accentColor: "azul",
+    accentTarget: "the indigo edge of one handwoven textile",
+    accentTargetEs: "el borde índigo de un textil tejido",
+    encuadre: "detalle",
+    razon: "Prueba de variedad material.",
+  };
+  const prompt = buildStyledPrompt({
+    subject: "A period-accurate archival scene in Colombia.",
+    direction,
+    withReferences: true,
+  });
+  assert.match(prompt, /Do not default to gold, flags or uniforms/i);
+  assert.match(prompt, /secondary candidates/i);
+});
+
+test("el contexto de una época conserva anclas visuales concretas", () => {
+  const structured: StructuredData = {
+    typology: "epoca",
+    slug: "republica-liberal",
+    titulo: "República Liberal",
+    resumen: "Un período de reformas políticas y vida urbana moderna.",
+    periodoCode: "REP",
+    rango: "1930-1946",
+    panorama: "Reformas educativas, sindicalismo y expansión de nuevas infraestructuras.",
+    hitos: [
+      { year: 1936, titulo: "Reforma constitucional" },
+      { year: 1942, titulo: "Expansión ferroviaria" },
+    ],
+    actores: ["Alfonso López Pumarejo", "María Cano"],
+    transformaciones: ["escuelas públicas", "ferrocarriles", "sindicatos"],
+    legado: "Amplió el vocabulario de ciudadanía social.",
+  };
+  const ctx = referenceContextFromStructured(structured) as ReturnType<typeof referenceContextFromStructured> & {
+    visualAnchors?: string[];
+  };
+  assert.deepEqual(ctx.visualAnchors?.slice(0, 4), [
+    "Alfonso López Pumarejo",
+    "María Cano",
+    "Reforma constitucional",
+    "Expansión ferroviaria",
+  ]);
+  assert.ok(ctx.visualAnchors?.includes("ferrocarriles"));
+});
+
+test("el contexto de una persona marca búsqueda de retrato público", () => {
+  const structured: StructuredData = {
+    typology: "entidad",
+    slug: "maria-cano",
+    titulo: "María Cano",
+    resumen: "Dirigente obrera y figura pública colombiana.",
+    periodoCode: "REP",
+    tipo: "Persona",
+    nacimiento: "1887",
+    muerte: "1967",
+    roles: ["dirigente obrera", "oradora"],
+    hitos: [{ year: 1925, titulo: "Giras obreras" }],
+    relaciones: ["Partido Socialista Revolucionario", "Medellín"],
+    semblanza: "Fue una figura reconocible en la vida pública y la prensa obrera.",
+  };
+  const ctx = referenceContextFromStructured(structured) as ReturnType<typeof referenceContextFromStructured> & {
+    entityType?: string;
+    visualIntent?: string;
+    visualAnchors?: string[];
+  };
+  assert.equal(ctx.entityType, "Persona");
+  assert.equal(ctx.visualIntent, "retrato-publico");
+  assert.ok(ctx.visualAnchors?.includes("María Cano portrait"));
+});
+
+test("el director de arte recibe acentos recientes para no repetir la serie", () => {
+  const prompt = buildArtDirectorUserPrompt({
+    titulo: "Colonia (1600-1780)",
+    resumen: "Vida urbana, minería, botánica y burocracia colonial.",
+    typology: "epoca",
+    periodoLabel: "1600-1780",
+    subjectText: "A period-accurate colonial scene in New Granada.",
+    referenceHints: ["Expedición Botánica — wikimedia, score 8"],
+    avoidAccentTargets: ["polvo de oro en batea", "banderas rojas de cabildo"],
+  });
+  assert.match(prompt, /ACENTOS RECIENTES A EVITAR/);
+  assert.match(prompt, /polvo de oro en batea/);
+  assert.match(prompt, /elige otro detalle material/i);
+});
+
+test("el buscador registra fuentes públicas sin API key de alto valor", () => {
+  for (const provider of ["internetarchive", "wellcome", "gallica", "rijksmuseum"]) {
+    assert.ok(REFERENCE_PROVIDER_NAMES.includes(provider), `falta proveedor ${provider}`);
+  }
 });
 
 // ── 7. Contrato de formatos del Taller ───────────────────────────────

@@ -90,6 +90,27 @@ export interface ReferenceContext {
   periodoLabel?: string;
   entidades?: string[];
   lugares?: string[];
+  /** Tipo de entidad cuando aplica: Persona/Lugar/Concepto/Institución. */
+  entityType?: string;
+  /** Intención visual dominante para orientar queries y scoring. */
+  visualIntent?: "retrato-publico" | "lugar-real" | "epoca-material" | "hecho-documental" | "conceptual";
+  /** Nombres concretos que sí pueden existir como imagen pública, archivo, objeto o lugar. */
+  visualAnchors?: string[];
+}
+
+function uniqueStrings(values: Array<string | null | undefined>, max = 14): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of values) {
+    const value = (raw ?? "").trim();
+    if (!value) continue;
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+    if (out.length >= max) break;
+  }
+  return out;
 }
 
 export function referenceContextFromStructured(s: StructuredData): ReferenceContext {
@@ -103,6 +124,8 @@ export function referenceContextFromStructured(s: StructuredData): ReferenceCont
         periodoLabel,
         entidades: s.protagonistas,
         lugares: s.lugares,
+        visualIntent: "hecho-documental",
+        visualAnchors: uniqueStrings([s.titulo, ...s.protagonistas, ...s.lugares, s.fecha ?? undefined]),
       };
     case "epoca":
       return {
@@ -111,14 +134,45 @@ export function referenceContextFromStructured(s: StructuredData): ReferenceCont
         typology: "época",
         periodoLabel: s.rango ?? periodoLabel,
         entidades: s.actores,
+        visualIntent: "epoca-material",
+        visualAnchors: uniqueStrings([
+          ...s.actores,
+          ...s.hitos.map((h) => h.titulo),
+          ...s.transformaciones,
+          s.titulo,
+          s.rango ?? undefined,
+        ]),
       };
     case "entidad":
+      if (s.tipo === "Persona") {
+        return {
+          titulo: s.titulo,
+          resumen: s.semblanza || s.resumen,
+          typology: `entidad (${s.tipo})`,
+          periodoLabel,
+          entidades: s.relaciones,
+          entityType: s.tipo,
+          visualIntent: "retrato-publico",
+          visualAnchors: uniqueStrings([
+            `${s.titulo} portrait`,
+            `${s.titulo} fotografía`,
+            `${s.titulo} retrato`,
+            s.titulo,
+            ...s.roles,
+            ...s.relaciones,
+            ...s.hitos.map((h) => h.titulo),
+          ]),
+        };
+      }
       return {
         titulo: s.titulo,
         resumen: s.semblanza || s.resumen,
         typology: `entidad (${s.tipo})`,
         periodoLabel,
         entidades: s.relaciones,
+        entityType: s.tipo,
+        visualIntent: s.tipo === "Lugar" ? "lugar-real" : "conceptual",
+        visualAnchors: uniqueStrings([s.titulo, ...s.relaciones, ...s.roles, ...s.hitos.map((h) => h.titulo)]),
       };
     case "pregunta":
       return {
@@ -127,6 +181,8 @@ export function referenceContextFromStructured(s: StructuredData): ReferenceCont
         typology: "pregunta",
         periodoLabel,
         entidades: s.temasRelacionados,
+        visualIntent: "conceptual",
+        visualAnchors: uniqueStrings([s.titulo, ...s.temasRelacionados]),
       };
   }
 }
@@ -141,8 +197,11 @@ Reglas:
 - De 5 a 7 queries, cada una de 2 a 4 PALABRAS. Ni una más. Sin apilar sinónimos ("pintura grabado ilustración" en una query = veneno).
 - Ancla en NOMBRES PROPIOS: persona, lugar, batalla, institución — solos o con UNA palabra de apoyo ("Riohacha", "batalla Lago Maracaibo", "Cartagena murallas").
 - Mezcla español e inglés ("Spanish colonial ship", "naval battle painting").
-- Escalera: de lo más específico a lo más amplio (la actividad, el objeto, el paisaje de época).
+- Escalera por capas: (1) sujeto exacto/persona/lugar, (2) retrato/foto/obra pública si es persona, (3) objetos/arquitectura/oficio/escena material, (4) atmósfera de época.
 - Piensa en QUÉ EXISTE fotografiado o pintado: si el tema es anterior a la fotografía, busca pinturas, grabados, piezas de museo y los LUGARES reales.
+- Para ÉPOCAS, NO te quedes en el nombre abstracto del período. Busca actores, hitos, oficios, arquitectura, transporte, vestuario, objetos y paisajes del período.
+- Para PERSONAS, empieza por imágenes públicas conocidas de esa persona: retrato, foto, portrait, caricatura, estatua, archivo. Solo después amplía a lugares/objetos asociados.
+- Para Google Images/Serper se permite una query algo más natural, pero sigue siendo corta y con nombres propios.
 
 Devuelve JSON puro: {"queries":["...", "..."]}`;
 
@@ -151,12 +210,39 @@ export function capForArchives(q: string, maxTokens = 4): string {
   return q.trim().split(/\s+/).slice(0, maxTokens).join(" ");
 }
 
+/** Semillas deterministas antes de llamar al LLM: garantizan nombres propios y capas visuales. */
+export function buildReferenceQuerySeeds(ctx: ReferenceContext): string[] {
+  const seeds: string[] = [];
+  const title = (ctx.titulo ?? "").trim();
+  if (ctx.visualIntent === "retrato-publico" && title) {
+    seeds.push(title, `${title} portrait`, `${title} fotografía`, `${title} retrato`);
+  } else if (title) {
+    seeds.push(title);
+  }
+
+  for (const anchor of ctx.visualAnchors ?? []) seeds.push(anchor);
+  for (const lugar of ctx.lugares ?? []) seeds.push(lugar);
+  for (const entidad of ctx.entidades ?? []) seeds.push((entidad ?? "").split(":")[0].trim());
+
+  if (ctx.visualIntent === "epoca-material") {
+    seeds.push("Colombia arquitectura", "Colombia vestuario", "Colombia archivo");
+  }
+  if (ctx.visualIntent === "lugar-real" && title) {
+    seeds.push(`${title} Colombia`, `${title} antiguo`);
+  }
+
+  return uniqueStrings(seeds, 12);
+}
+
 export async function generateReferenceQueries(ctx: ReferenceContext): Promise<string[]> {
   const lines = [
     `TEMA: ${ctx.titulo}`,
     ctx.resumen ? `RESUMEN: ${ctx.resumen}` : "",
     ctx.typology ? `TIPO DE PIEZA: ${ctx.typology}` : "",
+    ctx.entityType ? `TIPO DE ENTIDAD: ${ctx.entityType}` : "",
+    ctx.visualIntent ? `INTENCIÓN VISUAL: ${ctx.visualIntent}` : "",
     ctx.periodoLabel ? `PERÍODO: ${ctx.periodoLabel}` : "",
+    ctx.visualAnchors?.length ? `ANCLAS VISUALES: ${ctx.visualAnchors.slice(0, 10).join(", ")}` : "",
     ctx.entidades?.length ? `ENTIDADES: ${ctx.entidades.slice(0, 6).join(", ")}` : "",
     ctx.lugares?.length ? `LUGARES: ${ctx.lugares.slice(0, 4).join(", ")}` : "",
   ].filter(Boolean);
@@ -174,12 +260,10 @@ export async function generateReferenceQueries(ctx: ReferenceContext): Promise<s
   } catch (e) {
     console.warn(`[refs] generación de queries falló: ${(e as Error).message}`);
   }
-  // Anclas garantizadas: el título de la pieza (nombre propio = lo que mejor
-  // indexan los archivos) y las primeras entidades, por delante de lo del LLM.
-  // Las relaciones de una ficha vienen como "Nombre: contexto…" → solo el nombre.
-  const anchors = [ctx.titulo, ...(ctx.entidades ?? []).slice(0, 2)]
-    .map((s) => (s ?? "").split(":")[0].trim())
-    .filter((s) => s.length > 2);
+  // Anclas garantizadas: nombres propios y capas visuales por tipología, por
+  // delante de lo del LLM. Esto evita que épocas/personas caigan en atmósferas
+  // genéricas antes de intentar referentes públicos concretos.
+  const anchors = buildReferenceQuerySeeds(ctx).filter((s) => s.length > 2);
   const seen = new Set<string>();
   const merged: string[] = [];
   for (const q of [...anchors, ...queries]) {
@@ -209,8 +293,62 @@ async function jsonFetch(url: string, init: RequestInit = {}): Promise<unknown> 
   return res.json();
 }
 
+async function textFetch(url: string, init: RequestInit = {}): Promise<string> {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      "User-Agent": UA,
+      "Api-User-Agent": UA,
+      Accept: "text/html,application/xml,text/xml,*/*",
+      ...(init.headers ?? {}),
+    },
+    signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
+
 function asRecord(v: unknown): Record<string, unknown> {
   return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+}
+
+function firstString(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) {
+    for (const item of v) {
+      const s = firstString(item);
+      if (s) return s;
+    }
+  }
+  if (v && typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return firstString(o.content ?? o.value ?? o["@value"] ?? o.url ?? o.id);
+  }
+  return "";
+}
+
+function stripHtml(text: string): string {
+  return text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function xmlDecode(text: string): string {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function metaContent(html: string, property: string): string {
+  const re = new RegExp(`<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']+)["']`, "i");
+  return xmlDecode(html.match(re)?.[1] ?? "");
+}
+
+function upgradeIiifUrl(url: string, size = "1200,"): string {
+  return url
+    .replace(/^http:/, "https:")
+    .replace(/\/full\/[^/]+\/0\/default\.(?:jpg|jpeg|webp|png)$/i, `/full/${size}/0/default.jpg`);
 }
 
 async function searchOpenverse(q: string): Promise<ReferenceCandidate[]> {
@@ -342,6 +480,92 @@ async function searchLoc(q: string): Promise<ReferenceCandidate[]> {
   return out;
 }
 
+/** Internet Archive — sin llave. Bueno para libros escaneados, mapas, láminas y fotos históricas. */
+async function searchInternetArchive(q: string): Promise<ReferenceCandidate[]> {
+  const query = `${q} AND (mediatype:image OR mediatype:texts)`;
+  const url =
+    `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}` +
+    "&fl[]=identifier&fl[]=title&fl[]=description&fl[]=date&rows=12&page=1&output=json";
+  const j = asRecord(await jsonFetch(url));
+  const docs = Array.isArray(asRecord(j.response).docs) ? (asRecord(j.response).docs as unknown[]) : [];
+  const out: ReferenceCandidate[] = [];
+  for (const raw of docs) {
+    const o = asRecord(raw);
+    const identifier = typeof o.identifier === "string" ? o.identifier : "";
+    if (!identifier) continue;
+    const title = firstString(o.title) || identifier;
+    out.push({
+      provider: "internetarchive",
+      title,
+      url: `https://archive.org/services/img/${encodeURIComponent(identifier)}`,
+      page: `https://archive.org/details/${encodeURIComponent(identifier)}`,
+      width: 800,
+      height: 800,
+      query: q,
+    });
+  }
+  return out;
+}
+
+/** Wellcome Collection — sin llave. API pública + IIIF para obras digitalizadas abiertas. */
+async function searchWellcome(q: string): Promise<ReferenceCandidate[]> {
+  const j = asRecord(
+    await jsonFetch(
+      `https://api.wellcomecollection.org/catalogue/v2/works?query=${encodeURIComponent(q)}&include=images&limit=12`
+    )
+  );
+  const results = Array.isArray(j.results) ? j.results : [];
+  const out: ReferenceCandidate[] = [];
+  for (const raw of results) {
+    const o = asRecord(raw);
+    const images = Array.isArray(o.images) ? o.images : [];
+    const image = asRecord(images[0]);
+    const imageId = typeof image.id === "string" ? image.id : "";
+    if (!imageId) continue;
+    const id = typeof o.id === "string" ? o.id : "";
+    out.push({
+      provider: "wellcome",
+      title: typeof o.title === "string" ? stripHtml(o.title) : "",
+      url: `https://iiif.wellcomecollection.org/image/${encodeURIComponent(imageId)}/full/1200,/0/default.jpg`,
+      page: id ? `https://wellcomecollection.org/works/${encodeURIComponent(id)}` : undefined,
+      width: 1200,
+      height: 1200,
+      query: q,
+    });
+  }
+  return out;
+}
+
+/** Gallica / BnF — sin llave vía SRU + miniaturas/IIIF. Puede devolver challenge: en ese caso se silencia. */
+async function searchGallica(q: string): Promise<ReferenceCandidate[]> {
+  const xml = await textFetch(
+    `https://gallica.bnf.fr/services/engine/search/sru?operation=searchRetrieve&version=1.2&query=${encodeURIComponent(
+      `gallica all ${q}`
+    )}&maximumRecords=10`
+  );
+  if (/Vérification de sécurité|Verification de securite|captcha/i.test(xml)) return [];
+  const records = xml.split(/<srw:record>|<record>/i).slice(1);
+  const seen = new Set<string>();
+  const out: ReferenceCandidate[] = [];
+  for (const record of records) {
+    const ark = record.match(/ark:\/12148\/([a-z0-9]+)/i)?.[1];
+    if (!ark || seen.has(ark)) continue;
+    seen.add(ark);
+    const title = xmlDecode(record.match(/<dc:title[^>]*>([\s\S]*?)<\/dc:title>/i)?.[1] ?? "");
+    out.push({
+      provider: "gallica",
+      title: stripHtml(title) || `Gallica ${ark}`,
+      // `.thumbnail` es más estable que IIIF para resultados heterogéneos (libros, mapas, láminas).
+      url: `https://gallica.bnf.fr/ark:/12148/${ark}.thumbnail`,
+      page: `https://gallica.bnf.fr/ark:/12148/${ark}`,
+      width: 800,
+      height: 800,
+      query: q,
+    });
+  }
+  return out;
+}
+
 /** Art Institute of Chicago — sin llave, imágenes IIIF. Fuerte en pintura de época. */
 async function searchArtInstitute(q: string): Promise<ReferenceCandidate[]> {
   const j = asRecord(
@@ -396,6 +620,68 @@ async function searchCleveland(q: string): Promise<ReferenceCandidate[]> {
       height: 1000,
       query: q,
     });
+  }
+  return out;
+}
+
+function rijksName(o: Record<string, unknown>): string {
+  const ids = Array.isArray(o.identified_by) ? o.identified_by : [];
+  for (const raw of ids) {
+    const item = asRecord(raw);
+    if (String(item.type ?? "").toLowerCase() === "name" && typeof item.content === "string") return item.content;
+  }
+  return firstString(o.identified_by);
+}
+
+function rijksAccessPoint(o: Record<string, unknown>): string {
+  const subjects = Array.isArray(o.subject_of) ? o.subject_of : [];
+  for (const rawSubject of subjects) {
+    const subject = asRecord(rawSubject);
+    const carriers = Array.isArray(subject.digitally_carried_by) ? subject.digitally_carried_by : [];
+    for (const rawCarrier of carriers) {
+      const carrier = asRecord(rawCarrier);
+      const points = Array.isArray(carrier.access_point) ? carrier.access_point : [];
+      for (const point of points) {
+        const id = firstString(point);
+        if (/rijksmuseum\.nl\/.+collectie/i.test(id)) return id;
+      }
+    }
+  }
+  return "";
+}
+
+/** Rijksmuseum Data Services — sin llave. Útil para objetos, mapas, grabados y cultura material. */
+async function searchRijksmuseum(q: string): Promise<ReferenceCandidate[]> {
+  const j = asRecord(
+    await jsonFetch(
+      `https://data.rijksmuseum.nl/search/collection?title=${encodeURIComponent(q)}&imageAvailable=true`
+    )
+  );
+  const items = Array.isArray(j.orderedItems) ? j.orderedItems.slice(0, 5) : [];
+  const out: ReferenceCandidate[] = [];
+  for (const raw of items) {
+    const itemId = firstString(raw);
+    if (!itemId) continue;
+    try {
+      const detail = asRecord(await jsonFetch(itemId, { headers: { Accept: "application/json" } }));
+      const page = rijksAccessPoint(detail);
+      if (!page) continue;
+      const html = await textFetch(page);
+      const img = metaContent(html, "og:image");
+      if (!img) continue;
+      out.push({
+        provider: "rijksmuseum",
+        title: rijksName(detail),
+        url: upgradeIiifUrl(img),
+        page,
+        width: 1024,
+        height: 1024,
+        query: q,
+        referer: "https://www.rijksmuseum.nl/",
+      });
+    } catch {
+      // Algunos IDs no tienen representación pública; se ignoran.
+    }
   }
   return out;
 }
@@ -478,18 +764,27 @@ const PROVIDERS: Array<{
   { name: "artic", fn: searchArtInstitute, archive: true },
   { name: "cleveland", fn: searchCleveland, archive: true },
   { name: "loc", fn: searchLoc, archive: true },
+  { name: "internetarchive", fn: searchInternetArchive, archive: false },
+  { name: "wellcome", fn: searchWellcome, archive: false },
+  { name: "gallica", fn: searchGallica, archive: false },
+  { name: "rijksmuseum", fn: searchRijksmuseum, archive: false },
   { name: "smithsonian", fn: searchSmithsonian, archive: true },
   // Buscadores amplios (relevancia, no AND estricto): reciben la query completa.
   { name: "europeana", fn: searchEuropeana, archive: false },
   { name: "serper", fn: searchSerper, archive: false },
 ];
 
+export const REFERENCE_PROVIDER_NAMES = PROVIDERS.map((p) => p.name);
+
 function dedupeCandidates(all: ReferenceCandidate[]): ReferenceCandidate[] {
   const seen = new Set<string>();
   const out: ReferenceCandidate[] = [];
   for (const c of all) {
     if (!c.url || c.width < MIN_WIDTH) continue;
-    const key = c.url.split("/").pop()?.split("?")[0]?.toLowerCase() ?? c.url;
+    const cleanUrl = c.url.split("?")[0].toLowerCase();
+    const key = /\/iiif\/|iiif\.|\/full\/[^/]+\/0\/default\.(?:jpg|jpeg|webp|png)$/i.test(cleanUrl)
+      ? cleanUrl
+      : (cleanUrl.split("/").pop() ?? cleanUrl);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(c);
@@ -529,7 +824,7 @@ export async function searchAllProviders(queries: string[]): Promise<ReferenceCa
 
 // ── 3. Puntuación de relevancia por LLM ──────────────────────────────
 
-const SCORE_SYSTEM = `Puntúas candidatos a REFERENCIA VISUAL para ilustrar una pieza de historia de Colombia. Solo ves título, fuente y la query que lo encontró.
+const SCORE_SYSTEM = `Puntúas candidatos a REFERENCIA VISUAL para ilustrar una pieza de historia de Colombia. Ves título, fuente, página y la query que lo encontró.
 
 Puntúa 0–10 cada candidato según su utilidad como ANCLA DOCUMENTAL para un ilustrador:
 - 9–10: material de época del tema exacto (foto de prensa, pintura, pieza de museo, el lugar real).
@@ -537,7 +832,12 @@ Puntúa 0–10 cada candidato según su utilidad como ANCLA DOCUMENTAL para un i
 - 5–6: útil solo como atmósfera general (paisaje o arquitectura de la región/época, actividad análoga en otra geografía).
 - 0–4: ruido — logos, mapas genéricos, portadas de libros, páginas de texto, temas ajenos, arte moderno sin relación.
 
-Sé escéptico: un título ambiguo sin señales del tema puntúa bajo. Devuelve JSON puro: {"scores":[{"i":0,"score":7},...]} — un item por candidato, mismo orden.`;
+Reglas de juicio:
+- Si la intención es retrato-publico, una foto/retrato/caricatura/estatua/archivo del personaje exacto puntúa 9–10; un personaje distinto o "gente de la época" puntúa bajo.
+- Si la pieza es una época, premia referentes materiales variados: edificios, oficios, transportes, vestuario, prensa/archivo SIN depender de texto legible, objetos de museo y paisajes reales.
+- Prefiere archivos públicos, museos, bibliotecas, Commons/Openverse, Google Images con página de archivo/museo/prensa; baja puntaje a thumbnails, logos, libros, PDFs o páginas sin imagen clara.
+- Sé escéptico: un título ambiguo sin señales del tema puntúa bajo.
+Devuelve JSON puro: {"scores":[{"i":0,"score":7},...]} — un item por candidato, mismo orden.`;
 
 export async function scoreCandidates(
   candidates: ReferenceCandidate[],
@@ -545,9 +845,26 @@ export async function scoreCandidates(
 ): Promise<ScoredReference[]> {
   if (candidates.length === 0) return [];
   const list = candidates
-    .map((c, i) => `${i}. [${c.provider}] "${c.title || "(sin título)"}" (query: ${c.query})`)
+    .map(
+      (c, i) =>
+        `${i}. [${c.provider}] "${c.title || "(sin título)"}" (query: ${c.query}; page: ${
+          c.page ?? "n/a"
+        }; size: ${c.width}x${c.height})`
+    )
     .join("\n");
-  const user = `PIEZA: ${ctx.titulo} — ${ctx.resumen}\n${ctx.periodoLabel ? `PERÍODO: ${ctx.periodoLabel}\n` : ""}\nCANDIDATOS:\n${list}\n\nJSON:`;
+  const user = [
+    `PIEZA: ${ctx.titulo} — ${ctx.resumen}`,
+    ctx.typology ? `TIPO: ${ctx.typology}` : "",
+    ctx.entityType ? `TIPO DE ENTIDAD: ${ctx.entityType}` : "",
+    ctx.visualIntent ? `INTENCIÓN VISUAL: ${ctx.visualIntent}` : "",
+    ctx.periodoLabel ? `PERÍODO: ${ctx.periodoLabel}` : "",
+    ctx.visualAnchors?.length ? `ANCLAS VISUALES: ${ctx.visualAnchors.slice(0, 10).join(", ")}` : "",
+    `CANDIDATOS:\n${list}`,
+    "",
+    "JSON:",
+  ]
+    .filter(Boolean)
+    .join("\n");
   const raw = await callClaudeJson<{ scores?: unknown }>({
     model: SONNET_MODEL,
     system: SCORE_SYSTEM,
