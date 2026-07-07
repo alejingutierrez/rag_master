@@ -6,9 +6,15 @@ import { PageHeader, FilterTabs, SearchInput, primaryBtn, ghostBtn } from "@/com
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import type { LongitudId } from "@/lib/atelier-formats";
 import {
+  ENTITY_SERIES_TABS,
   SERIES_DEFAULT_LONGITUD,
+  SERIES_HIDE_PRODUCED_DEFAULT,
   SERIES_REQUIRE_IMAGE,
+  buildSeriesCatalogPageUrl,
+  buildSeriesEntityCatalogUrl,
   evaluateSeriesPoll,
+  shouldFetchSeriesCatalogPage,
+  type SeriesEntityType,
 } from "@/lib/atelier/series";
 import {
   fichaFormatForKind,
@@ -56,24 +62,27 @@ const LONGITUDES: { value: LongitudId; label: string }[] = [
   { value: "extensa", label: "Extensa" },
 ];
 
-/** Concatena varias páginas de un endpoint paginado (cap defensivo). */
-async function fetchPaged<T>(base: string, key: string, signal: AbortSignal, cap = 600): Promise<T[]> {
+/** Concatena todas las páginas que declare un endpoint paginado. */
+async function fetchPaged<T>(base: string, key: string, signal: AbortSignal): Promise<T[]> {
   const out: T[] = [];
   let page = 1;
   let totalPages = 1;
   do {
-    const sep = base.includes("?") ? "&" : "?";
-    const r = await fetch(`${base}${sep}page=${page}&limit=100`, { signal });
+    const r = await fetch(buildSeriesCatalogPageUrl(base, page), { signal });
     if (!r.ok) break;
     const d = await r.json();
     out.push(...((d[key] as T[]) ?? []));
     totalPages = d.pagination?.totalPages ?? 1;
     page++;
-  } while (page <= totalPages && out.length < cap);
+  } while (shouldFetchSeriesCatalogPage(page, totalPages));
   return out;
 }
 
-async function loadCatalog(kind: SourceKind, signal: AbortSignal): Promise<SerieItem[]> {
+async function loadCatalog(
+  kind: SourceKind,
+  signal: AbortSignal,
+  entityType: SeriesEntityType,
+): Promise<SerieItem[]> {
   switch (kind) {
     case "pregunta": {
       const rows = await fetchPaged<{ id: string; pregunta: string; periodoNombre?: string; periodoCode?: string }>(
@@ -116,7 +125,7 @@ async function loadCatalog(kind: SourceKind, signal: AbortSignal): Promise<Serie
       return out;
     }
     case "entidad": {
-      const r = await fetch("/api/entities?limit=300&minMentions=2", { signal });
+      const r = await fetch(buildSeriesEntityCatalogUrl(entityType), { signal });
       if (!r.ok) return [];
       const d = await r.json();
       const ents: Array<{ name: string; type: string; mentions: number }> = d.entities ?? [];
@@ -140,11 +149,12 @@ async function loadCatalog(kind: SourceKind, signal: AbortSignal): Promise<Serie
 
 export default function SeriePage() {
   const [kind, setKind] = useState<SourceKind>("hecho");
+  const [entityType, setEntityType] = useState<SeriesEntityType>("person");
   const [items, setItems] = useState<SerieItem[]>([]);
   const [produced, setProduced] = useState<Record<string, ProducedInfo>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [hideProduced, setHideProduced] = useState(false);
+  const [hideProduced, setHideProduced] = useState(SERIES_HIDE_PRODUCED_DEFAULT);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [concurrency, setConcurrency] = useState(3);
   const [longitud, setLongitud] = useState<LongitudId>(SERIES_DEFAULT_LONGITUD);
@@ -167,13 +177,13 @@ export default function SeriePage() {
     setSelected(new Set());
     setStatus({});
     Promise.all([
-      loadCatalog(kind, ctrl.signal).then((rows) => setItems(rows)),
+      loadCatalog(kind, ctrl.signal, entityType).then((rows) => setItems(rows)),
       loadProduced(kind, ctrl.signal),
     ])
       .catch(() => {})
       .finally(() => setLoading(false));
     return () => ctrl.abort();
-  }, [kind, loadProduced]);
+  }, [kind, entityType, loadProduced]);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -331,6 +341,9 @@ export default function SeriePage() {
     };
   }, [status]);
 
+  const currentEntityTab = ENTITY_SERIES_TABS.find((tab) => tab.type === entityType) ?? ENTITY_SERIES_TABS[0];
+  const catalogLabel = kind === "entidad" ? currentEntityTab.label.toLowerCase() : `${kindLabel(kind)}s`;
+
   return (
     <div className="fade-up" data-screen-label="AtelierSerie">
       <PageHeader
@@ -349,6 +362,16 @@ export default function SeriePage() {
         />
       </section>
 
+      {kind === "entidad" && (
+        <section style={{ padding: "14px 56px 0", maxWidth: 1100 }}>
+          <FilterTabs<SeriesEntityType>
+            value={entityType}
+            onChange={(t) => !running && setEntityType(t)}
+            options={ENTITY_SERIES_TABS.map((x) => ({ value: x.type, label: x.label }))}
+          />
+        </section>
+      )}
+
       {/* Barra de control */}
       <section
         style={{
@@ -360,7 +383,7 @@ export default function SeriePage() {
           flexWrap: "wrap",
         }}
       >
-        <SearchInput value={search} onChange={setSearch} placeholder={`Filtrar ${kindLabel(kind)}s…`} />
+        <SearchInput value={search} onChange={setSearch} placeholder={`Filtrar ${catalogLabel}…`} />
         <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, color: "var(--fg-muted)" }}>
           <input type="checkbox" checked={hideProduced} onChange={(e) => setHideProduced(e.target.checked)} />
           Ocultar ya producidos

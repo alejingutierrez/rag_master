@@ -3,6 +3,41 @@ import type { LongitudId } from "../atelier-formats";
 export const SERIES_DEFAULT_LONGITUD: LongitudId = "extensa";
 export const SERIES_REQUIRE_IMAGE = true;
 export const SERIES_IMAGE_MAX_RETRIES = 1;
+export const SERIES_CATALOG_PAGE_SIZE = 100;
+export const SERIES_HIDE_PRODUCED_DEFAULT = true;
+
+export type SeriesEntityType = "person" | "place" | "concept";
+
+export const ENTITY_SERIES_TABS: ReadonlyArray<{
+  type: SeriesEntityType;
+  label: string;
+}> = [
+  { type: "person", label: "Personas" },
+  { type: "place", label: "Lugares" },
+  { type: "concept", label: "Conceptos" },
+];
+
+export function buildSeriesEntityCatalogUrl(type: SeriesEntityType): string {
+  const params = new URLSearchParams({
+    limit: "all",
+    minMentions: "2",
+    type,
+  });
+  return `/api/entities?${params.toString()}`;
+}
+
+export function buildSeriesCatalogPageUrl(
+  base: string,
+  page: number,
+  limit = SERIES_CATALOG_PAGE_SIZE,
+): string {
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}page=${page}&limit=${limit}`;
+}
+
+export function shouldFetchSeriesCatalogPage(page: number, totalPages: number): boolean {
+  return page <= totalPages;
+}
 
 export type SeriesPollAction =
   | { kind: "wait"; reason: "production-running" | "image-running" | "image-kickoff-running" }

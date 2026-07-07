@@ -4,6 +4,12 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+function parseLimit(raw: string | null): number | null {
+  if (raw === "all") return null;
+  const n = Number(raw ?? "100");
+  return Number.isFinite(n) && n > 0 ? n : 100;
+}
+
 /**
  * Entidades del corpus, derivadas de las preguntas estructuradas (Opus 4.7).
  *
@@ -18,7 +24,7 @@ export const maxDuration = 60;
  * era poco confiable.
  */
 export async function GET(req: NextRequest) {
-  const limit = Number(req.nextUrl.searchParams.get("limit") ?? "100");
+  const limit = parseLimit(req.nextUrl.searchParams.get("limit"));
   const minMentions = Number(req.nextUrl.searchParams.get("minMentions") ?? "2");
   const typeFilter = req.nextUrl.searchParams.get("type"); // "person" | "place" | "concept" | null
 
@@ -100,10 +106,11 @@ export async function GET(req: NextRequest) {
     concept: aboveThreshold.filter((e) => e.type === "concept").length,
   };
 
-  const entities = aboveThreshold
+  const sortedEntities = aboveThreshold
     .filter((e) => !typeFilter || e.type === typeFilter)
-    .sort((a, b) => b.mentions - a.mentions)
-    .slice(0, limit)
+    .sort((a, b) => b.mentions - a.mentions);
+
+  const entities = (limit === null ? sortedEntities : sortedEntities.slice(0, limit))
     .map((e) => {
       let best = e.name;
       let bestCount = 0;

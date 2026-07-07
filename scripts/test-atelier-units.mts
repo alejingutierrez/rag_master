@@ -16,9 +16,15 @@ import { ATELIER_FORMAT_LIST, isValidFormatId, targetWords } from "../src/lib/at
 import { getFormatConfig } from "../src/lib/atelier/format-config";
 import { getFormatPrompt } from "../src/lib/atelier/formats";
 import {
+  ENTITY_SERIES_TABS,
+  SERIES_CATALOG_PAGE_SIZE,
   SERIES_DEFAULT_LONGITUD,
+  SERIES_HIDE_PRODUCED_DEFAULT,
+  buildSeriesCatalogPageUrl,
+  buildSeriesEntityCatalogUrl,
   SERIES_REQUIRE_IMAGE,
   evaluateSeriesPoll,
+  shouldFetchSeriesCatalogPage,
 } from "../src/lib/atelier/series";
 import type { SearchResult } from "../src/lib/vector-search";
 import type { VerifiedClaim, AtelierBrief } from "../src/lib/atelier/types";
@@ -412,6 +418,33 @@ test("la producción en serie usa longitud extensa por defecto para todos los fo
       `${id}: la serie no sube extensión frente a normal`,
     );
   }
+});
+
+test("la producción en serie muestra pendientes por defecto", () => {
+  assert.equal(SERIES_HIDE_PRODUCED_DEFAULT, true);
+});
+
+test("la producción en serie divide entidades por tipo", () => {
+  assert.deepEqual(
+    ENTITY_SERIES_TABS.map((t) => t.type),
+    ["person", "place", "concept"],
+  );
+});
+
+test("el catálogo de entidades en serie pide todas las entidades disponibles del tipo", () => {
+  const url = buildSeriesEntityCatalogUrl("concept");
+  assert.equal(url, "/api/entities?limit=all&minMentions=2&type=concept");
+});
+
+test("la paginación de serie no recorta preguntas o preguntas madre a 600 ítems", () => {
+  assert.equal(SERIES_CATALOG_PAGE_SIZE, 100);
+  assert.equal(buildSeriesCatalogPageUrl("/api/questions", 7), "/api/questions?page=7&limit=100");
+  assert.equal(
+    buildSeriesCatalogPageUrl("/api/preguntas-madre?status=READY", 7),
+    "/api/preguntas-madre?status=READY&page=7&limit=100",
+  );
+  assert.equal(shouldFetchSeriesCatalogPage(7, 9), true);
+  assert.equal(shouldFetchSeriesCatalogPage(10, 9), false);
 });
 
 test("la serie exige imagen completa antes de marcar una pieza como lista", () => {
