@@ -11,6 +11,7 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { TimelineEventData } from "@/components/timeline/TimelineEventDrawer";
+import { mergeCuratedEvents } from "@/lib/timeline-curated";
 
 export interface TimelinePeriodSlice {
   yearHistogram: Array<{ y: number; n: number; b: number }>;
@@ -33,6 +34,7 @@ export async function loadTimeline(): Promise<TimelineFile> {
       "utf8",
     );
     cache = JSON.parse(raw) as TimelineFile;
+    mergeCuratedEvents(cache.periods);
   }
   return cache;
 }

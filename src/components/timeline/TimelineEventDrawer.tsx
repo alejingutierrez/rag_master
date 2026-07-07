@@ -22,6 +22,8 @@ export interface TimelineEventData {
   porQueImporta: string;
   categoria: string;
   entidadesClave: string[];
+  /** true = hecho añadido por curaduría (no minado del corpus). */
+  curated?: boolean;
   evidencia: {
     nPreguntas: number;
     nLibros: number;
@@ -256,9 +258,22 @@ function DrawerContent({
         </Section>
 
         <Section title="Atención del corpus">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 12 }}>
-            <Metric label="Preguntas" value={ev.evidencia.nPreguntas} />
-            <Metric label="Obras" value={ev.evidencia.nLibros} />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: ev.curated ? "1fr 1fr" : "1fr 1fr 1fr",
+              gap: 16,
+              marginBottom: 12,
+            }}
+          >
+            {ev.curated ? (
+              <Metric label="Menciones" value={ev.evidencia.nPreguntas} />
+            ) : (
+              <>
+                <Metric label="Preguntas" value={ev.evidencia.nPreguntas} />
+                <Metric label="Obras" value={ev.evidencia.nLibros} />
+              </>
+            )}
             <Metric label="Peso relativo" value={ev.evidencia.peso} suffix="/100" />
           </div>
           <div style={{ height: 4, background: "var(--bg-muted)", position: "relative" }}>
@@ -272,8 +287,9 @@ function DrawerContent({
             />
           </div>
           <p style={{ margin: "10px 0 0", fontSize: 11.5, color: "var(--fg-faint)", lineHeight: 1.5 }}>
-            Calibrado contra las preguntas del corpus ancladas a {yearsLabel}: cuántas lo
-            interrogan y desde cuántas obras distintas.
+            {ev.curated
+              ? `Hecho añadido por curaduría (no minado). La cifra es el número de preguntas del corpus que mencionan a sus protagonistas; su peso pondera esa atención.`
+              : `Calibrado contra las preguntas del corpus ancladas a ${yearsLabel}: cuántas lo interrogan y desde cuántas obras distintas.`}
           </p>
         </Section>
 
@@ -299,7 +315,7 @@ function DrawerContent({
           </Section>
         )}
 
-        <Section title={`Preguntas del corpus (${ev.evidencia.nPreguntas})`}>
+        <Section title={ev.curated ? "Preguntas del corpus" : `Preguntas del corpus (${ev.evidencia.nPreguntas})`}>
           {questions === null && (
             <p style={{ margin: 0, fontSize: 12.5, color: "var(--fg-faint)", fontStyle: "italic" }}>
               Cargando preguntas…
@@ -307,7 +323,7 @@ function DrawerContent({
           )}
           {questions !== null && questions.length === 0 && (
             <p style={{ margin: 0, fontSize: 12.5, color: "var(--fg-faint)", fontStyle: "italic" }}>
-              Sin preguntas vinculadas.
+              {ev.curated ? "Hecho curado — sin preguntas minadas vinculadas." : "Sin preguntas vinculadas."}
             </p>
           )}
           {questions !== null && questions.length > 0 && (

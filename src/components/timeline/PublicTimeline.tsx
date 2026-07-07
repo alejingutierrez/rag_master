@@ -235,7 +235,9 @@ export function PublicTimeline({
                             <span style={{ position: "absolute", inset: 0, width: `${e.evidencia.peso}%`, background: `var(--p-${period.slug})` }} />
                           </span>
                           <span className="mono num" style={{ fontSize: 11, color: "var(--fg-muted)", letterSpacing: "0.03em" }}>
-                            {e.evidencia.nPreguntas.toLocaleString("es-CO")} preguntas · {e.evidencia.nLibros.toLocaleString("es-CO")} obras
+                            {e.curated
+                              ? `${e.evidencia.nPreguntas.toLocaleString("es-CO")} menciones · curado`
+                              : `${e.evidencia.nPreguntas.toLocaleString("es-CO")} preguntas · ${e.evidencia.nLibros.toLocaleString("es-CO")} obras`}
                           </span>
                         </div>
                       </div>

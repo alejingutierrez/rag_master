@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { mergeCuratedEvents } from "@/lib/timeline-curated";
+import type { TimelineEventData } from "@/components/timeline/TimelineEventDrawer";
 
 // Eventos minados del corpus (scripts/mine-timeline-events.mts).
 // Artefacto versionado en el repo — no requiere BD. Se lee de disco (no import
@@ -26,6 +28,9 @@ export async function GET(request: NextRequest) {
         "utf8"
       );
       cache = JSON.parse(raw) as TimelineEventsFile;
+      mergeCuratedEvents(
+        cache.periods as Record<string, { events: TimelineEventData[] }>,
+      );
     } catch {
       return NextResponse.json(
         { error: "Eventos no generados aún. Corre scripts/mine-timeline-events.mts" },
