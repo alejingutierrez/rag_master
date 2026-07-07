@@ -86,7 +86,11 @@ export function TimelineDensityStrip({
             onClick={() => onSelectEvent(ev)}
             style={{ cursor: "pointer" }}
           >
-            <title>{`${fmtYearSpan(ev.anioInicio, ev.anioFin)} · ${ev.titulo} — ${ev.evidencia.nPreguntas} preguntas / ${ev.evidencia.nLibros} obras`}</title>
+            <title>{`${fmtYearSpan(ev.anioInicio, ev.anioFin)} · ${ev.titulo} — ${
+              ev.curated
+                ? `${ev.evidencia.nPreguntas} menciones (curado)`
+                : `${ev.evidencia.nPreguntas} preguntas / ${ev.evidencia.nLibros} obras`
+            }`}</title>
             {/* Tramo del proceso (si es rango) */}
             {ev.anioFin > ev.anioInicio && (
               <line

@@ -216,10 +216,23 @@ function DrawerContent({
           </blockquote>
         </Section>
 
-        <Section title="Relevancia en el corpus">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 12 }}>
-            <Metric label="Preguntas" value={ev.evidencia.nPreguntas} />
-            <Metric label="Obras" value={ev.evidencia.nLibros} />
+        <Section title={ev.curated ? "Atención del corpus" : "Relevancia en el corpus"}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: ev.curated ? "1fr 1fr" : "1fr 1fr 1fr",
+              gap: 16,
+              marginBottom: 12,
+            }}
+          >
+            {ev.curated ? (
+              <Metric label="Menciones" value={ev.evidencia.nPreguntas} />
+            ) : (
+              <>
+                <Metric label="Preguntas" value={ev.evidencia.nPreguntas} />
+                <Metric label="Obras" value={ev.evidencia.nLibros} />
+              </>
+            )}
             <Metric label="Peso" value={ev.evidencia.peso} suffix="/100" />
           </div>
           <div style={{ height: 4, background: "var(--bg-muted)", position: "relative" }}>
@@ -233,8 +246,9 @@ function DrawerContent({
             />
           </div>
           <p style={{ margin: "10px 0 0", fontSize: 11.5, color: "var(--fg-faint)", lineHeight: 1.5 }}>
-            Calibrado por cuánto interroga el corpus este momento: número de preguntas y de obras
-            distintas ancladas a {yearsLabel}.
+            {ev.curated
+              ? `Hecho añadido por curaduría historiográfica (no minado). La cifra es el número de preguntas del corpus que mencionan a sus protagonistas; su peso pondera esa atención.`
+              : `Calibrado por cuánto interroga el corpus este momento: número de preguntas y de obras distintas ancladas a ${yearsLabel}.`}
           </p>
         </Section>
 

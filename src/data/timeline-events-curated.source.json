@@ -1,0 +1,425 @@
+{
+  "_README": "Hechos añadidos por curaduría historiográfica (autor: Alejandro Gutiérrez), NO minados del corpus. Cubren la capa cultural, social y étnica que el minado por picos de año sub-representa (Sociedad 2% / Historiografía 1% de los 178 eventos minados). Cada hecho se ancla en entidades reales del registro (src/data/entities.json) con menciones fuertes no nombradas por ningún evento minado. La evidencia se DERIVA del histograma versionado por scripts/build-curated-timeline.mts (densidad del corpus en la ventana temporal); no se fabrican conteos de preguntas. Fuente = solo lectura. Regenerar: npx tsx scripts/build-curated-timeline.mts",
+  "events": [
+    {
+      "periodo": "CON",
+      "anioInicio": 1536,
+      "anioFin": 1544,
+      "titulo": "Resistencia indígena a la Conquista",
+      "resumen": "Frente al avance de las huestes de Jiménez de Quesada y Belalcázar, líderes como La Gaitana en el alto Magdalena, el cacique Tundama en Duitama y el zaque Aquiminzaque en Tunja encabezan la resistencia armada muisca y de los pueblos del sur, sofocada con ejecuciones ejemplarizantes hacia 1544.",
+      "porQueImporta": "El corpus interroga la Conquista no solo como empresa española sino como derrota de proyectos políticos indígenas; nombra a sus líderes frente a una narrativa que suele borrarlos.",
+      "categoria": "CON",
+      "entidadesClave": ["La Gaitana", "Tundama", "Aquiminzaque"]
+    },
+    {
+      "periodo": "COL",
+      "anioInicio": 1636,
+      "anioFin": 1688,
+      "titulo": "Letras criollas del barroco neogranadino",
+      "resumen": "La escritura criolla madura con El Carnero (c. 1638) de Juan Rodríguez Freyle, la poesía barroca de Hernando Domínguez Camargo y la Historia general del Nuevo Reino de Granada (1688) de Lucas Fernández de Piedrahita, que fijan una memoria letrada del reino desde la élite santafereña.",
+      "porQueImporta": "Es el nacimiento de una conciencia criolla escrita: el corpus la lee como el primer laboratorio de identidad neogranadina, distinto de la crónica de conquista.",
+      "categoria": "CUL",
+      "entidadesClave": ["Juan Rodríguez Freyle", "Lucas Fernández de Piedrahita", "Hernando Domínguez Camargo"]
+    },
+    {
+      "periodo": "COL",
+      "anioInicio": 1700,
+      "anioFin": 1708,
+      "titulo": "Títulos de resguardo y derecho indígena en el Cauca (Juan Tama)",
+      "resumen": "El cacique Juan Tama de la Estrella consolida los títulos coloniales de resguardo de Vitoncó y Pitayó (1708), tejiendo una legalidad indígena que blindará las tierras nasa durante siglos y fundará la autoridad de los cabildos del Cauca.",
+      "porQueImporta": "El corpus rastrea aquí el origen jurídico del resguardo como institución de resistencia: la base sobre la que Quintín Lame y el CRIC litigarán en los siglos XX.",
+      "categoria": "TER",
+      "entidadesClave": ["Juan Tama"]
+    },
+    {
+      "periodo": "PRE_IND",
+      "anioInicio": 1795,
+      "anioFin": 1808,
+      "titulo": "Pensamiento económico ilustrado y el Consulado de Cartagena",
+      "resumen": "Desde el Consulado de Comercio de Cartagena, José Ignacio de Pombo redacta representaciones sobre comercio, moneda y agricultura que introducen la economía política ilustrada en el Nuevo Reino, mientras Juan Antonio Mon y Velarde ensaya reformas agrarias en Antioquia.",
+      "porQueImporta": "El corpus lo lee como la cara económica de la Ilustración criolla: un diagnóstico del atraso colonial que anticipa el programa material de la independencia.",
+      "categoria": "ECO",
+      "entidadesClave": ["José Ignacio de Pombo", "Juan Antonio Mon y Velarde"]
+    },
+    {
+      "periodo": "IND",
+      "anioInicio": 1814,
+      "anioFin": 1821,
+      "titulo": "Manumisión y libertad de vientres (1821)",
+      "resumen": "En el Congreso de Cúcuta, José Félix de Restrepo lidera el debate que produce la ley de libertad de partos de 1821: los hijos de esclavizadas nacerían libres, pero con manumisión gradual y condicionada. Una emancipación aplazada que dejó viva la esclavitud por tres décadas más.",
+      "porQueImporta": "El corpus interroga el límite social de la independencia: una república que proclama la libertad pero pacta la continuidad de la esclavitud para no romper con las élites propietarias.",
+      "categoria": "SOC",
+      "entidadesClave": ["José Félix de Restrepo"]
+    },
+    {
+      "periodo": "IND",
+      "anioInicio": 1815,
+      "anioFin": 1821,
+      "titulo": "Pardos, Haití y la dimensión afro de la independencia",
+      "resumen": "El respaldo del Haití de Alexandre Pétion a Bolívar a cambio de la promesa abolicionista, el liderazgo militar del pardo Manuel Piar y la movilización de los artesanos de color de Cartagena bajo Pedro Romero revelan una independencia sostenida por la gente afrodescendiente y atravesada por el miedo a la 'pardocracia'.",
+      "porQueImporta": "El corpus recupera el protagonismo afro que la historia patria heroica invisibilizó, y la tensión racial que costó la vida a Piar y marcó los límites de la promesa republicana.",
+      "categoria": "SOC",
+      "entidadesClave": ["Manuel Piar", "Alexandre Pétion", "Pedro Romero"]
+    },
+    {
+      "periodo": "NGR",
+      "anioInicio": 1848,
+      "anioFin": 1862,
+      "titulo": "Costumbrismo y república letrada del medio siglo",
+      "resumen": "Alrededor de tertulias y publicaciones como El Mosaico florece el costumbrismo: José María Samper teoriza la nación, Eugenio Díaz Castro publica Manuela (1858) y Ramón Torres Méndez y José María Cordovez Moure fijan en estampa y memoria las costumbres de una sociedad en transformación liberal.",
+      "porQueImporta": "El corpus lo lee como la invención cultural de Colombia: la escritura y la imagen construyen un imaginario nacional que el timeline político no registra.",
+      "categoria": "CUL",
+      "entidadesClave": ["José María Samper", "Eugenio Díaz Castro", "Ramón Torres Méndez", "José María Cordovez Moure"]
+    },
+    {
+      "periodo": "NGR",
+      "anioInicio": 1845,
+      "anioFin": 1862,
+      "titulo": "Historiografía y ciencia nacional (Acosta, Groot, Triana)",
+      "resumen": "Joaquín Acosta publica su Compendio histórico (1848) y rescata la Expedición Botánica; José Manuel Groot escribe la Historia eclesiástica y civil; José Jerónimo Triana lleva la botánica colombiana a Europa. Se profesionaliza el estudio del pasado y la naturaleza del país.",
+      "porQueImporta": "El corpus rastrea aquí el nacimiento de la historiografía y la ciencia nacionales, una capa de producción intelectual ausente del timeline minado.",
+      "categoria": "CUL",
+      "entidadesClave": ["Joaquín Acosta", "José Manuel Groot", "José Jerónimo Triana"]
+    },
+    {
+      "periodo": "NGR",
+      "anioInicio": 1859,
+      "anioFin": 1861,
+      "titulo": "Juan José Nieto y las élites afrocaribeñas",
+      "resumen": "Militar y novelista costeño, autor de Ingermina (1844), Juan José Nieto llega en 1861 a la presidencia del Estado —el primer gobernante afrodescendiente del país—, encarnando el ascenso político de las élites liberales del Caribe frente al centralismo andino.",
+      "porQueImporta": "El corpus lo interroga como excepción y síntoma: la movilidad afrocaribeña y el pulso regional que el relato bogotano de la nación tiende a borrar.",
+      "categoria": "POL",
+      "entidadesClave": ["Juan José Nieto"]
+    },
+    {
+      "periodo": "EUC",
+      "anioInicio": 1877,
+      "anioFin": 1877,
+      "titulo": "Candelario Obeso y las letras afropopulares",
+      "resumen": "Con los Cantos populares de mi tierra (1877), Candelario Obeso lleva por primera vez a la literatura culta la voz, el habla y la vida de los bogas del Magdalena, fundando una poesía afrocolombiana que reivindica al sujeto negro y popular.",
+      "porQueImporta": "El corpus lo lee como un quiebre en el canon letrado radical: la irrupción de lo afropopular en una república que se pensaba blanca y europea.",
+      "categoria": "CUL",
+      "entidadesClave": ["Candelario Obeso"]
+    },
+    {
+      "periodo": "EUC",
+      "anioInicio": 1863,
+      "anioFin": 1878,
+      "titulo": "Federalismo istmeño y la cuestión de Panamá (Arosemena)",
+      "resumen": "El istmeño Justo Arosemena, teórico del federalismo y del Estado de Panamá, articula la autonomía panameña dentro de los Estados Unidos de Colombia en el contexto de la ferrovía interoceánica y el creciente interés estadounidense sobre el Istmo.",
+      "porQueImporta": "El corpus rastrea aquí la genealogía profunda de 1903: la cuestión panameña como problema federal y geopolítico, no como súbita 'pérdida'.",
+      "categoria": "REL",
+      "entidadesClave": ["Justo Arosemena"]
+    },
+    {
+      "periodo": "REG",
+      "anioInicio": 1910,
+      "anioFin": 1922,
+      "titulo": "Quintín Lame y la insurgencia indígena por los resguardos",
+      "resumen": "Entre el Cauca y el Tolima, Manuel Quintín Lame y José Gonzalo Sánchez encabezan un movimiento indígena que reclama la restitución de resguardos, el fin del terraje y la autoridad de los cabildos. La 'Quintinada' es reprimida, pero funda la doctrina de lucha indígena del siglo XX.",
+      "porQueImporta": "Es el foco de 1915 en el corpus (203 menciones de Lame) y el gran ausente del timeline: la Regeneración vista desde abajo, por sus víctimas indígenas.",
+      "categoria": "MOV",
+      "entidadesClave": ["Manuel Quintín Lame", "José Gonzalo Sánchez"]
+    },
+    {
+      "periodo": "REG",
+      "anioInicio": 1886,
+      "anioFin": 1896,
+      "titulo": "José Asunción Silva y el modernismo literario",
+      "resumen": "La poesía de José Asunción Silva —el Nocturno, De sobremesa— introduce el modernismo en Colombia y una sensibilidad de fin de siglo en tensión con la sociedad regeneradora. Su suicidio en 1896 sella el mito del poeta maldito y la modernidad estética frustrada.",
+      "porQueImporta": "El corpus lo lee como la modernidad cultural que la Regeneración conservadora contuvo: una vanguardia estética invisibilizada por el timeline político.",
+      "categoria": "CUL",
+      "entidadesClave": ["José Asunción Silva", "José María Vargas Vila"]
+    },
+    {
+      "periodo": "REG",
+      "anioInicio": 1905,
+      "anioFin": 1919,
+      "titulo": "Industrialización antioqueña y las concesiones petroleras",
+      "resumen": "Alejandro Echavarría funda Coltejer (1907) e inaugura la gran industria textil antioqueña; empresarios como Pepe Sierra acumulan capital, y la concesión De Mares (1905) abre la explotación petrolera del Magdalena Medio que dará origen a la Tropical Oil y a Barrancabermeja.",
+      "porQueImporta": "El corpus rastrea aquí la matriz del capitalismo colombiano: industria antioqueña y enclave petrolero, motores materiales que el timeline reduce a 'economía cafetera'.",
+      "categoria": "ECO",
+      "entidadesClave": ["Alejandro Echavarría", "Roberto de Mares", "Pepe Sierra"]
+    },
+    {
+      "periodo": "REG",
+      "anioInicio": 1918,
+      "anioFin": 1928,
+      "titulo": "Luchas por baldíos y movimiento campesino costeño (Juana Julia Guzmán)",
+      "resumen": "En las sabanas de Córdoba y Sucre, Juana Julia Guzmán y Vicente Adamo organizan la Sociedad de Obreros y Artesanos de Montería y las ligas campesinas que disputan los baldíos a los grandes hacendados ganaderos, en una de las primeras movilizaciones agrarias con liderazgo femenino y afrocampesino.",
+      "porQueImporta": "El corpus lo distingue del movimiento obrero urbano: una insurgencia campesina por la tierra en el Caribe, con mujeres al frente, que el timeline no registra.",
+      "categoria": "MOV",
+      "entidadesClave": ["Juana Julia Guzmán", "Vicente Adamo"]
+    },
+    {
+      "periodo": "REG",
+      "anioInicio": 1885,
+      "anioFin": 1910,
+      "titulo": "Ferrocarriles y modernización infraestructural (Cisneros)",
+      "resumen": "El ingeniero cubano Francisco Javier Cisneros dirige la construcción del Ferrocarril de Antioquia y otras líneas que, junto a la navegación por el Magdalena, articulan por primera vez los mercados regionales y vuelcan la economía hacia la exportación cafetera.",
+      "porQueImporta": "El corpus interroga la infraestructura como condición del café y del Estado: la modernización material que hizo posible —y desigual— la integración nacional.",
+      "categoria": "ECO",
+      "entidadesClave": ["Francisco Javier Cisneros"]
+    },
+    {
+      "periodo": "REP_LIB",
+      "anioInicio": 1930,
+      "anioFin": 1946,
+      "titulo": "Feminismo y sufragismo (Ofelia Uribe de Acosta)",
+      "resumen": "Ofelia Uribe de Acosta y Georgina Fletcher impulsan los congresos femeninos y la campaña por los derechos civiles y políticos de la mujer, logrando en 1932-1936 reformas sobre patria potestad y bienes propios que anticipan el sufragio femenino de 1954.",
+      "porQueImporta": "El corpus lo rescata como el ciclo largo del feminismo colombiano: una lucha por la ciudadanía de la mujer que la Revolución en Marcha no incluyó.",
+      "categoria": "SOC",
+      "entidadesClave": ["Ofelia Uribe de Acosta", "Georgina Fletcher"]
+    },
+    {
+      "periodo": "REP_LIB",
+      "anioInicio": 1934,
+      "anioFin": 1946,
+      "titulo": "Muralismo y arte social",
+      "resumen": "Pedro Nel Gómez pinta los murales del Palacio Municipal de Medellín (desde 1936) y, con Ignacio Gómez Jaramillo, introduce el muralismo social de raíz mexicana: un arte público que retrata el trabajo, la minería y el pueblo en clave de la modernización liberal.",
+      "porQueImporta": "El corpus lo lee como la estética de la República Liberal: el arte puesto al servicio de un proyecto social, ausente del timeline económico-político.",
+      "categoria": "CUL",
+      "entidadesClave": ["Pedro Nel Gómez", "Ignacio Gómez Jaramillo"]
+    },
+    {
+      "periodo": "REP_LIB",
+      "anioInicio": 1930,
+      "anioFin": 1946,
+      "titulo": "Institucionalidad cafetera (Manuel Mejía y la Federación)",
+      "resumen": "Bajo la gerencia de Manuel Mejía, la Federación Nacional de Cafeteros se consolida como un Estado dentro del Estado: fija precios, crea el Fondo Nacional del Café y teje la infraestructura rural que hace del grano el eje de la economía y la política exterior.",
+      "porQueImporta": "El corpus interroga a la Federación como poder paraestatal: la institución que gobernó el campo cafetero por fuera —y por encima— de los gobiernos.",
+      "categoria": "ECO",
+      "entidadesClave": ["Manuel Mejía"]
+    },
+    {
+      "periodo": "VIO",
+      "anioInicio": 1946,
+      "anioFin": 1957,
+      "titulo": "La Iglesia y La Violencia (Monseñor Builes)",
+      "resumen": "Desde el púlpito, el obispo Miguel Ángel Builes y sectores del clero identifican al liberalismo con el pecado y azuzan la confrontación partidista, mientras la jerarquía encabezada por el cardenal Crisanto Luque respalda al régimen conservador durante los años más sangrientos.",
+      "porQueImporta": "El corpus interroga el papel de la Iglesia en la legitimación de la Violencia bipartidista: una responsabilidad moral que el relato del conflicto suele eludir.",
+      "categoria": "REL",
+      "entidadesClave": ["Miguel Ángel Builes", "Crisanto Luque"]
+    },
+    {
+      "periodo": "VIO",
+      "anioInicio": 1949,
+      "anioFin": 1955,
+      "titulo": "Guerrillas del Llano y autodefensas comunistas del Tolima",
+      "resumen": "Frente al terror oficial, se alzan las guerrillas liberales de los Llanos bajo Guadalupe Salcedo y las autodefensas campesinas comunistas del sur del Tolima y Sumapaz lideradas por Juan de la Cruz Varela, Isauro Yosa y Jacobo Prías Alape, embriones de la insurgencia agraria posterior.",
+      "porQueImporta": "El corpus las distingue de los 'chulavitas': una resistencia armada campesina con proyecto propio, semilla directa de las FARC y del conflicto que vendría.",
+      "categoria": "CON",
+      "entidadesClave": ["Guadalupe Salcedo", "Juan de la Cruz Varela", "Isauro Yosa", "Jacobo Prías Alape"]
+    },
+    {
+      "periodo": "VIO",
+      "anioInicio": 1949,
+      "anioFin": 1957,
+      "titulo": "Los pájaros y el terror conservador en el Valle",
+      "resumen": "En el Valle del Cauca, bandas de asesinos a sueldo al servicio conservador —los 'pájaros', encabezados por León María Lozano, 'El Cóndor'— siembran el terror selectivo contra liberales, mostrando el rostro paraestatal y sicarial de la Violencia.",
+      "porQueImporta": "El corpus lo lee como precedente del sicariato y del paramilitarismo: la delegación privada de la violencia política, anterior al narcotráfico.",
+      "categoria": "CON",
+      "entidadesClave": ["León María Lozano"]
+    },
+    {
+      "periodo": "VIO",
+      "anioInicio": 1948,
+      "anioFin": 1957,
+      "titulo": "Literatura del testimonio de la Violencia",
+      "resumen": "Eduardo Caballero Calderón (El Cristo de espaldas), Hernando Téllez (Cenizas para el viento) y Jorge Zalamea (El Gran Burundún-Burundá ha muerto) elaboran, en plena catástrofe, una literatura que da forma al horror y a la denuncia moral del país partido.",
+      "porQueImporta": "El corpus la rescata como la conciencia crítica de la época: la Violencia narrada por dentro, una capa cultural ausente del timeline del conflicto.",
+      "categoria": "CUL",
+      "entidadesClave": ["Eduardo Caballero Calderón", "Hernando Téllez", "Jorge Zalamea"]
+    },
+    {
+      "periodo": "FN",
+      "anioInicio": 1958,
+      "anioFin": 1974,
+      "titulo": "Colonización armada y frontera agraria",
+      "resumen": "Expulsados por la Violencia y el cierre de la vía reformista, miles de campesinos colonizan las tierras de frontera del piedemonte y la Amazonía; allí se reconstituyen las autodefensas que fundarán las FARC, ligando la cuestión agraria con la insurgencia naciente.",
+      "porQueImporta": "El corpus la identifica como el proceso estructural que el timeline no nombra: la frontera agraria como fábrica simultánea de campesinado y de guerra.",
+      "categoria": "TER",
+      "entidadesClave": ["Juan de la Cruz Varela"]
+    },
+    {
+      "periodo": "FN",
+      "anioInicio": 1971,
+      "anioFin": 1974,
+      "titulo": "El CRIC y el resurgimiento del movimiento indígena",
+      "resumen": "En 1971 nace en el Cauca el Consejo Regional Indígena del Cauca (CRIC), con Trino Morales entre sus fundadores, que recupera la bandera de Quintín Lame: recuperación de tierras, fortalecimiento de cabildos y defensa de la cultura, inaugurando el moderno movimiento indígena colombiano.",
+      "porQueImporta": "El corpus lo lee como el retorno del sujeto indígena a la política nacional, puente entre la Quintinada y el constitucionalismo multicultural de 1991.",
+      "categoria": "MOV",
+      "entidadesClave": ["Trino Morales"]
+    },
+    {
+      "periodo": "FN",
+      "anioInicio": 1962,
+      "anioFin": 1974,
+      "titulo": "Manuel Zapata Olivella y la afrocolombianidad",
+      "resumen": "Médico, antropólogo y escritor, Manuel Zapata Olivella —con su hermana Delia— investiga y reivindica la cultura afrocolombiana, que culminará en Changó, el gran putas (1983), fundando el campo de los estudios y la conciencia política negra en el país.",
+      "porQueImporta": "El corpus lo rescata como el arquitecto intelectual de la afrocolombianidad: una identidad y un campo cultural que el timeline no registra.",
+      "categoria": "CUL",
+      "entidadesClave": ["Manuel Zapata Olivella"]
+    },
+    {
+      "periodo": "FN",
+      "anioInicio": 1958,
+      "anioFin": 1972,
+      "titulo": "Vanguardias culturales: Nadaísmo y arte moderno",
+      "resumen": "Gonzalo Arango lanza el Nadaísmo (1958), rebelión estética contra la moral burguesa y clerical, mientras la crítica de Marta Traba y la pintura de Alejandro Obregón instalan el arte moderno en Colombia, abriendo un frente cultural de ruptura bajo el Frente Nacional.",
+      "porQueImporta": "El corpus lo lee como la disidencia cultural del cierre bipartidista: la vanguardia que impugnó el orden que la política pactaba.",
+      "categoria": "CUL",
+      "entidadesClave": ["Gonzalo Arango", "Marta Traba", "Alejandro Obregón"]
+    },
+    {
+      "periodo": "FN",
+      "anioInicio": 1958,
+      "anioFin": 1974,
+      "titulo": "Radio Sutatenza y Acción Cultural Popular",
+      "resumen": "Fundada por el sacerdote José Joaquín Salcedo, Radio Sutatenza y Acción Cultural Popular alfabetizan por radio a millones de campesinos, en la mayor experiencia de educación popular a distancia de América Latina y un vehículo de modernización del mundo rural.",
+      "porQueImporta": "El corpus la interroga como poder comunicativo y pedagógico sobre el campo: la modernización cultural rural que el timeline institucional omite.",
+      "categoria": "SOC",
+      "entidadesClave": ["José Joaquín Salcedo"]
+    },
+    {
+      "periodo": "CNA",
+      "anioInicio": 1977,
+      "anioFin": 1977,
+      "titulo": "Paro Cívico Nacional de 1977",
+      "resumen": "El 14 de septiembre de 1977, las cuatro centrales obreras convocan el mayor paro cívico de la historia del país contra el gobierno de López Michelsen; la protesta, reprimida con decenas de muertos, expresa el agotamiento social del Frente Nacional.",
+      "porQueImporta": "El corpus lo lee como el estallido social que precede al Estatuto de Seguridad: la protesta que el Estado respondió con militarización.",
+      "categoria": "MOV",
+      "entidadesClave": ["Alfonso López Michelsen"]
+    },
+    {
+      "periodo": "CNA",
+      "anioInicio": 1984,
+      "anioFin": 1984,
+      "titulo": "Asesinato de Rodrigo Lara Bonilla",
+      "resumen": "El 30 de abril de 1984, sicarios de Pablo Escobar asesinan al ministro de Justicia Rodrigo Lara Bonilla, que había denunciado la infiltración del narcotráfico en la política. Su muerte desata la primera gran ofensiva del Estado y la reactivación de la extradición.",
+      "porQueImporta": "El corpus lo marca como el punto de no retorno: la declaratoria de guerra entre el narcotráfico y el Estado que definirá la década.",
+      "categoria": "CON",
+      "entidadesClave": ["Rodrigo Lara Bonilla", "Pablo Escobar"]
+    },
+    {
+      "periodo": "CNA",
+      "anioInicio": 1986,
+      "anioFin": 1990,
+      "titulo": "Guerra sucia contra defensores de derechos humanos y la UP",
+      "resumen": "El exterminio de la Unión Patriótica se acompaña del asesinato sistemático de defensores de derechos humanos: Héctor Abad Gómez (1987), el dirigente Jaime Pardo Leal (1987) y decenas de sindicalistas y militantes caen bajo la alianza de narcos, paramilitares y agentes estatales.",
+      "porQueImporta": "El corpus lo interroga como terrorismo de Estado difuso: la eliminación física de la oposición y del movimiento de derechos humanos.",
+      "categoria": "CON",
+      "entidadesClave": ["Héctor Abad Gómez", "Jaime Pardo Leal"]
+    },
+    {
+      "periodo": "CNA",
+      "anioInicio": 1987,
+      "anioFin": 1989,
+      "titulo": "Mercenarios extranjeros y consolidación paramilitar",
+      "resumen": "En el Magdalena Medio, el instructor israelí Yair Klein entrena a los paramilitares de Gonzalo Rodríguez Gacha y Henry Pérez, profesionalizando el aparato armado narco-terrateniente responsable de masacres como La Rochela y del magnicidio de Galán.",
+      "porQueImporta": "El corpus revela la dimensión transnacional del paramilitarismo: la importación de saber militar que convirtió autodefensas locales en ejércitos privados.",
+      "categoria": "CON",
+      "entidadesClave": ["Yair Klein", "Gonzalo Rodríguez Gacha", "Henry Pérez"]
+    },
+    {
+      "periodo": "CNA",
+      "anioInicio": 1982,
+      "anioFin": 1982,
+      "titulo": "Premio Nobel de Literatura a García Márquez",
+      "resumen": "En 1982 Gabriel García Márquez recibe el Premio Nobel de Literatura, consagrando el realismo mágico y proyectando a Colombia en el imaginario mundial en el mismo momento en que el país se hundía en la violencia del narcotráfico.",
+      "porQueImporta": "El corpus lo lee como la paradoja cultural de la época: el máximo reconocimiento literario y la máxima degradación de la violencia, simultáneos.",
+      "categoria": "CUL",
+      "entidadesClave": ["Gabriel García Márquez"]
+    },
+    {
+      "periodo": "C91",
+      "anioInicio": 1995,
+      "anioFin": 2002,
+      "titulo": "Cultura ciudadana y transformación de Bogotá",
+      "resumen": "Las alcaldías de Antanas Mockus y Enrique Peñalosa reinventan Bogotá: cultura ciudadana, espacio público, TransMilenio y una pedagogía cívica que reduce la violencia urbana y convierte a la capital en referente de gobierno local en América Latina.",
+      "porQueImporta": "El corpus lo interroga como laboratorio de gobierno y de ciudadanía en medio de la guerra: la política local que sí funcionó mientras el Estado nacional fracasaba.",
+      "categoria": "SOC",
+      "entidadesClave": ["Antanas Mockus", "Enrique Peñalosa"]
+    },
+    {
+      "periodo": "C91",
+      "anioInicio": 1993,
+      "anioFin": 1997,
+      "titulo": "Proceso de Comunidades Negras y Ley 70 de 1993",
+      "resumen": "El artículo transitorio 55 de la Constitución cristaliza en la Ley 70 de 1993, que reconoce títulos colectivos a las comunidades negras del Pacífico. Carlos Rosero, Libia Grueso, Zulia Mena y Juan de Dios Mosquera articulan el Proceso de Comunidades Negras como sujeto político.",
+      "porQueImporta": "El corpus lo lee como el nacimiento jurídico de la etnicidad negra en Colombia, distinto y paralelo al reconocimiento indígena.",
+      "categoria": "MOV",
+      "entidadesClave": ["Carlos Rosero", "Libia Grueso", "Zulia Mena", "Juan de Dios Mosquera"]
+    },
+    {
+      "periodo": "C91",
+      "anioInicio": 1999,
+      "anioFin": 1999,
+      "titulo": "Asesinato de Jaime Garzón",
+      "resumen": "El 13 de agosto de 1999, paramilitares asesinan al humorista, periodista y mediador de paz Jaime Garzón, cuya sátira política y gestiones humanitarias lo habían vuelto incómodo. Su muerte conmociona al país y se vuelve símbolo de la persecución a la crítica.",
+      "porQueImporta": "El corpus lo interroga como magnicidio cultural: el silenciamiento de la voz crítica y del humor político en el peor momento del conflicto.",
+      "categoria": "CON",
+      "entidadesClave": ["Jaime Garzón"]
+    },
+    {
+      "periodo": "C91",
+      "anioInicio": 1995,
+      "anioFin": 2001,
+      "titulo": "Resistencia indígena al despojo (Kimy Pernía y Urrá)",
+      "resumen": "El líder embera Kimy Pernía Domicó encabeza la resistencia contra la represa de Urrá, que inundó el territorio ancestral del Alto Sinú. Su desaparición forzada a manos paramilitares en 2001 simboliza el costo étnico de los megaproyectos.",
+      "porQueImporta": "El corpus lo lee como el choque entre desarrollo extractivo y derechos territoriales étnicos, con la consulta previa como campo de batalla.",
+      "categoria": "MOV",
+      "entidadesClave": ["Kimy Pernía Domicó"]
+    },
+    {
+      "periodo": "SDE",
+      "anioInicio": 2008,
+      "anioFin": 2010,
+      "titulo": "Minga indígena y movilización étnica",
+      "resumen": "En 2008, la Minga de Resistencia Social y Comunitaria, con Aida Quilcué y Feliciano Valencia entre sus voceros del Cauca, marcha contra la política de Seguridad Democrática, los tratados de libre comercio y la violencia sobre los pueblos indígenas.",
+      "porQueImporta": "El corpus la interroga como el mayor desafío social a la era Uribe desde abajo: la protesta étnica y popular frente al proyecto de seguridad.",
+      "categoria": "MOV",
+      "entidadesClave": ["Aida Quilcué", "Feliciano Valencia"]
+    },
+    {
+      "periodo": "SDE",
+      "anioInicio": 2008,
+      "anioFin": 2010,
+      "titulo": "Madres de Soacha y el movimiento de víctimas",
+      "resumen": "El descubrimiento en 2008 de que jóvenes de Soacha ejecutados y presentados como guerrilleros muertos en combate dio rostro a los 'falsos positivos'. Las Madres de Soacha, encabezadas por Luz Marina Bernal, convirtieron el duelo en un movimiento nacional de víctimas.",
+      "porQueImporta": "El corpus lo distingue del escándalo militar: la organización de las víctimas como actor político y motor de la memoria y la justicia transicional.",
+      "categoria": "MOV",
+      "entidadesClave": ["Luz Marina Bernal"]
+    },
+    {
+      "periodo": "SDE",
+      "anioInicio": 2002,
+      "anioFin": 2016,
+      "titulo": "Auge extractivo y las 'locomotoras' minero-energéticas",
+      "resumen": "El alza mundial de precios impulsa un boom de minería e hidrocarburos —las 'locomotoras' del desarrollo— que multiplica la renta, la inversión extranjera y también los conflictos socioambientales, el desplazamiento y la dependencia de la economía en materias primas.",
+      "porQueImporta": "El corpus lo interroga como el modelo económico de fondo de la era Uribe-Santos: el extractivismo que financió al Estado y tensionó los territorios.",
+      "categoria": "ECO",
+      "entidadesClave": ["Extractivismo"]
+    },
+    {
+      "periodo": "POS",
+      "anioInicio": 2015,
+      "anioFin": 2019,
+      "titulo": "Arte y memoria del conflicto (Doris Salcedo)",
+      "resumen": "La artista Doris Salcedo elabora un lenguaje del duelo colectivo: Sumando ausencias (2016) sobre el plebiscito y el contramonumento Fragmentos (2019), fundido con las armas entregadas por las FARC, dan forma pública a la memoria de las víctimas.",
+      "porQueImporta": "El corpus lo lee como la elaboración estética del posconflicto: el arte como dispositivo de memoria frente a la disputa política por el pasado.",
+      "categoria": "CUL",
+      "entidadesClave": ["Doris Salcedo"]
+    },
+    {
+      "periodo": "POS",
+      "anioInicio": 2016,
+      "anioFin": 2017,
+      "titulo": "El río Atrato como sujeto de derechos",
+      "resumen": "La sentencia T-622 de 2016 de la Corte Constitucional reconoce al río Atrato como sujeto de derechos frente a la devastación de la minería ilegal, en un fallo pionero del constitucionalismo ecológico que vincula derechos étnicos y naturaleza.",
+      "porQueImporta": "El corpus lo interroga como frontera del derecho en el posconflicto: la biocultura del Pacífico y los derechos de la naturaleza frente al extractivismo.",
+      "categoria": "TER",
+      "entidadesClave": ["Río Atrato"]
+    }
+  ]
+}
