@@ -144,6 +144,8 @@ export interface StyledPromptArgs {
   direction: ArtDirection;
   /** true cuando van referencias adjuntas (images/edits). */
   withReferences: boolean;
+  /** Títulos/fuentes de las referencias elegidas; el prompt final se compone después de curarlas. */
+  referenceNotes?: string[];
   /** Prosa de la pieza (ES) inyectada como contexto factual cuando faltan
    * referencias visuales: ancla el generador en el texto, no en imágenes. */
   contextText?: string;
@@ -154,11 +156,19 @@ export function buildStyledPrompt(args: StyledPromptArgs): string {
   const d = args.direction;
   const escena = d.escena ? ` ${d.escena}` : "";
   const context = args.contextText?.trim();
+  const referenceNotes = (args.referenceNotes ?? []).filter((r) => r.trim()).slice(0, 8);
   const parts = [
     `${args.subject}${escena}`,
     ...(context
       ? [
           `HISTORICAL CONTEXT (Spanish — use ONLY to get the scene, figures, clothing, objects, architecture and setting historically right; do NOT render any of this text, letters or words in the image): ${context}`,
+        ]
+      : []),
+    ...(args.withReferences && referenceNotes.length
+      ? [
+          `DOCUMENTARY REFERENCE SELECTION (chosen before this prompt; ground the scene in these people, places, objects and period cues without copying them literally):\n${referenceNotes
+            .map((r, i) => `${i + 1}. ${r}`)
+            .join("\n")}`,
         ]
       : []),
     `COMPOSITION: ${ENCUADRE_EN[d.encuadre]}`,

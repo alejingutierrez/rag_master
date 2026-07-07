@@ -169,6 +169,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
       id: true,
       answer: true,
       structuredData: true,
+      metadata: true,
       userQuestion: true,
       question: { select: { pregunta: true } },
     },
@@ -188,7 +189,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     periodoLabel = structured.periodoCode ? (periodInfo(structured.periodoCode)?.label ?? "") : "";
     subject = subjectFor(structured);
     size = aspectForStructured(structured);
-    refCtx = referenceContextFromStructured(structured);
+    refCtx = referenceContextFromStructured(structured, { metadata: d.metadata });
   } else {
     subject = essaySubject(titleFallback, excerpt);
     size = "1536x1024";
@@ -252,7 +253,13 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
   // 3. Generación con reintentos (la moderación es estocástica). Con referencias
   //    → images/edits; sin ninguna usable → generación anclada solo en el texto.
   const contextText = degraded ? pieceContextExcerpt(d.answer) : undefined;
-  const prompt = buildStyledPrompt({ subject, direction, withReferences: hasRefs, contextText });
+  const prompt = buildStyledPrompt({
+    subject,
+    direction,
+    withReferences: hasRefs,
+    contextText,
+    referenceNotes: referenceHints,
+  });
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
   let png: Buffer | null = null;
   let attempts = 0;

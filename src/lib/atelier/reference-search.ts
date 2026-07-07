@@ -31,6 +31,7 @@ export const MIN_RELEVANT_REFS = 5;
 const MAX_REFS_TO_ATTACH = 7;
 /** Ancla documental directa (Tier "documental"): el material de verdad. */
 const MIN_SCORE = 6;
+export const SCORE_BATCH_SIZE = 45;
 /** Umbral blando (Tier "parcial"): sirve como atmósfera/grounding, no como ruido.
  * Incluye la banda 5-6 del rubro ("útil solo como atmósfera general") — mejor
  * darle ESO al generador que dejarlo sin ninguna ancla visual. */
@@ -113,36 +114,81 @@ function uniqueStrings(values: Array<string | null | undefined>, max = 14): stri
   return out;
 }
 
-export function referenceContextFromStructured(s: StructuredData): ReferenceContext {
+function plainRecord(v: unknown): Record<string, unknown> {
+  return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+}
+
+function strList(v: unknown, max = 12): string[] {
+  if (!Array.isArray(v)) return [];
+  return v
+    .map((x) => (typeof x === "string" ? x.trim() : ""))
+    .filter(Boolean)
+    .slice(0, max);
+}
+
+function visualHintsFromMetadata(metadata: unknown): {
+  personas: string[];
+  lugares: string[];
+  instituciones: string[];
+  conceptos: string[];
+} {
+  const root = plainRecord(metadata);
+  const atelier = plainRecord(root.atelier);
+  const brief = plainRecord(atelier.brief);
+  const entities = plainRecord(brief.entities);
+  const taxonomy = plainRecord(atelier.taxonomy);
+  return {
+    personas: uniqueStrings([...strList(entities.personas), ...strList(taxonomy.entidadesPersonas)], 10),
+    lugares: uniqueStrings([...strList(entities.lugares), ...strList(taxonomy.entidadesLugares)], 10),
+    instituciones: uniqueStrings([...strList(entities.instituciones), ...strList(taxonomy.entidadesInstituciones)], 8),
+    conceptos: uniqueStrings([...strList(entities.conceptos), ...strList(taxonomy.entidadesConceptos)], 8),
+  };
+}
+
+export function referenceContextFromStructured(
+  s: StructuredData,
+  opts: { metadata?: unknown } = {}
+): ReferenceContext {
   const periodoLabel = s.periodoCode ? (periodInfo(s.periodoCode)?.label ?? "") : "";
+  const visualHints = visualHintsFromMetadata(opts.metadata);
   switch (s.typology) {
-    case "hecho":
+    case "hecho": {
+      const protagonistas = uniqueStrings([...s.protagonistas, ...visualHints.personas], 10);
+      const lugares = uniqueStrings([...s.lugares, ...visualHints.lugares], 8);
       return {
         titulo: s.titulo,
         resumen: s.resumen,
         typology: "hecho",
         periodoLabel,
-        entidades: s.protagonistas,
-        lugares: s.lugares,
+        entidades: protagonistas,
+        lugares,
         visualIntent: "hecho-documental",
-        visualAnchors: uniqueStrings([s.titulo, ...s.protagonistas, ...s.lugares, s.fecha ?? undefined]),
+        visualAnchors: uniqueStrings([s.titulo, ...protagonistas, ...lugares, s.fecha ?? undefined], 18),
       };
-    case "epoca":
+    }
+    case "epoca": {
+      const personas = uniqueStrings([...s.actores, ...visualHints.personas], 10);
+      const lugares = uniqueStrings(visualHints.lugares, 8);
+      const instituciones = uniqueStrings(visualHints.instituciones, 6);
       return {
         titulo: s.titulo,
         resumen: s.panorama || s.resumen,
         typology: "época",
         periodoLabel: s.rango ?? periodoLabel,
-        entidades: s.actores,
+        entidades: uniqueStrings([...personas, ...instituciones], 14),
+        lugares,
         visualIntent: "epoca-material",
         visualAnchors: uniqueStrings([
-          ...s.actores,
+          ...personas,
+          ...lugares,
+          ...instituciones,
           ...s.hitos.map((h) => h.titulo),
           ...s.transformaciones,
           s.titulo,
           s.rango ?? undefined,
-        ]),
+        ], 18),
       };
+    }
     case "entidad":
       if (s.tipo === "Persona") {
         return {
@@ -214,15 +260,27 @@ export function capForArchives(q: string, maxTokens = 4): string {
 export function buildReferenceQuerySeeds(ctx: ReferenceContext): string[] {
   const seeds: string[] = [];
   const title = (ctx.titulo ?? "").trim();
-  if (ctx.visualIntent === "retrato-publico" && title) {
+  if (ctx.visualIntent === "epoca-material") {
+    const lugares = ctx.lugares ?? [];
+    const lugarKeys = new Set(lugares.map((l) => l.toLowerCase()));
+    const anchors = ctx.visualAnchors ?? [];
+    const primaryAnchors = anchors.filter((a) => !lugarKeys.has(a.toLowerCase())).slice(0, 5);
+    for (const anchor of primaryAnchors) seeds.push(anchor);
+    for (const lugar of lugares.slice(0, 3)) seeds.push(lugar);
+    if (title) seeds.push(title);
+    for (const anchor of anchors) seeds.push(anchor);
+    for (const entidad of ctx.entidades ?? []) seeds.push((entidad ?? "").split(":")[0].trim());
+  } else if (ctx.visualIntent === "retrato-publico" && title) {
     seeds.push(title, `${title} portrait`, `${title} fotografía`, `${title} retrato`);
   } else if (title) {
     seeds.push(title);
   }
 
-  for (const anchor of ctx.visualAnchors ?? []) seeds.push(anchor);
-  for (const lugar of ctx.lugares ?? []) seeds.push(lugar);
-  for (const entidad of ctx.entidades ?? []) seeds.push((entidad ?? "").split(":")[0].trim());
+  if (ctx.visualIntent !== "epoca-material") {
+    for (const anchor of ctx.visualAnchors ?? []) seeds.push(anchor);
+    for (const lugar of ctx.lugares ?? []) seeds.push(lugar);
+    for (const entidad of ctx.entidades ?? []) seeds.push((entidad ?? "").split(":")[0].trim());
+  }
 
   if (ctx.visualIntent === "epoca-material") {
     seeds.push("Colombia arquitectura", "Colombia vestuario", "Colombia archivo");
@@ -844,6 +902,34 @@ export async function scoreCandidates(
   ctx: ReferenceContext
 ): Promise<ScoredReference[]> {
   if (candidates.length === 0) return [];
+  const scored: ScoredReference[] = [];
+  for (const batch of buildCandidateScoreBatches(candidates)) {
+    try {
+      scored.push(...(await scoreCandidateBatch(batch, ctx)));
+    } catch (e) {
+      console.warn(`[refs] scoring de lote (${batch.length} candidatas) falló: ${(e as Error).message}`);
+      scored.push(...batch.map((c) => ({ ...c, score: 0 })));
+    }
+  }
+  return scored.sort((a, b) => b.score - a.score);
+}
+
+export function buildCandidateScoreBatches<T>(
+  candidates: T[],
+  batchSize = SCORE_BATCH_SIZE
+): T[][] {
+  const safeSize = Math.max(1, Math.trunc(batchSize));
+  const batches: T[][] = [];
+  for (let i = 0; i < candidates.length; i += safeSize) {
+    batches.push(candidates.slice(i, i + safeSize));
+  }
+  return batches;
+}
+
+async function scoreCandidateBatch(
+  candidates: ReferenceCandidate[],
+  ctx: ReferenceContext
+): Promise<ScoredReference[]> {
   const list = candidates
     .map(
       (c, i) =>

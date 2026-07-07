@@ -32,7 +32,14 @@ import {
   type ArtDirection,
 } from "../src/lib/atelier/art-director";
 import { buildStyledPrompt } from "../src/lib/atelier/image-prompt";
-import { REFERENCE_PROVIDER_NAMES, referenceContextFromStructured } from "../src/lib/atelier/reference-search";
+import {
+  REFERENCE_PROVIDER_NAMES,
+  SCORE_BATCH_SIZE,
+  buildCandidateScoreBatches,
+  buildReferenceQuerySeeds,
+  referenceContextFromStructured,
+  type ReferenceCandidate,
+} from "../src/lib/atelier/reference-search";
 import type { StructuredData } from "../src/lib/typology-schemas";
 import type { SearchResult } from "../src/lib/vector-search";
 import type { VerifiedClaim, AtelierBrief } from "../src/lib/atelier/types";
@@ -398,6 +405,65 @@ test("el contexto de una época conserva anclas visuales concretas", () => {
   assert.ok(ctx.visualAnchors?.includes("ferrocarriles"));
 });
 
+test("el contexto de una época rescata personas y lugares del metadata del Atelier", () => {
+  const structured: StructuredData = {
+    typology: "epoca",
+    slug: "frente-nacional",
+    titulo: "El Frente Nacional",
+    resumen: "Alternancia bipartidista y cierre político.",
+    periodoCode: "FN",
+    rango: "1958-1974",
+    panorama: "Pactos de Benidorm y Sitges, plebiscito y nacimiento de oposiciones armadas.",
+    hitos: [
+      { year: 1957, titulo: "Plebiscito fundacional" },
+      { year: 1964, titulo: "Operación Marquetalia" },
+    ],
+    actores: [],
+    transformaciones: [],
+    legado: "Cierre institucional y modernización estatal.",
+  };
+  const metadata = {
+    atelier: {
+      brief: {
+        entities: {
+          personas: [
+            "Alberto Lleras Camargo",
+            "Laureano Gómez",
+            "Gustavo Rojas Pinilla",
+            "Guillermo León Valencia",
+            "Carlos Lleras Restrepo",
+            "Misael Pastrana Borrero",
+            "Alfonso López Michelsen",
+            "Álvaro Gómez Hurtado",
+          ],
+          lugares: ["Benidorm", "Sitges", "Marquetalia"],
+          instituciones: ["INCORA"],
+        },
+      },
+      taxonomy: {
+        entidadesPersonas: ["Camilo Torres Restrepo"],
+        entidadesLugares: ["Bogotá"],
+      },
+    },
+  };
+
+  const ctx = referenceContextFromStructured(structured, { metadata }) as ReturnType<
+    typeof referenceContextFromStructured
+  > & { visualAnchors?: string[]; lugares?: string[] };
+  const seeds = buildReferenceQuerySeeds(ctx);
+
+  assert.deepEqual(ctx.visualAnchors?.slice(0, 3), [
+    "Alberto Lleras Camargo",
+    "Laureano Gómez",
+    "Gustavo Rojas Pinilla",
+  ]);
+  assert.ok(ctx.visualAnchors?.includes("Camilo Torres Restrepo"));
+  assert.ok(ctx.lugares?.includes("Benidorm"));
+  assert.equal(seeds[0], "Alberto Lleras Camargo");
+  assert.ok(seeds.slice(0, 9).includes("Benidorm"));
+  assert.ok(seeds.includes("El Frente Nacional"));
+});
+
 test("el contexto de una persona marca búsqueda de retrato público", () => {
   const structured: StructuredData = {
     typology: "entidad",
@@ -442,6 +508,44 @@ test("el buscador registra fuentes públicas sin API key de alto valor", () => {
   for (const provider of ["internetarchive", "wellcome", "gallica", "rijksmuseum"]) {
     assert.ok(REFERENCE_PROVIDER_NAMES.includes(provider), `falta proveedor ${provider}`);
   }
+});
+
+test("el scoring de referencias parte listas grandes en lotes revisables", () => {
+  const candidates: ReferenceCandidate[] = Array.from({ length: 263 }, (_, i) => ({
+    provider: "fixture",
+    title: `Candidato ${i + 1}`,
+    url: `https://example.com/${i + 1}.jpg`,
+    width: 800,
+    height: 800,
+    query: "Frente Nacional",
+  }));
+  const batches = buildCandidateScoreBatches(candidates);
+
+  assert.ok(SCORE_BATCH_SIZE <= 60);
+  assert.ok(batches.length > 1);
+  assert.equal(batches.flat().length, candidates.length);
+  assert.ok(batches.every((batch) => batch.length <= SCORE_BATCH_SIZE));
+});
+
+test("el prompt final declara las referencias seleccionadas antes del estilo", () => {
+  const prompt = buildStyledPrompt({
+    subject: "A documentary scene of Colombian bipartisan politics in the 1960s.",
+    direction: {
+      accentColor: "azul",
+      accentTarget: "the blue ceramic inkwell on the government desk",
+      accentTargetEs: "el tintero azul de cerámica sobre el escritorio gubernamental",
+      encuadre: "interior",
+      razon: "Condensa el cierre burocrático.",
+    },
+    withReferences: true,
+    referenceNotes: [
+      "Alberto Lleras Camargo portrait — wikimedia, score 9",
+      "Plebiscito colombiano 1957 — google-images, score 8",
+    ],
+  });
+
+  assert.match(prompt, /DOCUMENTARY REFERENCE SELECTION/i);
+  assert.ok(prompt.indexOf("Alberto Lleras Camargo portrait") < prompt.indexOf("STYLE:"));
 });
 
 // ── 7. Contrato de formatos del Taller ───────────────────────────────
