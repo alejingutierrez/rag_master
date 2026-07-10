@@ -1,6 +1,10 @@
 import { PublicShell } from "@/components/public/public-shell";
 import { buildMetadata } from "@/lib/seo";
 
+// PublicShell calcula métricas vivas del archivo; esta página no debe intentar
+// resolverlas durante el build de la imagen, donde DATABASE_URL no se inyecta.
+export const dynamic = "force-dynamic";
+
 export const metadata = buildMetadata({
   seo: {
     metaTitle: "Acerca",
