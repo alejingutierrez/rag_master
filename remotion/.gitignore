@@ -1,0 +1,6 @@
+node_modules/
+out/
+.remotion/
+*.log
+# imágenes de archivo (buscadas/generadas): assets fetch, no fuente — evita commitear material con derechos
+public/img/
