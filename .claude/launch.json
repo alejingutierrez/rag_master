@@ -7,6 +7,20 @@
       "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/alegut/MyApps/rag_master/.claude/worktrees/vibrant-proskuriakova-321034 && exec npx next dev --port \"$PORT\""],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "app",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/alegut/MyApps/rag_master/.claude/worktrees/zen-gauss-fa9650 && exec npx next dev --port \"$PORT\""],
+      "port": 3200,
+      "autoPort": true
+    },
+    {
+      "name": "proto",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "exec python3 -m http.server \"$PORT\" --directory /private/tmp/claude-501/-Users-alegut-MyApps-rag-master--claude-worktrees-zen-gauss-fa9650/9f891a5a-954d-4d56-b047-5a2ca75cee73/scratchpad"],
+      "port": 4599,
+      "autoPort": true
     }
   ]
 }
