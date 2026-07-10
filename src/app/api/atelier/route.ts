@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
   const intent = typeof body?.intent === "string" ? body.intent.trim() : "";
   const formatId = body?.formatId;
   const longitud = body?.longitud as LongitudId | undefined;
+  // Solo formato "video": estilo (VIDEO_STYLES.id) y duración objetivo en segundos.
+  const videoStyleId = typeof body?.styleId === "string" ? body.styleId : undefined;
+  const durationSec = Number.isFinite(Number(body?.durationSec)) ? Number(body.durationSec) : undefined;
   const questionId = typeof body?.questionId === "string" && body.questionId ? body.questionId : undefined;
   // Puente ítem↔producción (pregunta/madre/hecho/entidad/época). Se persiste en
   // metadata.sourceRef y es lo que marca al ítem como "producido" cuando el
@@ -156,6 +159,8 @@ export async function POST(req: NextRequest) {
           questionMeta,
           tableName: effectiveTable,
           useParentExpansion: v2Available,
+          videoStyleId,
+          durationSec,
         },
         { onProgress: updateMetadata }
       );
@@ -178,6 +183,8 @@ export async function POST(req: NextRequest) {
         docCount: result.confidenceIndex.documentosUnicos,
         wordCount: result.answer.trim().split(/\s+/).length,
         degraded: result.degraded,
+        // Solo formato "video": la partitura para el preview/render Remotion.
+        ...(result.videoScore ? { videoScore: result.videoScore, imagesUsed: result.imagesUsed } : {}),
         finishedAt: new Date().toISOString(),
       };
 
@@ -212,7 +219,8 @@ export async function POST(req: NextRequest) {
       // Imagen de portada (best-effort, DESPUÉS de persistir COMPLETE). Externa y
       // lenta: nunca debe tumbar ni demorar la pieza. Si falta la key o falla, la
       // pieza queda sin imagen (se puede generar luego a mano en Producciones).
-      if (isOpenAIConfigured()) {
+      // El video NO lleva portada gpt-image: ya trae sus propias imágenes de archivo.
+      if (formatId !== "video" && isOpenAIConfigured()) {
         try {
           const { imageUrl } = await generateAndStoreImage(deliverable.id);
           console.log(`[atelier ${deliverable.id}] imagen lista · ${imageUrl}`);

@@ -459,6 +459,15 @@ const FICHA_PROMPTS: Record<
 export const ATELIER_FORMAT_PROMPTS: Record<AtelierFormatId, AtelierFormat> = {
   ...NARRATIVE_FORMAT_PROMPTS,
   ...FICHA_PROMPTS,
+  // El video NO redacta prosa: compone una partitura vía el Director (ver
+  // orchestrator.ts, rama de video). Esta entrada solo satisface el Record
+  // exhaustivo; su writer prompt nunca se invoca.
+  video: {
+    id: "video",
+    name: "Video tipográfico",
+    maxTokens: 2000,
+    buildWriterSystemPrompt: () => "",
+  },
 };
 
 export function getFormatPrompt(id: AtelierFormatId): AtelierFormat {
