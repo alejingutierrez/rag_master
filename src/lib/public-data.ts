@@ -454,6 +454,10 @@ export interface HomeCard {
   periodCode: string | null;
   kicker: string;
   imageUrl: string | null;
+  kind: string;
+  docCount: number | null;
+  wordCount: number | null;
+  fragmentCount: number;
 }
 
 export interface HomeData {
@@ -475,12 +479,31 @@ function cardFromDeliverable(d: {
   templateId: string;
   answer: string;
   imageUrl: string | null;
+  metadata: unknown;
+  chunksUsed: unknown;
   structuredData: unknown;
   userQuestion: string | null;
   question: { pregunta: string; periodoCode: string | null } | null;
 }): HomeCard {
   const s = normalizeStructured(d.structuredData);
+  const atelier = (d.metadata as Record<string, unknown> | null)?.atelier as
+    | Record<string, unknown>
+    | undefined;
+  const chunks = Array.isArray(d.chunksUsed) ? d.chunksUsed : [];
+  const metrics = {
+    docCount: typeof atelier?.docCount === "number" ? atelier.docCount : null,
+    wordCount: typeof atelier?.wordCount === "number" ? atelier.wordCount : null,
+    fragmentCount: chunks.length,
+  };
   if (s) {
+    const kind =
+      s.typology === "entidad"
+        ? s.tipo === "Persona"
+          ? "biografia"
+          : s.tipo === "Lugar"
+            ? "lugar"
+            : "idea"
+        : s.typology;
     return {
       id: d.id,
       href: typologyPath(s),
@@ -493,9 +516,13 @@ function cardFromDeliverable(d: {
           : s.typology === "epoca"
             ? "Época"
             : s.typology === "entidad"
-              ? "Entidad"
+              ? s.tipo === "Persona"
+                ? "Biografía"
+                : s.tipo
               : "Ensayo",
       imageUrl: d.imageUrl ?? null,
+      kind,
+      ...metrics,
     };
   }
   const title = d.question?.pregunta ?? d.userQuestion ?? "Producción";
@@ -507,6 +534,8 @@ function cardFromDeliverable(d: {
     periodCode: d.question?.periodoCode ?? null,
     kicker: getAtelierFormat(d.templateId)?.name ?? "Ensayo",
     imageUrl: d.imageUrl ?? null,
+    kind: "ensayo",
+    ...metrics,
   };
 }
 
@@ -521,6 +550,8 @@ async function resolvePublishedCards(ids: string[]): Promise<HomeCard[]> {
       templateId: true,
       answer: true,
       imageUrl: true,
+      metadata: true,
+      chunksUsed: true,
       structuredData: true,
       userQuestion: true,
       question: { select: { pregunta: true, periodoCode: true } },
@@ -581,7 +612,7 @@ export async function getHome(): Promise<HomeData> {
     if (q?.deliverableId) {
       const cards = await resolvePublishedCards([q.deliverableId]);
       const c = cards[0];
-      if (c) {
+      if (c && c.id !== hero?.id) {
         questionOfWeek = { title: c.title, answer: c.desc, href: c.href };
       }
     } else if (q?.title && q?.answer) {
@@ -756,6 +787,11 @@ export interface AnchoredPiece {
   ideas: string[];
   entidadTipo: string | null; // Persona|Lugar|Concepto|Institución (solo fichas de entidad)
   entidadSlug: string | null; // slug de la ficha de entidad, si aplica
+  publishedAt: Date | null;
+  docCount: number | null;
+  wordCount: number | null;
+  fragmentCount: number;
+  sourceDocumentIds: string[];
   /** Ítem del archivo del que se produjo la pieza ({ kind, key }). Marca a una
    *  pieza como DEDICADA a una entidad cuando kind==="entidad" (ver dedicatedSlugs). */
   sourceRef: { kind: string; key: string } | null;
@@ -771,6 +807,8 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       structuredData: true,
       metadata: true,
       imageUrl: true,
+      publishedAt: true,
+      chunksUsed: true,
       userQuestion: true,
       question: { select: { periodoCode: true, yearPrincipal: true, pregunta: true } },
     },
@@ -778,6 +816,11 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
   const out: AnchoredPiece[] = [];
   for (const r of rows) {
     const s = normalizeStructured(r.structuredData);
+    const meta = (r.metadata ?? null) as Record<string, unknown> | null;
+    const atelier = meta?.atelier as Record<string, unknown> | undefined;
+    const chunks = Array.isArray(r.chunksUsed)
+      ? (r.chunksUsed as unknown as ChunkUsage[])
+      : [];
     const anchor = resolveAnchor({
       structured: s,
       taxonomy: taxOf(r.metadata),
@@ -808,6 +851,17 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       ideas: anchor.ideas,
       entidadTipo: s?.typology === "entidad" ? s.tipo : null,
       entidadSlug: s?.typology === "entidad" ? s.slug : null,
+      publishedAt: r.publishedAt,
+      docCount: typeof atelier?.docCount === "number" ? atelier.docCount : null,
+      wordCount: typeof atelier?.wordCount === "number" ? atelier.wordCount : null,
+      fragmentCount: chunks.length,
+      sourceDocumentIds: [
+        ...new Set(
+          chunks
+            .map((chunk) => chunk.documentId)
+            .filter((id): id is string => typeof id === "string" && id.length > 0),
+        ),
+      ],
       sourceRef,
     });
   }
@@ -822,13 +876,131 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
 // el trabajo pesado que hacía lento el sitio.
 const ANCHORED_TTL_MS = 2 * 60 * 1000;
 let anchoredCache: { pieces: AnchoredPiece[]; at: number } | null = null;
+let anchoredLoad: Promise<AnchoredPiece[]> | null = null;
 
 async function getAnchoredPieces(): Promise<AnchoredPiece[]> {
   const now = Date.now();
   if (anchoredCache && now - anchoredCache.at < ANCHORED_TTL_MS) return anchoredCache.pieces;
-  const pieces = await loadAnchoredPieces();
-  anchoredCache = { pieces, at: now };
-  return pieces;
+  if (!anchoredLoad) {
+    anchoredLoad = loadAnchoredPieces()
+      .then((pieces) => {
+        anchoredCache = { pieces, at: Date.now() };
+        return pieces;
+      })
+      .finally(() => {
+        anchoredLoad = null;
+      });
+  }
+  return anchoredLoad;
+}
+
+export interface PublicArchivePiece {
+  id: string;
+  href: string;
+  title: string;
+  summary: string;
+  label: string;
+  kind: string;
+  periodCode: string | null;
+  yearLabel: string | null;
+  imageUrl: string | null;
+  publishedAt: Date | null;
+}
+
+export interface PublicArchiveStats {
+  total: number;
+  hechos: number;
+  epocas: number;
+  biografias: number;
+  preguntas: number;
+  lecturas: number;
+  documents: number;
+  fragments: number;
+  words: number;
+  readingHours: number;
+}
+
+function pieceLabel(piece: AnchoredPiece): string {
+  if (piece.kind === "hecho") return "Hecho";
+  if (piece.kind === "epoca") return "Época";
+  if (piece.kind === "pregunta") return "Pregunta";
+  if (piece.kind === "entidad") {
+    if (piece.entidadTipo === "Persona") return "Biografía";
+    if (piece.entidadTipo === "Lugar") return "Lugar";
+    return "Idea";
+  }
+  return "Lectura";
+}
+
+function pieceYearLabel(piece: AnchoredPiece): string | null {
+  if (piece.anio == null) return null;
+  const start = piece.anio < 0 ? `${Math.abs(piece.anio)} a.C.` : String(piece.anio);
+  if (piece.anioFin == null || piece.anioFin === piece.anio) return start;
+  const end = piece.anioFin < 0 ? `${Math.abs(piece.anioFin)} a.C.` : String(piece.anioFin);
+  return `${start}–${end}`;
+}
+
+function archivePiece(piece: AnchoredPiece): PublicArchivePiece {
+  return {
+    id: piece.id,
+    href: piece.href,
+    title: piece.titulo,
+    summary: piece.resumen,
+    label: pieceLabel(piece),
+    kind: piece.kind,
+    periodCode: piece.periodCode,
+    yearLabel: pieceYearLabel(piece),
+    imageUrl: piece.imageUrl,
+    publishedAt: piece.publishedAt,
+  };
+}
+
+/** Piezas públicas recientes con su ruta canónica (no fuerza /ensayos/[id]). */
+export async function getRecentPublicPieces(limit = 8): Promise<PublicArchivePiece[]> {
+  const pieces = [...(await getAnchoredPieces())];
+  pieces.sort(
+    (a, b) =>
+      (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0) ||
+      a.titulo.localeCompare(b.titulo, "es"),
+  );
+  return pieces.slice(0, limit).map(archivePiece);
+}
+
+/** Totales del archivo calculados solo sobre piezas publicadas. */
+export async function getPublicArchiveStats(): Promise<PublicArchiveStats> {
+  const pieces = await getAnchoredPieces();
+  const documentIds = new Set<string>();
+  let hechos = 0;
+  let epocas = 0;
+  let biografias = 0;
+  let preguntas = 0;
+  let lecturas = 0;
+  let fragments = 0;
+  let words = 0;
+
+  for (const piece of pieces) {
+    if (piece.kind === "hecho") hechos++;
+    else if (piece.kind === "epoca") epocas++;
+    else if (piece.kind === "pregunta") preguntas++;
+    else if (piece.kind === "entidad" && piece.entidadTipo === "Persona") biografias++;
+    else lecturas++;
+    fragments += piece.fragmentCount;
+    words += piece.wordCount ?? 0;
+    for (const id of piece.sourceDocumentIds) documentIds.add(id);
+  }
+
+  return {
+    total: pieces.length,
+    hechos,
+    epocas,
+    biografias,
+    preguntas,
+    lecturas,
+    documents: documentIds.size,
+    fragments,
+    words,
+    readingHours: words > 0 ? Math.max(1, Math.round(words / 220 / 60)) : 0,
+  };
 }
 
 interface PublishedEntityData {
@@ -841,53 +1013,61 @@ interface PublishedEntityData {
   dedicatedSlugs: Record<EntityType, Set<string>>;
 }
 let pubEntityCache: { data: PublishedEntityData; at: number } | null = null;
+let pubEntityLoad: Promise<PublishedEntityData> | null = null;
 
 /** Índice de entidades PUBLICADAS (para el gate) + co-ocurrencia, cacheado. */
 async function getPublishedEntityData(): Promise<PublishedEntityData> {
   const now = Date.now();
   if (pubEntityCache && now - pubEntityCache.at < ANCHORED_TTL_MS) return pubEntityCache.data;
-  const pieces = await getAnchoredPieces();
-  const index = buildEntityIndex(pieces);
-  const publishedSlugs: Record<EntityType, Set<string>> = {
-    persona: new Set(),
-    lugar: new Set(),
-    idea: new Set(),
-  };
-  for (const acc of index.byKey.values()) {
-    const set = publishedSlugs[acc.type];
-    set.add(acc.slug);
-    for (const v of acc.variants.keys()) {
-      const vs = slugify(v);
-      if (vs) set.add(vs);
-    }
-  }
-  // Piezas DEDICADAS: una ficha de entidad, o cualquier pieza producida DESDE una
-  // entidad (crónica/ensayo con sourceRef.kind==="entidad"). Es la señal precisa
-  // de "tiene su historia publicada" — sin heurística de título.
-  const dedicatedSlugs: Record<EntityType, Set<string>> = {
-    persona: new Set(),
-    lugar: new Set(),
-    idea: new Set(),
-  };
-  for (const p of pieces) {
-    if (p.kind === "entidad" && p.entidadTipo) {
-      const t = entityTypeFromTipo(p.entidadTipo);
-      if (p.entidadSlug) dedicatedSlugs[t].add(p.entidadSlug);
-      const ts = slugify(p.titulo);
-      if (ts) dedicatedSlugs[t].add(ts);
-    }
-    if (p.sourceRef?.kind === "entidad") {
-      const i = p.sourceRef.key.indexOf(":");
-      if (i > 0) {
-        const t = sourceEntityType(p.sourceRef.key.slice(0, i));
-        const slug = p.sourceRef.key.slice(i + 1);
-        if (t && slug) dedicatedSlugs[t].add(slug);
+  if (!pubEntityLoad) {
+    pubEntityLoad = (async () => {
+      const pieces = await getAnchoredPieces();
+      const index = buildEntityIndex(pieces);
+      const publishedSlugs: Record<EntityType, Set<string>> = {
+        persona: new Set(),
+        lugar: new Set(),
+        idea: new Set(),
+      };
+      for (const acc of index.byKey.values()) {
+        const set = publishedSlugs[acc.type];
+        set.add(acc.slug);
+        for (const v of acc.variants.keys()) {
+          const vs = slugify(v);
+          if (vs) set.add(vs);
+        }
       }
-    }
+      // Piezas DEDICADAS: una ficha de entidad, o cualquier pieza producida DESDE una
+      // entidad (crónica/ensayo con sourceRef.kind==="entidad"). Es la señal precisa
+      // de "tiene su historia publicada" — sin heurística de título.
+      const dedicatedSlugs: Record<EntityType, Set<string>> = {
+        persona: new Set(),
+        lugar: new Set(),
+        idea: new Set(),
+      };
+      for (const p of pieces) {
+        if (p.kind === "entidad" && p.entidadTipo) {
+          const t = entityTypeFromTipo(p.entidadTipo);
+          if (p.entidadSlug) dedicatedSlugs[t].add(p.entidadSlug);
+          const ts = slugify(p.titulo);
+          if (ts) dedicatedSlugs[t].add(ts);
+        }
+        if (p.sourceRef?.kind === "entidad") {
+          const i = p.sourceRef.key.indexOf(":");
+          if (i > 0) {
+            const t = sourceEntityType(p.sourceRef.key.slice(0, i));
+            const slug = p.sourceRef.key.slice(i + 1);
+            if (t && slug) dedicatedSlugs[t].add(slug);
+          }
+        }
+      }
+      const data: PublishedEntityData = { index, publishedSlugs, dedicatedSlugs };
+      pubEntityCache = { data, at: Date.now() };
+      return data;
+    })().finally(() => {
+      pubEntityLoad = null;
+    });
   }
-  const data: PublishedEntityData = { index, publishedSlugs, dedicatedSlugs };
-  pubEntityCache = { data, at: now };
-  return data;
+  return pubEntityLoad;
 }
 
 // ── Época como HUB ───────────────────────────────────────────────────────────
@@ -1096,7 +1276,10 @@ export interface PublicEntity {
   slug: string;
   type: EntityType;
   href: string;
+  /** Número de piezas PUBLICADAS donde aparece. */
   mentions: number;
+  /** Prominencia histórica dentro del corpus completo de preguntas. */
+  corpusMentions: number;
   periods: string[];
   periodoOrden: number;
   anio: number | null;
@@ -1150,7 +1333,8 @@ function registryToPublic(e: RegistryEntity, index: EntityIndex): PublicEntity {
     slug: e.slug,
     type: e.type,
     href: entityPath(e.type, e.slug),
-    mentions: e.mentions,
+    mentions: acc?.pieceIds.size ?? 0,
+    corpusMentions: e.mentions,
     // Una PERSONA pertenece a UNA sola época — su "hogar" (moda del corpus, ya
     // curada por overrides/clasificador) — y no debe filtrarse en varias. Los
     // lugares/ideas transversales (Bogotá, el liberalismo) sí conservan sus
@@ -1192,11 +1376,38 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
     ]);
     const ded = dedicatedSlugs[type];
     const list: PublicEntity[] = [];
+    const representedAccs = new Set<string>();
     for (const e of reg.entities) {
       if (e.type !== type || !isDedicatedEntity(e, ded)) continue;
       list.push(registryToPublic(e, index));
+      const acc = findPublishedAcc(e, index);
+      if (acc) representedAccs.add(acc.key);
     }
-    list.sort((a, b) => b.mentions - a.mentions || a.name.localeCompare(b.name, "es"));
+    // Una ficha publicada puede usar un nombre más específico que el registro
+    // histórico (p. ej. José Prudencio Padilla vs. José Padilla). No se pierde:
+    // entra como nodo dedicado aun cuando no haya variante canónica todavía.
+    for (const acc of index.byKey.values()) {
+      if (acc.type !== type || !acc.hasFicha || representedAccs.has(acc.key)) continue;
+      list.push({
+        name: canonicalName(acc),
+        slug: acc.slug,
+        type: acc.type,
+        href: entityPath(acc.type, acc.slug),
+        mentions: acc.pieceIds.size,
+        corpusMentions: 0,
+        periods: [...acc.periods],
+        periodoOrden: acc.periodoOrden,
+        anio: acc.anio,
+        hasFicha: true,
+        resumen: acc.resumen,
+      });
+    }
+    list.sort(
+      (a, b) =>
+        b.mentions - a.mentions ||
+        b.corpusMentions - a.corpusMentions ||
+        a.name.localeCompare(b.name, "es"),
+    );
     return list.slice(0, ENTITY_DISPLAY_CAP);
   } catch (err) {
     console.error(`[public-data] getEntityUniverse(${type}) falló:`, err);
@@ -1221,6 +1432,7 @@ export async function getPeriodEntityUniverse(type: EntityType, periodCode: stri
         type: acc.type,
         href: entityPath(acc.type, acc.slug),
         mentions: acc.pieceIds.size,
+        corpusMentions: 0,
         periods: [...acc.periods],
         periodoOrden: acc.periodoOrden,
         anio: acc.anio,
@@ -1237,20 +1449,94 @@ export async function getPeriodEntityUniverse(type: EntityType, periodCode: stri
 
 /** Conteos por tipo — entidades del registro con ≥1 pieza DEDICADA publicada. */
 export async function getEntityCounts(): Promise<Record<EntityType, number>> {
-  const empty: Record<EntityType, number> = { persona: 0, lugar: 0, idea: 0 };
   try {
-    const [reg, { dedicatedSlugs }] = await Promise.all([
-      loadEntityRegistry(),
-      getPublishedEntityData(),
+    const [persona, lugar, idea] = await Promise.all([
+      getEntityUniverse("persona"),
+      getEntityUniverse("lugar"),
+      getEntityUniverse("idea"),
     ]);
-    for (const e of reg.entities) {
-      if (isDedicatedEntity(e, dedicatedSlugs[e.type])) empty[e.type]++;
-    }
-    return empty;
+    return { persona: persona.length, lugar: lugar.length, idea: idea.length };
   } catch (err) {
     console.error("[public-data] getEntityCounts falló:", err);
-    return empty;
+    return { persona: 0, lugar: 0, idea: 0 };
   }
+}
+
+/**
+ * Directorio conectado: entidades del registro canónico que aparecen al menos
+ * una vez en piezas publicadas. A diferencia de getEntityUniverse, no exige una
+ * ficha propia; por eso alimenta Lugares/Ideas y el tejido del home sin prometer
+ * biografías inexistentes.
+ */
+export async function getConnectedEntityDirectory(
+  type: EntityType,
+  limit = ENTITY_DISPLAY_CAP,
+): Promise<PublicEntity[]> {
+  try {
+    const [reg, { index, publishedSlugs }, dedicated] = await Promise.all([
+      loadEntityRegistry(),
+      getPublishedEntityData(),
+      getEntityUniverse(type),
+    ]);
+    const list: PublicEntity[] = [];
+    for (const e of reg.entities) {
+      if (e.type !== type || !isPublishedEntity(e, publishedSlugs[type])) continue;
+      list.push(registryToPublic(e, index));
+    }
+
+    // Una ficha dedicada tiene la nomenclatura editorial definitiva. Sustituye
+    // aliases más cortos del registro (p. ej. José Padilla → José Prudencio
+    // Padilla) sin inflar el conteo del directorio.
+    const nameTokens = (name: string) =>
+      new Set(
+        slugify(name)
+          .split("-")
+          .filter((token) => token.length > 1),
+      );
+    const sameNamedEntity = (a: string, b: string) => {
+      const aTokens = nameTokens(a);
+      const bTokens = nameTokens(b);
+      const smaller = aTokens.size <= bTokens.size ? aTokens : bTokens;
+      const larger = aTokens.size <= bTokens.size ? bTokens : aTokens;
+      return smaller.size >= 2 && [...smaller].every((token) => larger.has(token));
+    };
+    for (const fiche of dedicated) {
+      const match = list.findIndex(
+        (entity) => entity.href === fiche.href || sameNamedEntity(entity.name, fiche.name),
+      );
+      if (match >= 0) {
+        const connected = list[match];
+        list[match] = {
+          ...connected,
+          ...fiche,
+          mentions: Math.max(connected.mentions, fiche.mentions),
+          corpusMentions: Math.max(connected.corpusMentions, fiche.corpusMentions),
+          periods: [...new Set([...connected.periods, ...fiche.periods])],
+        };
+      } else {
+        list.push(fiche);
+      }
+    }
+    list.sort(
+      (a, b) =>
+        b.mentions - a.mentions ||
+        b.corpusMentions - a.corpusMentions ||
+        a.name.localeCompare(b.name, "es"),
+    );
+    return list.slice(0, limit);
+  } catch (err) {
+    console.error(`[public-data] getConnectedEntityDirectory(${type}) falló:`, err);
+    return [];
+  }
+}
+
+export async function getConnectedEntityCounts(): Promise<Record<EntityType, number>> {
+  const [persona, lugar, idea] = await Promise.all([
+    getConnectedEntityDirectory("persona"),
+    getConnectedEntityDirectory("lugar"),
+    getConnectedEntityDirectory("idea"),
+  ]);
+  return { persona: persona.length, lugar: lugar.length, idea: idea.length };
 }
 
 // ── Auto-enlace de entidades en prosa ────────────────────────────────────────
@@ -1402,6 +1688,7 @@ function pieceEntityNode(slug: string, index: EntityIndex, type?: EntityType): E
     type: acc.type,
     href: entityPath(acc.type, acc.slug),
     mentions: acc.pieceIds.size,
+    corpusMentions: 0,
     periods: [...acc.periods],
     periodoOrden: acc.periodoOrden,
     anio: acc.anio,

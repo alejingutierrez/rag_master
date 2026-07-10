@@ -32,7 +32,7 @@ export function EntityBrowser({
   emptyNote: string;
   typeLabel: string;
   color: string;
-  /** Tamaño total del registro del corpus (para "N de total"). */
+  /** Tamaño total del directorio conectado (para vistas filtradas por época). */
   total?: number;
 }) {
   const [periodo, setPeriodo] = useUrlState<string | null>({
@@ -93,9 +93,9 @@ export function EntityBrowser({
         {selectedPeriodo || nq
           ? `${filtered.length} de ${entities.length}`
           : filtered.length === entities.length
-          ? total && total > entities.length
-            ? `${entities.length.toLocaleString("es-CO")} más referenciadas · ${total.toLocaleString("es-CO")} en el corpus`
-            : `${entities.length} ${entities.length === 1 ? "registrada" : "registradas"}`
+            ? total && total > entities.length
+            ? `${entities.length.toLocaleString("es-CO")} en esta selección · ${total.toLocaleString("es-CO")} conectadas al archivo`
+            : `${entities.length} ${entities.length === 1 ? "conectada" : "conectadas"}`
           : `${filtered.length} de ${entities.length}`}
       </div>
 
@@ -110,16 +110,20 @@ export function EntityBrowser({
         </div>
       ) : (
         <ul className="ent-grid">
-          {filtered.map((e) => (
+          {filtered.map((e, index) => (
             <li key={e.slug} className="ent-card">
               <Link href={e.href}>
-                <div className="ent-kmeta">
-                  <span className="dot" style={{ background: color }} />
-                  {typeLabel} · {e.mentions} {e.mentions === 1 ? "aparición" : "apariciones"}
+                <span className="ent-number">{String(index + 1).padStart(2, "0")}</span>
+                <div className="ent-body">
+                  <div className="ent-kmeta">
+                    <span className="dot" style={{ background: color }} />
+                    {typeLabel} · {e.mentions} {e.mentions === 1 ? "pieza publicada" : "piezas publicadas"}
+                  </div>
+                  <div className="ent-name">{e.name}</div>
+                  {e.resumen && <div className="ent-sum">{e.resumen}</div>}
+                  {e.hasFicha && <span className="ent-ficha">✦ Historia propia</span>}
                 </div>
-                <div className="ent-name">{e.name}</div>
-                {e.resumen && <div className="ent-sum">{e.resumen}</div>}
-                {e.hasFicha && <span className="ent-ficha">✦ Con ficha</span>}
+                <span className="ent-arrow" aria-hidden>→</span>
               </Link>
             </li>
           ))}

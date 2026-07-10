@@ -29,30 +29,61 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const session = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value);
     const editor = session?.sub ?? "admin";
+    const current = await prisma.homeConfig.findUnique({ where: { id: "default" } });
+
+    const requestedHero =
+      typeof body.hero?.deliverableId === "string" ? body.hero.deliverableId : "";
+    const requestedFeatured = asStringArray(body.featured, 3);
+    const requestedCollection = asStringArray(body.collection?.items, 4);
+    const requestedQuestion =
+      typeof body.questionOfWeek?.deliverableId === "string"
+        ? body.questionOfWeek.deliverableId
+        : "";
+    const referencedIds = [
+      requestedHero,
+      ...requestedFeatured,
+      ...requestedCollection,
+      requestedQuestion,
+    ].filter(Boolean);
+    const published = referencedIds.length
+      ? await prisma.deliverable.findMany({
+          where: {
+            id: { in: referencedIds },
+            status: "COMPLETE",
+            source: "atelier",
+            publishedAt: { not: null },
+          },
+          select: { id: true },
+        })
+      : [];
+    const validIds = new Set(published.map((item) => item.id));
 
     // Normaliza los bloques que vengan (parcial).
     const data: Record<string, unknown> = { updatedBy: editor };
 
     if (body.hero !== undefined) {
-      const id = typeof body.hero?.deliverableId === "string" ? body.hero.deliverableId : "";
-      data.hero = id ? { deliverableId: id } : {};
+      data.hero = requestedHero && validIds.has(requestedHero)
+        ? { deliverableId: requestedHero }
+        : {};
     }
     if (body.featured !== undefined) {
-      data.featured = asStringArray(body.featured, 6);
+      data.featured = requestedFeatured.filter((id) => validIds.has(id));
     }
     if (body.collection !== undefined) {
       data.collection = {
         title: typeof body.collection?.title === "string" ? body.collection.title.slice(0, 120) : "",
         subtitle:
           typeof body.collection?.subtitle === "string" ? body.collection.subtitle.slice(0, 200) : "",
-        items: asStringArray(body.collection?.items, 6),
+        items: requestedCollection.filter((id) => validIds.has(id)),
       };
     }
     if (body.questionOfWeek !== undefined) {
       const q = body.questionOfWeek ?? {};
+      const storedHero = (current?.hero as { deliverableId?: string } | null)?.deliverableId ?? "";
+      const effectiveHero = body.hero !== undefined ? requestedHero : storedHero;
       data.questionOfWeek =
-        typeof q.deliverableId === "string" && q.deliverableId
-          ? { deliverableId: q.deliverableId }
+        requestedQuestion && validIds.has(requestedQuestion) && requestedQuestion !== effectiveHero
+          ? { deliverableId: requestedQuestion }
           : {
               title: typeof q.title === "string" ? q.title.slice(0, 200) : "",
               answer: typeof q.answer === "string" ? q.answer.slice(0, 600) : "",
@@ -66,7 +97,8 @@ export async function PATCH(request: NextRequest) {
       create: { id: "default", ...data },
     });
 
-    return NextResponse.json({ success: true, config: saved });
+    const ignoredIds = [...new Set(referencedIds.filter((id) => !validIds.has(id)))];
+    return NextResponse.json({ success: true, config: saved, ignoredIds });
   } catch (error) {
     console.error("Error saving home-config:", error);
     return NextResponse.json({ error: "Error al guardar la configuración" }, { status: 500 });

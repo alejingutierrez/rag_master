@@ -1,0 +1,17 @@
+.home-editor-rule { margin: 0 56px; }
+.home-editor-body { max-width: 900px; display: flex; flex-direction: column; gap: 48px; padding: 32px 56px 80px; }
+.home-editor-modes { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 14px; }
+.home-editor-warning { max-width: 560px; margin: 10px 0 0; padding: 9px 11px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); color: var(--fg-muted); font-size: 12.5px; line-height: 1.4; }
+.home-editor-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border-top: 1px solid var(--line); padding-top: 24px; }
+.home-editor-summary { font-size: 11px; color: var(--fg-faint); }
+.home-editor-picks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+
+@media (max-width: 700px) {
+  .home-editor-rule { margin: 0 20px; }
+  .home-editor-body { padding: 26px 20px 64px; gap: 38px; }
+  .home-editor-picks { grid-template-columns: 1fr; }
+  .home-editor-actions { align-items: stretch; }
+  .home-editor-actions > button,
+  .home-editor-actions > a { justify-content: center; }
+  .home-editor-summary { flex-basis: 100%; line-height: 1.5; }
+}

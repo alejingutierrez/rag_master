@@ -1,6 +1,6 @@
 import { PublicShell } from "@/components/public/public-shell";
 import { EntityBrowser } from "@/components/public/entity-index";
-import { getEntityUniverse, getPeriodEntityUniverse, getEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
+import { getConnectedEntityDirectory, getPeriodEntityUniverse, getConnectedEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { buildMetadata } from "@/lib/seo";
 
@@ -30,8 +30,8 @@ export default async function IdeasPage({
   const sp = (await searchParams) ?? {};
   const periodo = validPeriod(sp.periodo);
   const [entities, counts] = await Promise.all([
-    periodo ? getPeriodEntityUniverse("idea", periodo) : getEntityUniverse("idea"),
-    getEntityCounts(),
+    periodo ? getPeriodEntityUniverse("idea", periodo) : getConnectedEntityDirectory("idea"),
+    getConnectedEntityCounts(),
   ]);
   const m = ENTITY_TYPE_META.idea;
   return (
@@ -41,8 +41,8 @@ export default async function IdeasPage({
         total={counts.idea}
         kicker="Qué estaba en juego"
         title="Ideas"
-        intro="Los procesos, las ideologías y las instituciones del corpus — y las piezas que las piensan."
-        emptyNote="Aún no hay ideas en el corpus."
+        intro="Procesos, ideologías e instituciones presentes en las piezas publicadas — y las historias que permiten pensarlas."
+        emptyNote="Aún no hay ideas conectadas a piezas publicadas."
         typeLabel={m.singular}
         color={m.color}
       />

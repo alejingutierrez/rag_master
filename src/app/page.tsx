@@ -1,314 +1,365 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/public/public-shell";
-import { PERIODS, getPeriodColor, periodInfo } from "@/lib/design-tokens";
-import { getRecentEssays, getEssayCount, getHome, getEntityUniverse, getTypologyList } from "@/lib/public-data";
+import { ConnectedDirectory } from "@/components/public/connected-directory";
+import { PERIODS, getPeriodColor, type PeriodCode } from "@/lib/design-tokens";
+import {
+  getConnectedEntityDirectory,
+  getHome,
+  getPublicArchiveStats,
+  getRecentPublicPieces,
+  getTypologyList,
+  type HomeCard,
+  type TypologyCard,
+} from "@/lib/public-data";
+import { loadTimeline } from "@/lib/timeline-data";
 import "@/components/public/home.css";
 
-// TODO post-lanzamiento: envolver las queries en unstable_cache para aliviar el RDS.
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  // `absolute` evita que el title.template del layout añada un sufijo duplicado.
   title: { absolute: "Historia de Colombia · Archivo abierto y citable" },
   description:
-    "Un archivo vivo del pasado de Colombia, con las fuentes siempre a la vista. Ensayos, entidades, épocas y una línea de tiempo de cinco siglos.",
+    "Un archivo vivo del pasado de Colombia. Hechos, épocas, biografías y lecturas construidas con fuentes a la vista.",
   alternates: { canonical: "/" },
 };
 
-// Etiquetas compactas para el espectro (colores/años/slug vienen de PERIODS canónico).
-const BAND_LABEL: Record<string, string> = {
-  PRE: "Prehispánico", CON: "Conquista", COL: "Colonia", PRE_IND: "Pre-indep.",
-  IND: "Independencia", NGR: "Nueva Granada", EUC: "EE.UU. de Col.", REG: "Regeneración",
-  REP_LIB: "Rep. Liberal", VIO: "La Violencia", FN: "Frente Nac.", CNA: "Crisis y narco",
-  C91: "Constit. 1991", SDE: "Seg. Democr.", POS: "Posconflicto", TRANS: "Transversal",
-};
+const ATLAS_CODES: PeriodCode[] = ["PRE", "CON", "COL", "IND", "REG", "VIO", "C91", "POS"];
 
-function startYear(yr: string): string {
-  if (!yr || yr === "—") return "—";
-  if (yr.includes("antes de")) return "—" + yr.replace(/\D/g, "");
-  return yr.split(/[–-]/)[0].trim();
+function Arrow() {
+  return (
+    <svg viewBox="0 0 18 18" aria-hidden className="hp-arrow">
+      <path d="M3 9h11M10 4l5 5-5 5" fill="none" stroke="currentColor" strokeWidth="1.35" />
+    </svg>
+  );
 }
 
-const TIMELINE = [
-  { year: "1810", event: "Grito de Independencia", period: "IND" },
-  { year: "1819", event: "Batalla de Boyacá", period: "IND" },
-  { year: "1863", event: "Convención de Rionegro", period: "EUC" },
-  { year: "1886", event: "Constitución centralista", period: "REG" },
-  { year: "1948", event: "El Bogotazo", period: "VIO" },
-  { year: "1991", event: "Nueva Constitución", period: "C91" },
-];
+function formatNumber(value: number): string {
+  return value.toLocaleString("es-CO");
+}
 
-const ENTRADAS = [
-  { href: "/linea-de-tiempo", n: "01", title: "Línea de tiempo", desc: "Cinco siglos en una columna, calibrada por atención: los hitos pesan más." },
-  { href: "/entidades", n: "02", title: "Personas, lugares e ideas", desc: "Las figuras, los territorios y las ideas — conectados por dónde aparecen y con quién." },
-  { href: "/ensayos", n: "03", title: "Ensayos", desc: "Crónicas, reportajes y preguntas con respuesta razonada, evidencia y fuentes." },
-];
+function cardImage(src: string | null, alt: string, className = "", eager = false) {
+  if (!src) return <span className={`hp-image-fallback ${className}`} aria-hidden />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading={eager ? "eager" : "lazy"}
+      fetchPriority={eager ? "high" : "auto"}
+    />
+  );
+}
+
+interface SequenceCard {
+  id: string;
+  href: string;
+  title: string;
+  summary: string;
+  imageUrl: string | null;
+  periodCode: string | null;
+  yearLabel: string | null;
+}
+
+function sequenceFromHome(card: HomeCard): SequenceCard {
+  return {
+    id: card.id,
+    href: card.href,
+    title: card.title,
+    summary: card.desc,
+    imageUrl: card.imageUrl,
+    periodCode: card.periodCode,
+    yearLabel: card.periodCode ? PERIODS[card.periodCode as PeriodCode]?.yearRange ?? null : null,
+  };
+}
+
+function sequenceFromTypology(card: TypologyCard): SequenceCard {
+  return {
+    id: card.id,
+    href: card.href,
+    title: card.titulo,
+    summary: card.resumen,
+    imageUrl: card.imageUrl,
+    periodCode: card.periodCode,
+    yearLabel: card.meta,
+  };
+}
 
 export default async function HomePage() {
-  const [essays, essayCount, home, personas, epocaCards] = await Promise.all([
-    getRecentEssays(8),
-    getEssayCount(),
-    getHome(),
-    getEntityUniverse("persona"),
-    getTypologyList("epoca"),
-  ]);
+  const [home, archive, recent, hechos, epocas, entidades, personas, lugares, ideas, timeline] =
+    await Promise.all([
+      getHome(),
+      getPublicArchiveStats(),
+      getRecentPublicPieces(7),
+      getTypologyList("hecho"),
+      getTypologyList("epoca"),
+      getTypologyList("entidad"),
+      getConnectedEntityDirectory("persona"),
+      getConnectedEntityDirectory("lugar"),
+      getConnectedEntityDirectory("idea"),
+      loadTimeline().catch(() => null),
+    ]);
 
-  const latest = essays.map((e) => {
-    const yr = e.periodCode ? startYear(PERIODS[e.periodCode as keyof typeof PERIODS]?.yearRange ?? "") : "";
-    return {
-      period: e.periodCode ?? "TRANS",
-      title: e.title,
-      meta: e.formatName + (yr && yr !== "—" ? ` · ${yr}` : ""),
-      href: `/ensayos/${e.id}`,
-    };
-  });
+  const hero = home.hero;
+  const heroQueue = (home.featured.length ? home.featured : []).slice(0, 3);
+  const queue = heroQueue.length
+    ? heroQueue
+    : recent
+        .filter((piece) => piece.id !== hero?.id)
+        .slice(0, 3)
+        .map((piece) => ({
+          id: piece.id,
+          href: piece.href,
+          title: piece.title,
+          desc: piece.summary,
+          periodCode: piece.periodCode,
+          kicker: piece.label,
+          imageUrl: piece.imageUrl,
+          kind: piece.kind,
+          docCount: null,
+          wordCount: null,
+          fragmentCount: 0,
+        }));
 
-  // Fallbacks REALES (solo lo producido): si el editor no configuró un bloque,
-  // se usa lo publicado — personas, épocas o ensayos reales. Nunca ejemplos.
-  const heroCard =
-    home.hero ??
-    (essays[0]
-      ? {
-          title: essays[0].title,
-          href: `/ensayos/${essays[0].id}`,
-          periodCode: essays[0].periodCode,
-          kicker: essays[0].formatName,
-          desc: "",
-          imageUrl: null as string | null,
-        }
-      : null);
+  const curatedFacts = (home.collection?.cards ?? []).filter((card) => card.kind === "hecho");
+  const sequence: SequenceCard[] = (
+    curatedFacts.length >= 3
+      ? curatedFacts.slice(0, 3).map(sequenceFromHome)
+      : hechos.slice(0, 3).map(sequenceFromTypology)
+  );
+  const biographies = entidades.filter((card) => card.meta === "Persona").slice(0, 3);
+  const epocaByCode = new Map(epocas.map((card) => [card.periodCode, card]));
+  const timelineEvents = timeline
+    ? Object.values(timeline.periods).reduce((total, period) => total + period.events.length, 0)
+    : 0;
+  const readingMinutes = hero?.wordCount ? Math.max(1, Math.round(hero.wordCount / 220)) : null;
 
-  const featuredCards = (home.featured.length
-    ? home.featured.map((c) => ({
-        href: c.href,
-        period: c.periodCode ?? "TRANS",
-        type: c.kicker,
-        title: c.title,
-        desc: c.desc,
-        imageUrl: c.imageUrl,
-      }))
-    : essays.slice(0, 3).map((e) => ({
-        href: `/ensayos/${e.id}`,
-        period: e.periodCode ?? "TRANS",
-        type: e.formatName,
-        title: e.title,
-        desc: "",
-        imageUrl: null as string | null,
-      })));
-
-  // Épocas publicadas → su página; el resto del espectro → la línea de tiempo.
-  const epocaSlugByCode = new Map<string, string>();
-  for (const c of epocaCards) if (c.periodCode) epocaSlugByCode.set(c.periodCode, c.slug);
-  const bandHref = (code: string) =>
-    epocaSlugByCode.has(code) ? `/epocas/${epocaSlugByCode.get(code)}` : `/linea-de-tiempo?p=${code}`;
-
-  const featuredEntities = personas.slice(0, 4);
-  const collectionEpocas = epocaCards.slice(0, 4);
+  const directoryGroups = [
+    {
+      key: "personas" as const,
+      label: "Personas",
+      href: "/personas",
+      count: personas.length,
+      entries: personas.slice(0, 5).map(({ name, href, mentions }) => ({ name, href, mentions })),
+    },
+    {
+      key: "lugares" as const,
+      label: "Lugares",
+      href: "/lugares",
+      count: lugares.length,
+      entries: lugares.slice(0, 5).map(({ name, href, mentions }) => ({ name, href, mentions })),
+    },
+    {
+      key: "ideas" as const,
+      label: "Ideas",
+      href: "/ideas",
+      count: ideas.length,
+      entries: ideas.slice(0, 5).map(({ name, href, mentions }) => ({ name, href, mentions })),
+    },
+  ];
 
   return (
     <PublicShell>
-      <div className="hp-wrap">
-        <header className="hp-mast hp-fade">
-          <div className="row">
-            <div>
-              <h1 className="hp-word">Historia Colombiana</h1>
-              <p className="hp-tag">Un archivo vivo del pasado de Colombia, con las fuentes siempre a la vista.</p>
-            </div>
-            <div className="hp-stats">
-              {[["5", "siglos"], ["16", "épocas"], [essayCount.toLocaleString("es-CO"), "ensayos"]].map(([n, l]) => (
-                <span key={l} className="st"><b>{n}</b> {l}</span>
-              ))}
-            </div>
+      <div className="hp-atlas" aria-label="Recorrer por época">
+        <div className="hp-atlas-inner">
+          <div className="hp-atlas-count">{archive.epocas} épocas</div>
+          <div className="hp-atlas-track">
+            {ATLAS_CODES.map((code) => {
+              const period = PERIODS[code];
+              const card = epocaByCode.get(code);
+              return (
+                <Link
+                  key={code}
+                  href={card?.href ?? `/linea-de-tiempo?p=${code}`}
+                  className={code === hero?.periodCode ? "is-active" : ""}
+                  style={{ "--period-color": getPeriodColor(code) } as React.CSSProperties}
+                >
+                  <span className="hp-atlas-label">{period.label}</span>
+                  <span className="hp-atlas-dot" />
+                </Link>
+              );
+            })}
           </div>
-        </header>
-
-        {heroCard && (
-        <section className="hp-hero hp-fade hp-d1">
-          <div>
-            <div className="hp-ek">
-              <span
-                className="hp-dot"
-                style={{ background: getPeriodColor(heroCard.periodCode ?? "TRANS") }}
-              />
-              <span className="label" style={{ color: "var(--fg-muted)" }}>
-                Destacado · {heroCard.kicker}
-                {heroCard.periodCode ? ` · ${periodInfo(heroCard.periodCode)?.label ?? ""}` : ""}
-              </span>
-            </div>
-            <h2>{heroCard.title}</h2>
-            {heroCard.desc && <p className="hp-excerpt">{heroCard.desc}</p>}
-            <div className="hp-byl">
-              <Link href={heroCard.href} className="hp-read">
-                Leer →
-              </Link>
-              <span className="hp-sep">·</span>
-              <span className="hp-au">Alejandro Gutiérrez</span>
-            </div>
-          </div>
-          <figure style={{ margin: 0 }}>
-            {heroCard.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={heroCard.imageUrl}
-                alt={heroCard.title}
-                style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover" }}
-              />
-            ) : (
-              <span className="hp-ph land" aria-hidden />
-            )}
-          </figure>
-        </section>
-        )}
-
-        <section className="hp-sect">
-          <div className="hp-sect-h"><span className="hp-sn">En portada</span><Link className="hp-allr" href="/archivo">Ver el archivo →</Link></div>
-          <div className="hp-three">
-            {featuredCards.map((f) => (
-              <Link key={f.href} className="hp-fc" href={f.href}>
-                <figure style={{ margin: 0 }}>
-                  {f.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={f.imageUrl} alt={f.title} style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover" }} />
-                  ) : (
-                    <span className="hp-ph land" aria-hidden />
-                  )}
-                </figure>
-                <div className="hp-fct"><span className="hp-dot" style={{ background: getPeriodColor(f.period) }} /><span className="hp-fcty">{f.type}</span></div>
-                <h3>{f.title}</h3>
-                <p>{f.desc}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="hp-sect">
-          <div className="hp-sect-h"><span className="hp-sn">Cinco siglos</span><span className="hp-sc">Recorre la historia por época. El color es la navegación.</span></div>
-          <div className="hp-band">
-            {Object.values(PERIODS).map((p) => (
-              <Link key={p.code} className="hp-seg" href={bandHref(p.code)}>
-                <div className="bar" style={{ background: getPeriodColor(p.code) }} />
-                <div className="in"><div className="sn2">{BAND_LABEL[p.code] ?? p.label}</div><div className="sy">{startYear(p.yearRange)}</div></div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {(home.collection || collectionEpocas.length > 0) && (
-        <section className="hp-sect">
-          {home.collection ? (
-            <>
-              <div className="hp-sect-h">
-                <span className="hp-sn">Colección</span>
-                <span className="hp-scount">· {home.collection.title}</span>
-                {home.collection.subtitle && <span className="hp-sc">{home.collection.subtitle}</span>}
-              </div>
-              <div className="hp-coll">
-                {home.collection.cards.map((c) => (
-                  <Link key={c.id} className="hp-cc" href={c.href}>
-                    <figure style={{ margin: 0 }}>
-                      {c.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={c.imageUrl} alt={c.title} style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover" }} />
-                      ) : (
-                        <span className="hp-ph sq" aria-hidden />
-                      )}
-                    </figure>
-                    <div className="ccy">{c.title}</div>
-                    <div className="ccp"><span className="hp-dot" style={{ background: getPeriodColor(c.periodCode ?? "TRANS") }} />{c.kicker}</div>
-                  </Link>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="hp-sect-h"><span className="hp-sn">Colección</span><span className="hp-scount">· Épocas publicadas</span><span className="hp-sc">Los grandes períodos, ya en el sitio.</span></div>
-              <div className="hp-coll">
-                {collectionEpocas.map((c) => (
-                  <Link key={c.id} className="hp-cc" href={c.href}>
-                    <figure style={{ margin: 0 }}>
-                      {c.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={c.imageUrl} alt={c.titulo} style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover" }} />
-                      ) : (
-                        <span className="hp-ph sq" aria-hidden />
-                      )}
-                    </figure>
-                    <div className="ccy">{c.meta ?? c.titulo}</div>
-                    <div className="ccp"><span className="hp-dot" style={{ background: getPeriodColor(c.periodCode ?? "TRANS") }} />{c.titulo}</div>
-                  </Link>
-                ))}
-              </div>
-            </>
-          )}
-        </section>
-        )}
-
-        {featuredEntities.length > 0 && (
-        <section className="hp-sect">
-          <div className="hp-sect-h"><span className="hp-sn">Personas destacadas</span><Link className="hp-allr" href="/personas">Ver todas →</Link></div>
-          <div className="hp-ents">
-            {featuredEntities.map((e) => (
-              <Link key={e.slug} className="hp-ent-p" href={e.href}>
-                <figure style={{ margin: 0 }}><span className="hp-ph port" aria-hidden /></figure>
-                <div className="enn">{e.name}</div>
-                <div className="ent-t">
-                  <span className="hp-dot" style={{ background: e.periods[0] ? getPeriodColor(e.periods[0]) : "var(--fg-dim)" }} />
-                  {e.mentions} {e.mentions === 1 ? "aparición" : "apariciones"}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-        )}
+          <Link href="/linea-de-tiempo" className="hp-atlas-arrow" aria-label="Abrir línea de tiempo"><Arrow /></Link>
+        </div>
       </div>
 
-      {home.questionOfWeek && (
-      <section className="hp-qband">
-        <div className="inner">
-          <div className="ql">La pregunta de la semana</div>
-          <h3>{home.questionOfWeek.title}</h3>
-          <p className="qa">{home.questionOfWeek.answer}</p>
-          <Link className="qr" href={home.questionOfWeek.href}>
-            Ver la respuesta completa →
-          </Link>
-        </div>
-      </section>
-      )}
+      <div className="hp-mobile-years" aria-label="Anclas cronológicas">
+        {["1499", "1810", "1948", "1991", "hoy"].map((year, index) => (
+          <span key={year} className={index === 0 ? "is-active" : ""}><b>{year}</b><i /></span>
+        ))}
+      </div>
 
-      <div className="hp-wrap">
-        <section className="hp-sect">
-          <div className="hp-sect-h"><span className="hp-sn">Lo último</span><Link className="hp-allr" href="/archivo">Archivo completo →</Link></div>
-          <div className="hp-latest">
-            {latest.map((l, i) => (
-              <Link key={l.title + i} className="hp-li" href={l.href}>
-                <span className="lt"><span className="hp-dot" style={{ background: getPeriodColor(l.period) }} />{l.title}</span>
-                <span className="lm">{l.meta}</span>
+      {hero ? (
+        <section className="hp-hero">
+          <div className="hp-hero-media">{cardImage(hero.imageUrl, hero.title, "hp-hero-image", true)}</div>
+          <div className="hp-hero-copy">
+            <div className="hp-kicker">{hero.kicker} <span>·</span> {hero.periodCode ? PERIODS[hero.periodCode as PeriodCode]?.label : "Transversal"}</div>
+            <h1>{hero.title}</h1>
+            {hero.desc ? <p className="hp-hero-dek">{hero.desc}</p> : null}
+            <div className="hp-hero-actions">
+              <Link href={hero.href}>Leer la historia <Arrow /></Link>
+              <span>Alejandro Gutiérrez</span>
+            </div>
+            <div className="hp-provenance">
+              {hero.docCount != null ? <span>{formatNumber(hero.docCount)} documentos</span> : null}
+              <span>{formatNumber(hero.fragmentCount)} fragmentos</span>
+              {readingMinutes ? <span>{readingMinutes} min</span> : null}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {queue.length ? (
+        <section className="hp-queue hp-wide">
+          <div className="hp-section-label">En el archivo <Arrow /></div>
+          <div className="hp-queue-list">
+            {queue.map((item) => (
+              <Link href={item.href} key={item.id}>
+                <span className="hp-row-type">{item.kicker}</span>
+                <strong>{item.title}</strong>
+                <span className="hp-row-period">{item.periodCode ? PERIODS[item.periodCode as PeriodCode]?.yearRange : ""}</span>
+                <Arrow />
               </Link>
             ))}
           </div>
         </section>
+      ) : null}
 
-        <section className="hp-sect">
-          <div className="hp-sect-h"><span className="hp-sn">La línea de tiempo</span><Link className="hp-allr" href="/linea-de-tiempo">Ver completa →</Link></div>
-          <div className="hp-tlt">
-            {TIMELINE.map((t) => (
-              <Link key={t.year} href="/linea-de-tiempo">
-                <span className="tdot" style={{ background: getPeriodColor(t.period) }} />
-                <div className="ty2">{t.year}</div>
-                <div className="te">{t.event}</div>
-              </Link>
-            ))}
+      <div className="hp-wide hp-content">
+        <section className="hp-index-section">
+          <header className="hp-major-head">
+            <span>01</span>
+            <h2>{formatNumber(archive.total)} piezas publicadas</h2>
+          </header>
+          <div className="hp-index-list">
+            <Link href="/hechos" className="hp-index-row">
+              <b>{archive.hechos}</b><div><h3>Hechos</h3><p>Acontecimientos con fecha, lugares, protagonistas, causas y consecuencias.</p></div><Arrow />
+              <div className="hp-index-media">{cardImage(hechos[0]?.imageUrl ?? null, hechos[0]?.titulo ?? "Hechos")}</div>
+            </Link>
+            <Link href="/epocas" className="hp-index-row">
+              <b>{archive.epocas}</b><div><h3>Épocas</h3><p>Períodos con panorama, hitos, actores y legado.</p></div><Arrow />
+              <div className="hp-mini-timeline" aria-hidden>{ATLAS_CODES.slice(0, 6).map((code) => <i key={code} style={{ background: getPeriodColor(code) }} />)}</div>
+            </Link>
+            <Link href="/personas" className="hp-index-row">
+              <b>{archive.biografias}</b><div><h3>Biografías</h3><p>Personas con historia propia, fuentes y conexiones.</p></div><Arrow />
+              <div className="hp-index-portraits">{biographies.map((card) => <span key={card.id}>{cardImage(card.imageUrl, card.titulo)}</span>)}</div>
+            </Link>
+            <Link href="/ensayos" className="hp-index-row">
+              <b>{archive.preguntas}</b><div><h3>Pregunta</h3><p>Una lectura razonada desde las fuentes.</p></div><Arrow />
+              <div className="hp-index-question">{hero?.title ?? "Lecturas del archivo"}</div>
+            </Link>
           </div>
         </section>
 
-        <section className="hp-sect" style={{ paddingBottom: 36 }}>
-          <div className="hp-sect-h"><span className="hp-sn">Maneras de entrar</span></div>
-          <div className="hp-entradas">
-            {ENTRADAS.map((e) => (
-              <Link key={e.n} className="hp-ent-c" href={e.href}>
-                <div className="en2">{e.n}</div>
-                <h4>{e.title}</h4>
-                <p>{e.desc}</p>
+        <section className="hp-evidence">
+          <div className="hp-evidence-intro">
+            <span>02</span>
+            <h2>Un archivo construido con fuentes</h2>
+            <p>Totales calculados desde las piezas publicadas y los fragmentos que citan.</p>
+            <Link href="/acerca#metodo">Método y fuentes <Arrow /></Link>
+          </div>
+          <dl>
+            <div><dt>{formatNumber(archive.documents)}</dt><dd>documentos citados</dd></div>
+            <div><dt>{formatNumber(archive.fragments)}</dt><dd>fragmentos</dd></div>
+            <div><dt>{formatNumber(archive.words)}</dt><dd>palabras</dd></div>
+            <div><dt>{formatNumber(archive.readingHours)}</dt><dd>horas de lectura</dd></div>
+          </dl>
+        </section>
+
+        {sequence.length ? (
+          <section className="hp-sequence">
+            <div className="hp-side-head">
+              <span>03</span>
+              <h2>Hechos en secuencia</h2>
+              {home.collection?.title ? <p>{home.collection.title}</p> : null}
+              <Link href="/hechos">Ver los {archive.hechos} hechos <Arrow /></Link>
+            </div>
+            <div className="hp-sequence-list">
+              {sequence.map((card) => (
+                <article key={card.id} className="hp-sequence-item">
+                  <div className="hp-sequence-year">{card.yearLabel ?? "—"}<i /></div>
+                  <Link href={card.href} className="hp-sequence-image">{cardImage(card.imageUrl, card.title)}</Link>
+                  <div className="hp-sequence-copy">
+                    <h3><Link href={card.href}>{card.title}</Link></h3>
+                    {card.summary ? <p>{card.summary}</p> : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <section className="hp-epochs">
+          <div className="hp-side-head">
+            <span>04</span>
+            <h2>Quince épocas, {formatNumber(timelineEvents)} eventos</h2>
+            <p>Panorama de largo plazo, con hitos y actores clave.</p>
+          </div>
+          <div className="hp-epochs-body">
+            <div className="hp-epochs-rail">
+              {epocas.map((card) => (
+                <Link key={card.id} href={card.href} style={{ "--period-color": getPeriodColor(card.periodCode ?? "TRANS") } as React.CSSProperties}>
+                  <span>{card.titulo.replace(/\s*\([^)]*\)\s*$/, "")}</span>
+                  <small>{card.meta}</small>
+                  <i />
+                </Link>
+              ))}
+            </div>
+            <div className="hp-epochs-actions">
+              <Link href="/epocas">Ver las {archive.epocas} épocas <Arrow /></Link>
+              <span>La línea de tiempo reúne {formatNumber(timelineEvents)} eventos.</span>
+              <Link href="/linea-de-tiempo">Abrir línea de tiempo <Arrow /></Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="hp-connected">
+          <div className="hp-side-head">
+            <span>05</span>
+            <h2>El archivo conectado</h2>
+            <p>Biografías propias y entidades presentes en piezas publicadas.</p>
+          </div>
+          <div className="hp-connected-body">
+            {biographies.length ? (
+              <div className="hp-biographies">
+                <div className="hp-subhead"><strong>Con historia propia</strong><span>{biographies.length} biografías publicadas</span></div>
+                <div className="hp-biography-list">
+                  {biographies.map((card) => (
+                    <Link key={card.id} href={card.href}>
+                      {cardImage(card.imageUrl, card.titulo)}
+                      <span><strong>{card.titulo}</strong><small>{card.meta} · {card.periodCode ? PERIODS[card.periodCode as PeriodCode]?.yearRange : ""}</small></span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <ConnectedDirectory groups={directoryGroups} />
+          </div>
+        </section>
+
+        {home.questionOfWeek ? (
+          <section className="hp-question">
+            <div><span>Pregunta abierta</span><h2>{home.questionOfWeek.title}</h2></div>
+            <p>{home.questionOfWeek.answer}</p>
+            <Link href={home.questionOfWeek.href}>Leer la respuesta <Arrow /></Link>
+          </section>
+        ) : null}
+
+        <section className="hp-latest">
+          <div className="hp-side-head">
+            <span>06</span>
+            <h2>Lo recién publicado</h2>
+            <p>Las últimas piezas añadidas al archivo.</p>
+            <Link href="/archivo">Abrir todo el archivo <Arrow /></Link>
+          </div>
+          <div className="hp-latest-list">
+            {recent.slice(0, 5).map((piece) => (
+              <Link href={piece.href} key={piece.id}>
+                <span className="hp-row-type" style={{ "--dot": getPeriodColor(piece.periodCode ?? "TRANS") } as React.CSSProperties}>{piece.label}</span>
+                <strong>{piece.title}</strong>
+                <span>{piece.yearLabel ?? ""}</span>
+                <Arrow />
               </Link>
             ))}
           </div>

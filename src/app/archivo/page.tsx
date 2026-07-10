@@ -1,70 +1,81 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/public/public-shell";
-import { getRecentEssays, getEssayCount } from "@/lib/public-data";
+import { getPublicArchiveStats, getRecentPublicPieces } from "@/lib/public-data";
 import { getPeriodColor } from "@/lib/design-tokens";
 import { buildMetadata } from "@/lib/seo";
+import "./archivo.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = buildMetadata({
   seo: {
     metaTitle: "El archivo",
     metaDescription:
-      "Todas las producciones publicadas: crónicas, ensayos, fichas y preguntas sobre la historia de Colombia, con fuentes.",
-    keywords: ["archivo histórico", "historia de Colombia", "ensayos", "fuentes"],
+      "Todas las producciones publicadas: hechos, épocas, biografías y preguntas sobre la historia de Colombia, con sus fuentes.",
+    keywords: ["archivo histórico", "historia de Colombia", "hechos", "fuentes"],
   },
   path: "/archivo",
   type: "website",
 });
 
+function number(value: number): string {
+  return value.toLocaleString("es-CO");
+}
+
 export default async function ArchivoPage() {
-  const [essays, total] = await Promise.all([getRecentEssays(60), getEssayCount()]);
+  const [pieces, stats] = await Promise.all([
+    getRecentPublicPieces(300),
+    getPublicArchiveStats(),
+  ]);
 
   return (
     <PublicShell>
-      <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 34px" }}>
-        <header style={{ borderBottom: "1px solid var(--fg)", padding: "44px 0 26px" }}>
-          <div className="label" style={{ color: "var(--fg-muted)", marginBottom: 12 }}>
-            El archivo · {total.toLocaleString("es-CO")} producciones
+      <div className="ar-wrap">
+        <header className="ar-head">
+          <div className="ar-kicker">Archivo público · {number(stats.total)} piezas</div>
+          <div className="ar-title-row">
+            <h1>Todo el archivo</h1>
+            <p>
+              Una puerta única a las piezas publicadas. Cada entrada conserva su ruta correcta
+              y conduce a la historia, la biografía o la lectura que realmente existe.
+            </p>
           </div>
-          <h1 className="display" style={{ fontSize: "clamp(40px, 7vw, 76px)", lineHeight: 0.95, letterSpacing: "-0.02em", margin: 0 }}>
-            Todo el archivo
-          </h1>
-          <p className="serif" style={{ fontStyle: "italic", fontSize: 19, color: "var(--fg-muted)", margin: "14px 0 0", maxWidth: "48ch" }}>
-            Cada pieza nace de una pregunta al corpus. Ensayos, crónicas, capítulos, reportajes y podcasts.
-          </p>
+          <dl className="ar-stats">
+            <div><dt>{number(stats.hechos)}</dt><dd>hechos</dd></div>
+            <div><dt>{number(stats.epocas)}</dt><dd>épocas</dd></div>
+            <div><dt>{number(stats.biografias)}</dt><dd>biografías</dd></div>
+            <div><dt>{number(stats.preguntas + stats.lecturas)}</dt><dd>lecturas</dd></div>
+            <div><dt>{number(stats.documents)}</dt><dd>documentos citados</dd></div>
+            <div><dt>{number(stats.fragments)}</dt><dd>fragmentos</dd></div>
+          </dl>
         </header>
 
-        <ul style={{ listStyle: "none", margin: 0, padding: "6px 0 90px" }}>
-          {essays.map((e) => {
-            const color = e.periodCode ? getPeriodColor(e.periodCode) : "var(--fg-dim)";
-            return (
-              <li key={e.id}>
-                <Link
-                  href={`/ensayos/${e.id}`}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr auto",
-                    gap: 24,
-                    alignItems: "baseline",
-                    padding: "17px 0",
-                    borderTop: "1px solid var(--line)",
-                    textDecoration: "none",
-                  }}
-                >
-                  <span style={{ display: "flex", alignItems: "baseline", gap: 11, minWidth: 0 }}>
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0, transform: "translateY(-2px)" }} />
-                    <span className="serif" style={{ fontSize: 20, color: "var(--fg)", lineHeight: 1.3 }}>
-                      {e.title}
-                    </span>
+        <section className="ar-catalog" aria-labelledby="archivo-listado">
+          <div className="ar-catalog-head">
+            <h2 id="archivo-listado">Piezas publicadas</h2>
+            <span>Más recientes primero</span>
+          </div>
+          <ol className="ar-list">
+            {pieces.map((piece, index) => (
+              <li key={piece.id}>
+                <Link href={piece.href}>
+                  <span className="ar-index">{String(index + 1).padStart(2, "0")}</span>
+                  <span
+                    className="ar-type"
+                    style={{ "--ar-dot": getPeriodColor(piece.periodCode ?? "TRANS") } as React.CSSProperties}
+                  >
+                    {piece.label}
                   </span>
-                  <span className="mono" style={{ fontSize: 10.5, color: "var(--fg-faint)", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
-                    {e.formatName}
+                  <span className="ar-copy">
+                    <strong>{piece.title}</strong>
+                    {piece.summary ? <small>{piece.summary}</small> : null}
                   </span>
+                  <span className="ar-year">{piece.yearLabel ?? "—"}</span>
+                  <span className="ar-arrow" aria-hidden>→</span>
                 </Link>
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ol>
+        </section>
       </div>
     </PublicShell>
   );

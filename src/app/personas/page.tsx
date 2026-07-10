@@ -1,6 +1,6 @@
 import { PublicShell } from "@/components/public/public-shell";
 import { EntityBrowser } from "@/components/public/entity-index";
-import { getEntityUniverse, getPeriodEntityUniverse, getEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
+import { getConnectedEntityDirectory, getPeriodEntityUniverse, getConnectedEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { buildMetadata } from "@/lib/seo";
 
@@ -30,8 +30,8 @@ export default async function PersonasPage({
   const sp = (await searchParams) ?? {};
   const periodo = validPeriod(sp.periodo);
   const [entities, counts] = await Promise.all([
-    periodo ? getPeriodEntityUniverse("persona", periodo) : getEntityUniverse("persona"),
-    getEntityCounts(),
+    periodo ? getPeriodEntityUniverse("persona", periodo) : getConnectedEntityDirectory("persona"),
+    getConnectedEntityCounts(),
   ]);
   const m = ENTITY_TYPE_META.persona;
   return (
@@ -41,8 +41,8 @@ export default async function PersonasPage({
         total={counts.persona}
         kicker="Quién hizo la historia"
         title="Personas"
-        intro="Las figuras detectadas en el corpus — con dónde aparecen y con quién se relacionan."
-        emptyNote="Aún no hay personas en el corpus."
+        intro="Figuras presentes en las piezas publicadas. Algunas tienen biografía propia; las demás abren el tejido de historias donde aparecen."
+        emptyNote="Aún no hay personas conectadas a piezas publicadas."
         typeLabel={m.singular}
         color={m.color}
       />

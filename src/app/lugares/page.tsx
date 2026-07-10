@@ -1,6 +1,6 @@
 import { PublicShell } from "@/components/public/public-shell";
 import { EntityBrowser } from "@/components/public/entity-index";
-import { getEntityUniverse, getPeriodEntityUniverse, getEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
+import { getConnectedEntityDirectory, getPeriodEntityUniverse, getConnectedEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { buildMetadata } from "@/lib/seo";
 
@@ -30,8 +30,8 @@ export default async function LugaresPage({
   const sp = (await searchParams) ?? {};
   const periodo = validPeriod(sp.periodo);
   const [entities, counts] = await Promise.all([
-    periodo ? getPeriodEntityUniverse("lugar", periodo) : getEntityUniverse("lugar"),
-    getEntityCounts(),
+    periodo ? getPeriodEntityUniverse("lugar", periodo) : getConnectedEntityDirectory("lugar"),
+    getConnectedEntityCounts(),
   ]);
   const m = ENTITY_TYPE_META.lugar;
   return (
@@ -41,8 +41,8 @@ export default async function LugaresPage({
         total={counts.lugar}
         kicker="Dónde ocurrió"
         title="Lugares"
-        intro="Los territorios, regiones y ciudades del corpus — y las piezas que los cruzan."
-        emptyNote="Aún no hay lugares en el corpus."
+        intro="Territorios, regiones y ciudades mencionados en piezas publicadas — cada entrada conduce a las historias que la sostienen."
+        emptyNote="Aún no hay lugares conectados a piezas publicadas."
         typeLabel={m.singular}
         color={m.color}
       />

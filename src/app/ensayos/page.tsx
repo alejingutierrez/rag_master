@@ -6,9 +6,9 @@ export const dynamic = "force-dynamic";
 
 export const metadata = buildMetadata({
   seo: {
-    metaTitle: "Ensayos",
+    metaTitle: "Lecturas",
     metaDescription:
-      "Ensayos sobre la historia de Colombia — crónicas, reportajes y preguntas con respuesta razonada, ordenados por época y con las fuentes a la vista.",
+      "Lecturas sobre la historia de Colombia — preguntas con respuesta razonada y sus fuentes a la vista.",
     keywords: ["ensayos", "historia de Colombia", "crónicas", "reportajes", "preguntas históricas"],
   },
   path: "/ensayos",
@@ -20,10 +20,10 @@ export default async function EnsayosPage() {
   return (
     <TypologyIndex
       kicker="Lecturas"
-      title="Ensayos"
-      intro="Crónicas, reportajes y preguntas con respuesta razonada — ordenados por época, con las fuentes a la vista."
+      title="Lecturas"
+      intro="Preguntas con respuesta razonada — ordenadas por época y con las fuentes siempre a la vista."
       cards={cards}
-      emptyNote="Aún no hay ensayos publicados. Aparecerán aquí a medida que se publiquen desde el taller."
+      emptyNote="Aún no hay lecturas publicadas. Aparecerán aquí a medida que se publiquen desde el taller."
     />
   );
 }

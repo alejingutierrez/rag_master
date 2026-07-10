@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader, primaryBtn, ghostBtn } from "@/components/editorial";
+import "./home-editor.css";
 
 interface PubItem {
   id: string;
@@ -118,7 +119,9 @@ export default function HomeEditorPage() {
         collection: { title: collTitle, subtitle: collSubtitle, items: collItems },
         questionOfWeek:
           qMode === "deliverable"
-            ? { deliverableId: qId }
+            ? qId && qId !== heroId
+              ? { deliverableId: qId }
+              : {}
             : { title: qTitle, answer: qAnswer, href: qHref },
       };
       const res = await fetch("/api/home-config", {
@@ -143,14 +146,14 @@ export default function HomeEditorPage() {
         label="Producción · Editor del home"
         title="Editor del home"
         italic="portada"
-        subtitle="Elige qué piezas publicadas aparecen en la portada. Solo se pueden elegir producciones ya publicadas. Lo que dejes en blanco usa el default."
+        subtitle="Construye la portada con piezas ya publicadas. El sistema valida cada referencia contra la base y descarta automáticamente contenidos despublicados."
         action={
           <button type="button" style={primaryBtn} onClick={save} disabled={saving}>
             {saving ? "Guardando…" : saved ? "Guardado ✓" : "Guardar portada"}
           </button>
         }
       />
-      <hr className="hairline" style={{ margin: "0 56px" }} />
+      <hr className="hairline home-editor-rule" />
 
       {loading ? (
         <div style={{ padding: 56 }}>
@@ -164,10 +167,10 @@ export default function HomeEditorPage() {
           </p>
         </div>
       ) : (
-        <div style={{ padding: "32px 56px 80px", maxWidth: 900, display: "flex", flexDirection: "column", gap: 48 }}>
+        <div className="home-editor-body">
           {/* Hero */}
           <section>
-            <SectionTitle n="01" title="Destacado (hero)" hint="La pieza grande en la parte superior de la portada." />
+            <SectionTitle n="01" title="Pieza de apertura" hint="La historia que ocupa el gran plano editorial al comenzar la portada." />
             <select value={heroId} onChange={(e) => setHeroId(e.target.value)} style={selectStyle}>
               <option value="">— Usar el default —</option>
               {items.map((i) => (
@@ -181,13 +184,13 @@ export default function HomeEditorPage() {
 
           {/* Featured */}
           <section>
-            <SectionTitle n="02" title="En portada (hasta 3)" hint="La fila de tres tarjetas destacadas." />
+            <SectionTitle n="02" title="En el archivo (hasta 3)" hint="La pequeña mesa de lectura que acompaña la pieza de apertura." />
             <PickList items={items} selected={featured} onToggle={(id) => toggle(featured, setFeatured, id, 3)} />
           </section>
 
           {/* Collection */}
           <section>
-            <SectionTitle n="03" title="Colección (hasta 4)" hint="Una colección temática con su título y subtítulo." />
+            <SectionTitle n="03" title="Secuencia curada (hasta 4)" hint="Un recorrido temático ordenado. El orden de selección es el orden de lectura." />
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
               <input
                 value={collTitle}
@@ -207,8 +210,8 @@ export default function HomeEditorPage() {
 
           {/* Question of week */}
           <section>
-            <SectionTitle n="04" title="La pregunta de la semana" hint="Una pregunta publicada, o un texto libre." />
-            <div style={{ display: "flex", gap: 16, marginBottom: 14 }}>
+            <SectionTitle n="04" title="Pregunta abierta (opcional)" hint="Una lectura publicada distinta de la pieza de apertura, o un texto libre breve." />
+            <div className="home-editor-modes">
               <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13, cursor: "pointer" }}>
                 <input type="radio" checked={qMode === "deliverable"} onChange={() => setQMode("deliverable")} />
                 Una pregunta publicada
@@ -222,8 +225,8 @@ export default function HomeEditorPage() {
               <select value={qId} onChange={(e) => setQId(e.target.value)} style={selectStyle}>
                 <option value="">— Elegir pregunta —</option>
                 {(preguntas.length ? preguntas : items).map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.title}
+                  <option key={i.id} value={i.id} disabled={i.id === heroId}>
+                    {i.title}{i.id === heroId ? " — ya es la apertura" : ""}
                   </option>
                 ))}
               </select>
@@ -239,17 +242,20 @@ export default function HomeEditorPage() {
                 <input value={qHref} onChange={(e) => setQHref(e.target.value)} placeholder="Enlace (opcional, p. ej. /preguntas/…)" style={inputStyle} />
               </div>
             )}
+            {qMode === "deliverable" && qId && qId === heroId ? (
+              <p className="home-editor-warning">La pregunta coincide con la apertura y no se publicará dos veces. Elige otra pieza.</p>
+            ) : null}
           </section>
 
-          <div style={{ display: "flex", gap: 12, alignItems: "center", borderTop: "1px solid var(--line)", paddingTop: 24 }}>
+          <div className="home-editor-actions">
             <button type="button" style={primaryBtn} onClick={save} disabled={saving}>
               {saving ? "Guardando…" : saved ? "Guardado ✓" : "Guardar portada"}
             </button>
             <a href="/" target="_blank" rel="noreferrer" style={{ ...ghostBtn, textDecoration: "none" }}>
               Ver portada ↗
             </a>
-            <span className="mono" style={{ fontSize: 11, color: "var(--fg-faint)" }}>
-              hero: {heroId ? label(heroId) : "default"} · destacados: {featured.length} · colección: {collItems.length}
+            <span className="mono home-editor-summary">
+              apertura: {heroId ? label(heroId) : "default"} · archivo: {featured.length} · secuencia: {collItems.length}
             </span>
           </div>
         </div>
@@ -268,7 +274,7 @@ function PickList({
   onToggle: (id: string) => void;
 }) {
   return (
-    <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "var(--line)", border: "1px solid var(--line)" }}>
+    <ul className="home-editor-picks">
       {items.map((i) => {
         const on = selected.includes(i.id);
         const order = selected.indexOf(i.id) + 1;

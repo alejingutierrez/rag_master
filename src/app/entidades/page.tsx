@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/public/public-shell";
-import { getEntityCounts, ENTITY_TYPE_META, type EntityType } from "@/lib/public-data";
+import { getConnectedEntityCounts, ENTITY_TYPE_META, type EntityType } from "@/lib/public-data";
 import { buildMetadata } from "@/lib/seo";
 import "@/components/public/typology-index.css";
 
@@ -24,7 +24,7 @@ const CARDS: Array<{ type: EntityType; desc: string }> = [
 ];
 
 export default async function EntidadesPage() {
-  const counts = await getEntityCounts();
+  const counts = await getConnectedEntityCounts();
   return (
     <PublicShell>
       <div className="tix-wrap">
@@ -46,7 +46,7 @@ export default async function EntidadesPage() {
                 <Link href={m.index}>
                   <div className="tix-kmeta">
                     <span className="tix-dot" style={{ background: m.color }} />
-                    {n} {n === 1 ? "registrada" : "registradas"}
+                    {n} {n === 1 ? "conectada" : "conectadas"}
                   </div>
                   <div className="tix-ct">{m.plural}</div>
                   <div className="tix-cr">{desc}</div>
