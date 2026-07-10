@@ -18,7 +18,10 @@ import { classifyDeliverable } from "../deliverable-classifier";
 import { extractTypology } from "./typology-extractor";
 import { composeTypology, missingFields } from "./typology-composer";
 import { composeSeo } from "./seo-composer";
-import { fichaKindForFormat } from "../atelier-formats";
+import { fichaKindForFormat, VIDEO_FORMAT_ID } from "../atelier-formats";
+import { runDirector } from "../video/director";
+import { resolveScoreImagesToUrls } from "../video/scene-images";
+import { getStyle, imageCapFor } from "../video/styles";
 import type { DeliverableTaxonomy } from "../taxonomy";
 import type { DeliverableSeo } from "../seo";
 import type { StructuredData } from "../typology-schemas";
@@ -218,6 +221,87 @@ export async function runAtelier(
     console.warn(`[atelier] hipótesis falló: ${(e as Error).message}`);
   }
   await emit("hipotesis", "Hipótesis fijada.", { brief });
+
+  // ── Rama VIDEO ──
+  // En vez de redactar prosa, el video compone una PARTITURA tipográfica con el
+  // Director, alimentándolo con el dossier YA verificado (mismo rigor de
+  // investigación que un ensayo, sin re-hacer el RAG). Reusa "composicion" y
+  // "edicion" del stepper como "guion" y "montaje".
+  if (input.formatId === VIDEO_FORMAT_ID) {
+    const style = getStyle(input.videoStyleId ?? "");
+    const durationSec = input.durationSec && input.durationSec > 0 ? input.durationSec : 30;
+
+    // Evidencia = afirmaciones verificadas (texto cotejado + su primera fuente).
+    const evidence = verified.claims.map((c) => ({
+      content: c.texto,
+      source: c.fuentes[0]?.documentFilename,
+      page: c.fuentes[0]?.pageNumber,
+    }));
+
+    set("composicion", "running", "Escribiendo el guion del video…");
+    await emit("composicion", `Escribiendo el guion (${style.label})…`);
+    const director = await runDirector({
+      topic: input.intent,
+      styleBrief: style.brief, // carácter del tipo elegido
+      durationSec,
+      evidence, // dossier verificado inyectado: hereda el rigor del Taller
+      verify: false, // el Taller ya verificó cada afirmación
+    });
+    const score = director.score;
+    score.meta.personality = style.id as never; // registra el tipo elegido en la partitura
+    set("composicion", "done", undefined, `${score.scenes.length} escenas`);
+    await emit("composicion", "Guion del video compuesto.");
+
+    // ── Montaje: imágenes de archivo por URL (reusa el buscador del Taller). ──
+    set("edicion", "running", "Buscando imágenes de archivo y montando…");
+    await emit("edicion", "Buscando imágenes de archivo y montando…");
+    let imagesUsed = 0;
+    const cap = imageCapFor(style.imageUsage);
+    if (cap > 0) {
+      imagesUsed = await resolveScoreImagesToUrls(score, cap, (m) =>
+        onProgress({ stage: "edicion", phases: snapshot(), message: `archivo: ${m}` })
+      );
+    } else {
+      // Tipo sin imágenes: limpia cualquier consulta que el compositor dejara.
+      for (const s of score.scenes as unknown as Array<Record<string, unknown>>) {
+        delete s.image;
+        delete s.imageFill;
+      }
+    }
+    set("edicion", "done", undefined, `${score.scenes.length} escenas · ${imagesUsed} imágenes`);
+
+    const confidenceIndex = deriveConfidenceIndex(verified.claims);
+    const criticalApparatus = buildCriticalApparatus(verified.claims);
+    const chunksUsed = collectChunks(verified.claims, chunkMap, acopio.chunks);
+    const durSec = (score.meta.durationInFrames / score.meta.fps).toFixed(0);
+    // Cuerpo mínimo (para la lista de Producciones): el video se ve en el preview.
+    const answer = `# ${score.meta.title}\n\n${score.meta.periodLabel} · ${score.scenes.length} escenas · ${durSec}s`;
+
+    await emit("edicion", "Video listo.", {
+      videoScore: score,
+      imagesUsed,
+      confidenceIndex,
+      criticalApparatus,
+      docCount: confidenceIndex.documentosUnicos,
+      degraded,
+    });
+
+    return {
+      answer,
+      chunksUsed,
+      confidenceIndex,
+      criticalApparatus,
+      taxonomy: undefined,
+      structuredData: null,
+      seo: undefined,
+      qualityScore: undefined,
+      degraded,
+      brief,
+      phases,
+      videoScore: score,
+      imagesUsed,
+    };
+  }
 
   // ── 6. Composición ──
   set("composicion", "running", "Componiendo la pieza…");

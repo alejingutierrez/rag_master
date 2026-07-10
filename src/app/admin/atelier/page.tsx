@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import {
   PageHeader,
@@ -21,10 +22,17 @@ import {
   ATELIER_FORMAT_LIST,
   fichaKindForFormat,
   isValidFormatId,
+  isVideoFormat,
   type AtelierFormatId,
   type LongitudId,
 } from "@/lib/atelier-formats";
 import { decodeSourceRef, kindLabel, type SourceRef } from "@/lib/source-ref";
+import { VIDEO_STYLES } from "@/lib/video/styles";
+import type { TypographicScore } from "@/lib/video/score";
+import { TypographicVideo } from "@/remotion-comp/video/TypographicVideo";
+
+// Solo cliente: la composición Remotion usa measureText, ausente en SSR.
+const Player = dynamic(() => import("@remotion/player").then((m) => m.Player), { ssr: false });
 
 type Stage =
   | "encuadre"
@@ -64,6 +72,9 @@ interface AtelierMeta {
   wordCount?: number;
   docCount?: number;
   degraded?: string[];
+  /** Solo formato "video": la partitura para el preview Remotion. */
+  videoScore?: TypographicScore;
+  imagesUsed?: number;
 }
 
 interface ChunkMeta {
@@ -131,6 +142,8 @@ function AtelierContent() {
   const [intent, setIntent] = useState("");
   const [formatId, setFormatId] = useState<AtelierFormatId>("cronica");
   const [longitud, setLongitud] = useState<LongitudId>("normal");
+  const [styleId, setStyleId] = useState<string>(VIDEO_STYLES[0].id);
+  const [durationSec, setDurationSec] = useState(30);
   const [sourceRef, setSourceRef] = useState<SourceRef | null>(null);
   const [data, setData] = useState<Data | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -228,6 +241,7 @@ function AtelierContent() {
           longitud,
           questionId: sourceRef?.kind === "pregunta" ? sourceRef.key : undefined,
           sourceRef: sourceRef ?? undefined,
+          ...(isVideoFormat(formatId) ? { styleId, durationSec } : {}),
         }),
       });
       if (!res.ok) {
@@ -250,6 +264,7 @@ function AtelierContent() {
   const stageIdx = STAGE_INDEX[stage];
   const isRunning = data?.status === "GENERATING" || data?.status === "PENDING";
   const phase: "idle" | "running" | "done" = !data ? "idle" : isRunning ? "running" : "done";
+  const videoMode = !!data && isVideoFormat(data.templateId);
 
   return (
     <div className="fade-up" data-screen-label="Atelier">
@@ -268,7 +283,13 @@ function AtelierContent() {
             [
               {
                 label: "Formatos narrativos",
-                items: ATELIER_FORMAT_LIST.filter((f) => !fichaKindForFormat(f.id)),
+                items: ATELIER_FORMAT_LIST.filter(
+                  (f) => !fichaKindForFormat(f.id) && !isVideoFormat(f.id)
+                ),
+              },
+              {
+                label: "Video — la misma investigación verificada, en partitura tipográfica 9:16",
+                items: ATELIER_FORMAT_LIST.filter((f) => isVideoFormat(f.id)),
               },
               {
                 label: "Fichas del archivo — crean la página de su tipología con ficha completa",
@@ -358,9 +379,11 @@ function AtelierContent() {
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
             placeholder={
-              fichaKindForFormat(formatId)
-                ? 'Ej: "El almirante José Prudencio Padilla" — nombra el sujeto de la ficha (y el ángulo, si quieres).'
-                : 'Ej: "Cuéntame la toma y retoma del Palacio de Justicia desde la mirada de las víctimas."'
+              isVideoFormat(formatId)
+                ? 'Ej: "La Batalla de Boyacá" — el tema del video (el tipo define su carácter).'
+                : fichaKindForFormat(formatId)
+                  ? 'Ej: "El almirante José Prudencio Padilla" — nombra el sujeto de la ficha (y el ángulo, si quieres).'
+                  : 'Ej: "Cuéntame la toma y retoma del Palacio de Justicia desde la mirada de las víctimas."'
             }
             rows={2}
             style={{
@@ -389,10 +412,53 @@ function AtelierContent() {
               gap: 16,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>Extensión</span>
-              <FilterTabs<LongitudId> value={longitud} onChange={setLongitud} options={LONGITUDES} />
-            </div>
+            {isVideoFormat(formatId) ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>Tipo</span>
+                  <select
+                    value={styleId}
+                    onChange={(e) => setStyleId(e.target.value)}
+                    style={{
+                      padding: "7px 10px",
+                      border: "1px solid var(--line-strong)",
+                      background: "var(--bg)",
+                      fontSize: 13,
+                      color: "var(--fg)",
+                      borderRadius: 6,
+                    }}
+                  >
+                    {VIDEO_STYLES.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label} —{" "}
+                        {s.imageUsage === "none"
+                          ? "sin imagen"
+                          : s.imageUsage === "minimal"
+                            ? "imagen mínima"
+                            : "con imagen"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>
+                    Duración {durationSec}s
+                  </span>
+                  <input
+                    type="range"
+                    min={15}
+                    max={75}
+                    value={durationSec}
+                    onChange={(e) => setDurationSec(Number(e.target.value))}
+                  />
+                </label>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>Extensión</span>
+                <FilterTabs<LongitudId> value={longitud} onChange={setLongitud} options={LONGITUDES} />
+              </div>
+            )}
             <button
               type="button"
               onClick={submit}
@@ -509,7 +575,11 @@ function AtelierContent() {
                             letterSpacing: "0.06em",
                           }}
                         >
-                          {s.label}
+                          {videoMode && s.key === "composicion"
+                            ? "Guion"
+                            : videoMode && s.key === "edicion"
+                              ? "Montaje"
+                              : s.label}
                         </div>
                         {(active || done) && ph?.metric && (
                           <div style={{ fontSize: 11, color: "var(--fg-subtle)", marginTop: 4 }}>
@@ -546,7 +616,16 @@ function AtelierContent() {
               </section>
 
               <section style={{ padding: "44px 56px 96px", maxWidth: 1100 }}>
-                {tab === "pieza" && <Pieza data={data} isRunning={!!isRunning} />}
+                {tab === "pieza" &&
+                  (videoMode ? (
+                    <VideoResult
+                      score={meta?.videoScore}
+                      imagesUsed={meta?.imagesUsed}
+                      isRunning={!!isRunning}
+                    />
+                  ) : (
+                    <Pieza data={data} isRunning={!!isRunning} />
+                  ))}
                 {tab === "fases" && <Fases phases={meta?.phases ?? []} />}
                 {tab === "confianza" && <Confianza ci={meta?.confidenceIndex} degraded={meta?.degraded} />}
                 {tab === "fuentes" && <Fuentes chunks={data.chunksUsed ?? []} />}
@@ -602,6 +681,126 @@ function Pieza({ data, isRunning }: { data: Data; isRunning: boolean }) {
     </div>
   );
 }
+
+function VideoResult({
+  score,
+  imagesUsed,
+  isRunning,
+}: {
+  score?: TypographicScore;
+  imagesUsed?: number;
+  isRunning: boolean;
+}) {
+  const [rendering, setRendering] = useState(false);
+  const [mp4Url, setMp4Url] = useState("");
+  const [renderErr, setRenderErr] = useState("");
+
+  const downloadScore = () => {
+    if (!score) return;
+    const blob = new Blob([JSON.stringify(score, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `partitura-${score.meta.periodCode}.json`;
+    a.click();
+  };
+
+  const renderMp4 = async () => {
+    if (!score) return;
+    setRendering(true);
+    setMp4Url("");
+    setRenderErr("");
+    try {
+      const r = await fetch("/api/video/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ score }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d?.error || "Error al renderizar");
+      setMp4Url(d.url);
+    } catch (e) {
+      setRenderErr((e as Error).message);
+    }
+    setRendering(false);
+  };
+
+  if (!score) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "var(--accent)",
+            animation: "caret-blink 1s infinite",
+          }}
+        />
+        <span style={{ fontSize: 14, color: "var(--fg-muted)" }}>
+          {isRunning ? "Componiendo el video…" : "Sin partitura todavía."}
+        </span>
+      </div>
+    );
+  }
+
+  const durSec = (score.meta.durationInFrames / score.meta.fps).toFixed(1);
+  return (
+    <div
+      className="fade-in"
+      style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 32, alignItems: "start" }}
+    >
+      <div style={{ background: "#0a0a0a", borderRadius: 4, padding: 10, display: "grid", placeItems: "center" }}>
+        <Player
+          component={TypographicVideo as never}
+          inputProps={score as never}
+          durationInFrames={score.meta.durationInFrames}
+          fps={score.meta.fps}
+          compositionWidth={score.meta.width}
+          compositionHeight={score.meta.height}
+          style={{ width: 270, height: 480, borderRadius: 2 }}
+          controls
+          loop
+          acknowledgeRemotionLicense
+        />
+      </div>
+      <div style={{ display: "grid", gap: 14 }}>
+        <div>
+          <div className="display" style={{ fontSize: 24, color: "var(--fg)" }}>
+            {score.meta.title}
+          </div>
+          <div className="mono" style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 6 }}>
+            {score.meta.periodLabel} · {score.scenes.length} escenas · {durSec}s · {imagesUsed ?? 0}{" "}
+            imágenes de archivo
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+          <button type="button" onClick={downloadScore} style={ghostBtn}>
+            Descargar partitura
+          </button>
+          <button type="button" onClick={renderMp4} disabled={rendering} style={ghostBtn}>
+            {rendering ? "Renderizando MP4…" : "Renderizar MP4"}
+          </button>
+        </div>
+        {mp4Url && (
+          <a href={mp4Url} download style={{ fontSize: 14, color: "var(--accent)" }}>
+            ↓ Descargar {mp4Url.split("/").pop()}
+          </a>
+        )}
+        {renderErr && <p style={{ fontSize: 13, color: "var(--fg-muted)" }}>{renderErr}</p>}
+      </div>
+    </div>
+  );
+}
+
+const ghostBtn: React.CSSProperties = {
+  padding: "9px 14px",
+  background: "transparent",
+  color: "var(--fg)",
+  border: "1px solid var(--line-strong)",
+  fontSize: 13,
+  cursor: "pointer",
+  borderRadius: 6,
+};
 
 function Fases({ phases }: { phases: AtelierPhase[] }) {
   return (

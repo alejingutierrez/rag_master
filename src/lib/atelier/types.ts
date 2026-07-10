@@ -7,6 +7,7 @@ import type { AtelierFormatId, LongitudId } from "../atelier-formats";
 import type { DeliverableTaxonomy } from "../taxonomy";
 import type { DeliverableSeo } from "../seo";
 import type { StructuredData } from "../typology-schemas";
+import type { TypographicScore } from "../video/score";
 
 // ── Entrada ──────────────────────────────────────────────────────────
 
@@ -41,6 +42,9 @@ export interface AtelierInput {
   /** Tabla efectiva resuelta por el endpoint (chunks_v2 vacío ⇒ "chunks"). */
   tableName: "chunks" | "chunks_v2";
   useParentExpansion: boolean;
+  /** Solo formato "video": estilo (VIDEO_STYLES.id) y duración objetivo en seg. */
+  videoStyleId?: string;
+  durationSec?: number;
 }
 
 // ── Fase 1: Encuadre ─────────────────────────────────────────────────
@@ -220,6 +224,10 @@ export interface AtelierMetadata {
   wordCount?: number;
   qualityScore?: number;
   degraded?: string[];
+  /** Solo formato "video": la partitura lista para el preview/render Remotion. */
+  videoScore?: TypographicScore;
+  /** Solo formato "video": nº de imágenes de archivo resueltas. */
+  imagesUsed?: number;
   startedAt: string;
   finishedAt?: string;
 }
@@ -251,4 +259,8 @@ export interface AtelierResult {
   degraded: string[];
   brief: AtelierBrief;
   phases: AtelierPhase[];
+  /** Solo formato "video": partitura tipográfica producida por el Director. */
+  videoScore?: TypographicScore;
+  /** Solo formato "video": nº de imágenes de archivo resueltas. */
+  imagesUsed?: number;
 }

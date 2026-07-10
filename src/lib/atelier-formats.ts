@@ -11,10 +11,17 @@ export type AtelierFormatId =
   | "reportaje"
   | "capitulo"
   | "podcast"
+  | "video"
   | "ficha-hecho"
   | "ficha-epoca"
   | "ficha-entidad"
   | "ficha-pregunta";
+
+/** El formato que produce una partitura de video en vez de prosa. */
+export const VIDEO_FORMAT_ID: AtelierFormatId = "video";
+export function isVideoFormat(id: string): boolean {
+  return id === VIDEO_FORMAT_ID;
+}
 
 /** Tipología que produce un formato de ficha, o null si es un formato narrativo. */
 export function fichaKindForFormat(id: AtelierFormatId): "hecho" | "epoca" | "entidad" | "pregunta" | null {
@@ -71,6 +78,14 @@ export const ATELIER_FORMATS: Record<AtelierFormatId, AtelierFormatMeta> = {
     description: "Guion hablado para una sola voz: íntimo, escénico, dicho al oído.",
     defaultWords: 2400,
   },
+  video: {
+    id: "video",
+    name: "Video tipográfico",
+    description: "Pieza vertical 9:16 con ritmo: la misma investigación verificada, destilada en una partitura tipográfica animada con imágenes de archivo.",
+    // El video se mide en segundos, no en palabras; este valor solo orienta la
+    // amplitud de la indagación (más material para escoger los golpes).
+    defaultWords: 2200,
+  },
   "ficha-hecho": {
     id: "ficha-hecho",
     name: "Hecho",
@@ -126,6 +141,9 @@ const WORD_TARGETS: Record<AtelierFormatId, Record<LongitudId, number>> = {
   capitulo: { compacta: 4500, normal: 8000, extensa: 12000 },
   // Monólogo hablado: medido en minutos al oído (≈150 palabras/min ⇒ ~12/20/32 min).
   podcast: { compacta: 1700, normal: 3000, extensa: 4800 },
+  // Video: medido en SEGUNDOS (la duración se elige aparte). Estas cifras solo
+  // dan una base ancha de investigación para destilar los golpes de la partitura.
+  video: { compacta: 1800, normal: 2600, extensa: 3600 },
   // Fichas: artículo de referencia — denso y completo sin inflarse; la ficha
   // estructurada (campos) se compone aparte sobre la misma evidencia.
   "ficha-hecho": { compacta: 1400, normal: 2200, extensa: 3600 },

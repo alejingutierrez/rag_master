@@ -134,6 +134,18 @@ export const FORMAT_CONFIG: Record<AtelierFormatId, FormatConfig> = {
     claimsMax: 14,
   },
 
+  // Video tipográfico: la partitura es corta, pero necesita ESCOGER los golpes
+  // más contundentes de una base ancha. Indagación amplia (muchos ejes, muchas
+  // cifras/fechas/citas candidatas) para destilar 6-12 escenas de alto impacto.
+  video: {
+    ...BASE,
+    poolTarget: 200,
+    maxEjes: 12,
+    minEjes: 9,
+    claimsMin: 8,
+    claimsMax: 18,
+  },
+
   // ── Fichas (creación por tipología) ──
   // La prosa es más corta que un reportaje, pero la FICHA exige cobertura de
   // campos (causas, consecuencias, hitos, actores, relaciones): la indagación
