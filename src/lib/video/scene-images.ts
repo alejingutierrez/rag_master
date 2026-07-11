@@ -110,36 +110,61 @@ export async function resolveScoreImages(
 export async function resolveScoreImagesToUrls(
   score: TypographicScore,
   cap: number,
-  onImg?: (msg: string) => void
+  onImg?: (msg: string) => void,
+  opts: { deadlineMs?: number; perQueryMs?: number } = {}
 ): Promise<number> {
   const scenes = score.scenes as unknown as Array<Record<string, unknown>>;
   if (cap <= 0) {
     for (const s of scenes) { delete s.image; delete s.imageFill; }
     return 0;
   }
+  // Techos de tiempo. La búsqueda de archivo encadena fetch a proveedores +
+  // scoring LLM SERIALIZADO por el semáforo de Bedrock (1 en vuelo). Sin cotas,
+  // un estilo con muchas imágenes acumula decenas de llamadas y el "montaje"
+  // muele por horas, dejando el entregable colgado en GENERATING. Con estas
+  // cotas el montaje SIEMPRE termina acotado: el video sale con lo que resolvió
+  // (puro tipo si nada).
+  const deadline = Date.now() + (opts.deadlineMs ?? 150_000); // techo global
+  const perQueryMs = opts.perQueryMs ?? 45_000; // techo por consulta
   const cache = new Map<string, string | null>();
   let used = 0;
   const resolve = async (q: string): Promise<string | null> => {
     if (cache.has(q)) return cache.get(q)!;
-    if (used >= cap) return null;
-    try {
-      const ctx = { titulo: q, resumen: q, visualAnchors: [q], visualIntent: "hecho-documental" as const };
-      const queries = Array.from(new Set([q, capForArchives(q, 3)].filter(Boolean)));
-      const cands = await searchAllProviders(queries);
-      const scored = await scoreCandidates(cands, ctx);
-      const top = scored.find((c) => (c.score ?? 0) >= 6 && (c.width ?? 0) >= 700);
-      if (!top) { cache.set(q, null); return null; }
-      cache.set(q, top.url); used++;
-      onImg?.(`"${q}" → ${top.provider} score=${top.score}`);
-      return top.url;
-    } catch { cache.set(q, null); return null; }
+    if (used >= cap || Date.now() > deadline) return null;
+    // `work` NUNCA rechaza (try/catch interno): si pierde la carrera contra el
+    // timeout, sigue corriendo en segundo plano y una rejección tardía no queda
+    // sin manejar.
+    const work = (async (): Promise<string | null> => {
+      try {
+        const ctx = { titulo: q, resumen: q, visualAnchors: [q], visualIntent: "hecho-documental" as const };
+        const queries = Array.from(new Set([q, capForArchives(q, 3)].filter(Boolean)));
+        // Cota de candidatas a puntuar (por resolución): el scoring es 1 llamada
+        // LLM por lote de 45; sin cota, una query con cientos dispara varias.
+        const cands = (await searchAllProviders(queries))
+          .sort((a, b) => (b.width ?? 0) * (b.height ?? 0) - (a.width ?? 0) * (a.height ?? 0))
+          .slice(0, 36);
+        const scored = await scoreCandidates(cands, ctx);
+        const top = scored.find((c) => (c.score ?? 0) >= 6 && (c.width ?? 0) >= 700);
+        return top ? top.url : null;
+      } catch {
+        return null;
+      }
+    })();
+    const url = await Promise.race([
+      work,
+      new Promise<null>((res) => setTimeout(() => res(null), perQueryMs)),
+    ]);
+    cache.set(q, url);
+    if (url) { used++; onImg?.(`"${q}" → ${url.slice(0, 56)}`); }
+    return url;
   };
   for (const s of scenes) {
     for (const f of ["image", "imageFill"] as const) {
       const val = s[f];
       if (typeof val === "string" && !/^https?:\/\//.test(val) && !val.startsWith("img/")) {
         const url = await resolve(val);
-        if (url) s[f] = url; else delete s[f];
+        if (url) s[f] = url;
+        else delete s[f]; // no resuelto (o pasado el techo): la escena queda en puro tipo
       }
     }
   }
