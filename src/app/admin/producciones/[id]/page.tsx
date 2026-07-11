@@ -16,6 +16,12 @@ import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { getAtelierFormat } from "@/lib/atelier-formats";
 import { TIPO_LABELS, ESCALA_LABELS } from "@/lib/questions-config";
 import { deriveSeo, normalizeSeo, type DeliverableSeo } from "@/lib/seo";
+import dynamic from "next/dynamic";
+import { TypographicVideo } from "@/remotion-comp/video/TypographicVideo";
+import type { TypographicScore } from "@/lib/video/score";
+
+// Solo cliente: la composición Remotion usa measureText, ausente en SSR.
+const Player = dynamic(() => import("@remotion/player").then((m) => m.Player), { ssr: false });
 
 interface ChunkUsage {
   id: string;
@@ -164,6 +170,9 @@ interface AtelierMeta {
   criticalApparatus?: { fuentesPorSeccion?: AtelierSection[] };
   taxonomy?: AtelierTaxonomy;
   degraded?: string[];
+  /** Solo formato "video": la partitura para el preview Remotion. */
+  videoScore?: TypographicScore;
+  imagesUsed?: number;
 }
 
 function docLabel(c: ChunkUsage): string {
@@ -369,6 +378,7 @@ export default function ProduccionDetailPage({
   const atelier = isAtelier
     ? ((data.metadata as { atelier?: AtelierMeta } | null)?.atelier ?? null)
     : null;
+  const videoScore = atelier?.videoScore ?? null;
   const formatLabel = getAtelierFormat(data.templateId)?.name ?? data.templateId;
   const hasSections = !!atelier?.criticalApparatus?.fuentesPorSeccion?.length;
   const title = data.question?.pregunta ?? data.userQuestion ?? "Producción";
@@ -500,7 +510,9 @@ export default function ProduccionDetailPage({
           </div>
         )}
 
-        {!isGenerating && data.answer && (
+        {!isGenerating && videoScore ? (
+          <VideoPlayerBlock score={videoScore} imagesUsed={atelier?.imagesUsed} />
+        ) : !isGenerating && data.answer ? (
           <div className="prose">
             <AnswerRender
               markdown={data.answer}
@@ -508,7 +520,7 @@ export default function ProduccionDetailPage({
               onCite={setActiveSource}
             />
           </div>
-        )}
+        ) : null}
       </article>
 
       {/* Aparato crítico */}
@@ -1357,6 +1369,80 @@ function AtelierSections({
         </div>
       ))}
     </>
+  );
+}
+
+/** Cuerpo de una producción de VIDEO: preview Remotion + descarga/render. */
+function VideoPlayerBlock({ score, imagesUsed }: { score: TypographicScore; imagesUsed?: number }) {
+  const [rendering, setRendering] = useState(false);
+  const [mp4Url, setMp4Url] = useState("");
+  const [renderErr, setRenderErr] = useState("");
+
+  const downloadScore = () => {
+    const blob = new Blob([JSON.stringify(score, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `partitura-${score.meta.periodCode}.json`;
+    a.click();
+  };
+
+  const renderMp4 = async () => {
+    setRendering(true);
+    setMp4Url("");
+    setRenderErr("");
+    try {
+      const r = await fetch("/api/video/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ score }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d?.error || "Error al renderizar");
+      setMp4Url(d.url);
+    } catch (e) {
+      setRenderErr((e as Error).message);
+    }
+    setRendering(false);
+  };
+
+  const durSec = (score.meta.durationInFrames / score.meta.fps).toFixed(1);
+
+  return (
+    <div style={{ display: "flex", gap: 32, flexWrap: "wrap", alignItems: "flex-start" }}>
+      <div style={{ background: "#0a0a0a", borderRadius: 4, padding: 10 }}>
+        <Player
+          component={TypographicVideo as never}
+          inputProps={score as never}
+          durationInFrames={score.meta.durationInFrames}
+          fps={score.meta.fps}
+          compositionWidth={score.meta.width}
+          compositionHeight={score.meta.height}
+          style={{ width: 300, height: 533, borderRadius: 2 }}
+          controls
+          loop
+          acknowledgeRemotionLicense
+        />
+      </div>
+      <div style={{ display: "grid", gap: 12, minWidth: 200 }}>
+        <div className="mono" style={{ fontSize: 12, color: "var(--fg-muted)" }}>
+          {score.scenes.length} escenas · {durSec}s · {imagesUsed ?? 0} imágenes de archivo
+        </div>
+        <button type="button" onClick={downloadScore} style={ghostBtn}>
+          Descargar partitura
+        </button>
+        <button type="button" onClick={renderMp4} disabled={rendering} style={ghostBtn}>
+          {rendering ? "Renderizando MP4…" : "Renderizar MP4"}
+        </button>
+        {mp4Url && (
+          <a href={mp4Url} download style={{ fontSize: 13, color: "var(--accent)" }}>
+            ↓ {mp4Url.split("/").pop()}
+          </a>
+        )}
+        {renderErr && (
+          <p style={{ fontSize: 12, color: "var(--fg-muted)", margin: 0 }}>{renderErr}</p>
+        )}
+      </div>
+    </div>
   );
 }
 
