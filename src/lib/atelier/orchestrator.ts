@@ -258,14 +258,28 @@ export async function runAtelier(
     let imagesUsed = 0;
     const cap = imageCapFor(style.imageUsage);
     if (cap > 0) {
-      imagesUsed = await resolveScoreImagesToUrls(score, cap, (m) =>
-        onProgress({ stage: "edicion", phases: snapshot(), message: `archivo: ${m}` })
-      );
-    } else {
-      // Tipo sin imágenes: limpia cualquier consulta que el compositor dejara.
-      for (const s of score.scenes as unknown as Array<Record<string, unknown>>) {
-        delete s.image;
-        delete s.imageFill;
+      try {
+        // Con techos de tiempo: el montaje SIEMPRE termina acotado (el video sale
+        // con lo que resolvió). Sin esto, la búsqueda de archivo serializada por el
+        // semáforo de Bedrock podía moler por horas y dejar el entregable colgado.
+        imagesUsed = await resolveScoreImagesToUrls(
+          score,
+          cap,
+          (m) => onProgress({ stage: "edicion", phases: snapshot(), message: `archivo: ${m}` }),
+          { deadlineMs: 150_000, perQueryMs: 45_000 }
+        );
+      } catch (e) {
+        degraded.push("Búsqueda de imágenes falló; video en puro tipo.");
+        console.warn(`[atelier] montaje de imágenes falló: ${(e as Error).message}`);
+      }
+    }
+    // Limpieza dura: cualquier campo de imagen que quedara como CONSULTA (no URL),
+    // por cota/deadline/fallo, se elimina para que el Player no intente cargar un
+    // texto como imagen. Cubre también el tipo sin imágenes (cap 0).
+    for (const s of score.scenes as unknown as Array<Record<string, unknown>>) {
+      for (const f of ["image", "imageFill"] as const) {
+        const v = s[f];
+        if (typeof v === "string" && !/^https?:\/\//.test(v)) delete s[f];
       }
     }
     set("edicion", "done", undefined, `${score.scenes.length} escenas · ${imagesUsed} imágenes`);
