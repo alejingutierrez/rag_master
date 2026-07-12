@@ -32,8 +32,16 @@ export const WRITING_RULES = `REGLAS DE ESCRITURA (esto es tipografía en movimi
 - Nada de párrafos, nada de comas largas. Piensa en titulares que golpean.
 - Cada CIFRA, FECHA o NOMBRE debe estar respaldado por la evidencia. Si no hay respaldo, NO lo inventes: usa una afirmación cualitativa.
 - Un solo *acento* por línea, la palabra clave.
-- Arco narrativo: apertura → tensión (nombres, cifras, un par de cortes a negro) → consecuencia → cierre.
 - Español de Colombia, registro histórico serio pero vivo. Sin clichés de redes.`;
+
+export const COHERENCE_RULES = `CLARIDAD Y HILO (lo MÁS importante — un video impactante que NADIE entiende, fracasó):
+- El video cuenta UNA historia que un espectador SIN conocimiento previo del tema pueda seguir de principio a fin. Antes de escribir, fija el HILO en una frase (qué pasó, por qué importa) y ordena las escenas para contarlo.
+- HILO ENCADENADO: cada escena se apoya en la anterior (esto → por eso → entonces → pero → al final). No es un montón de fragmentos sueltos: es una CADENA. Las 2–3 primeras escenas ORIENTAN al espectador (de qué trata, dónde y cuándo pasa).
+- CADA ESCENA SE ENTIENDE SOLA: el texto principal con su pre/sub/label debe leerse como una micro-frase COMPLETA y gramatical. Nada de fragmentos que solo tienen sentido con contexto externo. Si al leer una escena aislada NO se entiende, reescríbela.
+- ORDEN TEMPORAL: si usas años o fechas, AVANZAN en orden. NUNCA retrocedas en el tiempo (no pongas 1888 y luego 1885). Un solo sentido de marcha.
+- "cifra" SOLO para un número cuyo significado es obvio y contundente por sí mismo (km, muertos, años, %, pesos, toneladas — una magnitud). NUNCA un conteo que necesita una frase para explicarse (p. ej. "3 veces"): eso va como "enunciado", no como cifra.
+- FUENTES legibles: en "autor"/"fuente" nombra a alguien reconocible (una persona real, una obra, un año) o déjalo vacío. En "label"/"pre" pon contexto claro. Evita fragmentos vagos que confunden más de lo que aclaran ("crónica de viaje", "informe consular X").
+- Prefiere la CLARIDAD a la astucia: si una frase es ambigua o críptica, dila plano. Mejor que se entienda a que suene misteriosa.`;
 
 export function personalityBrief(p: Personality): string {
   switch (p) {
@@ -91,7 +99,11 @@ ${VOCAB_SPEC}
 
 ${WRITING_RULES}
 
+${COHERENCE_RULES}
+
 ${brief}
+
+Nota: la personalidad/estilo define el CARÁCTER visual, pero JAMÁS a costa de la claridad. Primero que se entienda; después, el estilo.
 
 Para escenas con imagen, pon en "image"/"imageFill" una CONSULTA de búsqueda de archivo (2-4 palabras con nombres propios), no una ruta.
 
@@ -111,13 +123,21 @@ ${args.evidenceText}
 
 ${EXAMPLE}
 
-Escribe el guion del video para el TEMA, anclando cada hecho en la EVIDENCIA. Devuelve solo el JSON.`;
+PASOS: (1) Fija el HILO en una frase: la historia que vas a contar (qué pasó, por qué importa). (2) Ordena los hechos de la evidencia en ese hilo, en ORDEN TEMPORAL. (3) Conviértelos en escenas donde CADA UNA se entienda sola y se encadene con la anterior. Ancla cada dato en la EVIDENCIA. Devuelve solo el JSON.`;
 }
 
 export function buildVerifySystem(): string {
-  return `Eres un verificador escéptico. Recibes la EVIDENCIA y un guion de video (escenas JSON). Tu trabajo: corregir SOLO los hechos que la evidencia no respalde —cifras, fechas, nombres propios—. Ajusta al valor respaldado, o generaliza (quita el número/fecha) si no hay respaldo. NO agregues ni quites escenas, NO cambies el estilo ni los marcadores (*_), NO reescribas lo que ya está bien.
+  return `Eres un verificador de hechos Y un editor de claridad. Recibes la EVIDENCIA y un guion de video (escenas JSON). Haz DOS cosas — SIN agregar ni quitar escenas y SIN cambiar el estilo ni los marcadores (*_):
 
-Devuelve el MISMO objeto { "periodCode", "title", "scenes":[...] } con las correcciones aplicadas. Solo JSON.`;
+1. HECHOS: corrige cifras, fechas y nombres propios que la evidencia no respalde. Ajusta al valor respaldado, o generaliza (quita el número/fecha) si no hay respaldo.
+
+2. CLARIDAD (arregla solo lo que un espectador NO entendería; no toques lo que ya está claro):
+   - AÑOS FUERA DE ORDEN: si las escenas con año no avanzan en el tiempo, REORDENA el arreglo de escenas para que la cronología marche en un solo sentido.
+   - "cifra" CRÍPTICA: si una escena "cifra" es un número que necesita una frase para explicarse (p. ej. valor 3 "veces"), conviértela en "enunciado" que diga la idea en claro.
+   - FUENTES VAGAS: en "autor"/"fuente", si dice algo no reconocible ("crónica de viaje", "informe consular X"), nómbralo legible si la evidencia lo permite, o déjalo vacío.
+   - FRASE QUE NO SE ENTIENDE SOLA: si una escena aislada es incomprensible, reescribe su texto (mismos campos, mismo kind salvo la cifra críptica) para que se entienda.
+
+Devuelve el MISMO objeto { "periodCode", "title", "scenes":[...] } con las correcciones. Solo JSON.`;
 }
 
 export function buildVerifyUser(args: { draftJson: string; evidenceText: string }): string {
