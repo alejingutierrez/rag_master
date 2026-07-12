@@ -28,6 +28,10 @@ export const ArchivalImage: React.FC<{
   src: string; era: string; dur: number; scrim?: Scrim; pan?: Pan; from?: number;
 }> = ({ src, era, dur, scrim = "bottom", pan = "in", from = 0 }) => {
   const frame = useCurrentFrame();
+  // Resiliencia: si la imagen de archivo falla al cargar (URL caída, 403 de un
+  // CDN), NO tumbamos el render — la escena cae a fondo negro + tipografía.
+  // `onError` evita que <Img> lance y cancele todo el video en Lambda.
+  const [failed, setFailed] = React.useState(false);
   const t = interpolate(frame, [from, from + dur], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.inOut(Easing.quad) });
   const scale = (pan === "in" ? 1.06 : 1.12) + t * 0.14;
   const tx = pan === "left" ? -t * 46 : pan === "right" ? t * 46 : 0;
@@ -35,10 +39,12 @@ export const ArchivalImage: React.FC<{
   const css = scrimCss(scrim);
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a0a" }}>
-      <AbsoluteFill style={{ transform: `scale(${scale}) translate(${tx}px, ${ty}px)`, willChange: "transform" }}>
-        <Img src={srcUrl(src)} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "grayscale(1) contrast(1.08) brightness(0.97)" }} />
-        <AbsoluteFill style={{ backgroundColor: era, mixBlendMode: "overlay", opacity: 0.14 }} />
-      </AbsoluteFill>
+      {!failed && (
+        <AbsoluteFill style={{ transform: `scale(${scale}) translate(${tx}px, ${ty}px)`, willChange: "transform" }}>
+          <Img src={srcUrl(src)} onError={() => setFailed(true)} style={{ width: "100%", height: "100%", objectFit: "cover", filter: "grayscale(1) contrast(1.08) brightness(0.97)" }} />
+          <AbsoluteFill style={{ backgroundColor: era, mixBlendMode: "overlay", opacity: 0.14 }} />
+        </AbsoluteFill>
+      )}
       {css !== "none" && <AbsoluteFill style={{ background: css }} />}
     </AbsoluteFill>
   );
