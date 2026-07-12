@@ -1,50 +1,97 @@
 import { NextRequest } from "next/server";
-import { writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
-import { execSync } from "node:child_process";
+import type { AwsRegion } from "@remotion/lambda/client";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 3600;
+// POST (dispara) y GET (progreso) son rápidos: el render pesado corre en Lambda.
+export const maxDuration = 60;
 
 /**
- * Render LOCAL de la partitura a MP4 (solo para probar en la máquina de desarrollo:
- * usa el Remotion CLI + Chromium, que NO corren en App Runner). En producción esto
- * se reemplaza por @remotion/lambda. Escribe el MP4 en public/videos y devuelve su URL.
- * `--public-dir` apunta al public/ del app Next para hallar las imágenes de archivo.
+ * Render de la partitura a MP4 en @remotion/lambda. El render pesado (Chromium)
+ * corre en la función Lambda desplegada, NO en App Runner. Flujo asíncrono:
+ *   POST { score }                 → { renderId, bucketName }   (dispara)
+ *   GET  ?renderId=&bucketName=    → { done, progress, url? }   (polling)
+ * El MP4 de salida queda público en el bucket remotionlambda-* y se descarga
+ * directo desde su URL de S3.
+ *
+ * Config por env con defaults del despliegue (identificadores, no secretos):
+ *   REMOTION_LAMBDA_FUNCTION · REMOTION_LAMBDA_SERVE_URL · REMOTION_LAMBDA_REGION
  */
+const REGION = (process.env.REMOTION_LAMBDA_REGION ||
+  process.env.AWS_REGION ||
+  "us-east-1") as AwsRegion;
+const FUNCTION =
+  process.env.REMOTION_LAMBDA_FUNCTION ||
+  "remotion-render-4-0-487-mem2048mb-disk2048mb-240sec";
+const SERVE_URL =
+  process.env.REMOTION_LAMBDA_SERVE_URL ||
+  "https://remotionlambda-useast1-4vn52i09vl.s3.us-east-1.amazonaws.com/sites/historia-video/index.html";
+const COMPOSITION = "TypographicVideo";
+
 function json(obj: unknown, status = 200) {
-  return new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+function configured(): boolean {
+  return Boolean(FUNCTION && SERVE_URL);
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const score = body?.score;
-  if (!score?.meta || !Array.isArray(score?.scenes)) return json({ error: "Partitura requerida" }, 400);
-
-  // App Runner no trae Chromium ni el CLI de Remotion: el render a MP4 corre solo
-  // en desarrollo. En producción el preview funciona y el MP4 llega en la fase Lambda.
-  if (process.env.NODE_ENV === "production") {
-    return json(
-      { error: "El render a MP4 en la nube llega en la siguiente fase. Por ahora usa el preview y «Descargar partitura»." },
-      501
-    );
+  if (!score?.meta || !Array.isArray(score?.scenes)) {
+    return json({ error: "Partitura requerida" }, 400);
   }
-
+  if (!configured()) {
+    return json({ error: "Render en la nube no configurado (falta la función Lambda)." }, 501);
+  }
   try {
-    const repo = process.cwd();
-    const remotion = join(repo, "remotion");
-    const id = `${score.meta.periodCode}-${Date.now().toString(36)}`;
-    mkdirSync(join(remotion, "out"), { recursive: true });
-    mkdirSync(join(repo, "public", "videos"), { recursive: true });
-    const scorePath = join(remotion, "out", `score-web-${id}.json`);
-    writeFileSync(scorePath, JSON.stringify(score));
-    const outPath = join(repo, "public", "videos", `${id}.mp4`);
-    execSync(
-      `npx remotion render src/index.ts TypographicVideo "${outPath}" --props="${scorePath}" --public-dir="${join(repo, "public")}" --concurrency=4`,
-      { cwd: remotion, stdio: "ignore" }
-    );
-    return json({ url: `/videos/${id}.mp4` });
+    const { renderMediaOnLambda } = await import("@remotion/lambda/client");
+    const fileName = `video-${score.meta.periodCode ?? "hc"}-${score.meta.durationInFrames}.mp4`;
+    const { renderId, bucketName } = await renderMediaOnLambda({
+      region: REGION,
+      functionName: FUNCTION,
+      serveUrl: SERVE_URL,
+      composition: COMPOSITION,
+      inputProps: score,
+      codec: "h264",
+      privacy: "public",
+      downloadBehavior: { type: "download", fileName },
+    });
+    return json({ renderId, bucketName });
   } catch (e) {
-    return json({ error: "Render local falló: " + (e as Error).message.slice(0, 180) }, 500);
+    return json({ error: "No se pudo iniciar el render: " + (e as Error).message.slice(0, 200) }, 500);
+  }
+}
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const renderId = searchParams.get("renderId");
+  const bucketName = searchParams.get("bucketName");
+  if (!renderId || !bucketName) {
+    return json({ error: "renderId y bucketName requeridos" }, 400);
+  }
+  if (!configured()) {
+    return json({ error: "Render en la nube no configurado." }, 501);
+  }
+  try {
+    const { getRenderProgress } = await import("@remotion/lambda/client");
+    const p = await getRenderProgress({
+      renderId,
+      bucketName,
+      functionName: FUNCTION,
+      region: REGION,
+    });
+    if (p.fatalErrorEncountered) {
+      return json({ error: p.errors?.[0]?.message ?? "El render falló en Lambda." }, 500);
+    }
+    if (p.done) {
+      return json({ done: true, progress: 1, url: p.outputFile });
+    }
+    return json({ done: false, progress: p.overallProgress ?? 0 });
+  } catch (e) {
+    return json({ error: "No se pudo consultar el progreso: " + (e as Error).message.slice(0, 200) }, 500);
   }
 }
