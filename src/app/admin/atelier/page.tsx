@@ -692,6 +692,7 @@ function VideoResult({
   isRunning: boolean;
 }) {
   const [rendering, setRendering] = useState(false);
+  const [renderPct, setRenderPct] = useState(0);
   const [mp4Url, setMp4Url] = useState("");
   const [renderErr, setRenderErr] = useState("");
 
@@ -709,6 +710,7 @@ function VideoResult({
     setRendering(true);
     setMp4Url("");
     setRenderErr("");
+    setRenderPct(0);
     try {
       const r = await fetch("/api/video/render", {
         method: "POST",
@@ -716,8 +718,25 @@ function VideoResult({
         body: JSON.stringify({ score }),
       });
       const d = await r.json();
-      if (!r.ok) throw new Error(d?.error || "Error al renderizar");
-      setMp4Url(d.url);
+      if (!r.ok) throw new Error(d?.error || "Error al iniciar el render");
+      const renderId = d.renderId as string;
+      const bucketName = d.bucketName as string;
+      for (let i = 0; i < 150; i++) {
+        await new Promise((res) => setTimeout(res, 2500));
+        const pr = await fetch(
+          `/api/video/render?renderId=${encodeURIComponent(renderId)}&bucketName=${encodeURIComponent(bucketName)}`,
+          { cache: "no-store" },
+        );
+        const pd = await pr.json();
+        if (!pr.ok) throw new Error(pd?.error || "El render falló");
+        setRenderPct(Math.round((pd.progress ?? 0) * 100));
+        if (pd.done && pd.url) {
+          setMp4Url(pd.url);
+          setRendering(false);
+          return;
+        }
+      }
+      throw new Error("El render tardó demasiado; reintenta.");
     } catch (e) {
       setRenderErr((e as Error).message);
     }
@@ -778,12 +797,12 @@ function VideoResult({
             Descargar partitura
           </button>
           <button type="button" onClick={renderMp4} disabled={rendering} style={ghostBtn}>
-            {rendering ? "Renderizando MP4…" : "Renderizar MP4"}
+            {rendering ? `Renderizando… ${renderPct}%` : mp4Url ? "Renderizar de nuevo" : "Renderizar MP4"}
           </button>
         </div>
         {mp4Url && (
-          <a href={mp4Url} download style={{ fontSize: 14, color: "var(--accent)" }}>
-            ↓ Descargar {mp4Url.split("/").pop()}
+          <a href={mp4Url} style={{ fontSize: 14, color: "var(--accent)" }}>
+            ↓ Descargar MP4
           </a>
         )}
         {renderErr && <p style={{ fontSize: 13, color: "var(--fg-muted)" }}>{renderErr}</p>}
