@@ -124,6 +124,16 @@ const LONGITUDES: { value: LongitudId; label: string }[] = [
   { value: "extensa", label: "Extensa" },
 ];
 
+// Presets de duración del video: más tiempo ⇒ más escenas ⇒ más texto. El
+// valor es un objetivo en segundos; la duración real emerge del tiempo de
+// lectura de cada escena (calibrado para leer cómodo).
+const VIDEO_DURATIONS: { value: number; label: string }[] = [
+  { value: 30, label: "Corto · ~30s" },
+  { value: 60, label: "Medio · ~1 min" },
+  { value: 95, label: "Largo · ~1½ min" },
+  { value: 135, label: "Extenso · ~2 min" },
+];
+
 type Tab = "pieza" | "fases" | "confianza" | "fuentes";
 
 export default function AtelierPage() {
@@ -143,7 +153,7 @@ function AtelierContent() {
   const [formatId, setFormatId] = useState<AtelierFormatId>("cronica");
   const [longitud, setLongitud] = useState<LongitudId>("normal");
   const [styleId, setStyleId] = useState<string>(VIDEO_STYLES[0].id);
-  const [durationSec, setDurationSec] = useState(30);
+  const [durationSec, setDurationSec] = useState(60);
   const [sourceRef, setSourceRef] = useState<SourceRef | null>(null);
   const [data, setData] = useState<Data | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -440,18 +450,14 @@ function AtelierContent() {
                     ))}
                   </select>
                 </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>
-                    Duración {durationSec}s
-                  </span>
-                  <input
-                    type="range"
-                    min={15}
-                    max={75}
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 12, color: "var(--fg-muted)" }}>Duración</span>
+                  <FilterTabs<number>
                     value={durationSec}
-                    onChange={(e) => setDurationSec(Number(e.target.value))}
+                    onChange={setDurationSec}
+                    options={VIDEO_DURATIONS}
                   />
-                </label>
+                </div>
               </div>
             ) : (
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>

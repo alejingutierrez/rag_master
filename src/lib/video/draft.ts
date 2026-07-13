@@ -184,16 +184,21 @@ function textLen(c: SceneContent): number {
  * dura la SUMA de estos tiempos — la duración la manda la lectura, no un total fijo.
  */
 const KIND_BASE_SEC: Record<LayoutKind, number> = {
-  corte: 0.8, anio: 0.7, nombre: 0.8, cifra: 1.2, contraste: 0.9, cierre: 1.0,
-  enunciado: 0.7, portada: 0.9, pregunta: 1.0, lista: 0.9, cita: 1.1, imagen: 1.1,
+  corte: 0.9, anio: 0.85, nombre: 1.0, cifra: 1.35, contraste: 1.05, cierre: 1.1,
+  enunciado: 0.95, portada: 1.15, pregunta: 1.2, lista: 1.2, cita: 1.4, imagen: 1.3,
 };
 function readingSeconds(c: SceneContent): number {
   const words = textLen(c) / 5.2;
   const m = c as { image?: string; imageFill?: string };
-  const imgView = m.image || m.imageFill ? 0.8 : 0;
-  const ENTER_EXIT = 0.6; // la entrada y la salida necesitan su propio tiempo
-  const s = (KIND_BASE_SEC[c.kind] ?? 0.9) + words * 0.26 + imgView + ENTER_EXIT;
-  return Math.min(6.0, Math.max(1.8, s));
+  const imgView = m.image || m.imageFill ? 0.9 : 0;
+  // Entrada + salida animadas comen tiempo legible: hay que compensarlas para
+  // que la ventana en que el texto está QUIETO alcance a leerse cómodo.
+  const ENTER_EXIT = 0.95;
+  // ~0.33 s/palabra ≈ 150 ppm de lectura cómoda en pantalla (antes 0.26 ≈ 230 ppm,
+  // muy rápido). Clamp más ancho: hasta un titular corto respira (mín 2.4s) y una
+  // cita densa alcanza a leerse (máx 8s).
+  const s = (KIND_BASE_SEC[c.kind] ?? 1.0) + words * 0.33 + imgView + ENTER_EXIT;
+  return Math.min(8.0, Math.max(2.4, s));
 }
 
 export function assignTiming(
