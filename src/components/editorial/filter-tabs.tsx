@@ -1,16 +1,16 @@
 "use client";
 
-export type FilterOption<V extends string = string> =
+export type FilterOption<V extends string | number = string> =
   | V
   | { value: V; label: string };
 
-export interface FilterTabsProps<V extends string = string> {
+export interface FilterTabsProps<V extends string | number = string> {
   value: V;
   options: ReadonlyArray<FilterOption<V>>;
   onChange: (v: V) => void;
 }
 
-export function FilterTabs<V extends string = string>({
+export function FilterTabs<V extends string | number = string>({
   value,
   options,
   onChange,
@@ -25,8 +25,8 @@ export function FilterTabs<V extends string = string>({
       }}
     >
       {options.map((o) => {
-        const k = typeof o === "string" ? o : o.value;
-        const lab = typeof o === "string" ? o : o.label;
+        const k = typeof o === "object" && o !== null ? o.value : o;
+        const lab = typeof o === "object" && o !== null ? o.label : String(o);
         const active = k === value;
         return (
           <button

@@ -70,11 +70,11 @@ export function personalityBrief(p: Personality): string {
   }
 }
 
+// Escenas por duración, calibrado al ritmo de lectura CÓMODO (~4.2 s/escena
+// promedio, ya con entrada/salida). Más duración ⇒ más escenas ⇒ más texto.
 function sceneHint(durationSec: number): string {
-  if (durationSec <= 15) return "6 a 7 escenas";
-  if (durationSec <= 30) return "9 a 12 escenas";
-  if (durationSec <= 45) return "12 a 16 escenas";
-  return "16 a 22 escenas";
+  const mid = Math.max(6, Math.round(durationSec / 4.6));
+  return `${Math.max(5, mid - 2)} a ${mid + 3} escenas`;
 }
 
 const EXAMPLE = `EJEMPLO (formato exacto, abreviado):
