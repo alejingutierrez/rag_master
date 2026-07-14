@@ -8,7 +8,10 @@
  */
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
+import sharp from "sharp";
 import { searchAllProviders, capForArchives, searchReferences, scoreCandidates } from "../atelier/reference-search";
+import { uploadToS3 } from "../s3";
 import type { TypographicScore } from "./score";
 
 export interface SceneImageCandidate {
@@ -102,10 +105,43 @@ export async function resolveScoreImages(
 }
 
 /**
- * PRODUCCIÓN: resuelve las consultas de imagen a URLs de archivo (públicas), sin
- * descargar a disco — funciona en App Runner (Player) y en el render (Remotion Img
- * carga URLs). searchAllProviders + scoreCandidates (scoring LLM). Cae a puro tipo
- * donde no hay imagen relevante. Muta el score. Devuelve nº de imágenes usadas.
+ * Espeja la imagen elegida a S3 (bucket del sitio): descarga del archivo externo
+ * (respetando el Referer anti-hotlink), normaliza con sharp (≤1600×2400, JPEG) y
+ * sube a `video/img/<hash-url>.jpg` — clave determinista, re-subidas idempotentes.
+ * Así el Player y el render Lambda nunca dependen de la URL del archivo externo
+ * (403/hotlink/caídas). Devuelve la URL S3, o null (el llamador cae a la original).
+ */
+export async function mirrorCandidateToS3(c: { url: string; referer?: string }): Promise<string | null> {
+  if (!process.env.S3_BUCKET_NAME) return null; // sin bucket (dev local): usa la URL externa
+  try {
+    const res = await fetch(c.url, {
+      headers: {
+        "User-Agent": "HistoriaColombianaBot/1.0 (educational history project)",
+        ...(c.referer ? { Referer: c.referer } : {}),
+      },
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) return null;
+    const raw = Buffer.from(await res.arrayBuffer());
+    if (raw.length < 10_000 || raw.length > 30_000_000) return null; // miniatura o monstruo
+    const jpg = await sharp(raw)
+      .rotate() // respeta EXIF
+      .resize(1600, 2400, { fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 84 })
+      .toBuffer();
+    const key = `video/img/${createHash("sha1").update(c.url).digest("hex").slice(0, 16)}.jpg`;
+    return await uploadToS3(key, jpg, "image/jpeg");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * PRODUCCIÓN: resuelve las consultas de imagen a URLs públicas y las ESPEJA a S3
+ * (mirrorCandidateToS3) — el video de producción no depende de archivos externos.
+ * Si el espejo falla, cae a la URL del archivo (Remotion Img la carga igual).
+ * searchAllProviders + scoreCandidates (scoring LLM). Cae a puro tipo donde no
+ * hay imagen relevante. Muta el score. Devuelve nº de imágenes usadas.
  */
 export async function resolveScoreImagesToUrls(
   score: TypographicScore,
@@ -145,7 +181,9 @@ export async function resolveScoreImagesToUrls(
           .slice(0, 36);
         const scored = await scoreCandidates(cands, ctx);
         const top = scored.find((c) => (c.score ?? 0) >= 6 && (c.width ?? 0) >= 700);
-        return top ? top.url : null;
+        if (!top) return null;
+        // Espejo a S3: URL estable para el Player y el render Lambda.
+        return (await mirrorCandidateToS3(top)) ?? top.url;
       } catch {
         return null;
       }

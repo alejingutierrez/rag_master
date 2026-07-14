@@ -7,6 +7,9 @@
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts TypographicVideo out/bogotazo.mp4",
     "still": "remotion still src/index.ts TypographicVideo out/frame.png --frame=258",
+    "qa:stills": "node scripts/qa-stills.mjs",
+    "qa:cuts": "node scripts/qa-cuts.mjs",
+    "lambda:site": "remotion lambda sites create src/index.ts --site-name=historia-video",
     "upgrade": "remotion upgrade"
   },
   "dependencies": {
