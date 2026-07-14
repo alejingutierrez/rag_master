@@ -20,7 +20,14 @@ export const Chrome: React.FC<{ score: TypographicScore; palette: Palette }> = (
 
   // fondo de la escena activa; las escenas con imagen se tratan como oscuras
   let bg: SceneBg = "light";
-  for (const s of score.scenes) if (frame >= s.from + FADE / 2) bg = s.image ? "dark" : s.bg ?? "light";
+  let active = 0, activeFrom = 0;
+  for (let i = 0; i < score.scenes.length; i++) {
+    const s = score.scenes[i];
+    if (frame >= s.from + FADE / 2) {
+      bg = s.image ? "dark" : s.bg ?? "light";
+      active = i; activeFrom = s.from;
+    }
+  }
 
   const soft = inkSoftFor(palette, bg);
   const line = lineFor(palette, bg);
@@ -42,6 +49,18 @@ export const Chrome: React.FC<{ score: TypographicScore; palette: Palette }> = (
           {PERIOD_LABEL[score.meta.periodCode]}
         </span>
         <span style={{ fontFamily: FONT.mono, fontSize: 21, letterSpacing: "0.14em", color: faint }}>9:16</span>
+      </div>
+
+      {/* contador de escena: sube tras máscara en cada corte (pulso de producción) */}
+      <div style={{ position: "absolute", bottom: 168, right: 84, overflow: "hidden", opacity: inBar }}>
+        {(() => {
+          const cp = active === 0 ? 1 : prog(frame, Math.max(0, activeFrom + FADE / 2), 12);
+          return (
+            <span style={{ display: "block", fontFamily: FONT.mono, fontSize: 20, letterSpacing: "0.18em", color: faint, transform: `translateY(${(1 - cp) * 110}%)` }}>
+              {String(active + 1).padStart(2, "0")} · {String(score.scenes.length).padStart(2, "0")}
+            </span>
+          );
+        })()}
       </div>
 
       <div style={{ position: "absolute", bottom: 150, left: 84, right: 84, height: 2, background: line, transform: `scaleX(${inBar})`, transformOrigin: "left center" }}>

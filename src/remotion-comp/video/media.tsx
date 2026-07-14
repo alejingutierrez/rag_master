@@ -1,8 +1,9 @@
 /**
  * Capa de imagen: archivo B/N fundido con la línea gráfica. El TRATAMIENTO es
- * del estilo (stylepack): duotono de época, contraste, viñeta, grano animado,
- * energía del Ken Burns, y el modo "copia impresa" (borde blanco + rotación)
- * para los estilos de prensa. Dos primitivas:
+ * del estilo (stylepack): duotono de época, plata cálida (sepia), contraste,
+ * viñeta, grano animado, energía del Ken Burns, foco que llega (focusIn),
+ * vaivén de proyector (weave) y el modo "copia impresa" (borde blanco +
+ * rotación) para los estilos de prensa. Dos primitivas:
  *   - ArchivalImage: a sangre completa (o impresa), con paneo lento y scrim.
  *   - ImageText: la imagen SE VE DENTRO de las letras, y panea despacio dentro.
  */
@@ -33,7 +34,8 @@ const scrimCss = (scrim: Scrim): string => {
 };
 
 const DEFAULT_TREAT: ImageTreat = {
-  duotone: 0.14, contrast: 1.08, brightness: 0.97, vignette: 0.26, grain: 0.05, frame: false,
+  duotone: 0.14, contrast: 1.08, brightness: 0.97, vignette: 0.26, grain: 0.05,
+  frame: false, sepia: 0.06, focusIn: false, weave: 0,
 };
 
 export const ArchivalImage: React.FC<{
@@ -44,7 +46,7 @@ export const ArchivalImage: React.FC<{
   treat?: ImageTreat;
   /** true = copia impresa (borde blanco, rotación leve) — solo escenas "imagen" */
   printFrame?: boolean;
-  /** índice de escena: alterna la rotación de la copia impresa */
+  /** índice de escena: varía Ken Burns, esquinas y rotación (determinista) */
   seed?: number;
 }> = ({ src, era, dur, scrim = "bottom", pan = "in", from = 0, energy = 1, treat = DEFAULT_TREAT, printFrame = false, seed = 0 }) => {
   const frame = useCurrentFrame();
@@ -56,29 +58,46 @@ export const ArchivalImage: React.FC<{
   // Asentamiento de entrada: la foto llega un pelo más grande y asienta (sin
   // fade — los cortes en seco no deben parpadear).
   const settle = interpolate(frame, [from, from + 12], [1.045, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) });
-  const scale = ((pan === "in" ? 1.06 : 1.12) + t * 0.14 * energy) * settle;
-  const drift = 46 * energy;
+  // Ken Burns con variación por semilla: dos fotos seguidas nunca respiran igual.
+  const zoomAmp = (0.11 + ((seed * 37) % 7) * 0.011) * energy;
+  const scale = ((pan === "in" ? 1.06 : 1.12) + t * zoomAmp) * settle;
+  const drift = (40 + ((seed * 13) % 3) * 8) * energy;
   const tx = pan === "left" ? -t * drift : pan === "right" ? t * drift : 0;
-  const ty = pan === "up" ? -t * drift : pan === "down" ? t * drift : 0;
+  let ty = pan === "up" ? -t * drift : pan === "down" ? t * drift : 0;
+  // Vaivén de proyector (gate weave): micro-bob + rotación sub-pixel, determinista.
+  const weave = treat.weave ?? 0;
+  const wobY = weave ? Math.sin((frame + seed * 29) * 0.37) * 1.7 * weave : 0;
+  const wobR = weave ? Math.sin((frame + seed * 17) * 0.21) * 0.16 * weave : 0;
+  ty += wobY;
   const css = scrimCss(scrim);
-  const filter = `grayscale(1) contrast(${treat.contrast}) brightness(${treat.brightness})`;
+  // Foco que llega: desenfocada un pelo al entrar, nítida al asentar.
+  const blurIn = treat.focusIn
+    ? interpolate(frame, [from, from + 16], [7, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) })
+    : 0;
+  const filter = `grayscale(1) sepia(${treat.sepia ?? 0}) contrast(${treat.contrast}) brightness(${treat.brightness})${blurIn > 0.2 ? ` blur(${blurIn}px)` : ""}`;
+  // El scrim deriva un pelo CONTRA el paneo (parallax: la luz vive en otra capa).
+  const scrimShift = `translate(${-tx * 0.12}px, ${-ty * 0.12}px) scale(1.06)`;
 
   const picture = (
-    <AbsoluteFill style={{ transform: `scale(${scale}) translate(${tx}px, ${ty}px)`, willChange: "transform" }}>
+    <AbsoluteFill style={{ transform: `scale(${scale}) translate(${tx}px, ${ty}px) rotate(${wobR}deg)`, willChange: "transform" }}>
       <Img src={srcUrl(src)} onError={() => setFailed(true)} style={{ width: "100%", height: "100%", objectFit: "cover", filter }} />
       <AbsoluteFill style={{ backgroundColor: era, mixBlendMode: "overlay", opacity: treat.duotone }} />
     </AbsoluteFill>
   );
 
+  // La copia impresa asienta también su rotación (llega girada un pelo de más).
+  const printRotBase = seed % 2 === 0 ? 1.2 : -1.2;
+  const printRot = printRotBase + (settle - 1) * (printRotBase > 0 ? 26 : -26);
+
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a0a" }}>
       {!failed && (printFrame ? (
-        // Copia impresa: papel con borde, rotación alterna y sombra honda sobre negro.
+        // Copia impresa: papel con borde, rotación que asienta y sombra honda sobre negro.
         <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
           <div
             style={{
               position: "absolute", top: "11%", bottom: "27%", left: "7%", right: "7%",
-              background: "#f4f1ea", padding: 18, transform: `rotate(${seed % 2 === 0 ? 1.2 : -1.2}deg) scale(${settle})`,
+              background: "#f4f1ea", padding: 18, transform: `rotate(${printRot}deg) scale(${settle})`,
               boxShadow: "0 42px 110px rgba(0,0,0,0.55)",
             }}
           >
@@ -101,15 +120,15 @@ export const ArchivalImage: React.FC<{
       {!failed && treat.grain > 0 && (
         <AbsoluteFill style={{ backgroundImage: GRAIN, backgroundPosition: grainShift(frame), opacity: treat.grain, mixBlendMode: "overlay" }} />
       )}
-      {css !== "none" && !printFrame && <AbsoluteFill style={{ background: css }} />}
+      {css !== "none" && !printFrame && <AbsoluteFill style={{ background: css, transform: scrimShift }} />}
     </AbsoluteFill>
   );
 };
 
 /**
  * La imagen se ve dentro del texto (background-clip: text) y panea despacio
- * dentro. El filtro B/N se aplica al span (afecta lo que se ve por las letras),
- * así el archivo a color no rompe la línea gráfica.
+ * dentro (en diagonal, para que viva). El filtro B/N se aplica al span (afecta
+ * lo que se ve por las letras), así el archivo a color no rompe la línea gráfica.
  */
 export const ImageText: React.FC<{ src: string; children: React.ReactNode; style?: React.CSSProperties }> = ({ src, children, style }) => {
   const frame = useCurrentFrame();
@@ -119,7 +138,7 @@ export const ImageText: React.FC<{ src: string; children: React.ReactNode; style
       style={{
         backgroundImage: `url(${srcUrl(src)})`,
         backgroundSize: "cover",
-        backgroundPosition: `center ${46 - p * 10}%`,
+        backgroundPosition: `${50 + p * 4}% ${46 - p * 10}%`,
         WebkitBackgroundClip: "text",
         backgroundClip: "text",
         color: "transparent",

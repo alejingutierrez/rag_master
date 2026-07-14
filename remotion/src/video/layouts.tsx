@@ -149,7 +149,8 @@ const Cifra: React.FC<LayoutProps<CifraScene>> = ({ scene, palette }) => {
       {scene.pre && (<><TrackIn delay={T(2)} track={0.22} style={{ ...monoLabel(scene.pre, soft, 34) }}>{scene.pre}</TrackIn><div style={{ height: 30 }} /></>)}
       <Fade delay={T(4)} dur={14} y={0}><CifraNumber scene={scene} color={numberColor} delay={T(8)} /></Fade>
       <div style={{ height: 18 }} />
-      <DrawBar delay={land + 2} color={accent} width={220} height={8} dur={20} />
+      {/* la barra ES el conteo: se llena con el número y asienta (overshoot) al aterrizar */}
+      <DrawBar delay={T(8)} color={accent} width={220} height={8} dur={40} />
       {scene.sub && (<BlurRise delay={land + 8} dur={22}><div style={{ height: 16 }} /><span style={{ fontFamily: FONT.display, fontStyle: "italic", fontSize: 60, color: soft }}>{scene.sub}</span></BlurRise>)}
     </Container>
   );
@@ -324,7 +325,14 @@ const Imagen: React.FC<LayoutProps<ImagenScene>> = ({ scene, palette }) => {
       <div style={{ width: "100%" }}>
         {scene.kicker && (<TrackIn delay={T(4)} style={monoLabel(scene.kicker, soft)}>{scene.kicker}</TrackIn>)}
         {scene.titulo && (<><div style={{ height: 18 }} /><div style={{ fontFamily: FONT.display, fontSize: size, lineHeight: 0.98, letterSpacing: "-0.02em", color: ink, whiteSpace: "nowrap" }}>{scene.titulo.map((line, i) => (<MaskRise key={i} delay={T(10 + i * 8)} tilt={1.2}>{spans(line, ink, accent)}</MaskRise>))}</div></>)}
-        {scene.pie && (<Fade delay={T(20)} dur={20}><div style={{ height: 24 }} /><span style={{ ...monoLabel(scene.pie, soft, 24), letterSpacing: "0.12em" }}>{scene.pie}</span></Fade>)}
+        {scene.pie && (
+          <Fade delay={T(20)} dur={20}>
+            <div style={{ height: 24 }} />
+            <DrawBar delay={T(22)} color="rgba(255,255,255,0.42)" width={96} height={2} dur={16} />
+            <div style={{ height: 12 }} />
+            <span style={{ ...monoLabel(scene.pie, soft, 24), letterSpacing: "0.12em" }}>{scene.pie}</span>
+          </Fade>
+        )}
       </div>
     </AbsoluteFill>
   );
