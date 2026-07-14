@@ -25,7 +25,13 @@ MARCADORES dentro de los textos:
 - _palabra_  → itálica (Instrument Serif). Se pueden combinar: *_palabra_*.
 - "scale":"xl" para una sola palabra o cifra corta (un año, "Bogotá"). "l" para frases; "m"/"s" si son largas.
 - "bg": opcional en cualquier escena — "dark" (fondo negro) o "color" (campo del color de época, texto blanco) para un golpe visual fuerte. Úsalo con intención: 1–3 escenas por video, en los momentos de mayor peso (un quiebre, una cifra brutal, el clímax).
-- "weight": número opcional 0.5–1.6 para que una escena dure más (énfasis) o menos.`;
+- "weight": número opcional 0.5–1.6 para que una escena dure más (énfasis) o menos.
+
+IMAGEN DE ARCHIVO (opcional en cualquier escena; solo si el estilo la pide):
+- "image": "<consulta de archivo, 2-4 palabras con nombres propios>" → foto B/N a sangre completa DETRÁS del texto. Es una CONSULTA de búsqueda, no una ruta.
+- "imageFill": ídem, pero la foto se ve DENTRO de las letras (image-in-type; pensado para "nombre").
+- "pan": "in" | "left" | "right" | "up" | "down" — paneo lento de la foto (Ken Burns). VARÍALO entre escenas: dos fotos seguidas no panean igual.
+- "scrim": "bottom" | "top" | "full" | "none" — veladura para que el texto sea legible: "bottom" si el texto va abajo, "full" si cubre la foto entera. Si no lo pones, hay un default sensato.`;
 
 export const WRITING_RULES = `REGLAS DE ESCRITURA (esto es tipografía en movimiento, NO prosa):
 - Una idea por escena. Pocas palabras. Frases cortas y contundentes.
@@ -104,8 +110,6 @@ ${COHERENCE_RULES}
 ${brief}
 
 Nota: la personalidad/estilo define el CARÁCTER visual, pero JAMÁS a costa de la claridad. Primero que se entienda; después, el estilo.
-
-Para escenas con imagen, pon en "image"/"imageFill" una CONSULTA de búsqueda de archivo (2-4 palabras con nombres propios), no una ruta.
 
 ÉPOCAS (elige un "periodCode" para el tema):
 ${PERIOD_MENU}
