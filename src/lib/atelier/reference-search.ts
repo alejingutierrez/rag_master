@@ -251,15 +251,71 @@ Reglas:
 
 Devuelve JSON puro: {"queries":["...", "..."]}`;
 
-/** Recorta una query a N términos: las APIs de archivo hacen AND estricto. */
+/** Palabras función que no aportan al AND estricto de los motores de archivo.
+ *  Solo se descartan cuando la query EXCEDE el tope; nunca vacían la query. */
+const ARCHIVE_STOPWORDS = new Set([
+  "la", "el", "los", "las", "un", "una", "unos", "unas", "lo",
+  "de", "del", "y", "e", "o", "u", "en", "a", "al", "con", "su", "sus",
+  "the", "of", "and", "or", "to", "in", "on", "at", "for", "an",
+]);
+
+function foldAccents(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+/**
+ * Recorta una query a N términos para los motores de ARCHIVO (AND estricto).
+ * Dos mejoras sobre el corte ingenuo por los primeros N tokens:
+ *  1. Quita paréntesis (años, aclaraciones) que gastan cupo sin ayudar a buscar.
+ *  2. Si tras eso sigue excediendo el tope, prioriza palabras de CONTENIDO
+ *     (nombres propios, sustantivos) sobre artículos y preposiciones.
+ * Ejemplo real que motivó el cambio: "La toma y retoma del Palacio de Justicia
+ * (1985)" cortado a 4 tokens daba "La toma y retoma" (basura, cero resultados);
+ * ahora da "toma retoma Palacio Justicia". Las queries ya cortas van intactas.
+ */
 export function capForArchives(q: string, maxTokens = 4): string {
-  return q.trim().split(/\s+/).slice(0, maxTokens).join(" ");
+  const stripped = q.replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+  const tokens = stripped.split(/\s+/).filter(Boolean);
+  if (tokens.length <= maxTokens) return stripped;
+  const content = tokens.filter((t) => !ARCHIVE_STOPWORDS.has(foldAccents(t)));
+  const chosen = (content.length >= 1 ? content : tokens).slice(0, maxTokens);
+  return chosen.join(" ");
+}
+
+/** Normaliza un ancla (lugar/persona) a una query de archivo limpia: quita el
+ *  rol tras ":", las aclaraciones entre paréntesis y las comas de ciudad. */
+function cleanAnchor(s: string): string {
+  return (s ?? "")
+    .split(":")[0]
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/,/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** Semillas deterministas antes de llamar al LLM: garantizan nombres propios y capas visuales. */
 export function buildReferenceQuerySeeds(ctx: ReferenceContext): string[] {
   const seeds: string[] = [];
   const title = (ctx.titulo ?? "").trim();
+  // Eventos (hecho): el lugar icónico suele SER el sujeto visual (el Palacio de
+  // Justicia, la Plaza de Bolívar). Si no se busca de forma explícita, el desfile
+  // de protagonistas copa las 9 queries y el generador nunca ve el edificio —
+  // termina inventando un juzgado genérico. Se intercala lugar/persona con el
+  // LUGAR por delante, y se limpian comas/paréntesis para el AND de archivo.
+  if (ctx.visualIntent === "hecho-documental") {
+    if (title) seeds.push(title);
+    const places = (ctx.lugares ?? []).map(cleanAnchor).filter((s) => s.length > 2);
+    const people = (ctx.entidades ?? []).map(cleanAnchor).filter((s) => s.length > 2);
+    const topPlaces = places.slice(0, 4);
+    const topPeople = people.slice(0, 3);
+    for (let i = 0; i < Math.max(topPlaces.length, topPeople.length); i++) {
+      if (topPlaces[i]) seeds.push(topPlaces[i]);
+      if (topPeople[i]) seeds.push(topPeople[i]);
+    }
+    for (const p of places.slice(4)) seeds.push(p);
+    for (const p of people.slice(3)) seeds.push(p);
+    return uniqueStrings(seeds, 10);
+  }
   if (ctx.visualIntent === "epoca-material") {
     const lugares = ctx.lugares ?? [];
     const lugarKeys = new Set(lugares.map((l) => l.toLowerCase()));
@@ -835,16 +891,26 @@ const PROVIDERS: Array<{
 export const REFERENCE_PROVIDER_NAMES = PROVIDERS.map((p) => p.name);
 
 function dedupeCandidates(all: ReferenceCandidate[]): ReferenceCandidate[] {
-  const seen = new Set<string>();
+  const seenUrl = new Set<string>();
+  const seenTitle = new Set<string>();
   const out: ReferenceCandidate[] = [];
   for (const c of all) {
     if (!c.url || c.width < MIN_WIDTH) continue;
     const cleanUrl = c.url.split("?")[0].toLowerCase();
-    const key = /\/iiif\/|iiif\.|\/full\/[^/]+\/0\/default\.(?:jpg|jpeg|webp|png)$/i.test(cleanUrl)
+    const urlKey = /\/iiif\/|iiif\.|\/full\/[^/]+\/0\/default\.(?:jpg|jpeg|webp|png)$/i.test(cleanUrl)
       ? cleanUrl
       : (cleanUrl.split("/").pop() ?? cleanUrl);
-    if (seen.has(key)) continue;
-    seen.add(key);
+    if (seenUrl.has(urlKey)) continue;
+    // Misma FOTO específica republicada en varias URLs/tamaños (típico de
+    // Flickr vía Openverse): colapsa por título normalizado para no gastar los
+    // 7 cupos de referencia en la misma imagen. Verificado con el Palacio de
+    // Justicia: 5 copias de "28 años sin los desaparecidos" copaban el set.
+    // Los títulos vacíos o muy cortos NO se colapsan (perderíamos fotos válidas).
+    const titleKey = foldAccents(c.title).replace(/[^a-z0-9]+/g, " ").trim();
+    const dedupeTitle = titleKey.length >= 12;
+    if (dedupeTitle && seenTitle.has(titleKey)) continue;
+    seenUrl.add(urlKey);
+    if (dedupeTitle) seenTitle.add(titleKey);
     out.push(c);
   }
   return out;
