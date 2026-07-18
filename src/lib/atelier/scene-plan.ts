@@ -57,8 +57,13 @@ export interface DirectionWithSceneFields {
 
 const GROUP_SCENE_RE =
   /\b(parlament|president|presidente|congreso|senado|ministro|gabinete|reunion|reunión|meeting|assembly|recepci[oó]n|junto al|junto a|comitiva|delegaci[oó]n)\b/i;
-const PLACE_RE =
-  /\b(bogot[aá]|plaza|parque|avenida|calle|hotel|iglesia|catedral|palacio|capitolio|puente|r[ií]o|valle|ciudad|town|street|square|market|building)\b/i;
+// Arquitectura / lugar real CONCRETO: señal fuerte de que la referencia
+// gobierna una escena de lugar. Se excluye la geografía a secas (una ciudad,
+// un río, un valle): "1982 Reagan-Betancur Bogotá" es una foto de personas que
+// solo menciona la ciudad — no es el ancla de lugar de un evento sobre un
+// edificio icónico. Sin este filtro, esa foto ganaba como referencia principal.
+const ARCHITECTURE_RE =
+  /\b(plaza|parque|avenida|alameda|calle|carrera|hotel|iglesia|catedral|bas[ií]lica|capilla|palacio|capitolio|congreso|senado|puente|castillo|fuerte|fortaleza|muralla|convento|claustro|monasterio|teatro|estaci[oó]n|edificio|torre|c[uú]pula|columnata|fachada|square|street|avenue|church|cathedral|fort|bridge|tower|building|colonnade|facade)\b/i;
 const DOCUMENT_RE =
   /\b(constituci[oó]n|carta|mapa|documento|folio|manuscrito|pasqu[ií]n|prensa|pergamino|book|libro|map|document|letter|newspaper|gazette)\b/i;
 const ARTIFACT_RE =
@@ -127,7 +132,7 @@ function classifyReference(title: string, ctx: ReferenceContext): Pick<Reference
     };
   }
   const place = matchingPlace(title, ctx);
-  if (place || PLACE_RE.test(title)) {
+  if (place || ARCHITECTURE_RE.test(title)) {
     return {
       role: "place",
       reason: place ? `coincide con el lugar "${place}"` : "muestra arquitectura o lugar real",

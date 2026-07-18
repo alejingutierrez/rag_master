@@ -42,6 +42,7 @@ import {
   SCORE_BATCH_SIZE,
   buildCandidateScoreBatches,
   buildReferenceQuerySeeds,
+  capForArchives,
   referenceContextFromStructured,
   type ReferenceCandidate,
 } from "../src/lib/atelier/reference-search";
@@ -467,6 +468,68 @@ test("el contexto de una época rescata personas y lugares del metadata del Atel
   assert.equal(seeds[0], "Alberto Lleras Camargo");
   assert.ok(seeds.slice(0, 9).includes("Benidorm"));
   assert.ok(seeds.includes("El Frente Nacional"));
+});
+
+test("capForArchives limpia el título editorial en vez de cortar los primeros tokens", () => {
+  // El caso del Palacio de Justicia: el título perdía su sujeto al cortar 4 tokens
+  // ("La toma y retoma") → 0 resultados. Ahora prioriza palabras de contenido.
+  assert.equal(
+    capForArchives("La toma y retoma del Palacio de Justicia (1985)"),
+    "toma retoma Palacio Justicia"
+  );
+  // Quita paréntesis aunque el resto quepa en el tope.
+  assert.equal(capForArchives("María Cano (1887-1967)"), "María Cano");
+  // Las queries ya cortas y sin ruido se preservan intactas (sin regresión).
+  assert.equal(capForArchives("José Prudencio Padilla"), "José Prudencio Padilla");
+  assert.equal(capForArchives("batalla naval Maracaibo"), "batalla naval Maracaibo");
+});
+
+test("las semillas de un hecho anclado en lugar buscan el edificio, no solo protagonistas", () => {
+  const structured = {
+    typology: "hecho",
+    slug: "toma-palacio-1985",
+    titulo: "La toma y retoma del Palacio de Justicia (1985)",
+    resumen: "Asalto del M-19 y retoma militar del Palacio de Justicia.",
+    periodoCode: "CNA",
+    fecha: "1985",
+    lugares: ["Palacio de Justicia, Bogotá", "Plaza de Bolívar, Bogotá", "Cantón Norte, Bogotá"],
+    protagonistas: [
+      "Belisario Betancur (presidente de Colombia)",
+      "Alfonso Reyes Echandía (presidente de la Corte, víctima)",
+      "Luis Otero Cifuentes (M-19)",
+    ],
+  } as unknown as StructuredData;
+  const ctx = referenceContextFromStructured(structured);
+  const seeds = buildReferenceQuerySeeds(ctx);
+  const top = seeds.slice(0, 6);
+  // El lugar icónico entra en el top, limpio de comas (antes: ninguna query de lugar).
+  assert.ok(top.includes("Palacio de Justicia Bogotá"), `top sin el edificio: ${top.join(" | ")}`);
+  assert.ok(top.includes("Plaza de Bolívar Bogotá"));
+  // Y los protagonistas siguen presentes (no se pierden).
+  assert.ok(seeds.some((s) => s.includes("Belisario Betancur")));
+});
+
+test("una foto de personas con solo el nombre de la ciudad no gana como lugar", () => {
+  const ctx = {
+    titulo: "La toma del Palacio de Justicia (1985)",
+    resumen: "Asalto y retoma.",
+    typology: "hecho",
+    visualIntent: "hecho-documental" as const,
+    lugares: ["Palacio de Justicia, Bogotá", "Plaza de Bolívar, Bogotá"],
+    entidades: ["Belisario Betancur"],
+    visualAnchors: ["Belisario Betancur"],
+  };
+  const briefs = buildReferenceBriefs(
+    [
+      { meta: { title: "1982 Reagan-Betancour Bogota", provider: "wikimedia", url: "https://x/1.jpg", score: 8 } },
+      { meta: { title: "Palacio de Justicia de Colombia, Bogotá", provider: "wikimedia", url: "https://x/2.jpg", score: 8 } },
+    ],
+    ctx
+  );
+  // La foto de dos presidentes (solo menciona "Bogota") ya NO es "place".
+  assert.notEqual(briefs[0].role, "place");
+  // El edificio real (contiene "Palacio") sí gobierna como "place".
+  assert.equal(briefs[1].role, "place");
 });
 
 test("el contexto de una persona marca búsqueda de retrato público", () => {
