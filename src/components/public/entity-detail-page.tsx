@@ -26,6 +26,25 @@ export async function entityDetailMetadata(slug: string, type: EntityType) {
   const node = await getEntityNode(slug, type);
   const meta = ENTITY_TYPE_META[type];
   if (!node) return { title: meta.singular };
+
+  // Si hay ficha curada publicada, el <head> debe salir de ELLA: el SEO que
+  // redactó el Taller (metaTitle/description/keywords propios) y su portada como
+  // og:image. Antes se construía siempre desde el nodo del registro, así que las
+  // fichas publicadas perdían su SEO y quedaban con la imagen genérica.
+  if (node.hasFicha) {
+    const detail = await getTypologyDetail("entidad", slug);
+    if (detail) {
+      return buildMetadata({
+        seo: detail.seo,
+        path: entityPath(type, slug),
+        imageUrl: detail.imageUrl,
+        publishedTime: detail.publishedAt,
+        modifiedTime: detail.updatedAt,
+        type: "article",
+      });
+    }
+  }
+
   return buildMetadata({
     seo: {
       metaTitle: node.name,
