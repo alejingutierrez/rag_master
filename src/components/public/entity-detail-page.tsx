@@ -80,7 +80,9 @@ export async function EntityDetailPage({ slug, type }: { slug: string; type: Ent
             crumb={crumb}
             linker={linker}
             selfKey={selfKey}
-            extra={<EntityConnections pieces={node.pieces} related={node.related} />}
+            extra={
+              <EntityConnections pieces={node.pieces} related={node.related} selfHref={node.href} />
+            }
           />
         </>
       );

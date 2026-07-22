@@ -6,6 +6,7 @@ import { SearchInput } from "@/components/editorial";
 import { getPeriodColor } from "@/lib/design-tokens";
 import { PeriodSelector } from "@/components/public/period-selector";
 import { useUrlState } from "@/lib/use-url-state";
+import { imageAt } from "@/lib/image-url";
 import type { TypologyCard } from "@/lib/public-data";
 
 function norm(s: string): string {
@@ -103,8 +104,11 @@ export function TypologyBrowser({
                 <Link href={c.href}>
                   {c.imageUrl && (
                     <div className="tix-thumb">
+                      {/* Miniatura de rejilla: se pide al ancho real, no la portada
+                          entera (el índice de hechos son 200+ tarjetas). */}
+                      {/* Decorativa: el título va debajo, dentro del mismo enlace. */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={c.imageUrl} alt={c.titulo} loading="lazy" />
+                      <img src={imageAt(c.imageUrl, 480)!} alt="" aria-hidden loading="lazy" />
                     </div>
                   )}
                   <div className="tix-kmeta">

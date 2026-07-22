@@ -4,15 +4,26 @@ import { SourceApparatus } from "@/components/public/source-apparatus";
 import { renderProse } from "@/components/public/prose";
 import { getPeriodColor, periodInfo } from "@/lib/design-tokens";
 import { typologyLabel, type StructuredData, type Hito } from "@/lib/typology-schemas";
-import type { TypologyDetail } from "@/lib/public-data";
+import type { ResolvedEntityChip, TypologyDetail } from "@/lib/public-data";
 import type { EntityLinker } from "@/lib/entity-linker";
 import "@/components/public/article.css";
+import { imageAt } from "@/lib/image-url";
+
+/** Chips de entidad ya resueltos por la página, por rol dentro de la ficha. */
+export interface FichaChips {
+  protagonistas?: ResolvedEntityChip[];
+  lugares?: ResolvedEntityChip[];
+  actores?: ResolvedEntityChip[];
+  relaciones?: ResolvedEntityChip[];
+}
 
 const INDEX_HREF: Record<StructuredData["typology"], { href: string; label: string }> = {
   hecho: { href: "/hechos", label: "Hechos" },
   epoca: { href: "/epocas", label: "Épocas" },
   entidad: { href: "/entidades", label: "Entidades" },
-  pregunta: { href: "/ensayos", label: "Ensayos" },
+  // El índice de /ensayos se llama «Lecturas» en toda la navegación: la miga y el
+  // pie de la ficha tienen que llamarlo igual.
+  pregunta: { href: "/ensayos", label: "Lecturas" },
 };
 
 function Tags({ items }: { items: string[] }) {
@@ -24,6 +35,37 @@ function Tags({ items }: { items: string[] }) {
           {t}
         </span>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Entidades nombradas por la ficha. Las que tienen artículo propio se vuelven un
+ * enlace con su retrato; las demás quedan como texto. Así el lector distingue de
+ * un vistazo por dónde puede seguir leyendo, y ningún enlace muere en una página
+ * vacía. Sustituye a los <Tags> mudos que había antes.
+ */
+function EntityChips({ chips, fallback }: { chips?: ResolvedEntityChip[]; fallback: string[] }) {
+  if (!chips?.length) return <Tags items={fallback} />;
+  return (
+    <div className="ficha-chips">
+      {chips.map((c) =>
+        c.href ? (
+          <Link key={c.name} href={c.href} className="ficha-chip is-linked">
+            {c.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imageAt(c.imageUrl, 160)!} alt="" aria-hidden loading="lazy" />
+            ) : (
+              <span className="ficha-chip-dot" aria-hidden />
+            )}
+            <span>{c.name}</span>
+          </Link>
+        ) : (
+          <span key={c.name} className="ficha-chip">
+            {c.name}
+          </span>
+        ),
+      )}
     </div>
   );
 }
@@ -54,7 +96,7 @@ function Hitos({ hitos }: { hitos: Hito[] }) {
   );
 }
 
-function Ficha({ s }: { s: StructuredData }) {
+function Ficha({ s, chips }: { s: StructuredData; chips?: FichaChips }) {
   switch (s.typology) {
     case "hecho":
       return (
@@ -62,12 +104,12 @@ function Ficha({ s }: { s: StructuredData }) {
           {s.fecha && <Row k="Fecha">{s.fecha}</Row>}
           {s.lugares.length > 0 && (
             <Row k="Lugares">
-              <Tags items={s.lugares} />
+              <EntityChips chips={chips?.lugares} fallback={s.lugares} />
             </Row>
           )}
           {s.protagonistas.length > 0 && (
             <Row k="Protagonistas">
-              <Tags items={s.protagonistas} />
+              <EntityChips chips={chips?.protagonistas} fallback={s.protagonistas} />
             </Row>
           )}
           {s.causas.length > 0 && (
@@ -103,7 +145,7 @@ function Ficha({ s }: { s: StructuredData }) {
           )}
           {s.actores.length > 0 && (
             <Row k="Actores">
-              <Tags items={s.actores} />
+              <EntityChips chips={chips?.actores} fallback={s.actores} />
             </Row>
           )}
           {s.transformaciones.length > 0 && (
@@ -135,7 +177,7 @@ function Ficha({ s }: { s: StructuredData }) {
           )}
           {s.relaciones.length > 0 && (
             <Row k="Relaciones">
-              <Tags items={s.relaciones} />
+              <EntityChips chips={chips?.relaciones} fallback={s.relaciones} />
             </Row>
           )}
           {s.semblanza && <Row k="Semblanza">{s.semblanza}</Row>}
@@ -162,6 +204,7 @@ export function TypologyArticle({
   crumb,
   linker,
   selfKey,
+  chips,
 }: {
   detail: TypologyDetail;
   /** Contenido agregado (hub de época, conexiones de entidad) tras el cuerpo. */
@@ -172,6 +215,8 @@ export function TypologyArticle({
   linker?: EntityLinker | null;
   /** `${type}:${slug}` de la entidad de esta página — no se auto-enlaza a sí misma. */
   selfKey?: string;
+  /** Entidades de la ficha ya resueltas a enlace+retrato (ver resolveEntityChips). */
+  chips?: FichaChips;
 }) {
   const s = detail.structured;
   const idx = crumb ?? INDEX_HREF[s.typology];
@@ -215,7 +260,7 @@ export function TypologyArticle({
             {head}
             <figure className="art-figure portrait art-figure-side">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={detail.imageUrl!} alt={s.titulo} loading="lazy" />
+              <img src={imageAt(detail.imageUrl, 640)!} alt={s.titulo} loading="lazy" />
             </figure>
           </div>
         ) : (
@@ -224,7 +269,7 @@ export function TypologyArticle({
             {detail.imageUrl && (
               <figure className="art-figure landscape">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={detail.imageUrl} alt={s.titulo} loading="lazy" />
+                <img src={imageAt(detail.imageUrl, 1400)!} alt={s.titulo} loading="lazy" />
               </figure>
             )}
           </>
@@ -232,7 +277,7 @@ export function TypologyArticle({
 
         <div className="art-body">
           <div>
-            <Ficha s={s} />
+            <Ficha s={s} chips={chips} />
             <div className="prose">{renderProse(detail.answer, { linker, selfKey })}</div>
           </div>
 

@@ -2,6 +2,20 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "prod",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/alegut/MyApps/rag_master/.claude/worktrees/typographic-video-polish-1382b9 && exec npx next start --port \"$PORT\""],
+      "port": 3500,
+      "autoPort": true
+    },
+    {
+      "name": "audit",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/alegut/MyApps/rag_master/.claude/worktrees/typographic-video-polish-1382b9 && exec npx next dev --port \"$PORT\""],
+      "port": 3400,
+      "autoPort": true
+    },
+    {
       "name": "dev",
       "runtimeExecutable": "/bin/sh",
       "runtimeArgs": ["-c", "export PATH=/opt/homebrew/bin:$PATH && cd /Users/alegut/MyApps/rag_master/.claude/worktrees/vibrant-proskuriakova-321034 && exec npx next dev --port \"$PORT\""],

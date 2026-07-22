@@ -22,7 +22,7 @@
 .art-apx .al { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; color: var(--fg-subtle); display: block; margin-bottom: 16px; }
 .art-src { display: grid; grid-template-columns: 18px 1fr; gap: 8px; margin-bottom: 14px; scroll-margin-top: 80px; }
 .art-src .n { font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: 500; }
-.art-src .t { font-family: var(--font-sans); font-size: 12px; line-height: 1.45; color: var(--fg-muted); }
+.art-src .t { font-family: var(--font-sans); font-size: 12px; line-height: 1.45; color: var(--fg-muted); overflow-wrap: anywhere; }
 .art-src .t .pg { font-family: var(--font-mono); font-size: 10px; color: var(--fg-faint); }
 
 /* Fuente desplegable: el numeral abre el fragmento exacto que la respalda. */
@@ -30,14 +30,16 @@
 .art-src-x > summary { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: baseline; cursor: pointer; list-style: none; }
 .art-src-x > summary::-webkit-details-marker { display: none; }
 .art-src-x .n { font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: 500; }
-.art-src-x .t { font-family: var(--font-sans); font-size: 12px; line-height: 1.45; color: var(--fg-muted); }
+.art-src-x .t { font-family: var(--font-sans); font-size: 12px; line-height: 1.45; color: var(--fg-muted); overflow-wrap: anywhere; }
 .art-src-x .t .pg { font-family: var(--font-mono); font-size: 10px; color: var(--fg-faint); }
 .art-src-x .t .cue { font-family: var(--font-mono); font-size: 9px; color: var(--fg-faint); margin-left: 5px; opacity: 0; transition: opacity .12s ease; }
 .art-src-x > summary:hover .t { color: var(--fg-1); }
 .art-src-x > summary:hover .t .cue { opacity: 1; }
 .art-src-x[open] > summary .t { color: var(--fg-1); }
 .art-src-x[open] > summary .t .cue { opacity: 1; }
-.art-src-q { margin: 8px 0 2px 26px; padding: 9px 12px; border-left: 2px solid var(--line-strong); background: var(--bg-muted); font-family: var(--font-serif); font-size: 12.5px; line-height: 1.5; color: var(--fg-1); }
+/* El fragmento citado viene tal cual de la fuente: puede traer un ISSN, un DOI o
+   una URL sin espacios que se salía de la caja del aparato. */
+.art-src-q { margin: 8px 0 2px 26px; padding: 9px 12px; border-left: 2px solid var(--line-strong); background: var(--bg-muted); font-family: var(--font-serif); font-size: 12.5px; line-height: 1.5; color: var(--fg-1); overflow-wrap: anywhere; }
 
 .art-paso { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 760px; margin-top: 6px; padding-top: 20px; border-top: 1px solid var(--line); }
 .art-paso a { text-decoration: none; }
@@ -82,3 +84,26 @@
 .ficha-hitos .hy { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 500; }
 .ficha-hitos .ht { min-width: 0; font-size: 14px; line-height: 1.45; color: var(--fg-1); overflow-wrap: break-word; }
 .ficha-hitos .hd { color: var(--fg-muted); overflow-wrap: break-word; }
+
+/* ── Entidades de la ficha resueltas a enlace + retrato ──────────────────────
+   Sustituye a los .ficha-tag mudos en Protagonistas/Lugares/Actores/Relaciones.
+   La que tiene artículo propio se ve como enlace con cara; la que no, como texto.
+   La diferencia visual ES la información: dice dónde se puede seguir leyendo. */
+.ficha-chips { display: flex; flex-wrap: wrap; gap: 7px; max-width: 100%; min-width: 0; }
+.ficha-chip {
+  display: inline-flex; align-items: center; gap: 7px; max-width: 100%;
+  font-family: var(--font-sans); font-size: 12.5px; line-height: 1.45;
+  color: var(--fg-muted); border: 1px solid var(--line); border-radius: 2px;
+  padding: 2px 9px 2px 7px; overflow-wrap: break-word;
+}
+.ficha-chip.is-linked {
+  color: var(--fg-1); border-color: var(--line-strong); text-decoration: none;
+  padding-left: 3px; transition: border-color .15s ease, color .15s ease;
+}
+.ficha-chip.is-linked:hover { color: var(--accent); border-color: var(--accent); }
+.ficha-chip img {
+  width: 22px; height: 22px; border-radius: 2px; object-fit: cover;
+  object-position: center top; flex-shrink: 0; filter: grayscale(1) contrast(1.05);
+}
+.ficha-chip.is-linked:hover img { filter: none; }
+.ficha-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--fg-faint); flex-shrink: 0; margin-left: 4px; }

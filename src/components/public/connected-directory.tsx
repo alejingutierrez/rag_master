@@ -52,9 +52,11 @@ export function ConnectedDirectory({ groups }: { groups: DirectoryGroup[] }) {
             className={`hp-directory-group ${selected === group.key ? "is-active" : ""}`}
             role="tabpanel"
           >
+            {/* El directorio solo lista lo que tiene artículo propio publicado:
+                el rótulo dice eso y no «mencionadas», que era el mundo anterior. */}
             <div className="hp-directory-title">
-              <div><strong>{group.count}</strong> {group.label.toLowerCase()} mencionad{group.key === "lugares" ? "os" : "as"}</div>
-              <span>Presentes en piezas publicadas</span>
+              <div><strong>{group.count}</strong> {group.label.toLowerCase()} con historia propia</div>
+              <span>Orden por presencia en el archivo</span>
             </div>
             <ol>
               {group.entries.map((entry) => (

@@ -63,9 +63,13 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
     { href: "/hechos", label: "Hechos", meta: String(stats.hechos) },
     { href: "/epocas", label: "Épocas", meta: String(stats.epocas) },
     { href: "/linea-de-tiempo", label: "Línea de tiempo", meta: `${stats.timelineEvents} eventos` },
-    { href: "/personas", label: "Personas", meta: `${stats.biografias} biografías` },
-    { href: "/lugares", label: "Lugares", meta: `${stats.lugares} mencionados` },
-    { href: "/ideas", label: "Ideas", meta: `${stats.ideas} mencionadas` },
+    // El mapa existía sin ninguna puerta de entrada en la navegación.
+    { href: "/mapa", label: "Mapa", meta: "El archivo sobre el territorio" },
+    // Los directorios solo listan entidades con su propio artículo publicado: el
+    // conteo del menú tiene que ser ese mismo, no el de piezas por tipología.
+    { href: "/personas", label: "Personas", meta: `${stats.personas} con historia propia` },
+    { href: "/lugares", label: "Lugares", meta: `${stats.lugares} con historia propia` },
+    { href: "/ideas", label: "Ideas", meta: `${stats.ideas} con historia propia` },
     { href: "/ensayos", label: "Lecturas", meta: `${stats.preguntas} ${stats.preguntas === 1 ? "pregunta" : "preguntas"}` },
     { href: "/archivo", label: "Archivo", meta: `${stats.piezas} piezas` },
   ];
@@ -92,6 +96,9 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
         </nav>
 
         <div className="ps-utilities">
+          <Link href="/buscar" className="ps-utility-link" aria-current={active("/buscar") ? "page" : undefined}>
+            Buscar
+          </Link>
           <button
             type="button"
             className="ps-utility-button"
@@ -124,10 +131,10 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
             <p>El archivo se puede recorrer por acontecimientos, períodos y conexiones.</p>
           </div>
           <Link href="/lugares" className="ps-explore-link">
-            <span>Lugares</span><small>{stats.lugares} mencionados</small><Arrow />
+            <span>Lugares</span><small>{stats.lugares} con historia propia</small><Arrow />
           </Link>
           <Link href="/ideas" className="ps-explore-link">
-            <span>Ideas</span><small>{stats.ideas} mencionadas</small><Arrow />
+            <span>Ideas</span><small>{stats.ideas} con historia propia</small><Arrow />
           </Link>
           <Link href="/ensayos" className="ps-explore-link">
             <span>Lecturas</span><small>{stats.preguntas} {stats.preguntas === 1 ? "pregunta publicada" : "preguntas publicadas"}</small><Arrow />
@@ -155,6 +162,7 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
           ))}
         </nav>
         <div className="ps-mobile-foot">
+          <Link href="/buscar">Buscar <Arrow /></Link>
           <Link href="/acerca">Acerca <Arrow /></Link>
           <Link href="/acerca#metodo">Método y fuentes <Arrow /></Link>
         </div>

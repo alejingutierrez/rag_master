@@ -67,7 +67,7 @@ export function TimelineDensityStrip({
             fill={`var(--p-${slug})`}
             opacity={0.22}
           >
-            <title>{`${fmtY(h.y)} · ${h.n} preguntas / ${h.b} obras`}</title>
+            <title>{`${fmtY(h.y)} · ${h.n} ${h.n === 1 ? "pregunta" : "preguntas"} / ${h.b} ${h.b === 1 ? "obra" : "obras"}`}</title>
           </rect>
         );
       })}
@@ -88,8 +88,8 @@ export function TimelineDensityStrip({
           >
             <title>{`${fmtYearSpan(ev.anioInicio, ev.anioFin)} · ${ev.titulo} — ${
               ev.curated
-                ? `${ev.evidencia.nPreguntas} menciones (curado)`
-                : `${ev.evidencia.nPreguntas} preguntas / ${ev.evidencia.nLibros} obras`
+                ? `${ev.evidencia.nPreguntas} ${ev.evidencia.nPreguntas === 1 ? "mención" : "menciones"} (curado)`
+                : `${ev.evidencia.nPreguntas} ${ev.evidencia.nPreguntas === 1 ? "pregunta" : "preguntas"} / ${ev.evidencia.nLibros} ${ev.evidencia.nLibros === 1 ? "obra" : "obras"}`
             }`}</title>
             {/* Tramo del proceso (si es rango) */}
             {ev.anioFin > ev.anioInicio && (
