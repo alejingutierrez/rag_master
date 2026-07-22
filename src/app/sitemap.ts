@@ -17,8 +17,8 @@ const STATIC_ROUTES: { path: string; changeFrequency: ChangeFreq; priority: numb
   { path: "/personas", changeFrequency: "weekly", priority: 0.7 },
   { path: "/lugares", changeFrequency: "weekly", priority: 0.7 },
   { path: "/ideas", changeFrequency: "weekly", priority: 0.7 },
+  // `/preguntas` no se lista: redirige (308) a `/ensayos`, que sí está aquí.
   { path: "/ensayos", changeFrequency: "weekly", priority: 0.7 },
-  { path: "/preguntas", changeFrequency: "weekly", priority: 0.7 },
   { path: "/mapa", changeFrequency: "weekly", priority: 0.6 },
   { path: "/linea-de-tiempo", changeFrequency: "monthly", priority: 0.5 },
   { path: "/acerca", changeFrequency: "yearly", priority: 0.4 },

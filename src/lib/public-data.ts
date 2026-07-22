@@ -905,10 +905,15 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
 // ── Caché en memoria: piezas ancladas + índice de entidades publicadas ────────
 // loadAnchoredPieces() escanea TODOS los deliverables publicados y resuelve el
 // ancla de cada uno: caro, y se llamaba 4+ veces al navegar entidades/timeline.
-// Es determinista hasta publicar/despublicar → cache de proceso con TTL corto.
+// Es determinista hasta publicar/despublicar → cache de proceso.
 // Junto con el registro (que ya no escanea el corpus en cada request), elimina
 // el trabajo pesado que hacía lento el sitio.
-const ANCHORED_TTL_MS = 2 * 60 * 1000;
+//
+// TTL de 10 minutos: publicar es un acto editorial manual y poco frecuente, así
+// que con 2 minutos se pagaba el escaneo completo del corpus muchas veces al día
+// sin que hubiera cambiado nada. El precio es que una pieza recién publicada
+// puede tardar hasta 10 minutos en aparecer.
+const ANCHORED_TTL_MS = 10 * 60 * 1000;
 let anchoredCache: { pieces: AnchoredPiece[]; at: number } | null = null;
 let anchoredLoad: Promise<AnchoredPiece[]> | null = null;
 
@@ -1470,7 +1475,14 @@ export const ENTITY_DISPLAY_CAP = 300;
  * piezas PUBLICADAS (gate). Ordenadas por prominencia (menciones del corpus),
  * capadas a `ENTITY_DISPLAY_CAP`. El filtro de época navega dentro de ellas.
  */
+// El universo por tipo se pide muchas veces por request (el pie del sitio, el
+// home, los índices y el sitemap lo consultan) y recorrerlo implica escanear el
+// registro entero. Como solo depende de datos ya cacheados, se memoiza igual.
+const universeCache = new Map<EntityType, { list: PublicEntity[]; at: number }>();
+
 export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[]> {
+  const cached = universeCache.get(type);
+  if (cached && Date.now() - cached.at < ANCHORED_TTL_MS) return cached.list;
   try {
     const [reg, { index, dedicatedSlugs, dedicatedInfo }] = await Promise.all([
       loadEntityRegistry(),
@@ -1511,8 +1523,11 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
         b.corpusMentions - a.corpusMentions ||
         a.name.localeCompare(b.name, "es"),
     );
-    return list.slice(0, ENTITY_DISPLAY_CAP);
+    const out = list.slice(0, ENTITY_DISPLAY_CAP);
+    universeCache.set(type, { list: out, at: Date.now() });
+    return out;
   } catch (err) {
+    // No se cachea el fallo: el siguiente request vuelve a intentarlo.
     console.error(`[public-data] getEntityUniverse(${type}) falló:`, err);
     return [];
   }
