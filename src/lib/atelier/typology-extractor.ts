@@ -21,17 +21,35 @@ PRIMERO decide la TIPOLOGÍA según el SUJETO central de la pieza:
 
 LUEGO llena SOLO los campos de esa tipología, extraídos FIELMENTE del texto. No inventes: deja vacío ([] o "") lo que el texto no sustente.
 
-Devuelve JSON PURO (sin markdown). Esquema según la tipología elegida:
+TODAS las tipologías llevan además ANCLAJE GEOGRÁFICO:
+  "lugarPrincipal": el sitio más específico y defendible donde la pieza se ancla, y
+  "lat" / "lng": sus coordenadas decimales (WGS84, punto decimal, no coma).
 
-hecho:    {"typology":"hecho","titulo","resumen","fecha","anioInicio","anioFin","lugares":[],"protagonistas":[],"causas":[],"consecuencias":[],"porQueImporta"}
-epoca:    {"typology":"epoca","titulo","resumen","rango","panorama","hitos":[{"year","titulo","detalle"}],"actores":[],"transformaciones":[],"legado"}
-entidad:  {"typology":"entidad","titulo","tipo":"Persona|Lugar|Concepto|Institución","resumen","nacimiento","muerte","roles":[],"hitos":[{"year","titulo"}],"relaciones":[],"semblanza"}
-pregunta: {"typology":"pregunta","titulo","resumen","pregunta","tesis","debate","temasRelacionados":[]}
+Devuelve JSON PURO (sin markdown). Esquema según la tipología elegida (los tres campos geo van en todas):
+
+hecho:    {"typology":"hecho","titulo","resumen","fecha","anioInicio","anioFin","lugares":[],"protagonistas":[],"causas":[],"consecuencias":[],"porQueImporta","lugarPrincipal","lat","lng"}
+epoca:    {"typology":"epoca","titulo","resumen","rango","panorama","hitos":[{"year","titulo","detalle"}],"actores":[],"transformaciones":[],"legado","lugarPrincipal","lat","lng"}
+entidad:  {"typology":"entidad","titulo","tipo":"Persona|Lugar|Concepto|Institución","resumen","nacimiento","muerte","roles":[],"hitos":[{"year","titulo"}],"relaciones":[],"semblanza","lugarPrincipal","lat","lng"}
+pregunta: {"typology":"pregunta","titulo","resumen","pregunta","tesis","debate","temasRelacionados":[],"lugarPrincipal","lat","lng"}
 
 Reglas:
 - "titulo": breve y canónico ("El Bogotazo", "Rafael Núñez", "La Regeneración"). En entidad es el nombre.
 - "resumen": 1–2 frases; el gancho de la ficha.
 - Años como enteros (1948). Deja null lo desconocido; fechas legibles como texto ("9 de abril de 1948").
+
+Reglas del anclaje geográfico:
+- Elige el punto MÁS ESPECÍFICO que el texto sustente, y baja de precisión si no lo sustenta:
+  sitio exacto (Plaza de Bolívar, Bogotá) > municipio (Ciénaga, Magdalena) > departamento (Chocó) > región (Amazonía).
+- hecho: dónde OCURRIÓ. Si se desarrolla en varios sitios, el más definitorio del hecho.
+- entidad Lugar: el lugar mismo. entidad Persona: donde transcurre lo esencial de su vida pública
+  (no su natalicio si su obra fue en otra parte). entidad Concepto/Institución: su sede o foco geográfico.
+- epoca: el centro de gravedad del período (casi siempre la capital o la región que lo define).
+- pregunta: el territorio sobre el que la pregunta interroga.
+- Casi todo en este archivo ocurre en Colombia: lat entre -4.3 y 13.5; lng entre -82 y -66.8.
+  Un punto fuera de Colombia solo es válido si la pieza de verdad ocurre en el exterior
+  (Madrid, Panamá tras 1903, Caracas). Si dudas del punto, pon null en lat/lng: es mejor
+  no ubicar que ubicar mal.
+- Usa null (no 0) cuando no haya un anclaje defendible.
 - NO escribas nada fuera del JSON.`;
 
 export async function extractTypology(args: {

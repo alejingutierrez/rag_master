@@ -33,6 +33,17 @@ interface BaseStructured {
   resumen: string;
   /** Código de período canónico (taxonomy). Puede ser null. */
   periodoCode: string | null;
+  /**
+   * Anclaje geográfico principal de la pieza — el punto donde ocurre el hecho,
+   * donde está el lugar, donde transcurre la vida, o donde se gesta la idea.
+   * Alimenta el mapa navegable. Toda tipología lo lleva: una idea sin geografía
+   * es rara, y cuando de verdad no aplica queda en null y no se pinta.
+   */
+  lugarPrincipal: string | null;
+  /** Latitud decimal (WGS84). Rango útil de Colombia: -4.3 … 13.5. */
+  lat: number | null;
+  /** Longitud decimal (WGS84). Rango útil de Colombia: -82 … -66.8. */
+  lng: number | null;
 }
 
 export interface HechoStructured extends BaseStructured {
@@ -132,6 +143,23 @@ function strOrNull(v: unknown): string | null {
   const s = str(v);
   return s.length ? s : null;
 }
+
+/**
+ * Coordenada decimal válida, o null. Acepta número o string ("4,71" / "4.71"),
+ * porque el extractor a veces devuelve la coma decimal del español. Fuera de
+ * rango → null: es preferible un punto ausente a un punto en el océano.
+ */
+function coordOrNull(v: unknown, max: number): number | null {
+  let n: number | null = null;
+  if (typeof v === "number") n = v;
+  else if (typeof v === "string") {
+    const parsed = parseFloat(v.trim().replace(",", "."));
+    if (Number.isFinite(parsed)) n = parsed;
+  }
+  if (n == null || !Number.isFinite(n) || Math.abs(n) > max) return null;
+  // 0,0 es la Isla Nula en el Atlántico: el extractor la emite cuando no sabe.
+  return n === 0 ? null : Math.round(n * 1e6) / 1e6;
+}
 function normHitos(v: unknown, max = 12): Hito[] {
   if (!Array.isArray(v)) return [];
   const out: Hito[] = [];
@@ -197,7 +225,21 @@ export function normalizeStructured(
   const slug = slugify(str(o.slug) || titulo);
   if (!slug) return null;
 
-  const base = { typology, slug, titulo, resumen, periodoCode };
+  // Geo: el extractor puede anidarlo (geo/coordenadas) o aplanarlo (lat/lng).
+  const geo = (o.geo ?? o.coordenadas ?? o.coords ?? {}) as Record<string, unknown>;
+  const geoObj = geo && typeof geo === "object" ? geo : {};
+  const base = {
+    typology,
+    slug,
+    titulo,
+    resumen,
+    periodoCode,
+    lugarPrincipal: strOrNull(
+      o.lugarPrincipal ?? o.lugar_principal ?? geoObj.lugar ?? geoObj.nombre,
+    ),
+    lat: coordOrNull(o.lat ?? o.latitud ?? geoObj.lat ?? geoObj.latitud, 90),
+    lng: coordOrNull(o.lng ?? o.lon ?? o.longitud ?? geoObj.lng ?? geoObj.longitud, 180),
+  };
 
   switch (typology) {
     case "hecho":
