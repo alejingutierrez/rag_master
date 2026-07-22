@@ -100,7 +100,12 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Corre en todo salvo assets estáticos y archivos con extensión (svg/png/…, robots.txt, etc.).
+  //
+  // `/api/public-image` se EXCLUYE a propósito: es público (no necesita el candado)
+  // y, al pasar por el middleware, Next le añadía un `Vary: rsc, next-router-*` que
+  // impedía a CloudFront cachear las portadas — cada visita las regeneraba. Fuera
+  // del middleware, cada URL de imagen es un objeto estático que el CDN sí cachea.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|woff2?|json)$).*)",
+    "/((?!api/public-image|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|woff2?|json)$).*)",
   ],
 };

@@ -60,57 +60,54 @@ function rememberVariant(cacheKey: string, value: { body: Buffer; type: string }
   variantCache.set(cacheKey, value);
 }
 
+// UN SOLO formato: WebP. Antes se negociaba por `Accept` (AVIF/WebP/JPEG), y eso
+// tenía dos costes: (1) obligaba a un `Vary: Accept` que multiplica las entradas
+// de caché del CDN por navegador, y (2) AVIF cuesta ~2x más CPU de codificar que
+// WebP, y App Runner tiene poca. WebP lo entienden todos los navegadores desde
+// 2020 y ya deja las portadas en decenas de KB. Una URL = un objeto = el CDN lo
+// cachea de verdad para todos los visitantes.
+const MIME = "image/webp";
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const width = snapWidth(req.nextUrl.searchParams.get("w"));
 
-    const accept = req.headers.get("accept") ?? "";
-    const format = accept.includes("image/avif")
-      ? "avif"
-      : accept.includes("image/webp")
-        ? "webp"
-        : "jpeg";
-
-    const cacheKey = `${id}:${width}:${format}`;
+    const cacheKey = `${id}:${width}`;
     const cached = variantCache.get(cacheKey);
     if (cached) {
       // Reinserta para que la entrada usada vuelva al final de la cola de descarte.
       variantCache.delete(cacheKey);
       variantCache.set(cacheKey, cached);
-      return imageResponse(cached.body, cached.type, "hit");
+      return imageResponse(cached.body, "hit");
     }
 
     const key = await imageKeyOf(id);
     if (!key) return new NextResponse("Not found", { status: 404 });
 
     const original = await getFromS3(key);
-    const pipeline = sharp(original).rotate().resize({ width, withoutEnlargement: true });
-    const body =
-      format === "avif"
-        ? await pipeline.avif({ quality: 62 }).toBuffer()
-        : format === "webp"
-          ? await pipeline.webp({ quality: 78 }).toBuffer()
-          : await pipeline.jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+    const body = await sharp(original)
+      .rotate()
+      .resize({ width, withoutEnlargement: true })
+      .webp({ quality: 78, effort: 3 })
+      .toBuffer();
 
-    const type = `image/${format}`;
-    rememberVariant(cacheKey, { body, type });
-    return imageResponse(body, type, "miss");
+    rememberVariant(cacheKey, { body, type: MIME });
+    return imageResponse(body, "miss");
   } catch (error) {
     console.error("Error serving public image:", error);
     return new NextResponse("Error", { status: 500 });
   }
 }
 
-function imageResponse(body: Buffer, type: string, cache: string): NextResponse {
+function imageResponse(body: Buffer, cache: string): NextResponse {
   return new NextResponse(new Uint8Array(body), {
     status: 200,
     headers: {
-      "Content-Type": type,
+      "Content-Type": MIME,
+      // Inmutable por versión (la URL lleva ?v=timestamp). Sin `Vary`: un solo
+      // formato para todos, así CloudFront cachea la URL una vez y la reparte.
       "Cache-Control": "public, max-age=31536000, immutable",
-      // El formato depende del Accept: sin esto, una caché compartida podría
-      // servirle AVIF a un navegador que solo entiende JPEG.
-      Vary: "Accept",
       "X-Image-Cache": cache,
     },
   });
