@@ -1121,12 +1121,19 @@ export interface HubPiece {
   titulo: string;
   anio: number | null;
   kind: string;
+  /** Bajante del hecho: la época referencia sus hechos con algo que leer, no solo un título. */
+  resumen: string;
+  imageUrl: string | null;
+  yearLabel: string | null;
+  /** Protagonistas CON ficha propia publicada (ya pasados por el gate). */
+  protagonistas: EntityChip[];
 }
 export interface EntityChip {
   name: string;
   slug: string;
   href: string;
   count: number;
+  imageUrl: string | null;
 }
 export interface PeriodHub {
   hechos: HubPiece[];
@@ -1144,15 +1151,34 @@ export interface PeriodHub {
   };
 }
 
-function chipMap(map: Map<string, EntityChip>, type: EntityType, names: string[]) {
+/**
+ * Acumula chips de entidad, PASANDO EL GATE: solo entra la que tiene su propia
+ * pieza publicada. Antes entraba cualquier nombre mencionado, así que las épocas
+ * y los hechos ofrecían decenas de enlaces a páginas sin artículo detrás.
+ */
+function chipMap(
+  map: Map<string, EntityChip>,
+  type: EntityType,
+  names: string[],
+  gate: { dedicatedSlugs: Record<EntityType, Set<string>>; dedicatedInfo: PublishedEntityData["dedicatedInfo"] },
+) {
   for (const raw of names) {
     const name = raw.trim();
     if (!name) continue;
     const slug = slugify(name);
-    if (!slug) continue;
+    if (!slug || !gate.dedicatedSlugs[type].has(slug)) continue;
     const cur = map.get(slug);
-    if (cur) cur.count++;
-    else map.set(slug, { name, slug, href: entityPath(type, slug), count: 1 });
+    if (cur) {
+      cur.count++;
+      continue;
+    }
+    map.set(slug, {
+      name,
+      slug,
+      href: entityPath(type, slug),
+      count: 1,
+      imageUrl: gate.dedicatedInfo.get(entityKey(type, slug))?.imageUrl ?? null,
+    });
   }
 }
 
@@ -1168,19 +1194,33 @@ export async function getPeriodHub(periodCode: string): Promise<PeriodHub> {
     counts: { hechos: 0, ensayos: 0, personas: 0, lugares: 0, ideas: 0 },
   };
   try {
-    const pieces = (await getAnchoredPieces()).filter((p) => p.periodCode === periodCode);
+    const [all, gate] = await Promise.all([getAnchoredPieces(), getPublishedEntityData()]);
+    const pieces = all.filter((p) => p.periodCode === periodCode);
     const hechos: HubPiece[] = [];
     const ensayos: HubPiece[] = [];
     const personas = new Map<string, EntityChip>();
     const lugares = new Map<string, EntityChip>();
     const ideas = new Map<string, EntityChip>();
     for (const p of pieces) {
-      const hp: HubPiece = { href: p.href, titulo: p.titulo, anio: p.anio, kind: p.kind };
+      // Protagonistas del hecho, ya filtrados por el gate: la ficha de época
+      // referencia a sus personajes solo cuando hay biografía que leer.
+      const prota = new Map<string, EntityChip>();
+      chipMap(prota, "persona", p.personas, gate);
+      const hp: HubPiece = {
+        href: p.href,
+        titulo: p.titulo,
+        anio: p.anio,
+        kind: p.kind,
+        resumen: p.resumen,
+        imageUrl: p.imageUrl,
+        yearLabel: pieceYearLabel(p),
+        protagonistas: [...prota.values()].slice(0, 4),
+      };
       if (p.kind === "hecho") hechos.push(hp);
       else if (p.kind === "pregunta" || p.kind === "ensayo") ensayos.push(hp);
-      chipMap(personas, "persona", p.personas);
-      chipMap(lugares, "lugar", p.lugares);
-      chipMap(ideas, "idea", p.ideas);
+      chipMap(personas, "persona", p.personas, gate);
+      chipMap(lugares, "lugar", p.lugares, gate);
+      chipMap(ideas, "idea", p.ideas, gate);
     }
     const byYear = (a: HubPiece, b: HubPiece) =>
       (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es");
@@ -1619,6 +1659,64 @@ export async function resolveEntityHrefs(names: string[]): Promise<Record<string
   } catch (err) {
     console.error("[public-data] resolveEntityHrefs falló:", err);
     return {};
+  }
+}
+
+/** Chip resuelto de una entidad nombrada en una ficha. */
+export interface ResolvedEntityChip {
+  name: string;
+  type: EntityType;
+  /** Ruta a su página, o null si aún no tiene artículo propio (se pinta sin enlace). */
+  href: string | null;
+  imageUrl: string | null;
+}
+
+/**
+ * Resuelve los nombres que una ficha lista (protagonistas, actores, lugares) a
+ * chips enlazables. Los que tienen pieza propia publicada llevan href y retrato;
+ * el resto se devuelven igual pero SIN enlace, para que la ficha siga siendo fiel
+ * a lo que dice el texto sin prometer una página que no existe.
+ */
+export async function resolveEntityChips(
+  names: string[],
+  type: EntityType,
+): Promise<ResolvedEntityChip[]> {
+  if (!names.length) return [];
+  try {
+    const [reg, { dedicatedSlugs, dedicatedInfo }] = await Promise.all([
+      loadEntityRegistry(),
+      getPublishedEntityData(),
+    ]);
+    const seen = new Set<string>();
+    const out: ResolvedEntityChip[] = [];
+    for (const raw of names) {
+      const name = (raw ?? "").trim();
+      if (!name) continue;
+      const slug = slugify(name);
+      if (!slug || seen.has(slug)) continue;
+      seen.add(slug);
+
+      // El nombre de la ficha puede ser una variante ("José Padilla"); el registro
+      // la resuelve a la entidad canónica y a su slug publicado.
+      const key = reg.variantSlugToKey.get(slug);
+      const ent = key ? reg.byKey.get(key) : undefined;
+      const canonicalSlug = ent && ent.type === type ? ent.slug : slug;
+      const published = dedicatedSlugs[type].has(canonicalSlug) || dedicatedSlugs[type].has(slug);
+      const info =
+        dedicatedInfo.get(entityKey(type, canonicalSlug)) ?? dedicatedInfo.get(entityKey(type, slug));
+
+      out.push({
+        name,
+        type,
+        href: published ? entityPath(type, canonicalSlug) : null,
+        imageUrl: published ? (info?.imageUrl ?? null) : null,
+      });
+    }
+    // Los que tienen historia propia primero: son los caminos reales de lectura.
+    return out.sort((a, b) => Number(!!b.href) - Number(!!a.href));
+  } catch (err) {
+    console.error("[public-data] resolveEntityChips falló:", err);
+    return names.map((name) => ({ name, type, href: null, imageUrl: null }));
   }
 }
 

@@ -92,6 +92,9 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
         </nav>
 
         <div className="ps-utilities">
+          <Link href="/buscar" className="ps-utility-link" aria-current={active("/buscar") ? "page" : undefined}>
+            Buscar
+          </Link>
           <button
             type="button"
             className="ps-utility-button"
@@ -155,6 +158,7 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
           ))}
         </nav>
         <div className="ps-mobile-foot">
+          <Link href="/buscar">Buscar <Arrow /></Link>
           <Link href="/acerca">Acerca <Arrow /></Link>
           <Link href="/acerca#metodo">Método y fuentes <Arrow /></Link>
         </div>

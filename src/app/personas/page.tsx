@@ -41,8 +41,8 @@ export default async function PersonasPage({
         total={counts.persona}
         kicker="Quién hizo la historia"
         title="Personas"
-        intro="Figuras presentes en las piezas publicadas. Algunas tienen biografía propia; las demás abren el tejido de historias donde aparecen."
-        emptyNote="Aún no hay personas conectadas a piezas publicadas."
+        intro="Las figuras que tienen su propia biografía en el archivo: cada una con su semblanza, sus fuentes y los hechos donde interviene."
+        emptyNote="Todavía no hay biografías publicadas."
         typeLabel={m.singular}
         color={m.color}
       />

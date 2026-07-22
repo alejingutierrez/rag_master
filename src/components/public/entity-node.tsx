@@ -5,6 +5,7 @@ import type { EntityNode, EntityPieceRef, EntityRelation } from "@/lib/public-da
 import { ENTITY_TYPE_META } from "@/lib/public-data";
 import "@/components/public/article.css";
 import "@/components/public/wiki.css";
+import { imageAt } from "@/lib/image-url";
 
 const KIND_LABEL: Record<string, string> = {
   hecho: "Hecho",
@@ -19,37 +20,68 @@ function yearLabel(anio: number | null): string {
   return anio < 0 ? `${-anio} a.C.` : String(anio);
 }
 
+/** Cuántas piezas se ven sin desplegar; el resto queda en el <details>. */
+const PIEZAS_VISIBLES = 4;
+
+/** Una pieza donde aparece la entidad: año · título · tipo, en una sola línea. */
+function PieceRow({ p }: { p: EntityPieceRef }) {
+  return (
+    <Link href={p.href} className="wiki-mini-row" title={p.titulo}>
+      <span className="y">{yearLabel(p.anio)}</span>
+      <span className="t">{p.titulo}</span>
+      <span className="k">{KIND_LABEL[p.kind] ?? p.kind}</span>
+    </Link>
+  );
+}
+
 /**
  * Conexiones de una entidad: dónde aparece (piezas) y con qué otras entidades
  * co-ocurre (relaciones automáticas). Es la wikización — se teje sola.
+ *
+ * "Aparece en" es APARATO LATERAL, no cuerpo del artículo: una línea por pieza y
+ * solo las primeras; el resto se pliega en un <details> nativo (sin JS). Antes se
+ * volcaba la lista completa —decenas de entradas en lugares como Bogotá— y se
+ * comía la página.
  */
 export function EntityConnections({
   pieces,
   related,
+  selfHref,
 }: {
   pieces: EntityPieceRef[];
   related: EntityRelation[];
+  /** Ruta de esta misma entidad: su propia pieza no se lista como "aparición". */
+  selfHref?: string;
 }) {
-  if (pieces.length === 0 && related.length === 0) return null;
+  const otras = selfHref ? pieces.filter((p) => p.href !== selfHref) : pieces;
+  if (otras.length === 0 && related.length === 0) return null;
+  const visibles = otras.slice(0, PIEZAS_VISIBLES);
+  const resto = otras.slice(PIEZAS_VISIBLES);
   return (
     <div className="wiki">
-      {pieces.length > 0 && (
+      {otras.length > 0 && (
         <section className="wiki-sec">
           <div className="wiki-sec-h">
             <span className="wiki-sec-t">Aparece en</span>
-            <span className="wiki-sec-n">{pieces.length}</span>
+            <span className="wiki-sec-n">{otras.length}</span>
           </div>
-          <div className="wiki-list">
-            {pieces.map((p) => (
-              <Link key={p.href + p.titulo} href={p.href} className="wiki-item">
-                <span className="y">{yearLabel(p.anio)}</span>
-                <span>
-                  <span className="t">{p.titulo}</span>
-                  <span className="k">{KIND_LABEL[p.kind] ?? p.kind}</span>
-                </span>
-              </Link>
+          <div className="wiki-mini">
+            {visibles.map((p) => (
+              <PieceRow key={p.href + p.titulo} p={p} />
             ))}
           </div>
+          {resto.length > 0 && (
+            <details className="wiki-more">
+              <summary>
+                Ver {resto.length === 1 ? "la restante" : `las ${resto.length} restantes`}
+              </summary>
+              <div className="wiki-mini">
+                {resto.map((p) => (
+                  <PieceRow key={p.href + p.titulo} p={p} />
+                ))}
+              </div>
+            </details>
+          )}
         </section>
       )}
 
@@ -89,6 +121,30 @@ export function EntityNodeArticle({
   const periodLabels = node.periods
     .map((c) => periodInfo(c)?.label)
     .filter((x): x is string => !!x);
+  // La portada producida de la entidad. Un retrato de persona va al lado del
+  // título (alineado arriba, para no cortar la cabeza); una vista de lugar o de
+  // idea va apaisada bajo la cabecera — igual que en las fichas.
+  const esRetrato = node.type === "persona";
+  const retratoAlLado = esRetrato && !!node.imageUrl;
+
+  const head = (
+    <header className="art-head">
+      <div className="art-kick">
+        <span className="art-dot" style={{ background: ENTITY_TYPE_META[node.type].color }} />
+        <span className="art-klabel">
+          {meta.singular}
+          {node.mentions > 0
+            ? ` · ${node.mentions} ${node.mentions === 1 ? "aparición" : "apariciones"}`
+            : ""}
+        </span>
+      </div>
+      <h1 className="art-title">{node.name}</h1>
+      {node.resumen && <p className="art-stand">{node.resumen}</p>}
+      {periodLabels.length > 0 && (
+        <div className="art-meta">Presente en: {periodLabels.join(" · ")}</div>
+      )}
+    </header>
+  );
 
   return (
     <PublicShell>
@@ -97,24 +153,27 @@ export function EntityNodeArticle({
           <Link href={crumb.href}>{crumb.label}</Link> · {meta.singular}
         </div>
 
-        <header className="art-head">
-          <div className="art-kick">
-            <span className="art-dot" style={{ background: ENTITY_TYPE_META[node.type].color }} />
-            <span className="art-klabel">
-              {meta.singular}
-              {node.mentions > 0
-                ? ` · ${node.mentions} ${node.mentions === 1 ? "aparición" : "apariciones"}`
-                : ""}
-            </span>
+        {retratoAlLado ? (
+          <div className="art-head-row">
+            {head}
+            <figure className="art-figure portrait art-figure-side">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageAt(node.imageUrl, 640)!} alt={node.name} loading="lazy" />
+            </figure>
           </div>
-          <h1 className="art-title">{node.name}</h1>
-          {node.resumen && <p className="art-stand">{node.resumen}</p>}
-          {periodLabels.length > 0 && (
-            <div className="art-meta">Presente en: {periodLabels.join(" · ")}</div>
-          )}
-        </header>
+        ) : (
+          <>
+            {head}
+            {node.imageUrl && (
+              <figure className="art-figure landscape">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imageAt(node.imageUrl, 1400)!} alt={node.name} loading="lazy" />
+              </figure>
+            )}
+          </>
+        )}
 
-        <EntityConnections pieces={node.pieces} related={node.related} />
+        <EntityConnections pieces={node.pieces} related={node.related} selfHref={node.href} />
 
         <div className="art-paso">
           <Link href={crumb.href}>

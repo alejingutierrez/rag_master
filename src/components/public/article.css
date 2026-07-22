@@ -82,3 +82,26 @@
 .ficha-hitos .hy { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 500; }
 .ficha-hitos .ht { min-width: 0; font-size: 14px; line-height: 1.45; color: var(--fg-1); overflow-wrap: break-word; }
 .ficha-hitos .hd { color: var(--fg-muted); overflow-wrap: break-word; }
+
+/* ── Entidades de la ficha resueltas a enlace + retrato ──────────────────────
+   Sustituye a los .ficha-tag mudos en Protagonistas/Lugares/Actores/Relaciones.
+   La que tiene artículo propio se ve como enlace con cara; la que no, como texto.
+   La diferencia visual ES la información: dice dónde se puede seguir leyendo. */
+.ficha-chips { display: flex; flex-wrap: wrap; gap: 7px; max-width: 100%; min-width: 0; }
+.ficha-chip {
+  display: inline-flex; align-items: center; gap: 7px; max-width: 100%;
+  font-family: var(--font-sans); font-size: 12.5px; line-height: 1.45;
+  color: var(--fg-muted); border: 1px solid var(--line); border-radius: 2px;
+  padding: 2px 9px 2px 7px; overflow-wrap: break-word;
+}
+.ficha-chip.is-linked {
+  color: var(--fg-1); border-color: var(--line-strong); text-decoration: none;
+  padding-left: 3px; transition: border-color .15s ease, color .15s ease;
+}
+.ficha-chip.is-linked:hover { color: var(--accent); border-color: var(--accent); }
+.ficha-chip img {
+  width: 22px; height: 22px; border-radius: 2px; object-fit: cover;
+  object-position: center top; flex-shrink: 0; filter: grayscale(1) contrast(1.05);
+}
+.ficha-chip.is-linked:hover img { filter: none; }
+.ficha-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--fg-faint); flex-shrink: 0; margin-left: 4px; }

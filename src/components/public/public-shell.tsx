@@ -46,9 +46,9 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="ps-foot-col">
             <div className="ps-foot-title">Método y fuentes</div>
-            <Link href="/acerca#metodo">Cómo trabajamos</Link>
-            <Link href="/acerca#metodo">Fuentes</Link>
-            <Link href="/acerca">Criterios editoriales</Link>
+            <Link href="/como-trabajamos">Cómo trabajamos</Link>
+            <Link href="/fuentes">Fuentes</Link>
+            <Link href="/criterios-editoriales">Criterios editoriales</Link>
           </div>
           <div className="ps-foot-col">
             <div className="ps-foot-title">Archivo</div>
@@ -66,6 +66,7 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
           <div className="ps-foot-col">
             <div className="ps-foot-title">Proyecto</div>
             <Link href="/acerca">Acerca</Link>
+            <Link href="/autor">El autor</Link>
             <Link href="/ensayos">Lecturas</Link>
           </div>
         </div>

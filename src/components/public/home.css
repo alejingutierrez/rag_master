@@ -357,3 +357,33 @@ a:hover .hp-arrow { transform: translateX(3px); }
   .hp-arrow,
   .hp-sequence-image img { transition: none; }
 }
+
+/* ── Home filtrado por época ────────────────────────────────────────────────
+   La cinta superior filtra el home (/?epoca=CODE). Esta franja dice qué se está
+   viendo y ofrece la salida: leer la época entera, verla en la línea de tiempo,
+   o volver a todo el archivo. */
+.hp-atlas-reset { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--fg-muted); text-decoration: none; border-bottom: 1px solid var(--line-strong); padding-bottom: 2px; }
+.hp-atlas-reset:hover { color: var(--accent); border-color: var(--accent); }
+.hp-filter-note {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px;
+  max-width: 1320px; margin: 0 auto; padding: 14px 34px;
+  border-bottom: 1px solid var(--line);
+}
+.hp-filter-note > span {
+  font-family: var(--font-mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--period-color, var(--accent));
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.hp-filter-note > span::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.hp-filter-note b { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .06em; color: var(--fg-muted); }
+.hp-filter-note a {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em;
+  color: var(--fg); text-decoration: none;
+}
+.hp-filter-note a + a { margin-left: 0; }
+.hp-filter-note a:hover { color: var(--accent); }
+@media (max-width: 700px) {
+  .hp-filter-note { padding: 12px 18px; gap: 8px 14px; }
+  .hp-filter-note a { margin-left: 0; }
+}

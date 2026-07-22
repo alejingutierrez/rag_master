@@ -1,0 +1,65 @@
+/* Campo de búsqueda — una sola línea con hairline, sin caja ni sombra. */
+
+.sf { display: block; }
+.sf-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--fg-faint);
+  margin-bottom: 8px;
+}
+.sf-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--fg);
+  padding: 6px 0 9px;
+}
+.sf-icon { font-family: var(--font-mono); font-size: 17px; line-height: 1; color: var(--fg-faint); }
+.sf-input {
+  flex: 1;
+  min-width: 0;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.4vw, 25px);
+  line-height: 1.2;
+  letter-spacing: -.01em;
+  color: var(--fg);
+}
+.sf-input::placeholder { color: var(--fg-faint); font-style: italic; }
+.sf-input::-webkit-search-cancel-button { filter: grayscale(1); opacity: .5; }
+.sf-submit {
+  appearance: none;
+  flex: 0 0 auto;
+  background: var(--fg);
+  color: var(--bg);
+  border: 1px solid var(--fg);
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+}
+.sf-submit:hover { background: transparent; color: var(--fg); }
+.sf-hint {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+@media (max-width: 560px) {
+  .sf-row { gap: 8px; }
+  .sf-submit { padding: 6px 13px; letter-spacing: .06em; }
+}

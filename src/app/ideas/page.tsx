@@ -41,8 +41,8 @@ export default async function IdeasPage({
         total={counts.idea}
         kicker="Qué estaba en juego"
         title="Ideas"
-        intro="Procesos, ideologías e instituciones presentes en las piezas publicadas — y las historias que permiten pensarlas."
-        emptyNote="Aún no hay ideas conectadas a piezas publicadas."
+        intro="Procesos, ideologías e instituciones con pieza propia en el archivo — y las historias que permiten pensarlas."
+        emptyNote="Todavía no hay ideas con pieza propia publicada."
         typeLabel={m.singular}
         color={m.color}
       />

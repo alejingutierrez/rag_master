@@ -1,7 +1,6 @@
 import { PublicShell } from "@/components/public/public-shell";
 import { EntityBrowser } from "@/components/public/entity-index";
-import { getConnectedEntityDirectory, getPeriodEntityUniverse, getConnectedEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
-import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
+import { getConnectedEntityDirectory, ENTITY_TYPE_META } from "@/lib/public-data";
 import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -17,32 +16,24 @@ export const metadata = buildMetadata({
   type: "website",
 });
 
-function validPeriod(raw: string | string[] | undefined): PeriodCode | null {
-  const value = Array.isArray(raw) ? raw[0] : raw;
-  return value && value in PERIODS ? (value as PeriodCode) : null;
-}
-
-export default async function LugaresPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ periodo?: string | string[] }>;
-}) {
-  const sp = (await searchParams) ?? {};
-  const periodo = validPeriod(sp.periodo);
-  const [entities, counts] = await Promise.all([
-    periodo ? getPeriodEntityUniverse("lugar", periodo) : getConnectedEntityDirectory("lugar"),
-    getConnectedEntityCounts(),
-  ]);
+/**
+ * Índice de lugares. A diferencia de personas e ideas, NO se organiza por época:
+ * un lugar no pertenece a un período —Bogotá atraviesa el archivo entero— y
+ * filtrarlo por época obligaba a elegir una pertenencia falsa. El orden es
+ * alfabético, con filtro por inicial y búsqueda.
+ */
+export default async function LugaresPage() {
+  const entities = await getConnectedEntityDirectory("lugar");
   const m = ENTITY_TYPE_META.lugar;
   return (
     <PublicShell>
       <EntityBrowser
         entities={entities}
-        total={counts.lugar}
+        showPeriodFilter={false}
         kicker="Dónde ocurrió"
         title="Lugares"
-        intro="Territorios, regiones y ciudades mencionados en piezas publicadas — cada entrada conduce a las historias que la sostienen."
-        emptyNote="Aún no hay lugares conectados a piezas publicadas."
+        intro="Territorios, regiones y ciudades con historia propia en el archivo — en orden alfabético, porque ninguno pertenece a una sola época."
+        emptyNote="Aún no hay lugares con historia propia publicada."
         typeLabel={m.singular}
         color={m.color}
       />

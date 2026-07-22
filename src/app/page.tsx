@@ -9,9 +9,11 @@ import {
   getRecentPublicPieces,
   getTypologyList,
   type HomeCard,
+  type PublicArchivePiece,
   type TypologyCard,
 } from "@/lib/public-data";
 import { loadTimeline } from "@/lib/timeline-data";
+import { imageAt, type ImageWidth } from "@/lib/image-url";
 import "@/components/public/home.css";
 
 export const dynamic = "force-dynamic";
@@ -37,12 +39,19 @@ function formatNumber(value: number): string {
   return value.toLocaleString("es-CO");
 }
 
-function cardImage(src: string | null, alt: string, className = "", eager = false) {
+/** `width` es el ancho REAL que ocupa la imagen: pedir menos evita traer el PNG entero. */
+function cardImage(
+  src: string | null,
+  alt: string,
+  className = "",
+  eager = false,
+  width: ImageWidth = 480,
+) {
   if (!src) return <span className={`hp-image-fallback ${className}`} aria-hidden />;
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={imageAt(src, width)!}
       alt={alt}
       className={className}
       loading={eager ? "eager" : "lazy"}
@@ -85,12 +94,27 @@ function sequenceFromTypology(card: TypologyCard): SequenceCard {
   };
 }
 
-export default async function HomePage() {
-  const [home, archive, recent, hechos, epocas, entidades, personas, lugares, ideas, timeline] =
+/** Época seleccionada en la cinta del home, si es válida. */
+function validPeriod(raw: string | string[] | undefined): PeriodCode | null {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return value && value in PERIODS ? (value as PeriodCode) : null;
+}
+
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ epoca?: string | string[] }>;
+}) {
+  const sp = (await searchParams) ?? {};
+  const epoca = validPeriod(sp.epoca);
+
+  const [home, archive, allPieces, hechos, epocas, entidades, personas, lugares, ideas, timeline] =
     await Promise.all([
       getHome(),
       getPublicArchiveStats(),
-      getRecentPublicPieces(7),
+      // Una sola lectura del archivo alimenta "lo reciente" Y el filtro por época:
+      // la cinta superior deja de ser decorativa sin pagar consultas extra.
+      getRecentPublicPieces(1000),
       getTypologyList("hecho"),
       getTypologyList("epoca"),
       getTypologyList("entidad"),
@@ -100,8 +124,43 @@ export default async function HomePage() {
       loadTimeline().catch(() => null),
     ]);
 
-  const hero = home.hero;
-  const heroQueue = (home.featured.length ? home.featured : []).slice(0, 3);
+  const periodPieces: PublicArchivePiece[] = epoca
+    ? allPieces.filter((p) => p.periodCode === epoca)
+    : allPieces;
+  const recent = periodPieces;
+
+  // Con una época elegida el portada manda la pieza de esa época: primero su
+  // ficha de época, si no el hecho más antiguo. Sin época, manda la curaduría.
+  const periodHero =
+    periodPieces.find((p) => p.kind === "epoca") ??
+    periodPieces.find((p) => p.kind === "hecho") ??
+    periodPieces[0];
+  // getRecentPublicPieces ordena por fecha de publicación; dentro de una época
+  // el lector espera cronología histórica, no orden de producción.
+  const periodChronological = [...periodPieces].sort(
+    (a, b) => (parseInt(a.yearLabel ?? "9999", 10) || 9999) - (parseInt(b.yearLabel ?? "9999", 10) || 9999),
+  );
+
+  const hero = epoca
+    ? periodHero
+      ? {
+          id: periodHero.id,
+          href: periodHero.href,
+          title: periodHero.title,
+          desc: periodHero.summary,
+          periodCode: periodHero.periodCode,
+          kicker: periodHero.label,
+          imageUrl: periodHero.imageUrl,
+          kind: periodHero.kind,
+          docCount: null,
+          wordCount: null,
+          fragmentCount: 0,
+        }
+      : null
+    : home.hero;
+  // La curaduría manda solo en la vista general; filtrando por época, la fila
+  // "En el archivo" tiene que hablar de ESA época.
+  const heroQueue = epoca ? [] : home.featured.slice(0, 3);
   const queue = heroQueue.length
     ? heroQueue
     : recent
@@ -122,11 +181,23 @@ export default async function HomePage() {
         }));
 
   const curatedFacts = (home.collection?.cards ?? []).filter((card) => card.kind === "hecho");
-  const sequence: SequenceCard[] = (
-    curatedFacts.length >= 3
+  const sequence: SequenceCard[] = epoca
+    ? // Con época elegida, la secuencia son SUS hechos en orden cronológico.
+      periodChronological
+        .filter((p) => p.kind === "hecho" && p.id !== hero?.id)
+        .slice(0, 3)
+        .map((p) => ({
+          id: p.id,
+          href: p.href,
+          title: p.title,
+          summary: p.summary,
+          imageUrl: p.imageUrl,
+          periodCode: p.periodCode,
+          yearLabel: p.yearLabel,
+        }))
+    : curatedFacts.length >= 3
       ? curatedFacts.slice(0, 3).map(sequenceFromHome)
-      : hechos.slice(0, 3).map(sequenceFromTypology)
-  );
+      : hechos.slice(0, 3).map(sequenceFromTypology);
   const biographies = entidades.filter((card) => card.meta === "Persona").slice(0, 3);
   const epocaByCode = new Map(epocas.map((card) => [card.periodCode, card]));
   const timelineEvents = timeline
@@ -160,18 +231,29 @@ export default async function HomePage() {
 
   return (
     <PublicShell>
+      {/* Cinta de épocas: FILTRA el home en vez de salir de él. Cada época es un
+          enlace a /?epoca=CODE, así que funciona sin JavaScript, se puede
+          compartir y el botón atrás hace lo esperado. */}
       <div className="hp-atlas" aria-label="Recorrer por época">
         <div className="hp-atlas-inner">
-          <div className="hp-atlas-count">{archive.epocas} épocas</div>
+          <div className="hp-atlas-count">
+            {epoca ? (
+              <Link href="/" className="hp-atlas-reset">Todas las épocas</Link>
+            ) : (
+              `${archive.epocas} épocas`
+            )}
+          </div>
           <div className="hp-atlas-track">
             {ATLAS_CODES.map((code) => {
               const period = PERIODS[code];
-              const card = epocaByCode.get(code);
+              const active = epoca ? code === epoca : code === hero?.periodCode;
               return (
                 <Link
                   key={code}
-                  href={card?.href ?? `/linea-de-tiempo?p=${code}`}
-                  className={code === hero?.periodCode ? "is-active" : ""}
+                  href={code === epoca ? "/" : `/?epoca=${code}`}
+                  scroll={false}
+                  aria-current={code === epoca ? "true" : undefined}
+                  className={active ? "is-active" : ""}
                   style={{ "--period-color": getPeriodColor(code) } as React.CSSProperties}
                 >
                   <span className="hp-atlas-label">{period.label}</span>
@@ -184,6 +266,19 @@ export default async function HomePage() {
         </div>
       </div>
 
+      {epoca ? (
+        <div className="hp-filter-note">
+          <span style={{ "--period-color": getPeriodColor(epoca) } as React.CSSProperties}>
+            {PERIODS[epoca].label} · {PERIODS[epoca].yearRange}
+          </span>
+          <b>{periodPieces.length} {periodPieces.length === 1 ? "pieza" : "piezas"}</b>
+          {epocaByCode.get(epoca) ? (
+            <Link href={epocaByCode.get(epoca)!.href}>Leer la época <Arrow /></Link>
+          ) : null}
+          <Link href={`/linea-de-tiempo?p=${epoca}`}>Ver en la línea de tiempo <Arrow /></Link>
+        </div>
+      ) : null}
+
       <div className="hp-mobile-years" aria-label="Anclas cronológicas">
         {["1499", "1810", "1948", "1991", "hoy"].map((year, index) => (
           <span key={year} className={index === 0 ? "is-active" : ""}><b>{year}</b><i /></span>
@@ -192,7 +287,7 @@ export default async function HomePage() {
 
       {hero ? (
         <section className="hp-hero">
-          <div className="hp-hero-media">{cardImage(hero.imageUrl, hero.title, "hp-hero-image", true)}</div>
+          <div className="hp-hero-media">{cardImage(hero.imageUrl, hero.title, "hp-hero-image", true, 1400)}</div>
           <div className="hp-hero-copy">
             <div className="hp-kicker">{hero.kicker} <span>·</span> {hero.periodCode ? PERIODS[hero.periodCode as PeriodCode]?.label : "Transversal"}</div>
             <h1>{hero.title}</h1>
@@ -235,7 +330,7 @@ export default async function HomePage() {
           <div className="hp-index-list">
             <Link href="/hechos" className="hp-index-row">
               <b>{archive.hechos}</b><div><h3>Hechos</h3><p>Acontecimientos con fecha, lugares, protagonistas, causas y consecuencias.</p></div><Arrow />
-              <div className="hp-index-media">{cardImage(hechos[0]?.imageUrl ?? null, hechos[0]?.titulo ?? "Hechos")}</div>
+              <div className="hp-index-media">{cardImage(hechos[0]?.imageUrl ?? null, hechos[0]?.titulo ?? "Hechos", "", false, 320)}</div>
             </Link>
             <Link href="/epocas" className="hp-index-row">
               <b>{archive.epocas}</b><div><h3>Épocas</h3><p>Períodos con panorama, hitos, actores y legado.</p></div><Arrow />
@@ -243,7 +338,7 @@ export default async function HomePage() {
             </Link>
             <Link href="/personas" className="hp-index-row">
               <b>{archive.biografias}</b><div><h3>Biografías</h3><p>Personas con historia propia, fuentes y conexiones.</p></div><Arrow />
-              <div className="hp-index-portraits">{biographies.map((card) => <span key={card.id}>{cardImage(card.imageUrl, card.titulo)}</span>)}</div>
+              <div className="hp-index-portraits">{biographies.map((card) => <span key={card.id}>{cardImage(card.imageUrl, card.titulo, "", false, 160)}</span>)}</div>
             </Link>
             <Link href="/ensayos" className="hp-index-row">
               <b>{archive.preguntas}</b><div><h3>Pregunta</h3><p>Una lectura razonada desde las fuentes.</p></div><Arrow />
@@ -272,14 +367,20 @@ export default async function HomePage() {
             <div className="hp-side-head">
               <span>03</span>
               <h2>Hechos en secuencia</h2>
-              {home.collection?.title ? <p>{home.collection.title}</p> : null}
-              <Link href="/hechos">Ver los {archive.hechos} hechos <Arrow /></Link>
+              {epoca ? (
+                <p>Los hechos de {PERIODS[epoca].label}, en orden cronológico.</p>
+              ) : home.collection?.title ? (
+                <p>{home.collection.title}</p>
+              ) : null}
+              <Link href={epoca ? `/hechos?periodo=${epoca}` : "/hechos"}>
+                {epoca ? "Ver los hechos de la época" : `Ver los ${archive.hechos} hechos`} <Arrow />
+              </Link>
             </div>
             <div className="hp-sequence-list">
               {sequence.map((card) => (
                 <article key={card.id} className="hp-sequence-item">
                   <div className="hp-sequence-year">{card.yearLabel ?? "—"}<i /></div>
-                  <Link href={card.href} className="hp-sequence-image">{cardImage(card.imageUrl, card.title)}</Link>
+                  <Link href={card.href} className="hp-sequence-image">{cardImage(card.imageUrl, card.title, "", false, 640)}</Link>
                   <div className="hp-sequence-copy">
                     <h3><Link href={card.href}>{card.title}</Link></h3>
                     {card.summary ? <p>{card.summary}</p> : null}
@@ -327,7 +428,7 @@ export default async function HomePage() {
                 <div className="hp-biography-list">
                   {biographies.map((card) => (
                     <Link key={card.id} href={card.href}>
-                      {cardImage(card.imageUrl, card.titulo)}
+                      {cardImage(card.imageUrl, card.titulo, "", false, 160)}
                       <span><strong>{card.titulo}</strong><small>{card.meta} · {card.periodCode ? PERIODS[card.periodCode as PeriodCode]?.yearRange : ""}</small></span>
                     </Link>
                   ))}
@@ -349,7 +450,7 @@ export default async function HomePage() {
         <section className="hp-latest">
           <div className="hp-side-head">
             <span>06</span>
-            <h2>Lo recién publicado</h2>
+            <h2>{epoca ? `Todo sobre ${PERIODS[epoca].label}` : "Lo recién publicado"}</h2>
             <p>Las últimas piezas añadidas al archivo.</p>
             <Link href="/archivo">Abrir todo el archivo <Arrow /></Link>
           </div>

@@ -2,7 +2,10 @@ import Link from "next/link";
 import { getPeriodColor } from "@/lib/design-tokens";
 import type { PeriodHub, HubPiece, EntityChip } from "@/lib/public-data";
 import "@/components/public/wiki.css";
+import { imageAt } from "@/lib/image-url";
 
+/** Los hechos son la conexión principal de una época: se muestran más y mejor. */
+const HECHO_PREVIEW_LIMIT = 6;
 const PIECE_PREVIEW_LIMIT = 4;
 const ENTITY_PREVIEW_LIMIT = 6;
 
@@ -28,6 +31,52 @@ function PieceList({ items }: { items: HubPiece[] }) {
             <span className="k">{KIND_LABEL[p.kind] ?? p.kind}</span>
           </span>
         </Link>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Los hechos de la época, referenciados de verdad: portada, año, bajante y los
+ * protagonistas que ya tienen biografía. Antes eran una línea con el título, que
+ * no daba ninguna razón para entrar. Es el tejido época → hecho → personaje.
+ */
+function HechoCards({ items, color }: { items: HubPiece[]; color: string }) {
+  return (
+    <div className="hub-hechos">
+      {items.map((p) => (
+        <article key={p.href} className="hub-hecho">
+          <Link href={p.href} className="hub-hecho-main">
+            {p.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imageAt(p.imageUrl, 320)!} alt="" aria-hidden loading="lazy" className="hub-hecho-img" />
+            ) : (
+              <span className="hub-hecho-img is-empty" aria-hidden />
+            )}
+            <span className="hub-hecho-copy">
+              <span className="hub-hecho-year" style={{ color }}>
+                {p.yearLabel ?? yearLabel(p.anio)}
+              </span>
+              <span className="hub-hecho-title">{p.titulo}</span>
+              {p.resumen && <span className="hub-hecho-sum">{p.resumen}</span>}
+            </span>
+          </Link>
+          {p.protagonistas.length > 0 && (
+            <div className="hub-hecho-prota">
+              {p.protagonistas.map((e) => (
+                <Link key={e.slug} href={e.href} className="hub-prota">
+                  {e.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imageAt(e.imageUrl, 160)!} alt="" aria-hidden loading="lazy" />
+                  ) : (
+                    <span className="dot" style={{ background: color }} aria-hidden />
+                  )}
+                  {e.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </article>
       ))}
     </div>
   );
@@ -92,7 +141,7 @@ export function PeriodHubSections({
   periodCode: string | null;
 }) {
   const color = periodCode ? getPeriodColor(periodCode) : "var(--fg-dim)";
-  const hechos = hub.hechos.slice(0, PIECE_PREVIEW_LIMIT);
+  const hechos = hub.hechos.slice(0, HECHO_PREVIEW_LIMIT);
   const ensayos = hub.ensayos.slice(0, PIECE_PREVIEW_LIMIT);
   const personas = hub.personas.slice(0, ENTITY_PREVIEW_LIMIT);
   const lugares = hub.lugares.slice(0, ENTITY_PREVIEW_LIMIT);
@@ -131,7 +180,7 @@ export function PeriodHubSections({
           shown={hechos.length}
           exploreHref={periodCode ? `/hechos${periodQuery}` : "/hechos"}
         >
-          <PieceList items={hechos} />
+          <HechoCards items={hechos} color={color} />
         </Section>
       )}
       {hub.ensayos.length > 0 && (
@@ -159,7 +208,9 @@ export function PeriodHubSections({
           title="Lugares"
           count={hub.counts.lugares}
           shown={lugares.length}
-          exploreHref={periodCode ? `/lugares${periodQuery}` : "/lugares"}
+          // Los lugares ya no se organizan por época (un lugar no pertenece a una),
+          // así que su índice no acepta ?periodo — se enlaza entero.
+          exploreHref="/lugares"
         >
           <ChipRow items={lugares} color={color} />
         </Section>

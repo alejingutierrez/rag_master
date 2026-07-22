@@ -17,7 +17,13 @@ export const PUBLIC_PAGE_PREFIXES = [
   "/preguntas",
   "/hechos",
   "/linea-de-tiempo",
+  "/mapa",
+  "/buscar",
   "/acerca",
+  "/autor",
+  "/como-trabajamos",
+  "/fuentes",
+  "/criterios-editoriales",
   "/colecciones",
 ];
 

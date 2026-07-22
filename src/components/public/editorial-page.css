@@ -1,0 +1,99 @@
+/*
+ * Páginas editoriales del proyecto (/acerca, /autor, /como-trabajamos,
+ * /fuentes, /criterios-editoriales). Son páginas de texto largo: heredan el
+ * sistema del sitio (blanco editorial, display serif para títulos, mono para
+ * metadatos) y sólo añaden lo que necesitan: medida de línea cómoda, ritmo
+ * vertical por secciones y un raíl lateral que las mantiene unidas como
+ * conjunto.
+ */
+
+.edp-wrap { max-width: 1120px; margin: 0 auto; padding: 0 34px 100px; }
+@media (max-width: 640px) { .edp-wrap { padding: 0 18px 68px; } }
+
+/* ── Cabecera ──────────────────────────────────────────────────────────── */
+.edp-head { max-width: 800px; padding: 56px 0 0; }
+@media (max-width: 640px) { .edp-head { padding-top: 38px; } }
+.edp-kick { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .14em; color: var(--fg-subtle); margin-bottom: 16px; }
+.edp-title { font-family: var(--font-display); font-weight: 400; font-size: clamp(38px, 6.2vw, 66px); line-height: 1.02; letter-spacing: -.025em; margin: 0; color: var(--fg); text-wrap: balance; }
+.edp-stand { font-family: var(--font-display); font-style: italic; font-size: clamp(19px, 2.4vw, 23px); line-height: 1.4; color: var(--fg-muted); margin: 20px 0 0; max-width: 44ch; }
+
+/* Tira de datos escuetos bajo el título (ficha mínima, sin retrato). */
+.edp-strip { display: flex; flex-wrap: wrap; gap: 6px 13px; margin: 26px 0 0; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); max-width: 800px; }
+.edp-strip span { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .11em; color: var(--fg-muted); }
+.edp-strip span + span::before { content: "· "; color: var(--fg-faint); }
+
+/* ── Cuerpo: columna de lectura + raíl del conjunto ────────────────────── */
+.edp-body { display: grid; grid-template-columns: minmax(0, 700px) 210px; gap: 0 56px; padding-top: 40px; }
+@media (max-width: 940px) { .edp-body { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+
+.edp-col { min-width: 0; }
+
+/* Medida de lectura ~68 caracteres, algo más aireada que la prosa de ficha. */
+.edp-prose { max-width: 68ch; line-height: 1.72; }
+.edp-prose p { margin: 0 0 1.15em; }
+.edp-prose p:last-child { margin-bottom: 0; }
+.edp-prose ul { margin: 0 0 1.15em; padding-left: 0; list-style: none; }
+.edp-prose ul > li { position: relative; padding-left: 22px; margin-bottom: .6em; }
+.edp-prose ul > li::before { content: "—"; position: absolute; left: 0; color: var(--fg-faint); }
+
+/* ── Secciones numeradas ───────────────────────────────────────────────── */
+.edp-sec { margin-top: 54px; }
+.edp-sec:first-child { margin-top: 0; }
+.edp-sec-n { display: block; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--accent); border-top: 1px solid var(--fg); padding-top: 13px; margin-bottom: 11px; }
+.edp-h2 { font-family: var(--font-display); font-weight: 400; font-size: clamp(27px, 3.6vw, 35px); line-height: 1.08; letter-spacing: -.022em; margin: 0 0 18px; color: var(--fg); text-wrap: balance; }
+.edp-h3 { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 22px; line-height: 1.2; letter-spacing: -.012em; margin: 32px 0 10px; color: var(--fg); }
+
+/* Aseveración destacada: una sola línea que carga el peso del argumento. */
+.edp-rule { margin: 34px 0; padding: 2px 0 2px 22px; border-left: 2px solid var(--accent); font-family: var(--font-display); font-style: italic; font-size: clamp(21px, 2.6vw, 25px); line-height: 1.3; letter-spacing: -.015em; color: var(--fg); max-width: 34ch; }
+
+/* Nota al pie de sección, en sans pequeña (remisiones a otras páginas). */
+.edp-note { font-family: var(--font-sans); font-size: 13px; line-height: 1.6; color: var(--fg-muted); margin: 26px 0 0; max-width: 62ch; }
+.edp-note a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+.edp-note a:hover { border-bottom-color: var(--accent); }
+
+/* ── Pasos numerados (recorrido de una pieza) ──────────────────────────── */
+.edp-steps { list-style: none; margin: 26px 0 0; padding: 0; border-top: 1px solid var(--fg); }
+.edp-step { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 0 18px; padding: 22px 0 24px; border-bottom: 1px solid var(--line); }
+.edp-step-n { font-family: var(--font-mono); font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--accent); padding-top: 7px; }
+.edp-step-t { font-family: var(--font-display); font-weight: 400; font-size: 23px; line-height: 1.15; letter-spacing: -.015em; margin: 0 0 9px; color: var(--fg); }
+.edp-step-d { font-family: var(--font-display); font-size: 17.5px; line-height: 1.62; color: var(--fg-muted); margin: 0; max-width: 58ch; }
+.edp-step-d + .edp-step-d { margin-top: .7em; }
+@media (max-width: 560px) { .edp-step { grid-template-columns: minmax(0, 1fr); } .edp-step-n { padding: 0 0 8px; } }
+
+/* ── Definiciones (tipos de pieza, datos del autor) ────────────────────── */
+.edp-defs { border-top: 1px solid var(--fg); margin: 26px 0 0; }
+.edp-def { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 0 20px; padding: 16px 0 18px; border-bottom: 1px solid var(--line); }
+.edp-def-k { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--fg-subtle); padding-top: 5px; }
+.edp-def-v { min-width: 0; font-family: var(--font-display); font-size: 17.5px; line-height: 1.58; color: var(--fg-1); }
+.edp-def-v a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+.edp-def-v a:hover { border-bottom-color: var(--accent); }
+.edp-def-v .edp-def-go { display: block; margin-top: 8px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .05em; border-bottom: 0; }
+@media (max-width: 560px) { .edp-def { grid-template-columns: minmax(0, 1fr); } .edp-def-k { padding: 0 0 7px; } }
+
+/* ── Raíl: el conjunto de páginas del proyecto ─────────────────────────── */
+.edp-rail { align-self: start; position: sticky; top: 94px; }
+@media (max-width: 940px) { .edp-rail { position: static; margin-top: 56px; padding-top: 26px; border-top: 1px solid var(--line); } }
+.edp-rail-t { display: block; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--fg-subtle); margin-bottom: 12px; }
+.edp-rail-l { display: block; padding: 10px 0; border-top: 1px solid var(--line); font-family: var(--font-sans); font-size: 13px; line-height: 1.35; color: var(--fg-muted); text-decoration: none; }
+.edp-rail-l:hover { color: var(--accent); }
+.edp-rail-l[aria-current="page"] { color: var(--fg); }
+.edp-rail-l[aria-current="page"]::before { content: "› "; color: var(--accent); }
+
+/* ── Pie de página editorial: firma + salida a las otras páginas ───────── */
+.edp-foot { max-width: 966px; margin-top: 64px; }
+.edp-sign { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; color: var(--fg-faint); padding-top: 18px; border-top: 1px solid var(--line); }
+
+.edp-next { margin-top: 34px; border-top: 1px solid var(--fg); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.edp-next a { display: block; padding: 20px 22px 24px 0; border-bottom: 1px solid var(--line); text-decoration: none; }
+.edp-next a:nth-child(odd) { border-right: 1px solid var(--line); }
+.edp-next a:nth-child(even) { padding-left: 22px; }
+.edp-next-k { display: block; font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .12em; color: var(--fg-faint); margin-bottom: 9px; }
+.edp-next-t { display: block; font-family: var(--font-display); font-size: 22px; line-height: 1.12; letter-spacing: -.015em; color: var(--fg); }
+.edp-next a:hover .edp-next-t { color: var(--accent); }
+.edp-next-d { display: block; font-family: var(--font-sans); font-size: 12.5px; line-height: 1.5; color: var(--fg-muted); margin-top: 8px; max-width: 40ch; }
+@media (max-width: 640px) {
+  .edp-next { grid-template-columns: minmax(0, 1fr); }
+  .edp-next a:nth-child(odd) { border-right: 0; }
+  .edp-next a:nth-child(even) { padding-left: 0; }
+  .edp-next a { padding-right: 0; }
+}
