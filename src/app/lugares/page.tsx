@@ -9,7 +9,7 @@ export const metadata = buildMetadata({
   seo: {
     metaTitle: "Lugares",
     metaDescription:
-      "Los territorios, regiones y ciudades donde transcurre la historia de Colombia — con las piezas que los tocan y sus relaciones.",
+      "Los territorios, regiones y ciudades de la historia de Colombia con artículo propio publicado — y las piezas del archivo que los atraviesan.",
     keywords: ["geografía histórica", "territorios", "regiones", "historia de Colombia"],
   },
   path: "/lugares",

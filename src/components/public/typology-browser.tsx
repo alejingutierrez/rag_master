@@ -106,8 +106,9 @@ export function TypologyBrowser({
                     <div className="tix-thumb">
                       {/* Miniatura de rejilla: se pide al ancho real, no la portada
                           entera (el índice de hechos son 200+ tarjetas). */}
+                      {/* Decorativa: el título va debajo, dentro del mismo enlace. */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={imageAt(c.imageUrl, 480)!} alt={c.titulo} loading="lazy" />
+                      <img src={imageAt(c.imageUrl, 480)!} alt="" aria-hidden loading="lazy" />
                     </div>
                   )}
                   <div className="tix-kmeta">

@@ -1489,11 +1489,19 @@ function registryToPublic(
 }
 
 /** Relaciones (co-ocurrencia en piezas PUBLICADAS) de un acc → EntityRelation[]. */
-function relatedFromAcc(acc: EntityAccum, index: EntityIndex): EntityRelation[] {
+function relatedFromAcc(
+  acc: EntityAccum,
+  index: EntityIndex,
+  dedicatedSlugs: Record<EntityType, Set<string>>,
+): EntityRelation[] {
   return [...acc.related.entries()]
     .map(([k, shared]) => {
       const o = index.byKey.get(k);
       if (!o) return null;
+      // Pasa el gate como todo lo demás: la co-ocurrencia detecta a cualquier
+      // entidad nombrada, pero solo se enlaza la que tiene artículo propio. Sin
+      // este filtro, la mayoría de los chips "Relacionadas" caían en 404.
+      if (!dedicatedSlugs[o.type].has(o.slug)) return null;
       return { name: canonicalName(o), slug: o.slug, type: o.type, href: entityPath(o.type, o.slug), shared } as EntityRelation;
     })
     .filter((x): x is EntityRelation => !!x)
@@ -1800,7 +1808,7 @@ export async function getEntityNode(slug: string, type?: EntityType): Promise<En
       findRegistryEntity(slug, type),
       getPublishedEntityData(),
     ]);
-    if (!e) return pieceEntityNode(slug, index, type);
+    if (!e) return pieceEntityNode(slug, index, dedicatedSlugs, type);
 
     // La RUTA existe solo si la entidad tiene su propia pieza publicada. Antes
     // bastaba una mención, lo que abría miles de páginas casi vacías que además
@@ -1820,7 +1828,7 @@ export async function getEntityNode(slug: string, type?: EntityType): Promise<En
     return {
       ...registryToPublic(e, index, dedicatedInfo),
       pieces: pieceRefs,
-      related: acc ? relatedFromAcc(acc, index) : [],
+      related: acc ? relatedFromAcc(acc, index, dedicatedSlugs) : [],
     };
   } catch (err) {
     console.error(`[public-data] getEntityNode(${slug}) falló:`, err);
@@ -1833,7 +1841,12 @@ export async function getEntityNode(slug: string, type?: EntityType): Promise<En
  * registro canónico (nomenclatura editorial más específica que la minada). Exige
  * `hasFicha` — sin pieza propia no hay ruta, igual que en el camino principal.
  */
-function pieceEntityNode(slug: string, index: EntityIndex, type?: EntityType): EntityNode | null {
+function pieceEntityNode(
+  slug: string,
+  index: EntityIndex,
+  dedicatedSlugs: Record<EntityType, Set<string>>,
+  type?: EntityType,
+): EntityNode | null {
   const { byKey, piecesById } = index;
   let acc: EntityAccum | null = null;
   for (const a of byKey.values()) {
@@ -1860,7 +1873,7 @@ function pieceEntityNode(slug: string, index: EntityIndex, type?: EntityType): E
     resumen: acc.resumen,
     imageUrl: acc.imageUrl,
     pieces: pieceRefs,
-    related: relatedFromAcc(acc, index),
+    related: relatedFromAcc(acc, index, dedicatedSlugs),
   };
 }
 

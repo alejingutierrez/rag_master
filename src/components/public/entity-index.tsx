@@ -44,7 +44,6 @@ export function EntityBrowser({
   emptyNote,
   typeLabel,
   color,
-  total,
   showPeriodFilter = true,
 }: {
   entities: PublicEntity[];
@@ -54,8 +53,6 @@ export function EntityBrowser({
   emptyNote: string;
   typeLabel: string;
   color: string;
-  /** Tamaño total del directorio conectado (para vistas filtradas por época). */
-  total?: number;
   /** false → sin épocas: orden alfabético + filtro por inicial (lugares). */
   showPeriodFilter?: boolean;
 }) {
@@ -116,9 +113,7 @@ export function EntityBrowser({
       ? `${filtered.length} de ${entities.length}`
       : selectedPeriodo
         ? `${filtered.length} en esta época`
-        : total && total > entities.length
-          ? `${entities.length.toLocaleString("es-CO")} en esta selección · ${total.toLocaleString("es-CO")} en el archivo`
-          : `${entities.length} con historia propia`;
+        : `${entities.length} con historia propia`;
 
   const limpiar = () => {
     setPeriodo(null);
@@ -187,8 +182,10 @@ export function EntityBrowser({
                 {/* La portada de la pieza dedicada es el retrato/vista de la entidad. */}
                 <div className={"ent-fig" + (e.type === "persona" ? " is-retrato" : "")}>
                   {e.imageUrl ? (
+                    /* Decorativa: el nombre ya está en el cuerpo de la tarjeta y el
+                       enlace lo anuncia; con alt se leería dos veces. */
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={imageAt(e.imageUrl, 480)!} alt={e.name} loading="lazy" />
+                    <img src={imageAt(e.imageUrl, 480)!} alt="" aria-hidden loading="lazy" />
                   ) : (
                     <span className="ent-fig-ph" aria-hidden>
                       {inicialVisible(e.name)}

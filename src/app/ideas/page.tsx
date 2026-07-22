@@ -1,6 +1,6 @@
 import { PublicShell } from "@/components/public/public-shell";
 import { EntityBrowser } from "@/components/public/entity-index";
-import { getConnectedEntityDirectory, getPeriodEntityUniverse, getConnectedEntityCounts, ENTITY_TYPE_META } from "@/lib/public-data";
+import { getConnectedEntityDirectory, getPeriodEntityUniverse, ENTITY_TYPE_META } from "@/lib/public-data";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { buildMetadata } from "@/lib/seo";
 
@@ -10,7 +10,7 @@ export const metadata = buildMetadata({
   seo: {
     metaTitle: "Ideas",
     metaDescription:
-      "Los procesos, ideologías, instituciones y nociones que estructuran la historia de Colombia — con las piezas que las trabajan y sus relaciones.",
+      "Los procesos, ideologías e instituciones que estructuran la historia de Colombia con artículo propio publicado — y las piezas que los trabajan.",
     keywords: ["conceptos históricos", "procesos", "ideologías", "instituciones", "historia de Colombia"],
   },
   path: "/ideas",
@@ -29,16 +29,14 @@ export default async function IdeasPage({
 }) {
   const sp = (await searchParams) ?? {};
   const periodo = validPeriod(sp.periodo);
-  const [entities, counts] = await Promise.all([
-    periodo ? getPeriodEntityUniverse("idea", periodo) : getConnectedEntityDirectory("idea"),
-    getConnectedEntityCounts(),
-  ]);
+  const entities = periodo
+    ? await getPeriodEntityUniverse("idea", periodo)
+    : await getConnectedEntityDirectory("idea");
   const m = ENTITY_TYPE_META.idea;
   return (
     <PublicShell>
       <EntityBrowser
         entities={entities}
-        total={counts.idea}
         kicker="Qué estaba en juego"
         title="Ideas"
         intro="Procesos, ideologías e instituciones con pieza propia en el archivo — y las historias que permiten pensarlas."

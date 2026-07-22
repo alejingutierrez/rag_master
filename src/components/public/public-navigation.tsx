@@ -63,6 +63,8 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
     { href: "/hechos", label: "Hechos", meta: String(stats.hechos) },
     { href: "/epocas", label: "Épocas", meta: String(stats.epocas) },
     { href: "/linea-de-tiempo", label: "Línea de tiempo", meta: `${stats.timelineEvents} eventos` },
+    // El mapa existía sin ninguna puerta de entrada en la navegación.
+    { href: "/mapa", label: "Mapa", meta: "El archivo sobre el territorio" },
     // Los directorios solo listan entidades con su propio artículo publicado: el
     // conteo del menú tiene que ser ese mismo, no el de piezas por tipología.
     { href: "/personas", label: "Personas", meta: `${stats.personas} con historia propia` },

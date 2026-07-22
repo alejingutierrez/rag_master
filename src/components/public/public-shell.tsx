@@ -55,6 +55,7 @@ export async function PublicShell({ children }: { children: React.ReactNode }) {
             <Link href="/hechos">Hechos</Link>
             <Link href="/epocas">Épocas</Link>
             <Link href="/linea-de-tiempo">Línea de tiempo</Link>
+            <Link href="/mapa">Mapa</Link>
             <Link href="/archivo">Todo el archivo</Link>
           </div>
           <div className="ps-foot-col">
