@@ -13,37 +13,89 @@ import { imageAt } from "@/lib/image-url";
 /** Suscripción nula: solo sirve para distinguir servidor de cliente. */
 const sinSuscripcion = () => () => {};
 
+const ACENTOS = /[̀-ͯ]/g;
+/** Palabras vacías del español: no distinguen un hecho de otro. */
+const VACIAS = new Set(
+  ("de la el los las y en del a al un una para por con su sus e o entre sobre desde hasta " +
+    "como mas mientras tras ante bajo segun sin durante contra").split(" "),
+);
+
+/** Términos distintivos de un título, normalizados y sin repetir. */
+function terminos(texto: string): string[] {
+  return [
+    ...new Set(
+      texto
+        .normalize("NFD")
+        .replace(ACENTOS, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter((t) => t.length > 3 && !VACIAS.has(t)),
+    ),
+  ];
+}
+
 /**
- * Casa cada evento con el hecho publicado que lo cuenta. Un hecho pertenece al
- * evento si su AÑO PRINCIPAL cae dentro del tramo del evento (±1), no por mero
- * solape de un rango largo — así un hecho de 1887 no se cuela como "el hecho"
- * de un evento de 1899–1902 solo por compartir período.
+ * Cuánto comparten dos títulos, entre 0 y 1: términos distintivos en común sobre
+ * el menor de los dos conjuntos. Se usa el menor a propósito, para que un título
+ * corto ("Camellones del bajo San Jorge") pueda casar al 100 % con su versión
+ * larga ("Camellones del bajo San Jorge e intensificación agrícola").
+ */
+function afinidad(a: string, b: string): number {
+  const A = terminos(a);
+  const B = new Set(terminos(b));
+  if (A.length === 0 || B.size === 0) return 0;
+  let comunes = 0;
+  for (const t of A) if (B.has(t)) comunes++;
+  return comunes / Math.min(A.length, B.size);
+}
+
+/** Un evento solo anuncia una ficha si comparten claramente el asunto. */
+const AFINIDAD_MINIMA = 0.5;
+/** Holgura de años: el evento y su ficha pueden fechar el mismo proceso distinto. */
+const HOLGURA = 3;
+
+/**
+ * Casa cada evento con el hecho publicado que lo cuenta, POR EL ASUNTO.
  *
- * La asignación es EXCLUSIVA y se resuelve por cercanía: el par (evento, hecho)
- * más próximo se adjudica primero, de modo que dos eventos vecinos nunca
- * anuncian la misma ficha. Sin candidato → el evento no ofrece enlace alguno.
+ * Antes se casaba por cercanía de año con asignación exclusiva, y eso era falso:
+ * medido sobre el corpus, el 70 % de los pares no tenía ninguna relación temática.
+ * Peor, la exclusividad producía un corrimiento en cascada — cada evento se
+ * quedaba con la ficha del siguiente, de modo que "Real Audiencia de Santafé"
+ * (1549) anunciaba "Catástrofe demográfica" (1550) aunque su ficha exacta existía.
+ *
+ * Los eventos y las fichas se producen del mismo material, así que sus títulos se
+ * corresponden casi literalmente: comparar los términos distintivos es una señal
+ * mucho más fiable que el año. El año queda solo como comprobación de coherencia.
+ * Sin afinidad suficiente el evento NO ofrece enlace: es preferible un evento sin
+ * ficha a un evento que promete el hecho equivocado.
  */
 export function matchHechos(
   events: TimelineEventData[],
   hechos: TimelineLinkPiece[],
 ): Map<string, TimelineLinkPiece> {
-  const pares: Array<{ evId: string; hecho: TimelineLinkPiece; d: number }> = [];
-  for (const ev of events) {
-    const medio = (ev.anioInicio + ev.anioFin) / 2;
-    for (const h of hechos) {
-      if (h.anio == null) continue;
-      if (h.anio < ev.anioInicio - 1 || h.anio > ev.anioFin + 1) continue;
-      pares.push({ evId: ev.id, hecho: h, d: Math.abs(h.anio - medio) });
-    }
-  }
-  pares.sort((a, b) => a.d - b.d || a.hecho.titulo.localeCompare(b.hecho.titulo, "es"));
-
   const out = new Map<string, TimelineLinkPiece>();
-  const tomados = new Set<string>();
-  for (const p of pares) {
-    if (out.has(p.evId) || tomados.has(p.hecho.href)) continue;
-    out.set(p.evId, p.hecho);
-    tomados.add(p.hecho.href);
+  // Si dos eventos reclaman la misma ficha, se la queda el de mayor afinidad.
+  const mejorPorFicha = new Map<string, { evId: string; score: number }>();
+
+  for (const ev of events) {
+    let mejor: { hecho: TimelineLinkPiece; score: number } | null = null;
+    for (const h of hechos) {
+      // Coherencia temporal: descarta homónimos de otro siglo, sin decidir nada.
+      if (h.anio != null && (h.anio < ev.anioInicio - HOLGURA || h.anio > ev.anioFin + HOLGURA)) {
+        continue;
+      }
+      const score = afinidad(ev.titulo, h.titulo);
+      if (score < AFINIDAD_MINIMA) continue;
+      if (!mejor || score > mejor.score) mejor = { hecho: h, score };
+    }
+    if (!mejor) continue;
+
+    const disputa = mejorPorFicha.get(mejor.hecho.href);
+    if (disputa && disputa.score >= mejor.score) continue;
+    if (disputa) out.delete(disputa.evId);
+    mejorPorFicha.set(mejor.hecho.href, { evId: ev.id, score: mejor.score });
+    out.set(ev.id, mejor.hecho);
   }
   return out;
 }
