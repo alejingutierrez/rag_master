@@ -341,7 +341,12 @@ export default async function HomePage({
               <div className="hp-index-portraits">{biographies.map((card) => <span key={card.id}>{cardImage(card.imageUrl, card.titulo, "", false, 160)}</span>)}</div>
             </Link>
             <Link href="/ensayos" className="hp-index-row">
-              <b>{archive.preguntas}</b><div><h3>Pregunta</h3><p>Una lectura razonada desde las fuentes.</p></div><Arrow />
+              <b>{archive.preguntas}</b>
+              <div>
+                <h3>{archive.preguntas === 1 ? "Pregunta" : "Preguntas"}</h3>
+                <p>{archive.preguntas === 1 ? "Una lectura razonada desde las fuentes." : "Lecturas razonadas desde las fuentes."}</p>
+              </div>
+              <Arrow />
               <div className="hp-index-question">{hero?.title ?? "Lecturas del archivo"}</div>
             </Link>
           </div>
@@ -380,7 +385,10 @@ export default async function HomePage({
               {sequence.map((card) => (
                 <article key={card.id} className="hp-sequence-item">
                   <div className="hp-sequence-year">{card.yearLabel ?? "—"}<i /></div>
-                  <Link href={card.href} className="hp-sequence-image">{cardImage(card.imageUrl, card.title, "", false, 640)}</Link>
+                  {/* Enlace decorativo: repite el destino del título, así que se
+                      saca del foco y del árbol accesible (si la pieza no trae
+                      portada quedaba además sin nombre accesible). */}
+                  <Link href={card.href} className="hp-sequence-image" tabIndex={-1} aria-hidden>{cardImage(card.imageUrl, card.title, "", false, 640)}</Link>
                   <div className="hp-sequence-copy">
                     <h3><Link href={card.href}>{card.title}</Link></h3>
                     {card.summary ? <p>{card.summary}</p> : null}
@@ -419,12 +427,13 @@ export default async function HomePage({
           <div className="hp-side-head">
             <span>05</span>
             <h2>El archivo conectado</h2>
-            <p>Biografías propias y entidades presentes en piezas publicadas.</p>
+            <p>Personas, lugares e ideas con artículo propio, y las piezas que los atraviesan.</p>
           </div>
           <div className="hp-connected-body">
             {biographies.length ? (
               <div className="hp-biographies">
-                <div className="hp-subhead"><strong>Con historia propia</strong><span>{biographies.length} biografías publicadas</span></div>
+                {/* El rótulo cuenta TODO el directorio, no las tres que se ven. */}
+                <div className="hp-subhead"><strong>Con historia propia</strong><span>{personas.length} biografías publicadas</span></div>
                 <div className="hp-biography-list">
                   {biographies.map((card) => (
                     <Link key={card.id} href={card.href}>

@@ -162,8 +162,8 @@ export function PublicTimeline({
                           </span>
                           <span className="ptl-c">
                             {e.curated
-                              ? `${n(e.evidencia.nPreguntas)} menciones · curado`
-                              : `${n(e.evidencia.nPreguntas)} preguntas · ${n(e.evidencia.nLibros)} obras`}
+                              ? `${n(e.evidencia.nPreguntas)} ${e.evidencia.nPreguntas === 1 ? "mención" : "menciones"} · curado`
+                              : `${n(e.evidencia.nPreguntas)} ${e.evidencia.nPreguntas === 1 ? "pregunta" : "preguntas"} · ${n(e.evidencia.nLibros)} ${e.evidencia.nLibros === 1 ? "obra" : "obras"}`}
                           </span>
                           {hecho && <span className="ptl-tag">Ficha publicada</span>}
                         </span>

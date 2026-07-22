@@ -185,7 +185,7 @@ export function PeriodHubSections({
       )}
       {hub.ensayos.length > 0 && (
         <Section
-          title="Ensayos"
+          title="Lecturas"
           count={hub.counts.ensayos}
           shown={ensayos.length}
           exploreHref={periodCode ? `/ensayos${periodQuery}` : "/ensayos"}

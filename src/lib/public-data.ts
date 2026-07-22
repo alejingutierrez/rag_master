@@ -322,30 +322,27 @@ export async function getTypologyList(
   limit = 300,
 ): Promise<TypologyCard[]> {
   try {
-    const rows = await prisma.deliverable.findMany({
-      where: { ...PUBLISHED_WHERE, structuredData: { path: ["typology"], equals: typology } },
-      orderBy: { publishedAt: "desc" },
-      take: limit,
-      select: { id: true, structuredData: true, imageUrl: true, metadata: true },
-    });
+    // Se deriva del corpus ya cacheado en vez de consultar por su cuenta. La
+    // consulta propia traía `metadata` (5,2 MB) de hasta 300 filas, y la portada
+    // la llamaba tres veces: ~15 MB por render para datos que ya estaban en
+    // memoria. Todo lo que necesita la tarjeta vive ya en AnchoredPiece.
+    const pieces = await getAnchoredPieces();
     const cards: TypologyCard[] = [];
-    for (const r of rows) {
-      const s = normalizeStructured(r.structuredData);
-      if (!s) continue;
-      const anchor = resolveAnchor({ structured: s, taxonomy: taxOf(r.metadata) });
+    for (const p of pieces) {
+      if (p.kind !== typology || !p.slug) continue;
       cards.push({
-        id: r.id,
-        typology: s.typology,
-        slug: s.slug,
-        href: typologyPath(s),
-        titulo: s.titulo,
-        resumen: s.resumen,
-        periodCode: anchor.periodCode,
-        periodoOrden: anchor.periodoOrden,
-        anio: anchor.anio,
-        entidades: { personas: anchor.personas, lugares: anchor.lugares, ideas: anchor.ideas },
-        meta: cardMeta(s, anchor),
-        imageUrl: r.imageUrl ?? null,
+        id: p.id,
+        typology,
+        slug: p.slug,
+        href: p.href,
+        titulo: p.titulo,
+        resumen: p.resumen,
+        periodCode: p.periodCode,
+        periodoOrden: p.periodoOrden,
+        anio: p.anio,
+        entidades: { personas: p.personas, lugares: p.lugares, ideas: p.ideas },
+        meta: p.cardMeta,
+        imageUrl: p.imageUrl,
       });
     }
     cards.sort(
@@ -355,7 +352,9 @@ export async function getTypologyList(
           (b.anio ?? periodStartYear(b.periodCode) ?? 9999) ||
         a.titulo.localeCompare(b.titulo, "es"),
     );
-    return cards;
+    // El recorte va DESPUÉS de ordenar: así el límite se queda con las primeras
+    // cronológicamente, no con un subconjunto arbitrario del corpus.
+    return cards.slice(0, limit);
   } catch (err) {
     console.error(`[public-data] getTypologyList(${typology}) falló:`, err);
     return [];
@@ -799,6 +798,10 @@ export interface AnchoredPiece {
   personas: string[];
   lugares: string[];
   ideas: string[];
+  /** Slug de la ficha (cualquier tipología). Vacío si la pieza es solo un ensayo. */
+  slug: string;
+  /** Etiqueta corta de la tarjeta: fecha del hecho, rango de la época, tipo de entidad. */
+  cardMeta: string | null;
   entidadTipo: string | null; // Persona|Lugar|Concepto|Institución (solo fichas de entidad)
   entidadSlug: string | null; // slug de la ficha de entidad, si aplica
   /** Anclaje geográfico de la pieza (ver typology-schemas). Alimenta el mapa. */
@@ -818,39 +821,74 @@ export interface AnchoredPiece {
   sourceRef: { kind: string; key: string } | null;
 }
 
-/** Carga todas las piezas publicadas con su ancla resuelta. Base de la wikización. */
+/** Fila cruda de `loadAnchoredPieces`: solo los trozos de JSON que se usan. */
+interface AnchoredRow {
+  id: string;
+  templateId: string;
+  structuredData: unknown;
+  imageUrl: string | null;
+  publishedAt: Date | null;
+  userQuestion: string | null;
+  taxonomy: DeliverableTaxonomy | null;
+  docCount: number | null;
+  wordCount: number | null;
+  sourceRef: { kind?: unknown; key?: unknown } | null;
+  fragmentCount: number;
+  sourceDocumentIds: string[] | null;
+  periodoCode: string | null;
+  yearPrincipal: number | null;
+  pregunta: string | null;
+}
+
+/**
+ * Carga todas las piezas publicadas con su ancla resuelta. Base de la wikización.
+ *
+ * Va en SQL crudo a propósito. El `findMany` equivalente traía `chunksUsed`
+ * entero (6,6 MB, casi todo el TEXTO de cada fragmento) y `metadata` entera
+ * (5,2 MB, casi toda referencias de imagen) para acabar usando solo un conteo,
+ * unos ids de documento y cuatro campos. Aquí Postgres calcula el conteo y las
+ * referencias, y del resto se piden solo las rutas necesarias: el corpus completo
+ * baja de ~13 MB por carga en frío a una fracción.
+ */
 async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
-  const rows = await prisma.deliverable.findMany({
-    where: PUBLISHED_WHERE,
-    select: {
-      id: true,
-      templateId: true,
-      structuredData: true,
-      metadata: true,
-      imageUrl: true,
-      publishedAt: true,
-      chunksUsed: true,
-      userQuestion: true,
-      question: { select: { periodoCode: true, yearPrincipal: true, pregunta: true } },
-    },
-  });
+  const rows = await prisma.$queryRaw<AnchoredRow[]>`
+    SELECT
+      d.id,
+      d."templateId",
+      d."structuredData",
+      d."imageUrl",
+      d."publishedAt",
+      d."userQuestion",
+      d.metadata -> 'atelier' -> 'taxonomy'                       AS "taxonomy",
+      (d.metadata -> 'atelier' ->> 'docCount')::int               AS "docCount",
+      (d.metadata -> 'atelier' ->> 'wordCount')::int              AS "wordCount",
+      d.metadata -> 'sourceRef'                                   AS "sourceRef",
+      CASE WHEN jsonb_typeof(d."chunksUsed") = 'array'
+           THEN jsonb_array_length(d."chunksUsed") ELSE 0 END     AS "fragmentCount",
+      CASE WHEN jsonb_typeof(d."chunksUsed") = 'array' THEN (
+        SELECT array_agg(DISTINCT c ->> 'documentId')
+        FROM jsonb_array_elements(d."chunksUsed") AS c
+        WHERE c ->> 'documentId' IS NOT NULL
+      ) END                                                       AS "sourceDocumentIds",
+      q."periodoCode",
+      q."yearPrincipal",
+      q.pregunta
+    FROM deliverables d
+    LEFT JOIN questions q ON q.id = d."questionId"
+    WHERE d.status = 'COMPLETE'
+      AND d.source = 'atelier'
+      AND d."publishedAt" IS NOT NULL
+  `;
   const out: AnchoredPiece[] = [];
   for (const r of rows) {
     const s = normalizeStructured(r.structuredData);
-    const meta = (r.metadata ?? null) as Record<string, unknown> | null;
-    const atelier = meta?.atelier as Record<string, unknown> | undefined;
-    const chunks = Array.isArray(r.chunksUsed)
-      ? (r.chunksUsed as unknown as ChunkUsage[])
-      : [];
     const anchor = resolveAnchor({
       structured: s,
-      taxonomy: taxOf(r.metadata),
-      fallbackPeriodo: r.question?.periodoCode,
-      fallbackYear: r.question?.yearPrincipal,
+      taxonomy: r.taxonomy ?? undefined,
+      fallbackPeriodo: r.periodoCode ?? undefined,
+      fallbackYear: r.yearPrincipal ?? undefined,
     });
-    const rawRef = (r.metadata as Record<string, unknown> | null)?.sourceRef as
-      | { kind?: unknown; key?: unknown }
-      | undefined;
+    const rawRef = r.sourceRef ?? undefined;
     const sourceRef =
       rawRef && typeof rawRef.kind === "string" && typeof rawRef.key === "string"
         ? { kind: rawRef.kind, key: rawRef.key }
@@ -858,7 +896,7 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
     out.push({
       id: r.id,
       href: s ? typologyPath(s) : `/ensayos/${r.id}`,
-      titulo: s?.titulo ?? shortTitle(r.question?.pregunta ?? r.userQuestion ?? "Producción", 80),
+      titulo: s?.titulo ?? shortTitle(r.pregunta ?? r.userQuestion ?? "Producción", 80),
       resumen: s?.resumen ?? "",
       kind: s?.typology ?? "ensayo",
       templateId: r.templateId,
@@ -870,6 +908,8 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       personas: anchor.personas,
       lugares: anchor.lugares,
       ideas: anchor.ideas,
+      slug: s?.slug ?? "",
+      cardMeta: s ? cardMeta(s, anchor) : null,
       entidadTipo: s?.typology === "entidad" ? s.tipo : null,
       entidadSlug: s?.typology === "entidad" ? s.slug : null,
       lugarPrincipal: s?.lugarPrincipal ?? null,
@@ -886,16 +926,10 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
                 ? s.tesis
                 : "",
       publishedAt: r.publishedAt,
-      docCount: typeof atelier?.docCount === "number" ? atelier.docCount : null,
-      wordCount: typeof atelier?.wordCount === "number" ? atelier.wordCount : null,
-      fragmentCount: chunks.length,
-      sourceDocumentIds: [
-        ...new Set(
-          chunks
-            .map((chunk) => chunk.documentId)
-            .filter((id): id is string => typeof id === "string" && id.length > 0),
-        ),
-      ],
+      docCount: r.docCount,
+      wordCount: r.wordCount,
+      fragmentCount: Number(r.fragmentCount ?? 0),
+      sourceDocumentIds: (r.sourceDocumentIds ?? []).filter((id) => !!id),
       sourceRef,
     });
   }

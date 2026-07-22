@@ -21,7 +21,9 @@ const INDEX_HREF: Record<StructuredData["typology"], { href: string; label: stri
   hecho: { href: "/hechos", label: "Hechos" },
   epoca: { href: "/epocas", label: "Épocas" },
   entidad: { href: "/entidades", label: "Entidades" },
-  pregunta: { href: "/ensayos", label: "Ensayos" },
+  // El índice de /ensayos se llama «Lecturas» en toda la navegación: la miga y el
+  // pie de la ficha tienen que llamarlo igual.
+  pregunta: { href: "/ensayos", label: "Lecturas" },
 };
 
 function Tags({ items }: { items: string[] }) {

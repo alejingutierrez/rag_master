@@ -10,7 +10,7 @@ export const metadata = buildMetadata({
   seo: {
     metaTitle: "Personas, lugares e ideas",
     metaDescription:
-      "El tejido de la historia de Colombia: las personas, los lugares y las ideas que la habitan, conectados por dónde aparecen y con quién se relacionan.",
+      "El tejido de la historia de Colombia: las personas, los lugares y las ideas con artículo propio en el archivo, con las piezas donde aparecen y sus relaciones.",
     keywords: ["personajes históricos", "lugares", "conceptos", "historia de Colombia"],
   },
   path: "/entidades",
@@ -32,8 +32,9 @@ export default async function EntidadesPage() {
           <div className="tix-kick">El tejido de la historia</div>
           <h1 className="tix-title">Personas, lugares e ideas</h1>
           <p className="tix-intro">
-            Cada figura, territorio y proceso es un nodo: se conecta solo con las piezas donde
-            aparece y con las entidades con las que comparte historia.
+            Los tres directorios del archivo. Solo se listan las figuras, territorios y procesos
+            que ya tienen su propio artículo publicado, con las piezas donde aparecen y las
+            entidades con las que comparten historia.
           </p>
         </header>
 
@@ -46,7 +47,7 @@ export default async function EntidadesPage() {
                 <Link href={m.index}>
                   <div className="tix-kmeta">
                     <span className="tix-dot" style={{ background: m.color }} />
-                    {n} {n === 1 ? "conectada" : "conectadas"}
+                    {n} con historia propia
                   </div>
                   <div className="tix-ct">{m.plural}</div>
                   <div className="tix-cr">{desc}</div>
