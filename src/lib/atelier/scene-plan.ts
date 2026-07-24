@@ -105,7 +105,17 @@ function matchingPlace(title: string, ctx: ReferenceContext): string | null {
   return null;
 }
 
-function classifyReference(title: string, ctx: ReferenceContext): Pick<ReferenceBrief, "role" | "reason"> {
+function classifyReference(
+  title: string,
+  ctx: ReferenceContext,
+  identityVerified = false,
+): Pick<ReferenceBrief, "role" | "reason"> {
+  if (ctx.visualIntent === "retrato-publico" && identityVerified) {
+    return {
+      role: "portrait",
+      reason: "referencia verificada de la identidad exacta",
+    };
+  }
   if (GROUP_SCENE_RE.test(title)) {
     return {
       role: "people-scene",
@@ -150,7 +160,7 @@ export function buildReferenceBriefs(
 ): ReferenceBrief[] {
   return refs.map((ref, i) => {
     const title = ref.meta.title || "referencia visual";
-    const c = classifyReference(title, ctx);
+    const c = classifyReference(title, ctx, Boolean(ref.meta.identityVerified));
     return {
       index: i + 1,
       title,

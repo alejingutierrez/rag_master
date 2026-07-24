@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { runAtelier } from "@/lib/atelier/orchestrator";
 import { isValidFormatId, type LongitudId } from "@/lib/atelier-formats";
 import { asSourceRef } from "@/lib/source-ref";
+import {
+  canonicalizeSourceRef,
+  isCanonicalFicha,
+  validateEntitySourceContract,
+} from "@/lib/source-ref-server";
 import type { AtelierMetadata, AtelierQuestionMeta } from "@/lib/atelier/types";
 import { syncQuestionStats } from "@/lib/question-stats-sync";
 import { generateAndStoreImage, isOpenAIConfigured } from "@/lib/atelier/image";
@@ -34,7 +39,7 @@ export async function POST(req: NextRequest) {
   // Puente ítem↔producción (pregunta/madre/hecho/entidad/época). Se persiste en
   // metadata.sourceRef y es lo que marca al ítem como "producido" cuando el
   // formato es la ficha de su tipo. Ver src/lib/source-ref.ts.
-  const sourceRef = asSourceRef(body?.sourceRef);
+  const sourceRef = await canonicalizeSourceRef(asSourceRef(body?.sourceRef));
 
   if (intent.length < 12) {
     return new Response(JSON.stringify({ error: "Intención requerida (≥12 caracteres)" }), {
@@ -102,21 +107,56 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 1. Crear Deliverable en GENERATING inmediatamente.
-  const deliverable = await prisma.deliverable.create({
-    data: {
-      userQuestion: intent,
-      templateId: formatId,
-      status: "GENERATING",
-      answer: "",
-      modelUsed,
-      chunksUsed: [],
-      metadata: { atelier: initialMetadata, ...(sourceRef ? { sourceRef } : {}) } as unknown as object,
-      source: "atelier",
-      batchId,
-      questionId: safeQuestionId,
-    },
+  // 1. Crear Deliverable en GENERATING de forma idempotente. El lock
+  // transaccional cierra la carrera entre pestañas/batches: para una ficha
+  // canónica, GENERATING y COMPLETE cuentan como la misma producción.
+  const created = await prisma.$transaction(async (tx) => {
+    if (isCanonicalFicha(formatId, sourceRef)) {
+      const lockKey = `atelier:${formatId}:${sourceRef.kind}:${sourceRef.key}`;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+      const existing = await tx.deliverable.findFirst({
+        where: {
+          source: "atelier",
+          templateId: formatId,
+          status: { in: ["GENERATING", "COMPLETE"] },
+          AND: [
+            { metadata: { path: ["sourceRef", "kind"], equals: sourceRef.kind } },
+            { metadata: { path: ["sourceRef", "key"], equals: sourceRef.key } },
+          ],
+        },
+        select: { id: true, status: true },
+        orderBy: { updatedAt: "desc" },
+      });
+      if (existing) return { deliverable: existing, reused: true };
+    }
+
+    const deliverable = await tx.deliverable.create({
+      data: {
+        userQuestion: intent,
+        templateId: formatId,
+        status: "GENERATING",
+        answer: "",
+        modelUsed,
+        chunksUsed: [],
+        metadata: { atelier: initialMetadata, ...(sourceRef ? { sourceRef } : {}) } as unknown as object,
+        source: "atelier",
+        batchId,
+        questionId: safeQuestionId,
+      },
+      select: { id: true, status: true },
+    });
+    return { deliverable, reused: false };
   });
+  const deliverable = created.deliverable;
+
+  if (created.reused) {
+    return Response.json({
+      deliverableId: deliverable.id,
+      status: deliverable.status,
+      reused: true,
+      pollUrl: `/api/deliverables/${deliverable.id}`,
+    });
+  }
 
   // 2. Procesamiento en background.
   after(async () => {
@@ -161,12 +201,17 @@ export async function POST(req: NextRequest) {
           useParentExpansion: v2Available,
           videoStyleId,
           durationSec,
+          sourceRef: sourceRef ?? undefined,
         },
         { onProgress: updateMetadata }
       );
 
       if (!result.answer.trim()) {
         throw new Error("El Taller devolvió un entregable vacío.");
+      }
+      const sourceContract = validateEntitySourceContract(sourceRef, result.structuredData);
+      if (!sourceContract.ok) {
+        throw new Error(sourceContract.error);
       }
 
       const finalMeta: AtelierMetadata = {

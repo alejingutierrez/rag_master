@@ -6,7 +6,7 @@
  * ligero (cabecera + dónde aparece + relacionadas). Gate: sin presencia publicada
  * → notFound().
  */
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { TypologyArticle } from "@/components/public/typology-detail";
 import { EntityConnections, EntityNodeArticle } from "@/components/public/entity-node";
 import { JsonLd } from "@/components/public/json-ld";
@@ -32,11 +32,11 @@ export async function entityDetailMetadata(slug: string, type: EntityType) {
   // og:image. Antes se construía siempre desde el nodo del registro, así que las
   // fichas publicadas perdían su SEO y quedaban con la imagen genérica.
   if (node.hasFicha) {
-    const detail = await getTypologyDetail("entidad", slug);
+    const detail = await getTypologyDetail("entidad", node.slug, type);
     if (detail) {
       return buildMetadata({
         seo: detail.seo,
-        path: entityPath(type, slug),
+        path: entityPath(type, node.slug),
         imageUrl: detail.imageUrl,
         publishedTime: detail.publishedAt,
         modifiedTime: detail.updatedAt,
@@ -53,7 +53,7 @@ export async function entityDetailMetadata(slug: string, type: EntityType) {
         `${node.name}: ${meta.singular.toLowerCase()} en la historia de Colombia. Dónde aparece y con qué otras figuras se relaciona.`,
       keywords: [node.name, meta.singular, "historia de Colombia"],
     },
-    path: entityPath(type, slug),
+    path: entityPath(type, node.slug),
     type: "article",
   });
 }
@@ -61,6 +61,7 @@ export async function entityDetailMetadata(slug: string, type: EntityType) {
 export async function EntityDetailPage({ slug, type }: { slug: string; type: EntityType }) {
   const node = await getEntityNode(slug, type);
   if (!node) notFound();
+  if (slug !== node.slug) redirect(entityPath(type, node.slug));
 
   const meta = ENTITY_TYPE_META[type];
   const crumb = { href: meta.index, label: meta.plural };
@@ -69,7 +70,7 @@ export async function EntityDetailPage({ slug, type }: { slug: string; type: Ent
 
   // Si hay ficha curada, se muestra completa + las conexiones automáticas.
   if (node.hasFicha) {
-    const detail = await getTypologyDetail("entidad", slug);
+    const detail = await getTypologyDetail("entidad", node.slug, type);
     if (detail) {
       return (
         <>

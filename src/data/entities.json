@@ -1,7 +1,7 @@
 {
- "generatedAt": "2026-07-06T18:30:49.527Z",
+ "generatedAt": "2026-07-24T22:56:06.292Z",
  "minMentions": 2,
- "count": 11030,
+ "count": 11029,
  "entities": [
   {
    "type": "lugar",
@@ -415,7 +415,6 @@
    "mentions": 538,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "FN",
     "CNA",
     "C91",
@@ -2123,7 +2122,6 @@
    "mentions": 150,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "REG",
     "FN",
     "CNA",
@@ -2709,7 +2707,6 @@
    "mentions": 117,
    "periodoCode": "FN",
    "periods": [
-    "TRANS",
     "COL",
     "REG",
     "REP_LIB",
@@ -18360,7 +18357,6 @@
    "mentions": 17,
    "periodoCode": "SDE",
    "periods": [
-    "TRANS",
     "C91",
     "SDE",
     "POS"
@@ -21289,7 +21285,6 @@
    "mentions": 14,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA",
     "C91",
     "SDE"
@@ -23916,7 +23911,6 @@
    "mentions": 13,
    "periodoCode": "CNA",
    "periods": [
-    "REG",
     "CNA",
     "C91"
    ],
@@ -26035,7 +26029,6 @@
    "mentions": 12,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA",
     "C91",
     "SDE"
@@ -26670,7 +26663,6 @@
    "mentions": 11,
    "periodoCode": "C91",
    "periods": [
-    "TRANS",
     "REG",
     "C91"
    ],
@@ -27095,7 +27087,6 @@
    "mentions": 11,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "REG",
     "CNA",
     "C91",
@@ -27682,7 +27673,6 @@
    "mentions": 11,
    "periodoCode": "FN",
    "periods": [
-    "TRANS",
     "FN",
     "CNA",
     "C91"
@@ -27766,7 +27756,6 @@
    "mentions": 11,
    "periodoCode": "FN",
    "periods": [
-    "TRANS",
     "REP_LIB",
     "FN",
     "CNA",
@@ -29487,7 +29476,6 @@
    "mentions": 10,
    "periodoCode": "FN",
    "periods": [
-    "TRANS",
     "VIO",
     "FN"
    ],
@@ -30014,7 +30002,6 @@
    "mentions": 10,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "VIO",
     "FN",
     "CNA",
@@ -30276,22 +30263,6 @@
    ],
    "periodoOrden": 6,
    "anio": 1882
-  },
-  {
-   "type": "persona",
-   "slug": "salvatore-mancuso-gomez",
-   "name": "Salvatore Mancuso Gómez",
-   "variants": [
-    "Salvatore Mancuso Gómez"
-   ],
-   "mentions": 10,
-   "periodoCode": "C91",
-   "periods": [
-    "C91",
-    "SDE"
-   ],
-   "periodoOrden": 12,
-   "anio": 2000
   },
   {
    "type": "lugar",
@@ -30702,7 +30673,6 @@
    "mentions": 9,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA"
    ],
    "periodoOrden": 11,
@@ -34870,7 +34840,6 @@
    "mentions": 8,
    "periodoCode": "FN",
    "periods": [
-    "TRANS",
     "FN",
     "CNA"
    ],
@@ -36034,7 +36003,6 @@
    "periodoCode": "VIO",
    "periods": [
     "VIO",
-    "TRANS",
     "REP_LIB"
    ],
    "periodoOrden": 9,
@@ -36051,7 +36019,6 @@
    "periodoCode": "VIO",
    "periods": [
     "VIO",
-    "TRANS",
     "REP_LIB"
    ],
    "periodoOrden": 9,
@@ -36067,7 +36034,6 @@
    "mentions": 8,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA",
     "SDE"
    ],
@@ -37517,7 +37483,6 @@
    "periodoCode": "CNA",
    "periods": [
     "CNA",
-    "TRANS",
     "C91"
    ],
    "periodoOrden": 11,
@@ -46390,7 +46355,6 @@
    "periodoCode": "FN",
    "periods": [
     "FN",
-    "TRANS",
     "REP_LIB",
     "CNA"
    ],
@@ -46562,7 +46526,6 @@
    "periodoCode": "CNA",
    "periods": [
     "CNA",
-    "TRANS",
     "FN",
     "C91"
    ],
@@ -46609,7 +46572,6 @@
    "mentions": 6,
    "periodoCode": "C91",
    "periods": [
-    "TRANS",
     "C91",
     "SDE"
    ],
@@ -46641,7 +46603,6 @@
    "mentions": 6,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA"
    ],
    "periodoOrden": 11,
@@ -46672,7 +46633,6 @@
    "mentions": 6,
    "periodoCode": "FN",
    "periods": [
-    "TRANS",
     "VIO",
     "FN"
    ],
@@ -57027,7 +56987,6 @@
    "periodoCode": "FN",
    "periods": [
     "FN",
-    "TRANS",
     "CNA"
    ],
    "periodoOrden": 10,
@@ -58051,7 +58010,6 @@
    "periodoCode": "C91",
    "periods": [
     "C91",
-    "TRANS",
     "CNA",
     "SDE"
    ],
@@ -65893,7 +65851,6 @@
    "mentions": 4,
    "periodoCode": "FN",
    "periods": [
-    "TRANS",
     "FN"
    ],
    "periodoOrden": 10,
@@ -73126,7 +73083,6 @@
    "periodoCode": "FN",
    "periods": [
     "FN",
-    "TRANS",
     "C91"
    ],
    "periodoOrden": 10,
@@ -76890,7 +76846,6 @@
    "periodoCode": "CNA",
    "periods": [
     "CNA",
-    "TRANS",
     "SDE"
    ],
    "periodoOrden": 11,
@@ -77403,7 +77358,6 @@
    "mentions": 3,
    "periodoCode": "C91",
    "periods": [
-    "TRANS",
     "C91"
    ],
    "periodoOrden": 12,
@@ -77419,7 +77373,6 @@
    "mentions": 3,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA"
    ],
    "periodoOrden": 11,
@@ -79182,7 +79135,6 @@
    "periodoCode": "C91",
    "periods": [
     "C91",
-    "TRANS",
     "FN"
    ],
    "periodoOrden": 12,
@@ -80012,7 +79964,6 @@
    "periodoCode": "PRE",
    "periods": [
     "PRE",
-    "CON",
     "COL"
    ],
    "periodoOrden": 0,
@@ -80045,7 +79996,6 @@
    "periodoCode": "CNA",
    "periods": [
     "CNA",
-    "TRANS",
     "POS"
    ],
    "periodoOrden": 11,
@@ -88656,7 +88606,6 @@
    "periodoCode": "CNA",
    "periods": [
     "CNA",
-    "TRANS",
     "C91"
    ],
    "periodoOrden": 11,
@@ -93809,7 +93758,6 @@
    "periodoCode": "C91",
    "periods": [
     "C91",
-    "TRANS",
     "CNA"
    ],
    "periodoOrden": 12,
@@ -94095,7 +94043,6 @@
    "mentions": 3,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA"
    ],
    "periodoOrden": 11,
@@ -95032,7 +94979,6 @@
    "periodoCode": "FN",
    "periods": [
     "FN",
-    "TRANS",
     "POS"
    ],
    "periodoOrden": 10,
@@ -100429,7 +100375,6 @@
    "mentions": 3,
    "periodoCode": "C91",
    "periods": [
-    "TRANS",
     "C91"
    ],
    "periodoOrden": 12,
@@ -100823,7 +100768,6 @@
    "mentions": 3,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA"
    ],
    "periodoOrden": 11,
@@ -105675,7 +105619,6 @@
    "periodoCode": "FN",
    "periods": [
     "FN",
-    "TRANS",
     "REG"
    ],
    "periodoOrden": 10,
@@ -105736,7 +105679,6 @@
    "mentions": 2,
    "periodoCode": "VIO",
    "periods": [
-    "TRANS",
     "VIO"
    ],
    "periodoOrden": 9,
@@ -112799,8 +112741,7 @@
    "mentions": 2,
    "periodoCode": "VIO",
    "periods": [
-    "VIO",
-    "TRANS"
+    "VIO"
    ],
    "periodoOrden": 9,
    "anio": 1950
@@ -124179,7 +124120,6 @@
    "periodoCode": "CNA",
    "periods": [
     "CNA",
-    "TRANS",
     "FN"
    ],
    "periodoOrden": 11,
@@ -128449,7 +128389,6 @@
    "mentions": 2,
    "periodoCode": "C91",
    "periods": [
-    "TRANS",
     "C91"
    ],
    "periodoOrden": 12,
@@ -128706,7 +128645,6 @@
    "mentions": 2,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA"
    ],
    "periodoOrden": 11,
@@ -132469,7 +132407,6 @@
    "periodoCode": "FN",
    "periods": [
     "FN",
-    "TRANS",
     "REG"
    ],
    "periodoOrden": 10,
@@ -132531,7 +132468,6 @@
    "periodoCode": "FN",
    "periods": [
     "FN",
-    "TRANS",
     "REG"
    ],
    "periodoOrden": 10,
@@ -136288,10 +136224,10 @@
   {
    "type": "idea",
    "slug": "interetnicidad",
-   "name": "Interetnicidad",
+   "name": "interetnicidad",
    "variants": [
-    "Interetnicidad",
-    "interetnicidad"
+    "interetnicidad",
+    "Interetnicidad"
    ],
    "mentions": 2,
    "periodoCode": "TRANS",
@@ -137066,7 +137002,6 @@
    "periodoCode": "FN",
    "periods": [
     "FN",
-    "TRANS",
     "POS"
    ],
    "periodoOrden": 10,
@@ -137248,7 +137183,6 @@
    "mentions": 2,
    "periodoCode": "CNA",
    "periods": [
-    "TRANS",
     "CNA"
    ],
    "periodoOrden": 11,
@@ -137370,7 +137304,6 @@
    "periodoCode": "CNA",
    "periods": [
     "CNA",
-    "TRANS",
     "FN"
    ],
    "periodoOrden": 11,
@@ -138294,7 +138227,6 @@
    "periodoCode": "CNA",
    "periods": [
     "CNA",
-    "TRANS",
     "C91"
    ],
    "periodoOrden": 11,
@@ -138415,7 +138347,6 @@
    "mentions": 2,
    "periodoCode": "FN",
    "periods": [
-    "TRANS",
     "FN"
    ],
    "periodoOrden": 10,
@@ -150610,7 +150541,6 @@
    "mentions": 2,
    "periodoCode": "PRE",
    "periods": [
-    "CON",
     "PRE"
    ],
    "periodoOrden": 0,
@@ -151429,7 +151359,6 @@
    "periodoCode": "C91",
    "periods": [
     "C91",
-    "SDE",
     "POS"
    ],
    "periodoOrden": 12,
@@ -154361,7 +154290,6 @@
    "mentions": 2,
    "periodoCode": "C91",
    "periods": [
-    "TRANS",
     "C91"
    ],
    "periodoOrden": 12,
@@ -157376,10 +157304,10 @@
   {
    "type": "idea",
    "slug": "rama-judicial",
-   "name": "Rama judicial",
+   "name": "Rama Judicial",
    "variants": [
-    "Rama judicial",
-    "Rama Judicial"
+    "Rama Judicial",
+    "Rama judicial"
    ],
    "mentions": 2,
    "periodoCode": "CNA",
@@ -160631,7 +160559,6 @@
    "mentions": 2,
    "periodoCode": "C91",
    "periods": [
-    "TRANS",
     "C91"
    ],
    "periodoOrden": 12,

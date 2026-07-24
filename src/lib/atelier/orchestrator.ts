@@ -375,6 +375,7 @@ export async function runAtelier(
         brief,
         verified,
         taxonomy,
+        sourceRef: input.sourceRef,
       });
       const faltantes = missingFields(structuredData);
       if (faltantes.length > 0) {

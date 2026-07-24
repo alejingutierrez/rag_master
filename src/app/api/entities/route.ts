@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import {
+  entityKey,
+  loadEntityRegistry,
+  type EntityType as RegistryEntityType,
+} from "@/lib/entities-registry";
+import { slugify } from "@/lib/typology-schemas";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -37,6 +43,7 @@ export async function GET(req: NextRequest) {
       entidadesConceptos: true,
     },
   });
+  const registry = await loadEntityRegistry();
 
   if (questions.length === 0) {
     return NextResponse.json({
@@ -60,28 +67,47 @@ export async function GET(req: NextRequest) {
 
   const map = new Map<string, Bucket>();
 
-  // Clave compuesta tipo::nombre — evita colisión Bolivia (lugar) vs Bolívar (persona).
-  const key = (type: string, name: string) => `${type}::${name.trim().toLowerCase()}`;
+  const registryType = (type: Bucket["type"]): RegistryEntityType =>
+    type === "person" ? "persona" : type === "place" ? "lugar" : "idea";
+
+  // Resuelve cada superficie del corpus contra el registro canónico. Esto
+  // fusiona nombres cortos/completos y aliases curados antes de contar, en vez
+  // de ocultarlos solo en la página pública.
+  const canonical = (type: Bucket["type"], name: string) => {
+    const rt = registryType(type);
+    const rawSlug = slugify(name);
+    const resolvedKey =
+      registry.variantSlugToKey.get(rawSlug) ?? entityKey(rt, rawSlug);
+    const resolved = registry.byKey.get(resolvedKey);
+    return {
+      key: `${type}::${resolved?.slug ?? rawSlug}`,
+      name: resolved?.name ?? name,
+    };
+  };
 
   const ingest = (type: Bucket["type"], items: string[], docId: string, qid: string) => {
     for (const raw of items) {
       const name = raw.trim();
       if (!name) continue;
-      const k = key(type, name);
+      const resolved = canonical(type, name);
+      const k = resolved.key;
       const existing = map.get(k);
       if (existing) {
         existing.questionIds.add(qid);
         existing.docIds.add(docId);
         existing.mentions = existing.questionIds.size;
-        existing.variants.set(name, (existing.variants.get(name) ?? 0) + 1);
+        existing.variants.set(
+          resolved.name,
+          (existing.variants.get(resolved.name) ?? 0) + 1,
+        );
       } else {
         map.set(k, {
-          name,
+          name: resolved.name,
           mentions: 1,
           questionIds: new Set([qid]),
           docIds: new Set([docId]),
           type,
-          variants: new Map([[name, 1]]),
+          variants: new Map([[resolved.name, 1]]),
         });
       }
     }
@@ -112,6 +138,8 @@ export async function GET(req: NextRequest) {
 
   const entities = (limit === null ? sortedEntities : sortedEntities.slice(0, limit))
     .map((e) => {
+      // Si el registro dio un nombre canónico, se conserva. Las variantes se
+      // usan para contabilizar, no para volver a escoger un alias frecuente.
       let best = e.name;
       let bestCount = 0;
       for (const [variant, count] of e.variants) {
