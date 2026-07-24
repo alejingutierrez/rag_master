@@ -70,6 +70,8 @@ export interface ImageMetaReference {
   pagina?: string;
   fuente: string;
   score: number;
+  identidadVerificada?: boolean;
+  razonIdentidad?: string;
 }
 
 /** Nivel de anclaje visual conseguido para la imagen.
@@ -108,6 +110,8 @@ export interface ImageMeta {
   candidatos?: number;
   relevantes?: number;
   usables?: number;
+  identidadVerificada?: number;
+  identidadRequerida?: number;
   intentos?: number;
   error?: string;
 }
@@ -132,6 +136,8 @@ function refsToMeta(search: ReferenceSearchResult): ImageMetaReference[] {
     pagina: r.meta.page,
     fuente: r.meta.provider,
     score: r.meta.score,
+    identidadVerificada: r.meta.identityVerified,
+    razonIdentidad: r.meta.identityReason,
   }));
 }
 
@@ -250,6 +256,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
   //    ≥5 relevantes, NO se abandona la imagen — se degrada con transparencia y
   //    se apoya en el texto de la pieza dentro del prompt (proyecto, 2026-07).
   const search = await searchReferences(refCtx);
+  const esPersona = structured?.typology === "entidad" && structured.tipo === "Persona";
   const hasRefs = search.refs.length > 0;
   const ancla: ImageAncla = search.ok ? "documental" : hasRefs ? "parcial" : "solo-texto";
   const degraded = ancla !== "documental";
@@ -265,10 +272,30 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
   const scenePlan = structured ? inferDocumentaryScenePlan(structured, refCtx, referenceBriefs) : null;
   const avoidAccentTargets = await siblingAccentTargets(deliverableId, structured);
 
+  // Una referencia contextual no prueba un rostro. Para personas reales se
+  // detiene la generación antes de inventar un parecido aproximado.
+  if (esPersona && search.identityVerified < search.identityRequired) {
+    const message = `No se encontró una referencia facial verificable de ${refCtx.titulo}; el retrato no se generó.`;
+    await persistImageMeta(deliverableId, {
+      status: "sin_referencias",
+      at: new Date().toISOString(),
+      modelo: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2",
+      ancla: "solo-texto",
+      referencias: refsToMeta(search),
+      queries: search.queries,
+      candidatos: search.considered,
+      relevantes: search.relevant,
+      usables: search.usable,
+      identidadVerificada: search.identityVerified,
+      identidadRequerida: search.identityRequired,
+      error: message,
+    }).catch(() => {});
+    throw new Error(message);
+  }
+
   // 2. Director de arte (con respaldo neutro si el LLM falla). Corre DESPUÉS
   //    de la búsqueda para que el acento pueda salir de referentes reales y no
   //    de símbolos obvios repetidos (oro/banderas/uniformes).
-  const esPersona = structured?.typology === "entidad" && structured.tipo === "Persona";
   let direction: ArtDirection;
   try {
     direction = structured
@@ -302,6 +329,8 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     candidatos: search.considered,
     relevantes: search.relevant,
     usables: search.usable,
+    identidadVerificada: search.identityVerified,
+    identidadRequerida: search.identityRequired,
   };
   const acentoMeta = {
     color: direction.accentColor,
@@ -320,6 +349,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     withReferences: hasRefs,
     contextText,
     referenceNotes: referenceHints,
+    identityName: esPersona ? refCtx.titulo : undefined,
   });
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
   let png: Buffer | null = null;
@@ -332,9 +362,10 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
         ? await editImagePng({
             prompt,
             size,
+            quality: esPersona ? "high" : undefined,
             refs: search.refs.map((r) => ({ buffer: r.buffer, name: r.name })),
           })
-        : await generateImagePng({ prompt, size });
+        : await generateImagePng({ prompt, size, quality: esPersona ? "high" : undefined });
       break;
     } catch (e) {
       lastErr = e as Error;

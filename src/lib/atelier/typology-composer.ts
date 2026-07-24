@@ -21,6 +21,7 @@ import {
 } from "../typology-schemas";
 import type { AtelierBrief, VerifiedDossier } from "./types";
 import type { DeliverableTaxonomy } from "../taxonomy";
+import type { SourceRef } from "../source-ref";
 
 // ── Esquemas y exigencias por tipología ──────────────────────────────
 
@@ -130,12 +131,21 @@ export interface ComposeTypologyArgs {
   brief: AtelierBrief;
   verified: VerifiedDossier;
   taxonomy?: DeliverableTaxonomy;
+  sourceRef?: SourceRef;
 }
 
 export async function composeTypology(args: ComposeTypologyArgs): Promise<StructuredData> {
-  const system = SYSTEM_TEMPLATE.replace(/\{KIND\}/g, args.kind)
+  const sourceContract =
+    args.sourceRef?.kind === "entidad"
+      ? `\nCONTRATO DE IDENTIDAD OBLIGATORIO:
+- La ficha solicitada es EXACTAMENTE "${args.sourceRef.label}" (llave ${args.sourceRef.key}).
+- "titulo" debe nombrar esa misma entidad; puedes completar su nombre formal, pero NO cambiar de persona, lugar o concepto.
+- El prefijo de la llave fija el tipo: person=Persona, place=Lugar, concept=Concepto o Institución.
+- Si el artículo menciona otras entidades, son contexto: nunca sustituyen a la entidad solicitada.\n`
+      : "";
+  const system = `${SYSTEM_TEMPLATE.replace(/\{KIND\}/g, args.kind)
     .replace("{SCHEMA}", SCHEMA_LINES[args.kind])
-    .replace("{EXIGENCIAS}", EXIGENCIAS[args.kind]);
+    .replace("{EXIGENCIAS}", EXIGENCIAS[args.kind])}${sourceContract}`;
 
   const claims = packClaims(args.verified, 40);
   const tx = args.taxonomy;

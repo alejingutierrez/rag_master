@@ -44,8 +44,13 @@ export interface EntityRegistry {
   entities: RegistryEntity[];
   /** `${type}:${slug}` → entidad. */
   byKey: Map<string, RegistryEntity>;
-  /** slug de cualquier variante (o del canónico) → `${type}:${slug}`. Primera gana. */
+  /**
+   * slug de cualquier variante, alias curado o nombre canónico →
+   * `${type}:${slug}`. Primera gana.
+   */
   variantSlugToKey: Map<string, string>;
+  /** `${type}:${slug}` canónico → slugs canónico, variantes y aliases curados. */
+  slugsByKey: Map<string, Set<string>>;
   generatedAt: string | null;
 }
 
@@ -74,7 +79,50 @@ export async function loadEntityRegistry(): Promise<EntityRegistry> {
     const surfaces = new Set<string>([e.slug, ...e.variants.map((v) => slugify(v))]);
     for (const vs of surfaces) if (vs && !variantSlugToKey.has(vs)) variantSlugToKey.set(vs, k);
   }
-  cache = { entities, byKey, variantSlugToKey, generatedAt: file?.generatedAt ?? null };
+
+  // `entity-overrides.json` ya contiene la curación de duplicados realizada
+  // por nombre ("QA: duplicado de ..."). Antes solo ocultábamos la variante:
+  // el catálogo dinámico de /api/entities no consumía esa decisión y volvía a
+  // ofrecerla para producir. Convertimos esas entradas en alias resolubles del
+  // registro canónico, sin mantener una segunda entidad.
+  try {
+    const raw = await readFile(
+      join(process.cwd(), "src", "data", "entity-overrides.json"),
+      "utf8",
+    );
+    const overrides = JSON.parse(raw) as Record<string, { _motivo?: unknown }>;
+    for (const [aliasKey, override] of Object.entries(overrides)) {
+      if (aliasKey.startsWith("_")) continue;
+      const reason = typeof override?._motivo === "string" ? override._motivo : "";
+      const targetName = reason.match(/^QA:\s*duplicado de\s+"([^"]+)"$/i)?.[1];
+      if (!targetName) continue;
+      const colon = aliasKey.indexOf(":");
+      if (colon < 1) continue;
+      const type = aliasKey.slice(0, colon) as EntityType;
+      const aliasSlug = aliasKey.slice(colon + 1);
+      const targetKey = entityKey(type, slugify(targetName));
+      if (!byKey.has(targetKey) || !aliasSlug) continue;
+      variantSlugToKey.set(aliasSlug, targetKey);
+    }
+  } catch (err) {
+    console.error(
+      "[entities-registry] no se pudieron cargar aliases de entity-overrides.json:",
+      (err as Error).message,
+    );
+  }
+  const slugsByKey = new Map<string, Set<string>>();
+  for (const [surfaceSlug, canonicalKey] of variantSlugToKey) {
+    const slugs = slugsByKey.get(canonicalKey) ?? new Set<string>();
+    slugs.add(surfaceSlug);
+    slugsByKey.set(canonicalKey, slugs);
+  }
+  cache = {
+    entities,
+    byKey,
+    variantSlugToKey,
+    slugsByKey,
+    generatedAt: file?.generatedAt ?? null,
+  };
   return cache;
 }
 

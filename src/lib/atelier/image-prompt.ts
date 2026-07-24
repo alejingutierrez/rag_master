@@ -69,6 +69,10 @@ function documentarySceneClause(d: ArtDirection): string | null {
 export const REFERENCE_CLAUSE =
   "The attached images are authentic references: period photographs, paintings, museum artifacts and real places related to this subject. Use them ONLY as documentary grounding for faces, costumes, artifacts, architecture, landscape and atmosphere. Do NOT copy any reference literally, do NOT reproduce their captions, lettering or painterly style; compose an entirely NEW photographic scene.";
 
+export function identityReferenceClause(personName: string): string {
+  return `IDENTITY LOCK — ${personName}: every attached image has been selected because its documentary title identifies this exact person. Image #1 is the primary facial identity reference. Preserve the SAME recognizable individual: facial geometry, eye spacing and shape, nose, mouth, jaw, hairline, age cues and distinctive proportions. Do not beautify, genericize, substitute or blend the face with any other historical figure. Change only the photographic treatment, background, crop and period-accurate clothing required by this new composition. The result must read as a new editorial portrait of ${personName}, not as a look-alike.`;
+}
+
 // ── Encuadres (Ronda 4: rotan libremente según la escena) ────────────
 
 const ENCUADRE_EN: Record<EncuadreId, string> = {
@@ -168,6 +172,8 @@ export interface StyledPromptArgs {
   /** Prosa de la pieza (ES) inyectada como contexto factual cuando faltan
    * referencias visuales: ancla el generador en el texto, no en imágenes. */
   contextText?: string;
+  /** Activa el contrato reforzado de semejanza para una persona real. */
+  identityName?: string;
 }
 
 /** Compone el prompt completo: sujeto + contexto + encuadre + referencias + estilo. */
@@ -193,7 +199,13 @@ export function buildStyledPrompt(args: StyledPromptArgs): string {
         ]
       : []),
     `COMPOSITION: ${ENCUADRE_EN[d.encuadre]}`,
-    ...(args.withReferences ? [REFERENCE_CLAUSE] : []),
+    ...(args.withReferences
+      ? [
+          args.identityName
+            ? identityReferenceClause(args.identityName)
+            : REFERENCE_CLAUSE,
+        ]
+      : []),
     `STYLE: ${STYLE_35} ${accentClause(d)}`,
     `${negativeClause(d)}\n${COMMON}`,
   ];

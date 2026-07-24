@@ -25,6 +25,7 @@ import {
   findRegistryEntity,
   entityKey,
   type RegistryEntity,
+  type EntityRegistry,
   type EntityType,
 } from "@/lib/entities-registry";
 import { buildEntityLinker, type EntityLinker, type LinkableEntity } from "@/lib/entity-linker";
@@ -380,14 +381,35 @@ export interface TypologyDetail {
 export async function getTypologyDetail(
   typology: TypologyKind,
   slug: string,
+  entityType?: EntityType,
 ): Promise<TypologyDetail | null> {
   try {
+    let canonicalSlug = slug;
+    let candidateSlugs = [slug];
+    if (typology === "entidad") {
+      const reg = await loadEntityRegistry();
+      const direct = entityType ? reg.byKey.get(entityKey(entityType, slug)) : undefined;
+      const viaAliasKey = reg.variantSlugToKey.get(slug);
+      const viaAlias = viaAliasKey ? reg.byKey.get(viaAliasKey) : undefined;
+      const entity =
+        direct ??
+        (viaAlias && (!entityType || viaAlias.type === entityType) ? viaAlias : undefined);
+      if (entity) {
+        const key = entityKey(entity.type, entity.slug);
+        canonicalSlug = entity.slug;
+        candidateSlugs = [...(reg.slugsByKey.get(key) ?? new Set([entity.slug]))];
+      }
+    }
     const d = await prisma.deliverable.findFirst({
       where: {
         ...PUBLISHED_WHERE,
         AND: [
           { structuredData: { path: ["typology"], equals: typology } },
-          { structuredData: { path: ["slug"], equals: slug } },
+          {
+            OR: candidateSlugs.map((candidate) => ({
+              structuredData: { path: ["slug"], equals: candidate },
+            })),
+          },
         ],
       },
       orderBy: { publishedAt: "desc" },
@@ -405,8 +427,11 @@ export async function getTypologyDetail(
       },
     });
     if (!d) return null;
-    const structured = normalizeStructured(d.structuredData);
+    let structured = normalizeStructured(d.structuredData);
     if (!structured) return null;
+    if (structured.typology === "entidad" && structured.slug !== canonicalSlug) {
+      structured = { ...structured, slug: canonicalSlug };
+    }
 
     const chunks: ChunkUsage[] = Array.isArray(d.chunksUsed)
       ? (d.chunksUsed as unknown as ChunkUsage[])
@@ -851,34 +876,37 @@ interface AnchoredRow {
  * baja de ~13 MB por carga en frío a una fracción.
  */
 async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
-  const rows = await prisma.$queryRaw<AnchoredRow[]>`
-    SELECT
-      d.id,
-      d."templateId",
-      d."structuredData",
-      d."imageUrl",
-      d."publishedAt",
-      d."userQuestion",
-      d.metadata -> 'atelier' -> 'taxonomy'                       AS "taxonomy",
-      (d.metadata -> 'atelier' ->> 'docCount')::int               AS "docCount",
-      (d.metadata -> 'atelier' ->> 'wordCount')::int              AS "wordCount",
-      d.metadata -> 'sourceRef'                                   AS "sourceRef",
-      CASE WHEN jsonb_typeof(d."chunksUsed") = 'array'
-           THEN jsonb_array_length(d."chunksUsed") ELSE 0 END     AS "fragmentCount",
-      CASE WHEN jsonb_typeof(d."chunksUsed") = 'array' THEN (
-        SELECT array_agg(DISTINCT c ->> 'documentId')
-        FROM jsonb_array_elements(d."chunksUsed") AS c
-        WHERE c ->> 'documentId' IS NOT NULL
-      ) END                                                       AS "sourceDocumentIds",
-      q."periodoCode",
-      q."yearPrincipal",
-      q.pregunta
-    FROM deliverables d
-    LEFT JOIN questions q ON q.id = d."questionId"
-    WHERE d.status = 'COMPLETE'
-      AND d.source = 'atelier'
-      AND d."publishedAt" IS NOT NULL
-  `;
+  const [rows, registry] = await Promise.all([
+    prisma.$queryRaw<AnchoredRow[]>`
+      SELECT
+        d.id,
+        d."templateId",
+        d."structuredData",
+        d."imageUrl",
+        d."publishedAt",
+        d."userQuestion",
+        d.metadata -> 'atelier' -> 'taxonomy'                       AS "taxonomy",
+        (d.metadata -> 'atelier' ->> 'docCount')::int               AS "docCount",
+        (d.metadata -> 'atelier' ->> 'wordCount')::int              AS "wordCount",
+        d.metadata -> 'sourceRef'                                   AS "sourceRef",
+        CASE WHEN jsonb_typeof(d."chunksUsed") = 'array'
+             THEN jsonb_array_length(d."chunksUsed") ELSE 0 END     AS "fragmentCount",
+        CASE WHEN jsonb_typeof(d."chunksUsed") = 'array' THEN (
+          SELECT array_agg(DISTINCT c ->> 'documentId')
+          FROM jsonb_array_elements(d."chunksUsed") AS c
+          WHERE c ->> 'documentId' IS NOT NULL
+        ) END                                                       AS "sourceDocumentIds",
+        q."periodoCode",
+        q."yearPrincipal",
+        q.pregunta
+      FROM deliverables d
+      LEFT JOIN questions q ON q.id = d."questionId"
+      WHERE d.status = 'COMPLETE'
+        AND d.source = 'atelier'
+        AND d."publishedAt" IS NOT NULL
+    `,
+    loadEntityRegistry(),
+  ]);
   const out: AnchoredPiece[] = [];
   for (const r of rows) {
     const s = normalizeStructured(r.structuredData);
@@ -893,9 +921,31 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       rawRef && typeof rawRef.kind === "string" && typeof rawRef.key === "string"
         ? { kind: rawRef.kind, key: rawRef.key }
         : null;
+    const structuredEntityType =
+      s?.typology === "entidad" ? entityTypeFromTipo(s.tipo) : null;
+    const structuredEntityKey =
+      s?.typology === "entidad"
+        ? registry.variantSlugToKey.get(s.slug) ??
+          entityKey(structuredEntityType!, s.slug)
+        : null;
+    const canonicalStructuredEntity = structuredEntityKey
+      ? registry.byKey.get(structuredEntityKey)
+      : undefined;
+    const canonicalEntitySlug =
+      canonicalStructuredEntity &&
+      (!structuredEntityType || canonicalStructuredEntity.type === structuredEntityType)
+        ? canonicalStructuredEntity.slug
+        : s?.typology === "entidad"
+          ? s.slug
+          : null;
     out.push({
       id: r.id,
-      href: s ? typologyPath(s) : `/ensayos/${r.id}`,
+      href:
+        s?.typology === "entidad" && canonicalEntitySlug
+          ? entityPath(entityTypeFromTipo(s.tipo), canonicalEntitySlug)
+          : s
+            ? typologyPath(s)
+            : `/ensayos/${r.id}`,
       titulo: s?.titulo ?? shortTitle(r.pregunta ?? r.userQuestion ?? "Producción", 80),
       resumen: s?.resumen ?? "",
       kind: s?.typology ?? "ensayo",
@@ -911,7 +961,7 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       slug: s?.slug ?? "",
       cardMeta: s ? cardMeta(s, anchor) : null,
       entidadTipo: s?.typology === "entidad" ? s.tipo : null,
-      entidadSlug: s?.typology === "entidad" ? s.slug : null,
+      entidadSlug: canonicalEntitySlug,
       lugarPrincipal: s?.lugarPrincipal ?? null,
       lat: s?.lat ?? null,
       lng: s?.lng ?? null,
@@ -1095,7 +1145,10 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
   if (pubEntityCache && now - pubEntityCache.at < ANCHORED_TTL_MS) return pubEntityCache.data;
   if (!pubEntityLoad) {
     pubEntityLoad = (async () => {
-      const pieces = await getAnchoredPieces();
+      const [pieces, registry] = await Promise.all([
+        getAnchoredPieces(),
+        loadEntityRegistry(),
+      ]);
       const index = buildEntityIndex(pieces);
       // Piezas DEDICADAS: una ficha de entidad, o cualquier pieza producida DESDE una
       // entidad (crónica/ensayo con sourceRef.kind==="entidad"). Es la señal precisa
@@ -1111,8 +1164,12 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
       >();
       const markDedicated = (t: EntityType, slug: string, p: AnchoredPiece) => {
         if (!slug) return;
-        dedicatedSlugs[t].add(slug);
-        const key = entityKey(t, slug);
+        const registryKey = registry.variantSlugToKey.get(slug);
+        const registryEntity = registryKey ? registry.byKey.get(registryKey) : undefined;
+        const canonicalSlug =
+          registryEntity && registryEntity.type === t ? registryEntity.slug : slug;
+        dedicatedSlugs[t].add(canonicalSlug);
+        const key = entityKey(t, canonicalSlug);
         // Una ficha de entidad manda sobre una pieza producida desde ella: es el
         // retrato canónico. Por eso solo se rellena si aún no hay imagen.
         const prev = dedicatedInfo.get(key);
@@ -1200,11 +1257,17 @@ function chipMap(
   type: EntityType,
   names: string[],
   gate: { dedicatedSlugs: Record<EntityType, Set<string>>; dedicatedInfo: PublishedEntityData["dedicatedInfo"] },
+  registry: EntityRegistry,
 ) {
   for (const raw of names) {
-    const name = raw.trim();
-    if (!name) continue;
-    const slug = slugify(name);
+    const rawName = raw.trim();
+    if (!rawName) continue;
+    const rawSlug = slugify(rawName);
+    const registryKey = registry.variantSlugToKey.get(rawSlug);
+    const registryEntity = registryKey ? registry.byKey.get(registryKey) : undefined;
+    const entity = registryEntity?.type === type ? registryEntity : undefined;
+    const slug = entity?.slug ?? rawSlug;
+    const name = entity?.name ?? rawName;
     if (!slug || !gate.dedicatedSlugs[type].has(slug)) continue;
     const cur = map.get(slug);
     if (cur) {
@@ -1233,7 +1296,11 @@ export async function getPeriodHub(periodCode: string): Promise<PeriodHub> {
     counts: { hechos: 0, ensayos: 0, personas: 0, lugares: 0, ideas: 0 },
   };
   try {
-    const [all, gate] = await Promise.all([getAnchoredPieces(), getPublishedEntityData()]);
+    const [all, gate, registry] = await Promise.all([
+      getAnchoredPieces(),
+      getPublishedEntityData(),
+      loadEntityRegistry(),
+    ]);
     const pieces = all.filter((p) => p.periodCode === periodCode);
     const hechos: HubPiece[] = [];
     const ensayos: HubPiece[] = [];
@@ -1244,7 +1311,7 @@ export async function getPeriodHub(periodCode: string): Promise<PeriodHub> {
       // Protagonistas del hecho, ya filtrados por el gate: la ficha de época
       // referencia a sus personajes solo cuando hay biografía que leer.
       const prota = new Map<string, EntityChip>();
-      chipMap(prota, "persona", p.personas, gate);
+      chipMap(prota, "persona", p.personas, gate, registry);
       const hp: HubPiece = {
         href: p.href,
         titulo: p.titulo,
@@ -1257,9 +1324,9 @@ export async function getPeriodHub(periodCode: string): Promise<PeriodHub> {
       };
       if (p.kind === "hecho") hechos.push(hp);
       else if (p.kind === "pregunta" || p.kind === "ensayo") ensayos.push(hp);
-      chipMap(personas, "persona", p.personas, gate);
-      chipMap(lugares, "lugar", p.lugares, gate);
-      chipMap(ideas, "idea", p.ideas, gate);
+      chipMap(personas, "persona", p.personas, gate, registry);
+      chipMap(lugares, "lugar", p.lugares, gate, registry);
+      chipMap(ideas, "idea", p.ideas, gate, registry);
     }
     const byYear = (a: HubPiece, b: HubPiece) =>
       (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es");
@@ -1427,35 +1494,57 @@ export interface PublicEntity {
 // ningún enlace del sitio puede llevar a una página sin artículo detrás.
 // Personas: además una sola época "hogar" (ver registryToPublic), no la unión.
 
+/** Slugs canónicos, variantes y aliases curados de una entidad. */
+function entitySurfaceSlugs(e: RegistryEntity, reg: EntityRegistry): Set<string> {
+  return (
+    reg.slugsByKey.get(entityKey(e.type, e.slug)) ??
+    new Set([e.slug, ...e.variants.map((v) => slugify(v))])
+  );
+}
+
 /**
  * ¿La entidad tiene ≥1 pieza DEDICADA publicada (su ficha, o una pieza producida
  * desde ella)? Es EL gate del sitio público.
  */
-function isDedicatedEntity(e: RegistryEntity, ded: Set<string>): boolean {
-  if (ded.has(e.slug)) return true;
-  for (const v of e.variants) if (ded.has(slugify(v))) return true;
+function isDedicatedEntity(
+  e: RegistryEntity,
+  ded: Set<string>,
+  reg: EntityRegistry,
+): boolean {
+  for (const slug of entitySurfaceSlugs(e, reg)) if (ded.has(slug)) return true;
   return false;
 }
 
 /** El acc del índice publicado que corresponde a esta entidad del registro. */
-function findPublishedAcc(e: RegistryEntity, index: EntityIndex): EntityAccum | null {
-  const slugs = new Set<string>([e.slug, ...e.variants.map((v) => slugify(v))]);
+function findPublishedAcc(
+  e: RegistryEntity,
+  index: EntityIndex,
+  reg: EntityRegistry,
+): EntityAccum | null {
+  const slugs = entitySurfaceSlugs(e, reg);
+  let best: EntityAccum | null = null;
   for (const vs of slugs) {
     const acc = index.byKey.get(entityKey(e.type, vs));
-    if (acc) return acc;
+    if (!acc) continue;
+    if (
+      !best ||
+      (acc.hasFicha && !best.hasFicha) ||
+      (acc.hasFicha === best.hasFicha && acc.pieceIds.size > best.pieceIds.size)
+    ) {
+      best = acc;
+    }
   }
-  return null;
+  return best;
 }
 
 /** Info de la pieza dedicada de una entidad del registro (por slug o variante). */
 function findDedicatedInfo(
   e: RegistryEntity,
   info: PublishedEntityData["dedicatedInfo"],
+  reg: EntityRegistry,
 ): { imageUrl: string | null; href: string; resumen: string } | null {
-  const direct = info.get(entityKey(e.type, e.slug));
-  if (direct) return direct;
-  for (const v of e.variants) {
-    const hit = info.get(entityKey(e.type, slugify(v)));
+  for (const slug of entitySurfaceSlugs(e, reg)) {
+    const hit = info.get(entityKey(e.type, slug));
     if (hit) return hit;
   }
   return null;
@@ -1464,10 +1553,11 @@ function findDedicatedInfo(
 function registryToPublic(
   e: RegistryEntity,
   index: EntityIndex,
+  reg: EntityRegistry,
   dedicatedInfo?: PublishedEntityData["dedicatedInfo"],
 ): PublicEntity {
-  const acc = findPublishedAcc(e, index);
-  const ded = dedicatedInfo ? findDedicatedInfo(e, dedicatedInfo) : null;
+  const acc = findPublishedAcc(e, index, reg);
+  const ded = dedicatedInfo ? findDedicatedInfo(e, dedicatedInfo, reg) : null;
   return {
     name: e.name,
     slug: e.slug,
@@ -1493,18 +1583,33 @@ function relatedFromAcc(
   acc: EntityAccum,
   index: EntityIndex,
   dedicatedSlugs: Record<EntityType, Set<string>>,
+  reg?: EntityRegistry,
 ): EntityRelation[] {
-  return [...acc.related.entries()]
-    .map(([k, shared]) => {
+  const relations = new Map<string, EntityRelation>();
+  for (const [k, shared] of acc.related.entries()) {
       const o = index.byKey.get(k);
-      if (!o) return null;
+      if (!o) continue;
+      const registryKey = reg?.variantSlugToKey.get(o.slug);
+      const registryEntity = registryKey ? reg?.byKey.get(registryKey) : undefined;
+      const entity = registryEntity?.type === o.type ? registryEntity : undefined;
+      const slug = entity?.slug ?? o.slug;
       // Pasa el gate como todo lo demás: la co-ocurrencia detecta a cualquier
       // entidad nombrada, pero solo se enlaza la que tiene artículo propio. Sin
       // este filtro, la mayoría de los chips "Relacionadas" caían en 404.
-      if (!dedicatedSlugs[o.type].has(o.slug)) return null;
-      return { name: canonicalName(o), slug: o.slug, type: o.type, href: entityPath(o.type, o.slug), shared } as EntityRelation;
-    })
-    .filter((x): x is EntityRelation => !!x)
+      if (!dedicatedSlugs[o.type].has(slug)) continue;
+      const relationKey = entityKey(o.type, slug);
+      const previous = relations.get(relationKey);
+      const relation: EntityRelation = {
+        name: entity?.name ?? canonicalName(o),
+        slug,
+        type: o.type,
+        href: entityPath(o.type, slug),
+        // Dos aliases en la misma pieza no cuentan como dos co-ocurrencias.
+        shared: Math.max(previous?.shared ?? 0, shared),
+      };
+      relations.set(relationKey, relation);
+  }
+  return [...relations.values()]
     .sort((a, b) => b.shared - a.shared || a.name.localeCompare(b.name, "es"))
     .slice(0, 16);
 }
@@ -1534,10 +1639,12 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
     const list: PublicEntity[] = [];
     const representedAccs = new Set<string>();
     for (const e of reg.entities) {
-      if (e.type !== type || !isDedicatedEntity(e, ded)) continue;
-      list.push(registryToPublic(e, index, dedicatedInfo));
-      const acc = findPublishedAcc(e, index);
-      if (acc) representedAccs.add(acc.key);
+      if (e.type !== type || !isDedicatedEntity(e, ded, reg)) continue;
+      list.push(registryToPublic(e, index, reg, dedicatedInfo));
+      for (const slug of entitySurfaceSlugs(e, reg)) {
+        const acc = index.byKey.get(entityKey(e.type, slug));
+        if (acc) representedAccs.add(acc.key);
+      }
     }
     // Una ficha publicada puede usar un nombre más específico que el registro
     // histórico (p. ej. José Prudencio Padilla vs. José Padilla). No se pierde:
@@ -1582,15 +1689,35 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
  */
 export async function getPeriodEntityUniverse(type: EntityType, periodCode: string): Promise<PublicEntity[]> {
   try {
-    const [all, { dedicatedSlugs, dedicatedInfo }] = await Promise.all([
+    const [all, { dedicatedSlugs, dedicatedInfo }, reg] = await Promise.all([
       getAnchoredPieces(),
       getPublishedEntityData(),
+      loadEntityRegistry(),
     ]);
     const ded = dedicatedSlugs[type];
-    const { byKey } = buildEntityIndex(all.filter((p) => p.periodCode === periodCode));
-    const list = [...byKey.values()]
-      .filter((acc) => acc.type === type && ded.has(acc.slug))
-      .map((acc) => ({
+    const periodIndex = buildEntityIndex(all.filter((p) => p.periodCode === periodCode));
+    const list: PublicEntity[] = [];
+    const representedAccs = new Set<string>();
+    for (const e of reg.entities) {
+      if (e.type !== type || !isDedicatedEntity(e, ded, reg)) continue;
+      const acc = findPublishedAcc(e, periodIndex, reg);
+      if (!acc) continue;
+      list.push(registryToPublic(e, periodIndex, reg, dedicatedInfo));
+      for (const slug of entitySurfaceSlugs(e, reg)) {
+        const surfaceAcc = periodIndex.byKey.get(entityKey(e.type, slug));
+        if (surfaceAcc) representedAccs.add(surfaceAcc.key);
+      }
+    }
+    for (const acc of periodIndex.byKey.values()) {
+      if (
+        acc.type !== type ||
+        !acc.hasFicha ||
+        !ded.has(acc.slug) ||
+        representedAccs.has(acc.key)
+      ) {
+        continue;
+      }
+      list.push({
         name: canonicalName(acc),
         slug: acc.slug,
         type: acc.type,
@@ -1603,7 +1730,8 @@ export async function getPeriodEntityUniverse(type: EntityType, periodCode: stri
         hasFicha: acc.hasFicha,
         resumen: acc.resumen ?? dedicatedInfo.get(acc.key)?.resumen ?? null,
         imageUrl: acc.imageUrl ?? dedicatedInfo.get(acc.key)?.imageUrl ?? null,
-      }));
+      });
+    }
     list.sort((a, b) => b.mentions - a.mentions || a.name.localeCompare(b.name, "es"));
     return list.slice(0, ENTITY_DISPLAY_CAP);
   } catch (err) {
@@ -1670,7 +1798,7 @@ export async function getEntityLinker(): Promise<EntityLinker> {
     ]);
     const entities: LinkableEntity[] = [];
     for (const e of reg.entities) {
-      if (!isDedicatedEntity(e, dedicatedSlugs[e.type])) continue;
+      if (!isDedicatedEntity(e, dedicatedSlugs[e.type], reg)) continue;
       entities.push({
         key: entityKey(e.type, e.slug),
         type: e.type,
@@ -1708,7 +1836,7 @@ export async function resolveEntityHrefs(names: string[]): Promise<Record<string
       if (!slug) continue;
       const key = reg.variantSlugToKey.get(slug);
       const ent = key ? reg.byKey.get(key) : undefined;
-      if (ent && isDedicatedEntity(ent, dedicatedSlugs[ent.type])) {
+      if (ent && isDedicatedEntity(ent, dedicatedSlugs[ent.type], reg)) {
         out[name] = entityPath(ent.type, ent.slug);
       }
     }
@@ -1747,23 +1875,25 @@ export async function resolveEntityChips(
     const seen = new Set<string>();
     const out: ResolvedEntityChip[] = [];
     for (const raw of names) {
-      const name = (raw ?? "").trim();
-      if (!name) continue;
-      const slug = slugify(name);
-      if (!slug || seen.has(slug)) continue;
-      seen.add(slug);
+      const rawName = (raw ?? "").trim();
+      if (!rawName) continue;
+      const slug = slugify(rawName);
+      if (!slug) continue;
 
       // El nombre de la ficha puede ser una variante ("José Padilla"); el registro
       // la resuelve a la entidad canónica y a su slug publicado.
       const key = reg.variantSlugToKey.get(slug);
       const ent = key ? reg.byKey.get(key) : undefined;
       const canonicalSlug = ent && ent.type === type ? ent.slug : slug;
+      const canonicalKey = entityKey(type, canonicalSlug);
+      if (seen.has(canonicalKey)) continue;
+      seen.add(canonicalKey);
       const published = dedicatedSlugs[type].has(canonicalSlug) || dedicatedSlugs[type].has(slug);
       const info =
         dedicatedInfo.get(entityKey(type, canonicalSlug)) ?? dedicatedInfo.get(entityKey(type, slug));
 
       out.push({
-        name,
+        name: ent && ent.type === type ? ent.name : rawName,
         type,
         href: published ? entityPath(type, canonicalSlug) : null,
         imageUrl: published ? (info?.imageUrl ?? null) : null,
@@ -1804,8 +1934,9 @@ export interface EntityNode extends PublicEntity {
  */
 export async function getEntityNode(slug: string, type?: EntityType): Promise<EntityNode | null> {
   try {
-    const [e, { index, dedicatedSlugs, dedicatedInfo }] = await Promise.all([
+    const [e, reg, { index, dedicatedSlugs, dedicatedInfo }] = await Promise.all([
       findRegistryEntity(slug, type),
+      loadEntityRegistry(),
       getPublishedEntityData(),
     ]);
     if (!e) return pieceEntityNode(slug, index, dedicatedSlugs, type);
@@ -1813,9 +1944,9 @@ export async function getEntityNode(slug: string, type?: EntityType): Promise<En
     // La RUTA existe solo si la entidad tiene su propia pieza publicada. Antes
     // bastaba una mención, lo que abría miles de páginas casi vacías que además
     // se indexaban. Sin pieza propia → 404: el archivo solo promete lo que tiene.
-    if (!isDedicatedEntity(e, dedicatedSlugs[e.type])) return null;
+    if (!isDedicatedEntity(e, dedicatedSlugs[e.type], reg)) return null;
 
-    const varSlugs = new Set<string>([e.slug, ...e.variants.map((v) => slugify(v))]);
+    const varSlugs = entitySurfaceSlugs(e, reg);
     const namesOf = (p: AnchoredPiece) =>
       e.type === "persona" ? p.personas : e.type === "lugar" ? p.lugares : p.ideas;
 
@@ -1824,11 +1955,11 @@ export async function getEntityNode(slug: string, type?: EntityType): Promise<En
       .map((p) => ({ href: p.href, titulo: p.titulo, kind: p.kind, anio: p.anio }))
       .sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es"));
 
-    const acc = findPublishedAcc(e, index);
+    const acc = findPublishedAcc(e, index, reg);
     return {
-      ...registryToPublic(e, index, dedicatedInfo),
+      ...registryToPublic(e, index, reg, dedicatedInfo),
       pieces: pieceRefs,
-      related: acc ? relatedFromAcc(acc, index, dedicatedSlugs) : [],
+      related: acc ? relatedFromAcc(acc, index, dedicatedSlugs, reg) : [],
     };
   } catch (err) {
     console.error(`[public-data] getEntityNode(${slug}) falló:`, err);

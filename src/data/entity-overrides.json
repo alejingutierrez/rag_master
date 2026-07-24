@@ -4852,8 +4852,8 @@
   "_motivo": "QA: duplicado de \"Salvatore Mancuso\""
  },
  "persona:salvatore-mancuso-gomez": {
-  "periodoCode": "C91",
-  "anio": 2000
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Salvatore Mancuso\""
  },
  "persona:santiago-perez-triana": {
   "periodoCode": "REG",

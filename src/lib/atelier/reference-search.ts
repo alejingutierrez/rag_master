@@ -29,6 +29,9 @@ import { periodInfo } from "../design-tokens";
 
 export const MIN_RELEVANT_REFS = 5;
 const MAX_REFS_TO_ATTACH = 7;
+// Un solo retrato biográfico fuerte evita que el modelo promedie el rostro con
+// escenas grupales o imágenes ambiguas que también mencionan el nombre.
+const MAX_PERSON_REFS_TO_ATTACH = 1;
 /** Ancla documental directa (Tier "documental"): el material de verdad. */
 const MIN_SCORE = 6;
 export const SCORE_BATCH_SIZE = 45;
@@ -37,6 +40,10 @@ export const SCORE_BATCH_SIZE = 45;
  * darle ESO al generador que dejarlo sin ninguna ancla visual. */
 const SOFT_MIN_SCORE = 5;
 const MIN_WIDTH = 600;
+/** Los archivos históricos de personas suelen conservar una foto pequeña pero
+ * identificable. Para identidad importa más que sea la persona correcta que
+ * descartar el único retrato por no llegar a 600 px. */
+const MIN_PERSON_WIDTH = 160;
 const PROVIDER_TIMEOUT_MS = 15_000;
 const DOWNLOAD_TIMEOUT_MS = 25_000;
 const UA = "HistoriaColombiana/1.0 (buscador de referencias editoriales)";
@@ -51,6 +58,10 @@ export interface ReferenceCandidate {
   query: string;
   /** Referer requerido para descargar (algunos CDN bloquean hotlinking, p. ej. artic). */
   referer?: string;
+  /** Confirmación determinista de que el título corresponde al retratado. */
+  identityVerified?: boolean;
+  /** Explicación auditable del gate de identidad. */
+  identityReason?: string;
 }
 
 export interface ScoredReference extends ReferenceCandidate {
@@ -67,6 +78,8 @@ export interface DownloadedReference {
     url: string;
     page?: string;
     score: number;
+    identityVerified?: boolean;
+    identityReason?: string;
   };
 }
 
@@ -82,6 +95,10 @@ export interface ReferenceSearchResult {
   /** Usables como atmósfera/grounding (score ≥ SOFT_MIN_SCORE). */
   usable: number;
   queries: string[];
+  /** Retratos que pasaron el gate de nombre exacto/canónico. */
+  identityVerified: number;
+  /** Número mínimo que exige esta intención (1 para persona, 0 para el resto). */
+  identityRequired: number;
 }
 
 export interface ReferenceContext {
@@ -263,6 +280,62 @@ function foldAccents(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+const PERSON_NAME_STOPWORDS = new Set(["de", "del", "la", "las", "los", "y"]);
+const GROUP_REFERENCE_RE =
+  /\b(recepcion|recepción|reunion|reunión|meeting|audiencia|delegacion|delegación|comitiva|grupo|congreso|gabinete|junto a|junto al)\b/i;
+const NON_PORTRAIT_PERSON_RE =
+  /\b(coat of arms|escudo|puente|bridge|estadio|stadium|aeropuerto|airport|avenida|calle|street|colegio|school|universidad|university|hospital|parque|park|plaza|municipio|municipality|departamento|department|memorial|monumento|monument|tumba|tomb|biblioteca|library)\b/i;
+const PORTRAIT_HINT_RE =
+  /\b(retrato|portrait|fotograf[ií]a|photo|archivo|archive|rostro|face|presidente|president)\b/i;
+
+function personTokens(value: string): string[] {
+  return foldAccents(value)
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter((token) => token.length > 1 && !PERSON_NAME_STOPWORDS.has(token));
+}
+
+/** Match estricto de identidad por nombre: nunca usa la query que trajo el
+ * resultado, solo el título documental del propio archivo. */
+export function matchesPersonIdentity(candidateTitle: string, personName: string): boolean {
+  const expected = personTokens(personName);
+  const actual = new Set(personTokens(candidateTitle));
+  if (expected.length < 2 || actual.size < 2) return false;
+  return expected.every((token) => actual.has(token));
+}
+
+export function scorePersonIdentityCandidate(
+  candidate: ReferenceCandidate,
+  personName: string,
+): ScoredReference | null {
+  if (!matchesPersonIdentity(candidate.title, personName)) return null;
+  if (NON_PORTRAIT_PERSON_RE.test(candidate.title)) return null;
+  const dedicatedBiography = candidate.provider === "wikipedia-biografia";
+  // Internet Archive, Gallica y bibliotecas devuelven sobre todo cubiertas de
+  // libros/documentos. Solo entran si el título declara una imagen de la
+  // persona; el nombre del autor en una portada no demuestra un rostro.
+  if (
+    /^(internetarchive|gallica|loc|wellcome)/.test(candidate.provider) &&
+    !PORTRAIT_HINT_RE.test(candidate.title)
+  ) {
+    return null;
+  }
+  const groupScene = GROUP_REFERENCE_RE.test(candidate.title);
+  const score = dedicatedBiography ? 10 : groupScene ? 7 : 9;
+  return {
+    ...candidate,
+    score,
+    identityVerified: true,
+    identityReason: dedicatedBiography
+      ? "imagen principal de la biografía exacta"
+      : groupScene
+        ? "el título contiene el nombre exacto, pero es una escena grupal"
+        : "el título documental contiene el nombre exacto",
+  };
+}
+
 /**
  * Recorta una query a N términos para los motores de ARCHIVO (AND estricto).
  * Dos mejoras sobre el corte ingenuo por los primeros N tokens:
@@ -349,6 +422,15 @@ export function buildReferenceQuerySeeds(ctx: ReferenceContext): string[] {
 }
 
 export async function generateReferenceQueries(ctx: ReferenceContext): Promise<string[]> {
+  // En personas no ampliamos a relaciones, roles o atmósferas: eso fue lo que
+  // permitía adjuntar a otra figura pública. Toda búsqueda conserva el nombre.
+  if (ctx.visualIntent === "retrato-publico" && ctx.titulo.trim()) {
+    const title = ctx.titulo.trim();
+    return uniqueStrings(
+      [title, `${title} retrato`, `${title} fotografía`, `${title} portrait`],
+      4,
+    );
+  }
   const lines = [
     `TEMA: ${ctx.titulo}`,
     ctx.resumen ? `RESUMEN: ${ctx.resumen}` : "",
@@ -509,6 +591,61 @@ async function searchWikimedia(q: string): Promise<ReferenceCandidate[]> {
     });
   }
   return out;
+}
+
+function wikipediaPageCandidates(
+  raw: unknown,
+  target: string,
+): ReferenceCandidate[] {
+  const pages = asRecord(asRecord(asRecord(raw).query).pages);
+  const out: ReferenceCandidate[] = [];
+  for (const value of Object.values(pages)) {
+    const page = asRecord(value);
+    const title = typeof page.title === "string" ? page.title : "";
+    if (!matchesPersonIdentity(title, target)) continue;
+    const original = asRecord(page.original);
+    const thumbnail = asRecord(page.thumbnail);
+    const url =
+      (typeof original.source === "string" && original.source) ||
+      (typeof thumbnail.source === "string" && thumbnail.source) ||
+      "";
+    if (!url) continue;
+    out.push({
+      provider: "wikipedia-biografia",
+      title,
+      url,
+      page: typeof page.fullurl === "string" ? page.fullurl : undefined,
+      width:
+        (typeof original.width === "number" && original.width) ||
+        (typeof thumbnail.width === "number" && thumbnail.width) ||
+        0,
+      height:
+        (typeof original.height === "number" && original.height) ||
+        (typeof thumbnail.height === "number" && thumbnail.height) ||
+        0,
+      query: target,
+      identityVerified: true,
+      identityReason: "imagen principal de la biografía exacta",
+    });
+  }
+  return out.slice(0, 1);
+}
+
+/** Retrato exacto de la biografía antes del fan-out ruidoso de archivos. */
+async function searchWikipediaBiography(personName: string): Promise<ReferenceCandidate[]> {
+  const base =
+    "https://es.wikipedia.org/w/api.php?action=query&format=json&prop=pageimages%7Cinfo" +
+    "&piprop=original%7Cthumbnail&pithumbsize=1200&inprop=url";
+  const direct = await jsonFetch(
+    `${base}&redirects=1&titles=${encodeURIComponent(personName)}`,
+  );
+  const exact = wikipediaPageCandidates(direct, personName);
+  if (exact.length) return exact;
+  const search = await jsonFetch(
+    `${base}&generator=search&gsrsearch=${encodeURIComponent(`"${personName}"`)}` +
+      "&gsrlimit=5",
+  );
+  return wikipediaPageCandidates(search, personName);
 }
 
 async function searchMetMuseum(q: string): Promise<ReferenceCandidate[]> {
@@ -890,12 +1027,15 @@ const PROVIDERS: Array<{
 
 export const REFERENCE_PROVIDER_NAMES = PROVIDERS.map((p) => p.name);
 
-function dedupeCandidates(all: ReferenceCandidate[]): ReferenceCandidate[] {
+function dedupeCandidates(
+  all: ReferenceCandidate[],
+  minWidth = MIN_WIDTH,
+): ReferenceCandidate[] {
   const seenUrl = new Set<string>();
   const seenTitle = new Set<string>();
   const out: ReferenceCandidate[] = [];
   for (const c of all) {
-    if (!c.url || c.width < MIN_WIDTH) continue;
+    if (!c.url || c.width < minWidth) continue;
     const cleanUrl = c.url.split("?")[0].toLowerCase();
     const urlKey = /\/iiif\/|iiif\.|\/full\/[^/]+\/0\/default\.(?:jpg|jpeg|webp|png)$/i.test(cleanUrl)
       ? cleanUrl
@@ -916,7 +1056,10 @@ function dedupeCandidates(all: ReferenceCandidate[]): ReferenceCandidate[] {
   return out;
 }
 
-export async function searchAllProviders(queries: string[]): Promise<ReferenceCandidate[]> {
+export async function searchAllProviders(
+  queries: string[],
+  opts: { minWidth?: number } = {},
+): Promise<ReferenceCandidate[]> {
   const all: ReferenceCandidate[] = [];
   // Diagnóstico por proveedor: sin esto, un bloqueo de IPs de datacenter (o un
   // cambio de API) se ve como "0 candidatas" sin explicación en los logs.
@@ -943,7 +1086,7 @@ export async function searchAllProviders(queries: string[]): Promise<ReferenceCa
     (p) => `${p.name}=${failures[p.name] ? `ERR×${failures[p.name]}` : `ok(${empties[p.name] ?? 0} vacías)`}`
   ).join(" · ");
   console.log(`[refs] proveedores: ${resumen} · candidatas brutas: ${all.length}`);
-  return dedupeCandidates(all);
+  return dedupeCandidates(all, opts.minWidth ?? MIN_WIDTH);
 }
 
 // ── 3. Puntuación de relevancia por LLM ──────────────────────────────
@@ -1050,15 +1193,30 @@ async function downloadOne(ref: ScoredReference, index: number): Promise<Downloa
     });
     if (!res.ok) return null;
     const raw = Buffer.from(await res.arrayBuffer());
-    if (raw.length < 10_000) return null; // miniatura o placeholder
-    const buffer = await sharp(raw)
-      .resize(1568, 1568, { fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 88 })
-      .toBuffer();
+    if (raw.length < (ref.identityVerified ? 3_000 : 10_000)) return null; // miniatura o placeholder
+    const pipeline = sharp(raw).resize(1568, 1568, {
+      fit: "inside",
+      // Una foto biográfica pequeña sigue siendo mejor ancla de identidad que
+      // un rostro inventado. Se normaliza para que el modelo no la minimice.
+      withoutEnlargement: !ref.identityVerified,
+      kernel: sharp.kernel.lanczos3,
+    });
+    const normalized = ref.identityVerified
+      ? pipeline.sharpen({ sigma: 0.7 })
+      : pipeline;
+    const buffer = await normalized.jpeg({ quality: 88 }).toBuffer();
     return {
       buffer,
       name: `ref-${index + 1}.jpg`,
-      meta: { provider: ref.provider, title: ref.title, url: ref.url, page: ref.page, score: ref.score },
+      meta: {
+        provider: ref.provider,
+        title: ref.title,
+        url: ref.url,
+        page: ref.page,
+        score: ref.score,
+        identityVerified: ref.identityVerified,
+        identityReason: ref.identityReason,
+      },
     };
   } catch {
     return null;
@@ -1082,13 +1240,34 @@ const BROADEN_SYSTEM = `Las queries anteriores no encontraron suficientes refere
 
 export async function searchReferences(ctx: ReferenceContext): Promise<ReferenceSearchResult> {
   const queries = await generateReferenceQueries(ctx);
+  const isPerson = ctx.visualIntent === "retrato-publico";
 
-  let candidates = await searchAllProviders(queries);
-  let scored = await scoreCandidates(candidates, ctx);
+  const biography = isPerson
+    ? await searchWikipediaBiography(ctx.titulo).catch((e) => {
+        console.warn(`[refs] Wikipedia biografía falló: ${(e as Error).message}`);
+        return [];
+      })
+    : [];
+  // Si ya existe la imagen biográfica exacta, una sola pasada por el nombre
+  // canónico basta para buscar un segundo ángulo; no lanzamos 4× todos los
+  // archivos. Si no existe, sí agotamos las cuatro variantes exactas.
+  const providerQueries = isPerson && biography.length ? queries.slice(0, 1) : queries;
+  let candidates = await searchAllProviders(providerQueries, {
+    minWidth: isPerson ? MIN_PERSON_WIDTH : MIN_WIDTH,
+  });
+  if (isPerson) {
+    candidates = dedupeCandidates([...biography, ...candidates], MIN_PERSON_WIDTH);
+  }
+  let scored = isPerson
+    ? candidates
+        .map((candidate) => scorePersonIdentityCandidate(candidate, ctx.titulo))
+        .filter((candidate): candidate is ScoredReference => Boolean(candidate))
+        .sort((a, b) => b.score - a.score)
+    : await scoreCandidates(candidates, ctx);
   let relevant = scored.filter((s) => s.score >= MIN_SCORE);
 
   // Segunda pasada con queries más amplias si no se llegó al piso.
-  if (relevant.length < MIN_RELEVANT_REFS) {
+  if (!isPerson && relevant.length < MIN_RELEVANT_REFS) {
     try {
       const raw = await callClaudeJson<{ queries?: unknown }>({
         model: SONNET_MODEL,
@@ -1122,16 +1301,26 @@ export async function searchReferences(ctx: ReferenceContext): Promise<Reference
   //   que el generador tenga AL MENOS algo de ancla visual. El caller decide el
   //   modo (edits con refs vs. generación desde el texto) según lo que baje.
   const usable = scored.filter((s) => s.score >= SOFT_MIN_SCORE);
-  const pool = relevant.length >= MIN_RELEVANT_REFS ? relevant : usable;
-  const refs = await downloadReferences(pool, MAX_REFS_TO_ATTACH);
+  const pool = isPerson
+    ? relevant
+    : relevant.length >= MIN_RELEVANT_REFS
+      ? relevant
+      : usable;
+  const refs = await downloadReferences(
+    pool,
+    isPerson ? MAX_PERSON_REFS_TO_ATTACH : MAX_REFS_TO_ATTACH,
+  );
   // Las descargas pueden fallar (hotlink muerto): el piso se evalúa sobre lo bajado.
   const relevantDownloaded = refs.filter((r) => r.meta.score >= MIN_SCORE).length;
+  const identityVerified = refs.filter((r) => r.meta.identityVerified).length;
   return {
-    ok: relevantDownloaded >= MIN_RELEVANT_REFS,
+    ok: isPerson ? identityVerified >= 1 : relevantDownloaded >= MIN_RELEVANT_REFS,
     refs,
     considered: candidates.length,
     relevant: relevant.length,
     usable: usable.length,
     queries,
+    identityVerified,
+    identityRequired: isPerson ? 1 : 0,
   };
 }

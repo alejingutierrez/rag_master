@@ -8,6 +8,7 @@ import type { DeliverableTaxonomy } from "../taxonomy";
 import type { DeliverableSeo } from "../seo";
 import type { StructuredData } from "../typology-schemas";
 import type { TypographicScore } from "../video/score";
+import type { SourceRef as ProductionSourceRef } from "../source-ref";
 
 // ── Entrada ──────────────────────────────────────────────────────────
 
@@ -39,6 +40,8 @@ export interface AtelierInput {
   longitud?: LongitudId;
   /** Pistas curadas de la pregunta de origen (si el encargo viene de una). */
   questionMeta?: AtelierQuestionMeta;
+  /** Identidad canónica de la pieza solicitada; obliga a no derivar en otra. */
+  sourceRef?: ProductionSourceRef;
   /** Tabla efectiva resuelta por el endpoint (chunks_v2 vacío ⇒ "chunks"). */
   tableName: "chunks" | "chunks_v2";
   useParentExpansion: boolean;

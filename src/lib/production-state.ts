@@ -1,7 +1,8 @@
 /**
  * Estado de producción por tipología (solo lectura).
  *
- * "Producido" ⇔ existe un Deliverable COMPLETE cuyo `templateId` es la ficha del
+ * "Ocupado/producido" ⇔ existe un Deliverable GENERATING o COMPLETE cuyo
+ * `templateId` es la ficha del
  * mismo tipo (`fichaFormatForKind`) y que está enlazado al ítem:
  *   - pregunta → por FK `Deliverable.questionId` (robusto para preguntas viejas
  *     sin sourceRef; además el Taller ya pasa questionId).
@@ -20,6 +21,8 @@ export interface ProducedInfo {
   deliverableId: string;
   /** ISO si está publicado en el sitio público, null si solo producido. */
   publishedAt: string | null;
+  /** Permite distinguir una ficha aún en curso de una ya terminada. */
+  status: "GENERATING" | "COMPLETE";
 }
 
 /**
@@ -36,13 +39,13 @@ export async function getProducedKeys(
   if (kind === "pregunta") {
     const dels = await prisma.deliverable.findMany({
       where: {
-        status: "COMPLETE",
+        status: { in: ["GENERATING", "COMPLETE"] },
         templateId: ficha,
         ...(keys && keys.length
           ? { questionId: { in: keys } }
           : { questionId: { not: null } }),
       },
-      select: { id: true, questionId: true, publishedAt: true },
+      select: { id: true, questionId: true, publishedAt: true, status: true },
       orderBy: { updatedAt: "desc" },
     });
     for (const d of dels) {
@@ -50,6 +53,7 @@ export async function getProducedKeys(
       out.set(d.questionId, {
         deliverableId: d.id,
         publishedAt: d.publishedAt?.toISOString() ?? null,
+        status: d.status as ProducedInfo["status"],
       });
     }
     return out;
@@ -58,11 +62,11 @@ export async function getProducedKeys(
   // Resto de tipologías: enlace vía metadata.sourceRef.
   const dels = await prisma.deliverable.findMany({
     where: {
-      status: "COMPLETE",
+      status: { in: ["GENERATING", "COMPLETE"] },
       templateId: ficha,
       metadata: { path: ["sourceRef", "kind"], equals: kind },
     },
-    select: { id: true, metadata: true, publishedAt: true },
+    select: { id: true, metadata: true, publishedAt: true, status: true },
     orderBy: { updatedAt: "desc" },
   });
   for (const d of dels) {
@@ -74,6 +78,7 @@ export async function getProducedKeys(
     out.set(k, {
       deliverableId: d.id,
       publishedAt: d.publishedAt?.toISOString() ?? null,
+      status: d.status as ProducedInfo["status"],
     });
   }
   return out;

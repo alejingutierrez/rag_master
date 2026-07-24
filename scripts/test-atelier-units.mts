@@ -43,9 +43,12 @@ import {
   buildCandidateScoreBatches,
   buildReferenceQuerySeeds,
   capForArchives,
+  matchesPersonIdentity,
   referenceContextFromStructured,
+  scorePersonIdentityCandidate,
   type ReferenceCandidate,
 } from "../src/lib/atelier/reference-search";
+import { validateEntitySourceContract } from "../src/lib/entity-source-contract";
 import type { StructuredData } from "../src/lib/typology-schemas";
 import type { SearchResult } from "../src/lib/vector-search";
 import type { VerifiedClaim, AtelierBrief } from "../src/lib/atelier/types";
@@ -557,6 +560,108 @@ test("el contexto de una persona marca búsqueda de retrato público", () => {
   assert.ok(ctx.visualAnchors?.includes("María Cano portrait"));
 });
 
+test("el gate de identidad acepta el nombre completo y rechaza otra figura pública", () => {
+  assert.equal(
+    matchesPersonIdentity("Carlos Pizarro Leongómez, 1989", "Carlos Pizarro Leongómez"),
+    true,
+  );
+  assert.equal(
+    matchesPersonIdentity("Jaime Pardo Leal en Bogotá", "Carlos Pizarro Leongómez"),
+    false,
+  );
+  const verified = scorePersonIdentityCandidate(
+    {
+      provider: "wikipedia-biografia",
+      title: "Eduardo Santos Montejo",
+      url: "https://example.com/eduardo.jpg",
+      width: 220,
+      height: 311,
+      query: "Eduardo Santos",
+    },
+    "Eduardo Santos",
+  );
+  assert.equal(verified?.identityVerified, true);
+  assert.equal(verified?.score, 10);
+});
+
+test("una referencia grupal exacta queda por debajo de la biografía", () => {
+  const groupRef = scorePersonIdentityCandidate(
+    {
+      provider: "wikimedia",
+      title: "Recepción a Mariano Ospina Pérez",
+      url: "https://example.com/recepcion.jpg",
+      width: 900,
+      height: 700,
+      query: "Mariano Ospina Pérez",
+    },
+    "Mariano Ospina Pérez",
+  );
+  assert.equal(groupRef?.identityVerified, true);
+  assert.equal(groupRef?.score, 7);
+});
+
+test("el prompt de retrato bloquea la identidad y prohíbe mezclar rostros", () => {
+  const prompt = buildStyledPrompt({
+    subject: "A dignified vertical portrait of Álvaro Gómez Hurtado.",
+    direction: {
+      accentColor: "rojo",
+      accentTarget: "one restrained red tie detail",
+      accentTargetEs: "un detalle rojo contenido en la corbata",
+      encuadre: "retrato",
+      razon: "Detalle editorial.",
+    },
+    withReferences: true,
+    identityName: "Álvaro Gómez Hurtado",
+    referenceNotes: ["Álvaro Gómez Hurtado — wikipedia-biografia, score 10"],
+  });
+  assert.match(prompt, /IDENTITY LOCK — Álvaro Gómez Hurtado/i);
+  assert.match(prompt, /Do not .*blend the face/i);
+  assert.match(prompt, /Image #1 is the primary facial identity reference/i);
+});
+
+test("el contrato de origen impide producir una persona desde un lugar", () => {
+  const result = validateEntitySourceContract(
+    { kind: "entidad", key: "place:santander", label: "Santander" },
+    {
+      typology: "entidad",
+      slug: "francisco-de-paula-santander",
+      titulo: "Francisco de Paula Santander",
+      resumen: "Militar y estadista.",
+      periodoCode: "IND",
+      tipo: "Persona",
+      nacimiento: "1792",
+      muerte: "1840",
+      roles: ["estadista"],
+      hitos: [],
+      relaciones: [],
+      semblanza: "Figura de la independencia.",
+    },
+  );
+  assert.equal(result.ok, false);
+  assert.match(result.error ?? "", /derivó en Persona/i);
+});
+
+test("el contrato permite completar el nombre formal de la misma persona", () => {
+  const result = validateEntitySourceContract(
+    { kind: "entidad", key: "person:carlos-pizarro", label: "Carlos Pizarro" },
+    {
+      typology: "entidad",
+      slug: "carlos-pizarro-leongomez",
+      titulo: "Carlos Pizarro Leongómez",
+      resumen: "Comandante del M-19.",
+      periodoCode: "CNA",
+      tipo: "Persona",
+      nacimiento: "1951",
+      muerte: "1990",
+      roles: ["dirigente político"],
+      hitos: [],
+      relaciones: [],
+      semblanza: "Figura de la desmovilización.",
+    },
+  );
+  assert.equal(result.ok, true);
+});
+
 test("el director de arte recibe acentos recientes para no repetir la serie", () => {
   const prompt = buildArtDirectorUserPrompt({
     titulo: "Colonia (1600-1780)",
@@ -783,8 +888,9 @@ function fakeBrief(formato: AtelierBrief["ficha"]["formato"]): AtelierBrief {
 test("el set de formatos incluye podcast y todos son válidos", () => {
   const ids = ATELIER_FORMAT_LIST.map((f) => f.id);
   assert.ok(ids.includes("podcast"), "falta el formato podcast");
-  // 5 narrativos + 4 fichas del archivo (hecho/época/entidad/pregunta).
-  assert.equal(ids.length, 9);
+  assert.ok(ids.includes("video"), "falta el formato video");
+  // 6 formatos editoriales (incluido video) + 4 fichas del archivo.
+  assert.equal(ids.length, 10);
   for (const k of ["ficha-hecho", "ficha-epoca", "ficha-entidad", "ficha-pregunta"])
     assert.ok(ids.includes(k), `falta el formato ${k}`);
   for (const id of ids) assert.ok(isValidFormatId(id), `formato inválido: ${id}`);
@@ -817,6 +923,12 @@ test("cada formato construye un writer prompt no vacío y con # H1", () => {
       brief: fakeBrief(id),
       verifiedContext: "### Núcleo\n- un hecho cotejado",
     });
+    // Video no redacta prosa: el Director compone una partitura tipográfica.
+    if (id === "video") {
+      assert.equal(sys, "");
+      assert.ok(fmt.maxTokens > 0, `${id}: maxTokens inválido`);
+      continue;
+    }
     assert.ok(sys.length > 800, `${id}: prompt sospechosamente corto`);
     assert.ok(sys.includes("# H1") || /`# H1`/.test(sys), `${id}: no exige título # H1`);
     assert.ok(fmt.maxTokens > 0, `${id}: maxTokens inválido`);
