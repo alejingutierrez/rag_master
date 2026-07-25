@@ -113,7 +113,13 @@ export async function POST(req: NextRequest) {
   const created = await prisma.$transaction(async (tx) => {
     if (isCanonicalFicha(formatId, sourceRef)) {
       const lockKey = `atelier:${formatId}:${sourceRef.kind}:${sourceRef.key}`;
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+      // `pg_advisory_xact_lock` retorna `void`. Prisma 6 intenta deserializar
+      // cada columna de `$queryRaw` y falla con P2010 si proyectamos ese `void`
+      // directamente. `IS NULL` conserva la llamada bloqueante pero convierte
+      // la única columna de salida a boolean, un tipo soportado.
+      await tx.$queryRaw<Array<{ locked: boolean }>>`
+        SELECT pg_advisory_xact_lock(hashtext(${lockKey})) IS NULL AS "locked"
+      `;
       const existing = await tx.deliverable.findFirst({
         where: {
           source: "atelier",

@@ -4,6 +4,7 @@
  * Exit 0 si todo pasa, 1 si algo falla.
  */
 import assert from "node:assert";
+import { readFileSync } from "node:fs";
 import { rebalanceByDiversity, countUniqueDocuments } from "../src/lib/atelier/diversity";
 import { extractJsonObject, parseJsonObject } from "../src/lib/atelier/json";
 import {
@@ -1015,6 +1016,21 @@ test("la serie sigue esperando piezas GENERATING e imagen generando", () => {
   assert.equal(
     evaluateSeriesPoll({ status: "COMPLETE", metadata: { image: { status: "generando" } } }).kind,
     "wait",
+  );
+});
+
+test("el lock idempotente del Taller no proyecta el tipo void de PostgreSQL", () => {
+  const route = readFileSync(
+    new URL("../src/app/api/atelier/route.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    route,
+    /pg_advisory_xact_lock\(hashtext\([\s\S]*?\)\)\s+IS NULL AS "locked"/,
+  );
+  assert.doesNotMatch(
+    route,
+    /\$queryRaw`SELECT pg_advisory_xact_lock\(hashtext\([^`]+`\s*;/,
   );
 });
 
