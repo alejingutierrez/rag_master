@@ -39,7 +39,7 @@ const concept = (label: string, key: string): CampaignEntity => ({
 
 export const CAMPAIGN_ENTITIES: CampaignEntity[] = [
   // Personas — 30 figuras canónicas, sin alias de las 56 páginas ya publicadas.
-  person("Fidel Castaño", "fidel-castano"),
+  person("Francisco José de Caldas", "francisco-jose-de-caldas"),
   person("Gustavo Petro", "gustavo-petro"),
   person("Enrique Olaya Herrera", "enrique-olaya-herrera"),
   person("José Manuel Marroquín", "jose-manuel-marroquin"),
@@ -49,15 +49,15 @@ export const CAMPAIGN_ENTITIES: CampaignEntity[] = [
   person("Gonzalo Jiménez de Quesada", "gonzalo-jimenez-de-quesada"),
   person("Iván Cepeda", "ivan-cepeda"),
   person("Gabriel García Márquez", "gabriel-garcia-marquez"),
-  person("Mario Montoya", "mario-montoya"),
+  person("Policarpa Salavarrieta", "policarpa-salavarrieta"),
   person("Miguel Abadía Méndez", "miguel-abadia-mendez"),
-  person("Iván Márquez", "ivan-marquez"),
+  person("José María Obando", "jose-maria-obando"),
   person("Agustín Codazzi", "agustin-codazzi"),
   person("Bernardo Jaramillo Ossa", "bernardo-jaramillo-ossa"),
   person("Theodore Roosevelt", "theodore-roosevelt"),
   person("Jaime Bateman", "jaime-bateman"),
-  person("Manuel Zapata Olivella", "manuel-zapata-olivella"),
-  person("Rodrigo Tovar Pupo", "rodrigo-tovar-pupo"),
+  person("José Acevedo y Gómez", "jose-acevedo-y-gomez"),
+  person("José María Córdova", "jose-maria-cordova"),
   person("Alfonso Cano", "alfonso-cano"),
   person("Francia Márquez", "francia-marquez"),
   person("Horacio Serpa", "horacio-serpa"),

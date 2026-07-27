@@ -1011,6 +1011,16 @@ test("la serie reintenta una imagen fallida una vez y luego reporta error", () =
   );
 });
 
+test("la serie falla cerrado si una persona no tiene referencia facial verificable", () => {
+  assert.deepEqual(
+    evaluateSeriesPoll({
+      status: "COMPLETE",
+      metadata: { image: { status: "sin_referencias" } },
+    }),
+    { kind: "error", reason: "image-without-identity-reference" },
+  );
+});
+
 test("la serie sigue esperando piezas GENERATING e imagen generando", () => {
   assert.equal(evaluateSeriesPoll({ status: "GENERATING" }).kind, "wait");
   assert.equal(

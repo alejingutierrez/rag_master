@@ -34,6 +34,9 @@ const BASE = process.env.SITE_URL || "https://historiacolombiana.com";
 const CONC = Math.max(1, Number(process.env.CONC ?? "3"));
 const POLL_MS = Number(process.env.POLL_MS ?? "8000");
 const MAX_ITEM_MS = Number(process.env.MAX_ITEM_MS ?? String(40 * 60 * 1000));
+const STALE_GENERATING_MS = Number(
+  process.env.STALE_GENERATING_MS ?? String(20 * 60 * 1000),
+);
 const STATE_FILE =
   process.env.STATE_FILE || join(tmpdir(), "rag-master-campaign-2026-07-25.json");
 const argv = new Set(process.argv.slice(2));
@@ -242,7 +245,10 @@ async function pollUntilReady(deliverableId: string): Promise<void> {
 async function produceOne(job: Job): Promise<{ id: string; reused: boolean }> {
   const existing = await latestRows(job);
   const usable = existing.find(
-    (row) => row.status === "GENERATING" || row.status === "COMPLETE",
+    (row) =>
+      row.status === "COMPLETE" ||
+      (row.status === "GENERATING" &&
+        Date.now() - row.updatedAt.getTime() < STALE_GENERATING_MS),
   );
   if (usable) {
     await pollUntilReady(usable.id);
