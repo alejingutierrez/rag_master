@@ -9,7 +9,7 @@ import "./globals.css";
 
 const display = Instrument_Serif({
   variable: "--font-display",
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   weight: ["400"],
   style: ["normal", "italic"],
   display: "swap",
@@ -17,14 +17,14 @@ const display = Instrument_Serif({
 
 const sans = DM_Sans({
   variable: "--font-sans",
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
 const mono = JetBrains_Mono({
   variable: "--font-mono",
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
 });

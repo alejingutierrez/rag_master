@@ -34,9 +34,15 @@ export function HomeEssays({
               <span>Alejandro Gutiérrez</span>
               <Link href={central.href}>Leer el ensayo <EditorialArrow /></Link>
             </div>
-            <Link href={central.href} className="hc-essay-image-link" tabIndex={-1} aria-hidden>
-              <EditorialImage src={central.imageUrl} alt="" className="hc-essay-image" width={1400} />
-            </Link>
+            <div className="hc-essay-image-frame" aria-hidden>
+              <EditorialImage
+                src={central.imageUrl}
+                alt=""
+                className="hc-essay-image"
+                width={1400}
+                sizes="(max-width: 760px) calc(100vw - 36px), 65vw"
+              />
+            </div>
           </article>
 
           <aside className="hc-related-readings">

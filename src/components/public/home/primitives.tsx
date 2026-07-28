@@ -1,6 +1,8 @@
 import type { ImageWidth } from "@/lib/image-url";
 import { imageAt } from "@/lib/image-url";
 
+const RESPONSIVE_IMAGE_WIDTHS: ImageWidth[] = [160, 320, 480, 640, 960, 1400];
+
 export function EditorialArrow({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 18 18" aria-hidden className={`hc-arrow ${className}`}>
@@ -15,12 +17,14 @@ export function EditorialImage({
   className = "",
   eager = false,
   width = 640,
+  sizes,
 }: {
   src: string | null;
   alt: string;
   className?: string;
   eager?: boolean;
   width?: ImageWidth;
+  sizes?: string;
 }) {
   if (!src) {
     return (
@@ -34,10 +38,19 @@ export function EditorialImage({
       </span>
     );
   }
+
+  const responsive = src.startsWith("/api/public-image/");
+  const widths = RESPONSIVE_IMAGE_WIDTHS.filter((candidate) => candidate <= width);
+  const srcSet = responsive
+    ? widths.map((candidate) => `${imageAt(src, candidate)} ${candidate}w`).join(", ")
+    : undefined;
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={imageAt(src, width)!}
+      srcSet={srcSet}
+      sizes={srcSet ? sizes ?? `${width}px` : undefined}
       alt={alt}
       className={className}
       loading={eager ? "eager" : "lazy"}

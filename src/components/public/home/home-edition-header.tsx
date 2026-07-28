@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   HISTORICAL_PERIODS,
@@ -32,6 +32,8 @@ export function HomeEditionHeader({
   editionDate: string;
 }) {
   const activePeriodRef = useRef<HTMLAnchorElement | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [periodsOpen, setPeriodsOpen] = useState(false);
   const selected = selectedPeriod ? PERIODS[selectedPeriod] : null;
   const status = selected
     ? `${selected.label} · ${selected.yearRange}`
@@ -60,17 +62,47 @@ export function HomeEditionHeader({
 
       <div className="hc-section-menu">
         <nav aria-label="Secciones de Historia Colombiana">
-          {SECTION_LINKS.map((item) => (
-            <Link key={item.href} href={item.href}>
+          {SECTION_LINKS.map((item, index) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              data-mobile-secondary={index >= 4 ? "true" : undefined}
+            >
               {item.label}
             </Link>
           ))}
         </nav>
         <div className="hc-menu-tools">
           <Link href="/buscar">Buscar</Link>
-          <Link href="/acerca">Más</Link>
+          <Link href="/acerca" className="hc-menu-more-desktop">Más</Link>
+          <button
+            type="button"
+            className="hc-mobile-menu-trigger"
+            aria-expanded={menuOpen}
+            aria-controls="hc-mobile-menu"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            Menú
+            <svg viewBox="0 0 12 12" aria-hidden>
+              <path d="m2.5 4.5 3.5 3 3.5-3" fill="none" stroke="currentColor" strokeWidth="1.2" />
+            </svg>
+          </button>
         </div>
       </div>
+
+      <nav
+        id="hc-mobile-menu"
+        className={`hc-mobile-menu${menuOpen ? " is-open" : ""}`}
+        aria-label="Más secciones"
+        hidden={!menuOpen}
+      >
+        {SECTION_LINKS.slice(4).map((item) => (
+          <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>
+            {item.label}
+          </Link>
+        ))}
+        <Link href="/acerca" onClick={() => setMenuOpen(false)}>Acerca del proyecto</Link>
+      </nav>
 
       <div className="hc-period-intro">
         <div>
@@ -80,7 +112,30 @@ export function HomeEditionHeader({
         {selected ? <Link href="/">Restablecer edición</Link> : <Link href="/linea-de-tiempo">Abrir línea completa</Link>}
       </div>
 
-      <nav className="hc-period-selector" aria-label="Personalizar la portada por época">
+      <button
+        type="button"
+        className="hc-period-mobile-toggle"
+        aria-expanded={periodsOpen}
+        aria-controls="hc-period-selector"
+        onClick={() => setPeriodsOpen((open) => !open)}
+      >
+        <span>
+          <small>Edición histórica</small>
+          <strong>{selected ? `${selected.label} · ${selected.yearRange}` : "Todas las épocas"}</strong>
+        </span>
+        <span>
+          {periodsOpen ? "Cerrar" : "Cambiar"}
+          <svg viewBox="0 0 12 12" aria-hidden>
+            <path d="m2.5 4.5 3.5 3 3.5-3" fill="none" stroke="currentColor" strokeWidth="1.2" />
+          </svg>
+        </span>
+      </button>
+
+      <nav
+        id="hc-period-selector"
+        className={`hc-period-selector${periodsOpen ? " is-mobile-open" : ""}`}
+        aria-label="Personalizar la portada por época"
+      >
         {HISTORICAL_PERIODS.map((code) => {
           const period = PERIODS[code];
           const active = code === selectedPeriod;

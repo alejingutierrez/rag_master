@@ -6,6 +6,7 @@ import { HomeEssays } from "@/components/public/home/home-essays";
 import { HomeImprint } from "@/components/public/home/home-imprint";
 import { HomeLead } from "@/components/public/home/home-lead";
 import { HomeRecentIndex } from "@/components/public/home/home-recent-index";
+import { JsonLd } from "@/components/public/json-ld";
 import type {
   HomeEditionCounts,
   HomeEntity,
@@ -19,7 +20,6 @@ import {
 import {
   getConnectedEntityDirectory,
   getHome,
-  getMapPoints,
   getPeriodHub,
   getPublicArchiveStats,
   getRecentPublicPieces,
@@ -31,14 +31,17 @@ import {
   type PublicEntity,
   type TypologyCard,
 } from "@/lib/public-data";
+import { homeJsonLd } from "@/lib/seo";
 import "@/components/public/home/home-redesign.css";
 
 export const dynamic = "force-dynamic";
 
+const HOME_DESCRIPTION =
+  "Una portada histórica que conecta hechos, épocas, ensayos, personas, lugares e ideas con las fuentes siempre a la vista.";
+
 export const metadata = {
   title: { absolute: "Historia de Colombia · Archivo abierto y citable" },
-  description:
-    "Una portada histórica que conecta hechos, épocas, ensayos, personas, lugares e ideas con las fuentes siempre a la vista.",
+  description: HOME_DESCRIPTION,
   alternates: { canonical: "/" },
 };
 
@@ -194,7 +197,7 @@ export default async function HomePage({
   const params = (await searchParams) ?? {};
   const selectedPeriod = validPeriod(params.epoca);
 
-  const [home, archive, allPieces, facts, peopleDirectory, placesDirectory, ideasDirectory, allMapPoints, hub] =
+  const [home, archive, allPieces, facts, peopleDirectory, placesDirectory, ideasDirectory, hub] =
     await Promise.all([
       getHome(),
       getPublicArchiveStats(),
@@ -203,7 +206,6 @@ export default async function HomePage({
       getConnectedEntityDirectory("persona"),
       getConnectedEntityDirectory("lugar"),
       getConnectedEntityDirectory("idea"),
-      getMapPoints(),
       selectedPeriod ? getPeriodHub(selectedPeriod) : Promise.resolve(null),
     ]);
 
@@ -254,10 +256,6 @@ export default async function HomePage({
   const ideas: HomeEntity[] = hub
     ? hub.ideas.map(entityFromChip)
     : ideasDirectory.map(entityFromDirectory);
-  const mapPoints = selectedPeriod
-    ? allMapPoints.filter((point) => point.periodCode === selectedPeriod)
-    : allMapPoints;
-
   const essays = hub
     ? hub.ensayos.map((piece, index) => ({
         ...storyFromHub(piece, index),
@@ -296,6 +294,7 @@ export default async function HomePage({
   return (
     <PublicShell variant="edition">
       <div className="hc-home" data-mode="light">
+        <JsonLd data={homeJsonLd(HOME_DESCRIPTION)} />
         <HomeEditionHeader
           selectedPeriod={selectedPeriod}
           counts={counts}
@@ -320,7 +319,7 @@ export default async function HomePage({
             people={people}
             places={places}
             ideas={ideas}
-            mapPoints={mapPoints}
+            selectedPeriod={selectedPeriod}
             editionLabel={editionLabel}
             totals={{ people: counts.people, places: counts.places, ideas: counts.ideas }}
           />

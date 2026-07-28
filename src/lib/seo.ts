@@ -211,6 +211,31 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]): JsonL
   };
 }
 
+/** Grafo de portada: identifica el sitio y la colección editorial principal. */
+export function homeJsonLd(description: string): JsonLdNode {
+  const websiteId = `${SITE_URL}/#website`;
+  return jsonLdGraph(
+    {
+      "@type": "WebSite",
+      "@id": websiteId,
+      name: SITE_NAME,
+      url: SITE_URL,
+      description,
+      inLanguage: "es",
+      publisher: PUBLISHER,
+    },
+    {
+      "@type": "CollectionPage",
+      name: "Historia de Colombia · Archivo abierto y citable",
+      url: SITE_URL,
+      description,
+      inLanguage: "es",
+      isPartOf: { "@id": websiteId },
+      about: { "@type": "Country", name: "Colombia" },
+    },
+  );
+}
+
 function authoredBits(ctx: { datePublished?: string | null; dateModified?: string | null }): JsonLdNode {
   return {
     author: { "@type": "Person", name: AUTHOR },
