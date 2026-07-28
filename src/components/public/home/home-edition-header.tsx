@@ -89,7 +89,7 @@ export function HomeEditionHeader({
               key={code}
               href={active ? "/" : `/?epoca=${code}`}
               scroll={false}
-              aria-current={active ? "true" : undefined}
+              aria-current={active ? "page" : undefined}
               className={active ? "is-active" : ""}
               ref={active ? activePeriodRef : undefined}
               style={{ "--period-color": getPeriodColor(code) } as React.CSSProperties}
