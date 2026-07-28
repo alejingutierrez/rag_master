@@ -73,6 +73,14 @@
   --font-headline: "ivypresto-headline";
   --font-display: "ivypresto-headline";
   --font-sans: "degular";
+  --tracking-brand: -0.02em;
+  --tracking-headline: -0.018em;
+  --tracking-title: -0.008em;
+  --tracking-title-small: -0.004em;
+  --leading-brand: 0.86;
+  --leading-headline: 1;
+  --leading-title: 1.04;
+  --leading-title-small: 1.08;
 }
 
 /* ============================================================================
@@ -420,8 +428,8 @@
     font-family: var(--font-display), "Source Serif 4", Georgia, serif;
     font-weight: 400;
     font-style: italic;
-    letter-spacing: -0.02em;
-    line-height: 1.05;
+    letter-spacing: var(--tracking-title);
+    line-height: var(--leading-title);
     padding-bottom: 0.08em;
     color: var(--fg);
   }
@@ -439,7 +447,7 @@
     font-family: var(--font-display), "Source Serif 4", Georgia, serif;
     font-weight: 400;
     font-style: italic;
-    letter-spacing: -0.015em;
+    letter-spacing: var(--tracking-title-small);
   }
 
   .display.num {
@@ -554,9 +562,9 @@
     font-weight: 400;
     font-style: italic;
     font-size: 44px;
-    line-height: 1.05;
+    line-height: var(--leading-title);
     margin: 0 0 0.5em;
-    letter-spacing: -0.025em;
+    letter-spacing: var(--tracking-title);
   }
   .prose h2 {
     font-family: var(--font-display), Georgia, serif;
@@ -565,7 +573,7 @@
     font-size: 36px;
     line-height: 1.1;
     margin: 1.8em 0 0.4em;
-    letter-spacing: -0.025em;
+    letter-spacing: var(--tracking-title);
     padding-bottom: 0.04em;
   }
   .prose h3 {
@@ -574,7 +582,8 @@
     font-weight: 400;
     font-size: 26px;
     margin: 1.4em 0 0.3em;
-    letter-spacing: -0.015em;
+    line-height: var(--leading-title-small);
+    letter-spacing: var(--tracking-title-small);
   }
   .prose h4 {
     font-family: var(--font-display), Georgia, serif;
@@ -634,12 +643,12 @@
     font-family: var(--font-display), Georgia, serif;
     font-weight: 400;
     font-style: italic;
-    letter-spacing: -0.02em;
+    letter-spacing: var(--tracking-title);
     color: var(--fg);
   }
   .prose-academic h1 {
     font-size: 44px;
-    line-height: 1.05;
+    line-height: var(--leading-title);
     margin: 0 0 0.5em;
   }
   .prose-academic h2 {
@@ -650,6 +659,7 @@
   .prose-academic h3 {
     font-size: 26px;
     font-style: italic;
+    line-height: var(--leading-title-small);
     margin: 1.4em 0 0.3em;
   }
   .prose-academic h4 {

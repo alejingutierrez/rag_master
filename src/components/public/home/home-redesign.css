@@ -155,8 +155,8 @@
   font-size: clamp(76px, 10.8vw, 150px);
   font-weight: 600;
   font-style: normal;
-  line-height: .72;
-  letter-spacing: -.052em;
+  line-height: var(--leading-brand);
+  letter-spacing: var(--tracking-brand);
   text-align: center;
   white-space: nowrap;
   color: var(--fg);
@@ -387,8 +387,8 @@
   font-size: clamp(54px, 4.9vw, 76px);
   font-weight: 600;
   font-style: normal;
-  line-height: .84;
-  letter-spacing: -.043em;
+  line-height: var(--leading-headline);
+  letter-spacing: var(--tracking-headline);
 }
 
 .hc-lead-main h1 a:hover,
@@ -478,7 +478,8 @@
   font-family: var(--font-display);
   font-size: 29px;
   font-weight: 400;
-  line-height: .98;
+  line-height: var(--leading-title-small);
+  letter-spacing: var(--tracking-title-small);
 }
 .hc-secondary-story > p {
   margin: 8px 0 12px;
@@ -520,8 +521,8 @@
   font-size: clamp(50px, 5.6vw, 78px);
   font-weight: 400;
   font-style: italic;
-  line-height: .88;
-  letter-spacing: -.035em;
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
 
 .hc-section-dek {
@@ -648,8 +649,8 @@
   font-size: clamp(37px, 4vw, 56px);
   font-weight: 400;
   font-style: italic;
-  line-height: .92;
-  letter-spacing: -.025em;
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
 
 .hc-timeline-copy > p {
@@ -707,6 +708,8 @@
   font-family: var(--font-display);
   font-size: 26px;
   font-weight: 400;
+  line-height: var(--leading-title-small);
+  letter-spacing: var(--tracking-title-small);
 }
 .hc-people-heading > a,
 .hc-index-heading > a {
@@ -752,7 +755,8 @@
   font-family: var(--font-display);
   font-size: 24px;
   font-weight: 400;
-  line-height: .95;
+  line-height: var(--leading-title-small);
+  letter-spacing: var(--tracking-title-small);
 }
 .hc-person-card small {
   display: block;
@@ -837,7 +841,8 @@
   font-family: var(--font-display);
   font-size: 25px;
   font-weight: 400;
-  line-height: 1;
+  line-height: var(--leading-title-small);
+  letter-spacing: var(--tracking-title-small);
 }
 .hc-map-card p {
   margin: 8px 0 12px;
@@ -903,7 +908,8 @@
   font-family: var(--font-display);
   font-size: clamp(34px, 4vw, 52px);
   font-weight: 400;
-  line-height: .95;
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
 .hc-map-deferred > p {
   max-width: 44ch;
@@ -944,7 +950,12 @@
   font-size: 9px;
   color: var(--fg-faint);
 }
-.hc-entity-index li a { font-family: var(--font-display); font-size: 17px; line-height: 1.05; }
+.hc-entity-index li a {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: var(--leading-title-small);
+  letter-spacing: var(--tracking-title-small);
+}
 .hc-entity-index li a:hover { color: var(--accent); }
 .hc-index-empty {
   margin: 18px 0;
@@ -976,8 +987,8 @@
   font-size: clamp(53px, 5.5vw, 78px);
   font-weight: 400;
   font-style: italic;
-  line-height: .88;
-  letter-spacing: -.035em;
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
 .hc-central-essay > p {
   max-width: 62ch;
@@ -1021,7 +1032,8 @@
   font-family: var(--font-display);
   font-size: 24px;
   font-weight: 400;
-  line-height: .98;
+  line-height: var(--leading-title-small);
+  letter-spacing: var(--tracking-title-small);
 }
 .hc-related-readings article p {
   margin: 7px 0 0;
@@ -1046,7 +1058,8 @@
   font-family: var(--font-display);
   font-size: 46px;
   font-weight: 400;
-  line-height: .95;
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
 }
 .hc-empty-editorial > p:not(.hc-eyebrow) { max-width: 52ch; color: var(--fg-muted); }
 .hc-empty-editorial a { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); }
@@ -1086,7 +1099,8 @@
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 400;
-  line-height: 1.08;
+  line-height: var(--leading-title-small);
+  letter-spacing: var(--tracking-title-small);
 }
 .hc-index-kind {
   position: relative;
@@ -1159,8 +1173,8 @@
 .hc-imprint-brand > a {
   font-family: var(--font-display);
   font-size: 39px;
-  line-height: .9;
-  letter-spacing: -.025em;
+  line-height: var(--leading-brand);
+  letter-spacing: var(--tracking-brand);
 }
 .hc-imprint-brand > p {
   max-width: 33ch;
@@ -1183,7 +1197,8 @@
   font-family: var(--font-display);
   font-size: 31px;
   font-weight: 400;
-  line-height: .95;
+  line-height: var(--leading-title-small);
+  letter-spacing: var(--tracking-title-small);
 }
 .hc-imprint dl { margin: 0; }
 .hc-imprint-edition dl {
@@ -1257,6 +1272,14 @@
 
 /* ── Tablet ────────────────────────────────────────────────────────────── */
 
+@media (min-width: 761px) {
+  .hc-section-mark h2 {
+    width: 100%;
+    max-width: none;
+    text-wrap: pretty;
+  }
+}
+
 @media (max-width: 1100px) {
   .hc-masthead { font-size: clamp(70px, 10.2vw, 112px); }
   .hc-section-menu nav { gap: 18px; }
@@ -1290,7 +1313,7 @@
   .hc-masthead {
     padding: 14px 0 12px;
     font-size: clamp(47px, 14vw, 72px);
-    line-height: .79;
+    line-height: var(--leading-brand);
     white-space: normal;
   }
   .hc-section-menu {
@@ -1457,7 +1480,11 @@
     grid-template-columns: 1fr;
   }
   .hc-lead-main { grid-template-columns: 1fr; gap: 18px; }
-  .hc-lead-main h1 { max-width: 11ch; font-size: clamp(48px, 14vw, 62px); line-height: .87; }
+  .hc-lead-main h1 {
+    max-width: 11ch;
+    font-size: clamp(48px, 14vw, 62px);
+    line-height: var(--leading-headline);
+  }
   .hc-lead-dek { margin-top: 16px; font-size: 18px; }
   .hc-lead-byline { align-items: flex-end; }
   .hc-lead-image { aspect-ratio: 4 / 3; }
