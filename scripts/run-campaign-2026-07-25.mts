@@ -1,8 +1,9 @@
 /**
- * Produce, revisa, publica y verifica el lote editorial 2026-07-25.
+ * Produce, revisa, publica y verifica un lote editorial versionado.
  *
  * Uso:
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --plan
+ *   node --import tsx scripts/run-campaign-2026-07-25.mts --campaign=2026-07-28 --plan
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --produce
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --qa
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --covers
@@ -27,11 +28,37 @@ import {
   type StructuredData,
 } from "../src/lib/typology-schemas";
 import {
-  CAMPAIGN_ENTITIES,
-  CAMPAIGN_MASTER_IDS,
+  CAMPAIGN_ENTITIES as CAMPAIGN_2026_07_25_ENTITIES,
+  CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_07_25_MASTER_IDS,
   type CampaignEntity,
 } from "./campaign-2026-07-25-manifest";
+import {
+  CAMPAIGN_ENTITIES as CAMPAIGN_2026_07_28_ENTITIES,
+  CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_07_28_MASTER_IDS,
+} from "./campaign-2026-07-28-manifest";
 
+const CAMPAIGN_ID =
+  process.env.CAMPAIGN_ID ||
+  process.argv.find((value) => value.startsWith("--campaign="))?.slice(11) ||
+  "2026-07-25";
+const CAMPAIGNS = {
+  "2026-07-25": {
+    entities: CAMPAIGN_2026_07_25_ENTITIES,
+    masterIds: CAMPAIGN_2026_07_25_MASTER_IDS,
+  },
+  "2026-07-28": {
+    entities: CAMPAIGN_2026_07_28_ENTITIES,
+    masterIds: CAMPAIGN_2026_07_28_MASTER_IDS,
+  },
+} as const;
+const selectedCampaign = CAMPAIGNS[CAMPAIGN_ID as keyof typeof CAMPAIGNS];
+if (!selectedCampaign) {
+  throw new Error(
+    `Campaña desconocida: ${CAMPAIGN_ID}. Usa ${Object.keys(CAMPAIGNS).join(" o ")}.`,
+  );
+}
+const CAMPAIGN_ENTITIES: readonly CampaignEntity[] = selectedCampaign.entities;
+const CAMPAIGN_MASTER_IDS: readonly string[] = selectedCampaign.masterIds;
 const BASE = process.env.SITE_URL || "https://historiacolombiana.com";
 const CONC = Math.max(1, Number(process.env.CONC ?? "3"));
 const IMAGE_CONC = Math.max(1, Number(process.env.IMAGE_CONC ?? "2"));
@@ -46,7 +73,7 @@ const DB_RETRY_ATTEMPTS = Math.max(
 );
 const DB_RETRY_MAX_MS = Number(process.env.DB_RETRY_MAX_MS ?? "30000");
 const STATE_FILE =
-  process.env.STATE_FILE || join(tmpdir(), "rag-master-campaign-2026-07-25.json");
+  process.env.STATE_FILE || join(tmpdir(), `rag-master-campaign-${CAMPAIGN_ID}.json`);
 const argv = new Set(process.argv.slice(2));
 
 type Bucket = CampaignEntity["type"] | "master";
@@ -767,7 +794,7 @@ async function printPlan(all: Job[]) {
     out[job.bucket] = (out[job.bucket] ?? 0) + 1;
     return out;
   }, {});
-  console.log(`Lote ${all.length} · ${BASE}`);
+  console.log(`Campaña ${CAMPAIGN_ID} · lote ${all.length} · ${BASE}`);
   console.log(JSON.stringify(counts));
   for (const bucket of ["person", "place", "concept", "master"]) {
     console.log(`\n${bucket.toUpperCase()}`);
