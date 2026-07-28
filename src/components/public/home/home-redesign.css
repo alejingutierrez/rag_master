@@ -151,9 +151,10 @@
 .hc-masthead {
   display: block;
   padding: clamp(18px, 2.2vw, 28px) 0 clamp(14px, 1.5vw, 20px);
-  font-family: var(--font-display);
+  font-family: var(--font-headline), Georgia, serif;
   font-size: clamp(76px, 10.8vw, 150px);
-  font-weight: 400;
+  font-weight: 600;
+  font-style: normal;
   line-height: .72;
   letter-spacing: -.052em;
   text-align: center;
@@ -382,9 +383,10 @@
 .hc-lead-main h1 {
   max-width: 9.5ch;
   margin: 12px 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-headline), Georgia, serif;
   font-size: clamp(54px, 4.9vw, 76px);
-  font-weight: 400;
+  font-weight: 600;
+  font-style: normal;
   line-height: .84;
   letter-spacing: -.043em;
 }
@@ -398,7 +400,8 @@
 .hc-lead-dek {
   max-width: 64ch;
   margin: 20px 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 200;
   font-size: 18px;
   line-height: 1.38;
   color: var(--fg-muted);
@@ -516,6 +519,7 @@
   font-family: var(--font-display);
   font-size: clamp(50px, 5.6vw, 78px);
   font-weight: 400;
+  font-style: italic;
   line-height: .88;
   letter-spacing: -.035em;
 }
@@ -523,7 +527,8 @@
 .hc-section-dek {
   max-width: 60ch;
   margin: 14px 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 200;
   font-size: 17px;
   line-height: 1.4;
   color: var(--fg-muted);
@@ -642,13 +647,15 @@
   font-family: var(--font-display);
   font-size: clamp(37px, 4vw, 56px);
   font-weight: 400;
+  font-style: italic;
   line-height: .92;
   letter-spacing: -.025em;
 }
 
 .hc-timeline-copy > p {
   margin: 16px 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 200;
   font-size: 17px;
   line-height: 1.42;
   color: var(--fg-muted);
@@ -968,13 +975,15 @@
   font-family: var(--font-display);
   font-size: clamp(53px, 5.5vw, 78px);
   font-weight: 400;
+  font-style: italic;
   line-height: .88;
   letter-spacing: -.035em;
 }
 .hc-central-essay > p {
   max-width: 62ch;
   margin: 18px 0 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 200;
   font-size: 20px;
   line-height: 1.42;
   color: var(--fg-muted);
