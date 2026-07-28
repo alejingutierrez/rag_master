@@ -16,6 +16,10 @@ import { normalizeTaxonomy, reconcilePeriodo } from "../src/lib/taxonomy";
 import { imageAt, publicImageVariantCacheKey } from "../src/lib/image-url";
 import { aspectRatioForImageSize } from "../src/lib/bedrock-image";
 import { isBillingHardLimit } from "../src/lib/openai-image";
+import {
+  PUBLIC_DELIVERABLE_SOURCES,
+  isPublicDeliverableSource,
+} from "../src/lib/publication-policy";
 import { ATELIER_FORMAT_LIST, isValidFormatId, targetWords } from "../src/lib/atelier-formats";
 import { getFormatConfig } from "../src/lib/atelier/format-config";
 import { getFormatPrompt } from "../src/lib/atelier/formats";
@@ -102,6 +106,21 @@ test("se reconoce el límite duro de facturación del proveedor principal", () =
     true,
   );
   assert.equal(isBillingHardLimit(new Error("moderation_blocked")), false);
+});
+
+test("la política pública admite fichas del Taller y preguntas madres", () => {
+  assert.deepEqual(PUBLIC_DELIVERABLE_SOURCES, ["atelier", "master"]);
+  assert.equal(isPublicDeliverableSource("atelier"), true);
+  assert.equal(isPublicDeliverableSource("master"), true);
+  assert.equal(isPublicDeliverableSource("chat"), false);
+});
+
+test("la consulta SQL del archivo incluye ambos orígenes públicos", () => {
+  const publicData = readFileSync(
+    new URL("../src/lib/public-data.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(publicData, /d\.source IN \('atelier', 'master'\)/);
 });
 
 // ── Fixtures ─────────────────────────────────────────────────────────

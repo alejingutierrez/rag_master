@@ -29,11 +29,15 @@ import {
   type EntityType,
 } from "@/lib/entities-registry";
 import { buildEntityLinker, type EntityLinker, type LinkableEntity } from "@/lib/entity-linker";
+import {
+  PUBLIC_DELIVERABLE_SOURCES,
+  isPublicDeliverableSource,
+} from "@/lib/publication-policy";
 
 /** WHERE base de todo lo publicable: pieza del Taller, completa y publicada. */
 const PUBLISHED_WHERE = {
   status: "COMPLETE" as const,
-  source: "atelier",
+  source: { in: [...PUBLIC_DELIVERABLE_SOURCES] },
   publishedAt: { not: null },
 };
 
@@ -236,7 +240,13 @@ export async function getEssay(id: string): Promise<PublicEssayDetail | null> {
         },
       },
     });
-    if (!d || d.status !== "COMPLETE" || d.source !== "atelier" || !d.publishedAt || !d.answer)
+    if (
+      !d ||
+      d.status !== "COMPLETE" ||
+      !isPublicDeliverableSource(d.source) ||
+      !d.publishedAt ||
+      !d.answer
+    )
       return null;
 
     const chunks: ChunkUsage[] = Array.isArray(d.chunksUsed)
@@ -902,7 +912,7 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       FROM deliverables d
       LEFT JOIN questions q ON q.id = d."questionId"
       WHERE d.status = 'COMPLETE'
-        AND d.source = 'atelier'
+        AND d.source IN ('atelier', 'master')
         AND d."publishedAt" IS NOT NULL
     `,
     loadEntityRegistry(),
@@ -1788,6 +1798,20 @@ export async function getConnectedEntityCounts(): Promise<Record<EntityType, num
 // viene ordenado por prominencia, así que en colisiones gana la más mencionada.
 let linkerCache: { linker: EntityLinker; at: number } | null = null;
 
+/**
+ * Invalida el snapshot público del proceso actual después de una mutación
+ * editorial. Las instancias que no recibieron la mutación se autocorrigen en el
+ * gate de detalle mediante la comprobación directa de la ficha publicada.
+ */
+export function invalidatePublicDataCaches(): void {
+  anchoredCache = null;
+  anchoredLoad = null;
+  pubEntityCache = null;
+  pubEntityLoad = null;
+  universeCache.clear();
+  linkerCache = null;
+}
+
 export async function getEntityLinker(): Promise<EntityLinker> {
   const now = Date.now();
   if (linkerCache && now - linkerCache.at < ANCHORED_TTL_MS) return linkerCache.linker;
@@ -1934,17 +1958,50 @@ export interface EntityNode extends PublicEntity {
  */
 export async function getEntityNode(slug: string, type?: EntityType): Promise<EntityNode | null> {
   try {
-    const [e, reg, { index, dedicatedSlugs, dedicatedInfo }] = await Promise.all([
+    const [e, reg, initialData] = await Promise.all([
       findRegistryEntity(slug, type),
       loadEntityRegistry(),
       getPublishedEntityData(),
     ]);
-    if (!e) return pieceEntityNode(slug, index, dedicatedSlugs, type);
+    let publishedData = initialData;
+    if (!e) {
+      return pieceEntityNode(
+        slug,
+        publishedData.index,
+        publishedData.dedicatedSlugs,
+        type,
+      );
+    }
 
     // La RUTA existe solo si la entidad tiene su propia pieza publicada. Antes
     // bastaba una mención, lo que abría miles de páginas casi vacías que además
     // se indexaban. Sin pieza propia → 404: el archivo solo promete lo que tiene.
-    if (!isDedicatedEntity(e, dedicatedSlugs[e.type], reg)) return null;
+    if (!isDedicatedEntity(e, publishedData.dedicatedSlugs[e.type], reg)) {
+      // Otra instancia pudo publicar la ficha mientras este proceso conservaba
+      // el snapshot anterior. Verifica el dato autoritativo antes de devolver 404.
+      const surfaceSlugs = [...entitySurfaceSlugs(e, reg)];
+      const publishedFicha = await prisma.deliverable.findFirst({
+        where: {
+          ...PUBLISHED_WHERE,
+          AND: [
+            { structuredData: { path: ["typology"], equals: "entidad" } },
+            {
+              OR: surfaceSlugs.map((candidate) => ({
+                structuredData: { path: ["slug"], equals: candidate },
+              })),
+            },
+          ],
+        },
+        select: { id: true },
+      });
+      if (!publishedFicha) return null;
+      invalidatePublicDataCaches();
+      publishedData = await getPublishedEntityData();
+      if (!isDedicatedEntity(e, publishedData.dedicatedSlugs[e.type], reg)) {
+        return null;
+      }
+    }
+    const { index, dedicatedSlugs, dedicatedInfo } = publishedData;
 
     const varSlugs = entitySurfaceSlugs(e, reg);
     const namesOf = (p: AnchoredPiece) =>
