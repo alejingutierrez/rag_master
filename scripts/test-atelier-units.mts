@@ -20,6 +20,10 @@ import {
   PUBLIC_DELIVERABLE_SOURCES,
   isPublicDeliverableSource,
 } from "../src/lib/publication-policy";
+import {
+  CAMPAIGN_ENTITIES as CAMPAIGN_2026_07_28_ENTITIES,
+  CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_07_28_MASTER_IDS,
+} from "./campaign-2026-07-28-manifest";
 import { ATELIER_FORMAT_LIST, isValidFormatId, targetWords } from "../src/lib/atelier-formats";
 import { getFormatConfig } from "../src/lib/atelier/format-config";
 import { getFormatPrompt } from "../src/lib/atelier/formats";
@@ -121,6 +125,23 @@ test("la consulta SQL del archivo incluye ambos orígenes públicos", () => {
     "utf8",
   );
   assert.match(publicData, /d\.source IN \('atelier', 'master'\)/);
+});
+
+test("la campaña 2026-07-28 declara 30 piezas inéditas por categoría", () => {
+  const counts = CAMPAIGN_2026_07_28_ENTITIES.reduce<Record<string, number>>(
+    (out, entity) => {
+      out[entity.type] = (out[entity.type] ?? 0) + 1;
+      return out;
+    },
+    {},
+  );
+  assert.deepEqual(counts, { person: 30, place: 30, concept: 30 });
+  assert.equal(CAMPAIGN_2026_07_28_MASTER_IDS.length, 30);
+  const keys = new Set([
+    ...CAMPAIGN_2026_07_28_ENTITIES.map((entity) => entity.key),
+    ...CAMPAIGN_2026_07_28_MASTER_IDS,
+  ]);
+  assert.equal(keys.size, 120);
 });
 
 // ── Fixtures ─────────────────────────────────────────────────────────
