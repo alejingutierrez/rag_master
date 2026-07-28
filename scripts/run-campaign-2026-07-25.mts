@@ -63,7 +63,9 @@ const BASE = process.env.SITE_URL || "https://historiacolombiana.com";
 const CONC = Math.max(1, Number(process.env.CONC ?? "3"));
 const IMAGE_CONC = Math.max(1, Number(process.env.IMAGE_CONC ?? "2"));
 const POLL_MS = Number(process.env.POLL_MS ?? "8000");
-const MAX_ITEM_MS = Number(process.env.MAX_ITEM_MS ?? String(40 * 60 * 1000));
+// El endpoint del Taller dispone de hasta 60 minutos. Dejamos cinco minutos
+// de margen para que la edición/portada terminen sin declarar fallas prematuras.
+const MAX_ITEM_MS = Number(process.env.MAX_ITEM_MS ?? String(55 * 60 * 1000));
 const DB_RETRY_ATTEMPTS = Math.max(
   1,
   Number(process.env.DB_RETRY_ATTEMPTS ?? "80"),
@@ -253,12 +255,14 @@ async function latestRows(job: Job): Promise<DeliverableRow[]> {
   );
 }
 
-async function pollUntilReady(deliverableId: string): Promise<void> {
+async function pollUntilReady(
+  deliverableId: string,
+  deadlineAt = Date.now() + MAX_ITEM_MS,
+): Promise<void> {
   let imageKickoffStarted = false;
   let imageRetries = 0;
-  const startedAt = Date.now();
   for (;;) {
-    if (Date.now() - startedAt > MAX_ITEM_MS) {
+    if (Date.now() > deadlineAt) {
       throw new Error(`timeout tras ${Math.round(MAX_ITEM_MS / 60000)} min`);
     }
     await sleep(POLL_MS);
@@ -339,7 +343,11 @@ async function produceOne(job: Job): Promise<{ id: string; reused: boolean }> {
         Date.now() - startedAt(row) < MAX_ITEM_MS),
   );
   if (usable) {
-    await pollUntilReady(usable.id);
+    const deadlineAt =
+      usable.status === "GENERATING"
+        ? startedAt(usable) + MAX_ITEM_MS
+        : Date.now() + MAX_ITEM_MS;
+    await pollUntilReady(usable.id, deadlineAt);
     return { id: usable.id, reused: true };
   }
 
