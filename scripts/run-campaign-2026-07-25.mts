@@ -5,6 +5,7 @@
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --plan
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --produce
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --qa
+ *   node --import tsx scripts/run-campaign-2026-07-25.mts --covers
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --publish
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --verify
  */
@@ -18,6 +19,7 @@ import { tmpdir } from "node:os";
 import { prisma } from "../src/lib/prisma";
 import { signSession, adminEmail, SESSION_COOKIE } from "../src/lib/auth";
 import { evaluateSeriesPoll } from "../src/lib/atelier/series";
+import { generateAndStoreImage } from "../src/lib/atelier/image";
 import { missingFields } from "../src/lib/atelier/typology-composer";
 import { validateEntitySourceContract } from "../src/lib/entity-source-contract";
 import {
@@ -32,11 +34,17 @@ import {
 
 const BASE = process.env.SITE_URL || "https://historiacolombiana.com";
 const CONC = Math.max(1, Number(process.env.CONC ?? "3"));
+const IMAGE_CONC = Math.max(1, Number(process.env.IMAGE_CONC ?? "2"));
 const POLL_MS = Number(process.env.POLL_MS ?? "8000");
 const MAX_ITEM_MS = Number(process.env.MAX_ITEM_MS ?? String(40 * 60 * 1000));
 const STALE_GENERATING_MS = Number(
   process.env.STALE_GENERATING_MS ?? String(20 * 60 * 1000),
 );
+const DB_RETRY_ATTEMPTS = Math.max(
+  1,
+  Number(process.env.DB_RETRY_ATTEMPTS ?? "80"),
+);
+const DB_RETRY_MAX_MS = Number(process.env.DB_RETRY_MAX_MS ?? "30000");
 const STATE_FILE =
   process.env.STATE_FILE || join(tmpdir(), "rag-master-campaign-2026-07-25.json");
 const argv = new Set(process.argv.slice(2));
@@ -90,6 +98,7 @@ interface PollDeliverable {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const stamp = () => new Date().toISOString().slice(11, 19);
 let cookie = "";
+let imageBillingBlocked = false;
 
 function asObject(value: unknown): JsonObject {
   return value && typeof value === "object" ? (value as JsonObject) : {};
@@ -169,36 +178,56 @@ async function apiWrite(
   };
 }
 
+async function withDbRetry<T>(label: string, operation: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= DB_RETRY_ATTEMPTS; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (attempt === 1 || attempt % 10 === 0) {
+        console.log(`[RDS] ${stamp()} reintento ${attempt}/${DB_RETRY_ATTEMPTS} · ${label}`);
+      }
+      if (attempt < DB_RETRY_ATTEMPTS) {
+        await sleep(Math.min(DB_RETRY_MAX_MS, attempt * 2_000));
+      }
+    }
+  }
+  throw lastError;
+}
+
 async function latestRows(job: Job): Promise<DeliverableRow[]> {
-  return prisma.deliverable.findMany({
-    where: {
-      templateId: job.bucket === "master" ? "ficha-pregunta" : "ficha-entidad",
-      metadata: {
-        path: ["sourceRef", "kind"],
-        equals: job.sourceKind,
-      },
-      AND: [
-        {
+  return withDbRetry(`${job.bucket}:${job.label.slice(0, 48)}`, () =>
+    prisma.deliverable.findMany({
+        where: {
+          templateId: job.bucket === "master" ? "ficha-pregunta" : "ficha-entidad",
           metadata: {
-            path: ["sourceRef", "key"],
-            equals: job.key,
+            path: ["sourceRef", "kind"],
+            equals: job.sourceKind,
           },
+          AND: [
+            {
+              metadata: {
+                path: ["sourceRef", "key"],
+                equals: job.key,
+              },
+            },
+          ],
         },
-      ],
-    },
-    select: {
-      id: true,
-      status: true,
-      answer: true,
-      metadata: true,
-      structuredData: true,
-      imageUrl: true,
-      imageKey: true,
-      publishedAt: true,
-      updatedAt: true,
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+        select: {
+          id: true,
+          status: true,
+          answer: true,
+          metadata: true,
+          structuredData: true,
+          imageUrl: true,
+          imageKey: true,
+          publishedAt: true,
+          updatedAt: true,
+        },
+        orderBy: { updatedAt: "desc" },
+      }),
+  );
 }
 
 async function pollUntilReady(deliverableId: string): Promise<void> {
@@ -216,6 +245,13 @@ async function pollUntilReady(deliverableId: string): Promise<void> {
     } catch {
       continue;
     }
+    const imageState = asObject(asObject(row.metadata).image);
+    const imageError =
+      typeof imageState.error === "string" ? imageState.error : "";
+    if (/billing hard limit|billing_hard_limit_reached/i.test(imageError)) {
+      imageBillingBlocked = true;
+      throw new Error("image-billing-hard-limit");
+    }
     const action = evaluateSeriesPoll(row, {
       requireImage: true,
       imageRetries,
@@ -227,6 +263,7 @@ async function pollUntilReady(deliverableId: string): Promise<void> {
       action.kind === "trigger-image" &&
       (!imageKickoffStarted || action.reason === "image-error")
     ) {
+      if (imageBillingBlocked) throw new Error("image-billing-hard-limit");
       const image = await apiWrite(
         `/api/deliverables/${deliverableId}/generate-image`,
         "POST",
@@ -285,17 +322,19 @@ async function produceOne(job: Job): Promise<{ id: string; reused: boolean }> {
 }
 
 async function hydrateMasterLabels(all: Job[]) {
-  const masters = await prisma.masterQuestion.findMany({
-    where: { id: { in: [...CAMPAIGN_MASTER_IDS] } },
-    select: {
-      id: true,
-      pregunta: true,
-      gateScore: true,
-      childCount: true,
-      periodoCode: true,
-      categoriaCode: true,
-    },
-  });
+  const masters = await withDbRetry("hydrate-master-labels", () =>
+    prisma.masterQuestion.findMany({
+      where: { id: { in: [...CAMPAIGN_MASTER_IDS] } },
+      select: {
+        id: true,
+        pregunta: true,
+        gateScore: true,
+        childCount: true,
+        periodoCode: true,
+        categoriaCode: true,
+      },
+    }),
+  );
   const byId = new Map(masters.map((master) => [master.id, master]));
   for (const job of all) {
     if (job.bucket !== "master") continue;
@@ -503,10 +542,19 @@ async function runQa(all: Job[]): Promise<QaResult[]> {
       .filter((row) => row.status === "COMPLETE")
       .sort((a, b) => {
         const score = (row: DeliverableRow) => {
+          const evaluation = qaRow(job, row);
+          const nonImageErrors = evaluation.errors.filter(
+            (error) =>
+              !error.startsWith("sin portada persistida") &&
+              !error.startsWith("imagen "),
+          );
           const meta = asObject(row.metadata);
           const atelier = asObject(meta.atelier);
           const confidence = asObject(atelier.confidenceIndex);
           return (
+            (nonImageErrors.length === 0 ? 100_000 : 0) -
+            nonImageErrors.length * 10_000 -
+            evaluation.errors.length * 1_000 +
             (row.imageKey || row.imageUrl ? 100 : 0) +
             Number(atelier.qualityScore ?? 0) * 10 +
             Number(confidence.score ?? 0)
@@ -532,10 +580,12 @@ async function runQa(all: Job[]): Promise<QaResult[]> {
     }
   }
 
-  const existing = await prisma.deliverable.findMany({
-    where: { status: "COMPLETE", publishedAt: { not: null } },
-    select: { id: true, structuredData: true },
-  });
+  const existing = await withDbRetry("qa-published-catalog", () =>
+    prisma.deliverable.findMany({
+      where: { status: "COMPLETE", publishedAt: { not: null } },
+      select: { id: true, structuredData: true },
+    }),
+  );
   const existingPaths = new Map<string, string>();
   for (const row of existing) {
     const structured = row.structuredData as StructuredData | null;
@@ -591,6 +641,47 @@ async function runQa(all: Job[]): Promise<QaResult[]> {
     })),
   });
   return results;
+}
+
+async function generateMissingCovers(results: QaResult[]) {
+  const targets = results.filter(
+    (result) =>
+      result.deliverableId &&
+      result.errors.some((error) => error === "sin portada persistida"),
+  );
+  console.log(
+    `\nPORTADAS: ${targets.length} faltantes · concurrencia ${IMAGE_CONC}`,
+  );
+  let index = 0;
+  let failures = 0;
+  const worker = async () => {
+    while (index < targets.length) {
+      const result = targets[index++];
+      const id = result.deliverableId!;
+      const startedAt = Date.now();
+      try {
+        await generateAndStoreImage(id);
+        console.log(
+          `  ✓ ${result.job.bucket} · ${result.job.label.slice(0, 64)} · ${Math.round(
+            (Date.now() - startedAt) / 1000,
+          )}s`,
+        );
+      } catch (error) {
+        failures++;
+        console.log(
+          `  ✗ ${result.job.bucket} · ${result.job.label.slice(0, 64)} · ${
+            (error as Error).message
+          }`,
+        );
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(IMAGE_CONC, targets.length) }, () => worker()),
+  );
+  if (failures) {
+    throw new Error(`Fallaron ${failures}/${targets.length} portadas.`);
+  }
 }
 
 async function publish(results: QaResult[]) {
@@ -706,6 +797,10 @@ async function main() {
 
   const qa = await runQa(all);
   if (argv.has("--qa")) return;
+  if (argv.has("--covers")) {
+    await generateMissingCovers(qa);
+    return;
+  }
   if (argv.has("--publish")) {
     await publish(qa);
     return;
@@ -714,7 +809,7 @@ async function main() {
     await verify(qa);
     return;
   }
-  throw new Error("Usa --plan, --produce, --qa, --publish o --verify.");
+  throw new Error("Usa --plan, --produce, --qa, --covers, --publish o --verify.");
 }
 
 main()

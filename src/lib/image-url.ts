@@ -1,6 +1,6 @@
 /**
  * Anchos de portada. Las portadas se guardan como PNG de varios megabytes; el
- * endpoint `/api/public-image/[id]` las redimensiona y las convierte a AVIF/WebP,
+ * endpoint `/api/public-image/[id]` las redimensiona y las convierte a WebP,
  * pero solo si se le pide un ancho. Este helper lo añade en el punto de uso, para
  * que una miniatura de rejilla no descargue la imagen de portada completa.
  *
@@ -16,4 +16,13 @@ export function imageAt(url: string | null | undefined, width: ImageWidth): stri
   // Solo nuestro endpoint sabe redimensionar; una URL externa se deja intacta.
   if (!url.startsWith("/api/public-image/")) return url;
   return `${url}${url.includes("?") ? "&" : "?"}w=${width}`;
+}
+
+/** La versión forma parte de la identidad de una portada regenerada. */
+export function publicImageVariantCacheKey(
+  id: string,
+  width: number,
+  version: string | null,
+): string {
+  return `${id}:${width}:${(version || "legacy").slice(0, 80)}`;
 }
