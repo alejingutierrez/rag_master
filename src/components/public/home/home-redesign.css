@@ -10,6 +10,7 @@
   --bg-muted: #f5f5f5;
   --bg-hover: #f5f5f5;
   --bg-elevated: #fff;
+  --home-section-space: clamp(52px, 6.5vw, 88px);
   --fg: #0a0a0a;
   --fg-1: #171717;
   --fg-muted: #525252;
@@ -324,7 +325,9 @@
   min-width: 75px;
   padding: 0 12px;
   border-left: 1px solid var(--line);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-content: center;
   align-items: baseline;
   justify-content: center;
   gap: 5px;
@@ -349,7 +352,7 @@
 .hc-lead {
   width: min(100%, var(--container-editorial));
   margin: 0 auto;
-  padding: clamp(36px, 5vw, 74px) var(--editorial-gutter) var(--editorial-section-space);
+  padding: clamp(34px, 4vw, 58px) var(--editorial-gutter) var(--home-section-space);
   border-bottom: 1px solid var(--fg);
   display: grid;
   grid-template-columns: minmax(0, 2.15fr) minmax(300px, .85fr);
@@ -473,7 +476,7 @@
 .hc-section {
   width: min(100%, var(--container-editorial));
   margin: 0 auto;
-  padding: var(--editorial-section-space) var(--editorial-gutter);
+  padding: var(--home-section-space) var(--editorial-gutter);
   border-bottom: 1px solid var(--fg);
 }
 
@@ -481,7 +484,7 @@
   display: grid;
   grid-template-columns: 78px minmax(0, 1fr);
   gap: 22px;
-  margin-bottom: clamp(34px, 5vw, 62px);
+  margin-bottom: clamp(28px, 3.5vw, 46px);
 }
 
 .hc-section-number {
@@ -745,7 +748,7 @@
 }
 
 .hc-connected-lower {
-  padding-top: clamp(42px, 5vw, 70px);
+  padding-top: clamp(34px, 4vw, 54px);
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(290px, .75fr);
   gap: var(--editorial-column-gap);
