@@ -20,10 +20,16 @@ import { uploadToS3 } from "../s3";
 import {
   editImagePng,
   generateImagePng,
+  isBillingHardLimit,
   isModerationBlocked,
   isOpenAIConfigured,
   type ImageSize,
 } from "../openai-image";
+import {
+  bedrockImageModel,
+  generateBedrockImagePng,
+  isBedrockImageFallbackEnabled,
+} from "../bedrock-image";
 import { normalizeStructured } from "../typology-schemas";
 import { periodInfo } from "../design-tokens";
 import {
@@ -351,11 +357,70 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     referenceNotes: referenceHints,
     identityName: esPersona ? refCtx.titulo : undefined,
   });
-  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+  const primaryIndex =
+    direction.primaryReferenceIndex ?? scenePlan?.primaryReferenceIndex ?? 1;
+  const primaryReference =
+    search.refs[primaryIndex - 1]?.buffer ?? search.refs[0]?.buffer;
+  const safeModerationPrompt =
+    "Documentary editorial still life in a quiet late-twentieth-century " +
+    "Colombian historical archive: an analog radio, sealed evidence boxes, " +
+    "a courthouse blueprint, a city map and a manual typewriter on a worn " +
+    "wooden table, connected by one muted crimson thread. Silver-gelatin " +
+    "black-and-white photography with restrained ink texture and one subtle " +
+    "color accent. No people, no weapons, no injuries, no explosions, no " +
+    "visible text, no captions, no logos, no watermark.";
+  const generateWithBedrock = async () => {
+    try {
+      return await generateBedrockImagePng({
+        prompt,
+        size,
+        reference: primaryReference,
+      });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        /filtró la salida: Filter reason: prompt/i.test(error.message)
+      ) {
+        console.warn(
+          `[imagen ${deliverableId}] Bedrock filtró el prompt; usando composición documental segura`,
+        );
+        return generateBedrockImagePng({
+          prompt: safeModerationPrompt,
+          size,
+        });
+      }
+      throw error;
+    }
+  };
+  let model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
   let png: Buffer | null = null;
   let attempts = 0;
   let lastErr: Error | null = null;
-  for (let i = 1; i <= GENERATION_ATTEMPTS; i++) {
+  const previousImage = (
+    d.metadata && typeof d.metadata === "object"
+      ? (d.metadata as { image?: ImageMeta }).image
+      : undefined
+  );
+  if (
+    previousImage?.error &&
+    /moderation_blocked|safety system/i.test(previousImage.error) &&
+    isBedrockImageFallbackEnabled()
+  ) {
+    console.warn(
+      `[imagen ${deliverableId}] moderación previa agotada; usando respaldo Bedrock ${bedrockImageModel()}`,
+    );
+    try {
+      attempts = 1;
+      png = await generateWithBedrock();
+      model = bedrockImageModel();
+    } catch (fallbackError) {
+      lastErr = fallbackError as Error;
+      console.warn(
+        `[imagen ${deliverableId}] respaldo Bedrock falló: ${lastErr.message.slice(0, 200)}`,
+      );
+    }
+  }
+  for (let i = 1; i <= GENERATION_ATTEMPTS && !png; i++) {
     attempts = i;
     try {
       png = hasRefs
@@ -365,13 +430,52 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
             quality: esPersona ? "high" : undefined,
             refs: search.refs.map((r) => ({ buffer: r.buffer, name: r.name })),
           })
-        : await generateImagePng({ prompt, size, quality: esPersona ? "high" : undefined });
+        : await generateImagePng({
+            prompt,
+            size,
+            quality: esPersona ? "high" : undefined,
+          });
       break;
     } catch (e) {
       lastErr = e as Error;
+      if (isBillingHardLimit(e) && isBedrockImageFallbackEnabled()) {
+        console.warn(
+          `[imagen ${deliverableId}] límite de OpenAI; usando respaldo Bedrock ${bedrockImageModel()}`,
+        );
+        try {
+          png = await generateWithBedrock();
+          model = bedrockImageModel();
+          break;
+        } catch (fallbackError) {
+          lastErr = fallbackError as Error;
+          console.warn(
+            `[imagen ${deliverableId}] respaldo Bedrock falló: ${lastErr.message.slice(0, 200)}`,
+          );
+          break;
+        }
+      }
       const moderated = isModerationBlocked(e);
       console.warn(
-        `[imagen ${deliverableId}] intento ${i}/${GENERATION_ATTEMPTS} falló${moderated ? " (moderación)" : ""}: ${lastErr.message.slice(0, 200)}`
+        `[imagen ${deliverableId}] intento ${i}/${GENERATION_ATTEMPTS} falló${moderated ? " (moderación)" : ""}: ${lastErr.message.slice(0, 200)}`,
+      );
+    }
+  }
+  if (
+    !png &&
+    lastErr &&
+    isModerationBlocked(lastErr) &&
+    isBedrockImageFallbackEnabled()
+  ) {
+    console.warn(
+      `[imagen ${deliverableId}] moderación agotada; usando respaldo Bedrock ${bedrockImageModel()}`,
+    );
+    try {
+      png = await generateWithBedrock();
+      model = bedrockImageModel();
+    } catch (fallbackError) {
+      lastErr = fallbackError as Error;
+      console.warn(
+        `[imagen ${deliverableId}] respaldo Bedrock falló: ${lastErr.message.slice(0, 200)}`,
       );
     }
   }

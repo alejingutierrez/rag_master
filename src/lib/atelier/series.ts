@@ -43,7 +43,10 @@ export type SeriesPollAction =
   | { kind: "wait"; reason: "production-running" | "image-running" | "image-kickoff-running" }
   | { kind: "trigger-image"; reason: "image-missing" | "image-error" }
   | { kind: "done" }
-  | { kind: "error"; reason: "production-error" | "image-error" };
+  | {
+      kind: "error";
+      reason: "production-error" | "image-error" | "image-without-identity-reference";
+    };
 
 interface SeriesPollDeliverable {
   status?: string | null;
@@ -84,6 +87,13 @@ export function evaluateSeriesPoll(
   const status = imageStatus(deliverable.metadata);
   if (status === "ok") return { kind: "done" };
   if (status === "generando") return { kind: "wait", reason: "image-running" };
+  // Para personas, el pipeline se niega deliberadamente a inventar un rostro si
+  // no encuentra una referencia facial verificable. Es un estado terminal: un
+  // segundo kickoff repetiría la misma búsqueda y la serie quedaría esperando
+  // indefinidamente con `imageKickoffStarted=true`.
+  if (status === "sin_referencias") {
+    return { kind: "error", reason: "image-without-identity-reference" };
+  }
   if (status === "error") {
     if ((opts.imageRetries ?? 0) < SERIES_IMAGE_MAX_RETRIES) {
       return { kind: "trigger-image", reason: "image-error" };

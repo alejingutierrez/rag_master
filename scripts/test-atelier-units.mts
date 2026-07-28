@@ -13,6 +13,9 @@ import {
   stripScaffolding,
 } from "../src/lib/atelier/aparato";
 import { normalizeTaxonomy, reconcilePeriodo } from "../src/lib/taxonomy";
+import { imageAt, publicImageVariantCacheKey } from "../src/lib/image-url";
+import { aspectRatioForImageSize } from "../src/lib/bedrock-image";
+import { isBillingHardLimit } from "../src/lib/openai-image";
 import { ATELIER_FORMAT_LIST, isValidFormatId, targetWords } from "../src/lib/atelier-formats";
 import { getFormatConfig } from "../src/lib/atelier/format-config";
 import { getFormatPrompt } from "../src/lib/atelier/formats";
@@ -69,6 +72,37 @@ function test(name: string, fn: () => void): void {
 function group(name: string): void {
   console.log(`\n${name}`);
 }
+
+group("Portadas versionadas y respaldo de generación");
+
+test("imageAt conserva la versión de portada y añade el ancho", () => {
+  assert.equal(
+    imageAt("/api/public-image/abc?v=1720000000000", 480),
+    "/api/public-image/abc?v=1720000000000&w=480",
+  );
+});
+
+test("la caché distingue dos regeneraciones de la misma portada", () => {
+  assert.notEqual(
+    publicImageVariantCacheKey("abc", 480, "v1"),
+    publicImageVariantCacheKey("abc", 480, "v2"),
+  );
+  assert.equal(publicImageVariantCacheKey("abc", 480, null), "abc:480:legacy");
+});
+
+test("el respaldo Bedrock respeta la orientación solicitada", () => {
+  assert.equal(aspectRatioForImageSize("1536x1024"), "3:2");
+  assert.equal(aspectRatioForImageSize("1024x1536"), "2:3");
+  assert.equal(aspectRatioForImageSize("1024x1024"), "1:1");
+});
+
+test("se reconoce el límite duro de facturación del proveedor principal", () => {
+  assert.equal(
+    isBillingHardLimit(new Error("billing_hard_limit_reached")),
+    true,
+  );
+  assert.equal(isBillingHardLimit(new Error("moderation_blocked")), false);
+});
 
 // ── Fixtures ─────────────────────────────────────────────────────────
 function chunk(id: string, doc: string, sim = 0.8): SearchResult {
@@ -1008,6 +1042,16 @@ test("la serie reintenta una imagen fallida una vez y luego reporta error", () =
   assert.equal(
     evaluateSeriesPoll({ status: "COMPLETE", metadata: { image: { status: "error" } } }, { imageRetries: 1 }).kind,
     "error",
+  );
+});
+
+test("la serie falla cerrado si una persona no tiene referencia facial verificable", () => {
+  assert.deepEqual(
+    evaluateSeriesPoll({
+      status: "COMPLETE",
+      metadata: { image: { status: "sin_referencias" } },
+    }),
+    { kind: "error", reason: "image-without-identity-reference" },
   );
 });
 

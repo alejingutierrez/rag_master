@@ -22,6 +22,13 @@ export function isModerationBlocked(err: unknown): boolean {
   return err instanceof Error && /moderation_blocked|safety system/i.test(err.message);
 }
 
+export function isBillingHardLimit(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    /billing hard limit|billing_hard_limit_reached/i.test(err.message)
+  );
+}
+
 export interface GenerateImageOpts {
   prompt: string;
   size: ImageSize;

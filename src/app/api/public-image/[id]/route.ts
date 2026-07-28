@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { prisma } from "@/lib/prisma";
 import { getFromS3 } from "@/lib/s3";
+import { publicImageVariantCacheKey } from "@/lib/image-url";
 
 export const runtime = "nodejs";
 
@@ -72,8 +73,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const width = snapWidth(req.nextUrl.searchParams.get("w"));
-
-    const cacheKey = `${id}:${width}`;
+    const cacheKey = publicImageVariantCacheKey(
+      id,
+      width,
+      req.nextUrl.searchParams.get("v"),
+    );
     const cached = variantCache.get(cacheKey);
     if (cached) {
       // Reinserta para que la entrada usada vuelva al final de la cola de descarte.
