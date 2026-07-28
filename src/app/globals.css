@@ -39,6 +39,13 @@
   --container-prose: 760px;
   --container-page: 1080px;
   --container-wide: 1320px;
+  --container-editorial: 1360px;
+
+  /* ── Retícula editorial pública ───────────────────────────────────────── */
+  --editorial-gutter: clamp(18px, 3vw, 36px);
+  --editorial-section-space: clamp(64px, 9vw, 116px);
+  --editorial-column-gap: clamp(22px, 3.2vw, 48px);
+  --editorial-rule: 1px;
 
   /* ── Radios — 0 excepto pill ────────────────────────────────────────────── */
   --radius-sm: 0px;

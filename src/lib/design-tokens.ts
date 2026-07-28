@@ -49,6 +49,29 @@ export const PERIODS: Record<PeriodCode, PeriodInfo> = {
   TRANS: { code: "TRANS", slug: "trans", label: "Transversal", short: "TRA", yearRange: "—" },
 };
 
+/** Orden canónico compartido por selectores, timelines y portadas. */
+export const PERIOD_ORDER: PeriodCode[] = [
+  "PRE",
+  "CON",
+  "COL",
+  "PRE_IND",
+  "IND",
+  "NGR",
+  "EUC",
+  "REG",
+  "REP_LIB",
+  "VIO",
+  "FN",
+  "CNA",
+  "C91",
+  "SDE",
+  "POS",
+  "TRANS",
+];
+
+/** Las quince épocas históricas navegables; excluye el ancla transversal. */
+export const HISTORICAL_PERIODS: PeriodCode[] = PERIOD_ORDER.filter((code) => code !== "TRANS");
+
 export type CategoryCode =
   | "POL"
   | "ECO"

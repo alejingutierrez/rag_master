@@ -13,11 +13,20 @@ const COLOMBIA_BOUNDS: LatLngBoundsExpression = [
   [13.6, -66.8],
 ];
 
+function pointsInColombia(points: MapPoint[]): MapPoint[] {
+  const local = points.filter(
+    (point) => point.lat >= -4.4 && point.lat <= 13.6 && point.lng >= -79.2 && point.lng <= -66.8,
+  );
+  // Una edición puede ser genuinamente internacional; si no existe ningún punto
+  // colombiano, el mapa sí debe viajar al conjunto completo.
+  return local.length ? local : points;
+}
+
 /**
  * Reencuadra el mapa cuando cambian los puntos filtrados: al elegir una época el
  * mapa "viaja" hasta ella en vez de dejar al lector buscando dónde quedó todo.
  */
-function FitToPoints({ points }: { points: MapPoint[] }) {
+function FitToPoints({ points, fitInitial = false }: { points: MapPoint[]; fitInitial?: boolean }) {
   const map = useMap();
   // Firma estable: solo reencuadra cuando cambia el CONJUNTO, no en cada render.
   const signature = points.map((p) => p.id).join(",");
@@ -25,12 +34,20 @@ function FitToPoints({ points }: { points: MapPoint[] }) {
 
   useEffect(() => {
     if (points.length === 0) return;
-    if (first.current) {
+    if (first.current && !fitInitial) {
       first.current = false;
       return; // El encuadre inicial ya es Colombia entera.
     }
-    const lats = points.map((p) => p.lat);
-    const lngs = points.map((p) => p.lng);
+    first.current = false;
+    // La portada es un mapa de Colombia. Los anclajes internacionales siguen
+    // dibujados, pero no deben encoger el país hasta convertirlo en un punto.
+    const framingPoints = pointsInColombia(points);
+    const lats = framingPoints.map((p) => p.lat);
+    const lngs = framingPoints.map((p) => p.lng);
+    if (framingPoints.length === 1) {
+      map.flyTo([lats[0], lngs[0]], 7, { duration: 0.6 });
+      return;
+    }
     map.flyToBounds(
       [
         [Math.min(...lats), Math.min(...lngs)],
@@ -40,7 +57,7 @@ function FitToPoints({ points }: { points: MapPoint[] }) {
     );
     // `signature` describe el conjunto de puntos; `points` cambia de identidad en cada render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature, map]);
+  }, [fitInitial, signature, map]);
 
   return null;
 }
@@ -54,10 +71,13 @@ export function MapCanvas({
   points,
   active,
   onSelect,
+  fitInitial = false,
 }: {
   points: MapPoint[];
   active: MapPoint | null;
   onSelect: (p: MapPoint) => void;
+  /** En vistas ya filtradas (como una edición del home), encuadra esos puntos al montar. */
+  fitInitial?: boolean;
 }) {
   // Varias piezas comparten lugar (Bogotá se lleva decenas). Se separan en una
   // espiral mínima alrededor del punto para que todas sean clicables.
@@ -88,7 +108,7 @@ export function MapCanvas({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         maxZoom={18}
       />
-      <FitToPoints points={points} />
+      <FitToPoints points={points} fitInitial={fitInitial} />
       {spread.map(({ p, lat, lng }) => {
         const color = getPeriodColor(p.periodCode ?? "TRANS");
         const isActive = active?.id === p.id;
