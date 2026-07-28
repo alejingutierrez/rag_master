@@ -9,6 +9,7 @@ import {
   type TypologyKind,
 } from "@/lib/typology-schemas";
 import { normalizeSeo } from "@/lib/seo";
+import { invalidatePublicDataCaches } from "@/lib/public-data";
 
 export const runtime = "nodejs";
 
@@ -172,6 +173,13 @@ export async function PATCH(
         metadata: true,
       },
     });
+    if (
+      typeof body.published === "boolean" ||
+      body.structuredData !== undefined ||
+      typeof body.slug === "string"
+    ) {
+      invalidatePublicDataCaches();
+    }
 
     return NextResponse.json({ success: true, deliverable: updated });
   } catch (error) {
