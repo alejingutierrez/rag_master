@@ -443,7 +443,6 @@
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  filter: grayscale(1) contrast(1.03);
 }
 
 .hc-lead-secondary {
@@ -470,7 +469,6 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  filter: grayscale(1);
 }
 .hc-secondary-story h2 {
   margin: 8px 0 0;
@@ -629,7 +627,6 @@
   height: 100%;
   min-height: 360px;
   object-fit: cover;
-  filter: grayscale(1);
 }
 
 .hc-timeline-copy {
@@ -735,7 +732,6 @@
   aspect-ratio: 4 / 5;
   object-fit: cover;
   object-position: center top;
-  filter: grayscale(1);
 }
 .hc-person-card > span {
   display: block;
@@ -817,7 +813,6 @@
   height: 100%;
   min-height: 155px;
   object-fit: cover;
-  filter: grayscale(1);
 }
 .hc-map-card > div {
   padding: 16px 18px 18px;
@@ -989,7 +984,6 @@
   width: 100%;
   aspect-ratio: 16 / 8.2;
   object-fit: cover;
-  filter: grayscale(1);
 }
 .hc-related-readings {
   padding-left: var(--editorial-column-gap);
