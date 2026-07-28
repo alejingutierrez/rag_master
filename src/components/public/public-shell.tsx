@@ -11,7 +11,21 @@ function eventCount(periods: Awaited<ReturnType<typeof loadTimeline>>["periods"]
 }
 
 /** Chrome público global: navegación de atlas, menú móvil y pie editorial. */
-export async function PublicShell({ children }: { children: React.ReactNode }) {
+export async function PublicShell({
+  children,
+  variant = "default",
+}: {
+  children: React.ReactNode;
+  /**
+   * La portada funciona como una edición completa: trae masthead, navegación y
+   * pie propios. Las páginas interiores conservan el chrome público compacto.
+   */
+  variant?: "default" | "edition";
+}) {
+  if (variant === "edition") {
+    return <div className="ps-page ps-page-edition">{children}</div>;
+  }
+
   const [archive, connected, timeline] = await Promise.all([
     getPublicArchiveStats(),
     getConnectedEntityCounts(),
