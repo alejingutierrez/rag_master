@@ -64,9 +64,6 @@ const CONC = Math.max(1, Number(process.env.CONC ?? "3"));
 const IMAGE_CONC = Math.max(1, Number(process.env.IMAGE_CONC ?? "2"));
 const POLL_MS = Number(process.env.POLL_MS ?? "8000");
 const MAX_ITEM_MS = Number(process.env.MAX_ITEM_MS ?? String(40 * 60 * 1000));
-const STALE_GENERATING_MS = Number(
-  process.env.STALE_GENERATING_MS ?? String(20 * 60 * 1000),
-);
 const DB_RETRY_ATTEMPTS = Math.max(
   1,
   Number(process.env.DB_RETRY_ATTEMPTS ?? "80"),
@@ -125,7 +122,6 @@ interface PollDeliverable {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const stamp = () => new Date().toISOString().slice(11, 19);
 let cookie = "";
-let imageBillingBlocked = false;
 
 function asObject(value: unknown): JsonObject {
   return value && typeof value === "object" ? (value as JsonObject) : {};
@@ -272,13 +268,6 @@ async function pollUntilReady(deliverableId: string): Promise<void> {
     } catch {
       continue;
     }
-    const imageState = asObject(asObject(row.metadata).image);
-    const imageError =
-      typeof imageState.error === "string" ? imageState.error : "";
-    if (/billing hard limit|billing_hard_limit_reached/i.test(imageError)) {
-      imageBillingBlocked = true;
-      throw new Error("image-billing-hard-limit");
-    }
     const action = evaluateSeriesPoll(row, {
       requireImage: true,
       imageRetries,
@@ -290,7 +279,6 @@ async function pollUntilReady(deliverableId: string): Promise<void> {
       action.kind === "trigger-image" &&
       (!imageKickoffStarted || action.reason === "image-error")
     ) {
-      if (imageBillingBlocked) throw new Error("image-billing-hard-limit");
       const image = await apiWrite(
         `/api/deliverables/${deliverableId}/generate-image`,
         "POST",
@@ -308,11 +296,47 @@ async function pollUntilReady(deliverableId: string): Promise<void> {
 
 async function produceOne(job: Job): Promise<{ id: string; reused: boolean }> {
   const existing = await latestRows(job);
+  const startedAt = (row: DeliverableRow): number => {
+    const atelier = asObject(asObject(row.metadata).atelier);
+    const raw =
+      typeof atelier.startedAt === "string" ? Date.parse(atelier.startedAt) : NaN;
+    return Number.isFinite(raw) ? raw : row.updatedAt.getTime();
+  };
+  const stale = existing.find(
+    (row) =>
+      row.status === "GENERATING" &&
+      Date.now() - startedAt(row) >= MAX_ITEM_MS,
+  );
+  if (stale) {
+    const metadata = asObject(stale.metadata);
+    const atelier = asObject(metadata.atelier);
+    await withDbRetry(`expire-stale:${job.bucket}:${job.key}`, () =>
+      prisma.deliverable.update({
+        where: { id: stale.id },
+        data: {
+          status: "ERROR",
+          metadata: {
+            ...metadata,
+            atelier: {
+              ...atelier,
+              stage: "error",
+              message: `Intento GENERATING vencido tras ${Math.round(MAX_ITEM_MS / 60000)} min; se habilita regeneración idempotente.`,
+              finishedAt: new Date().toISOString(),
+            },
+          } as unknown as object,
+        },
+      }),
+    );
+    console.log(
+      `[RECOVERY] ${stamp()} ${job.bucket} · ${job.label.slice(0, 64)} · ${stale.id}`,
+    );
+  }
   const usable = existing.find(
     (row) =>
       row.status === "COMPLETE" ||
       (row.status === "GENERATING" &&
-        Date.now() - row.updatedAt.getTime() < STALE_GENERATING_MS),
+        row.id !== stale?.id &&
+        Date.now() - startedAt(row) < MAX_ITEM_MS),
   );
   if (usable) {
     await pollUntilReady(usable.id);
