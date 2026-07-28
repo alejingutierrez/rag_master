@@ -41,17 +41,15 @@ function PageviewTracker() {
  */
 export function GoogleAnalytics() {
   const pathname = usePathname();
-  const loaded = useRef(false);
-  if (!isPrivate(pathname)) loaded.current = true;
-  if (!loaded.current) return null;
+  if (isPrivate(pathname)) return null;
 
   return (
     <>
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
-      <Script id="ga4-init" strategy="afterInteractive">
+      <Script id="ga4-init" strategy="lazyOnload">
         {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`}
       </Script>
       <Suspense fallback={null}>

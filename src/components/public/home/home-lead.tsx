@@ -17,22 +17,32 @@ export function HomeLead({
   return (
     <section className="hc-lead" aria-labelledby="hc-lead-title">
       <article className="hc-lead-main">
-        <div className="hc-story-meta">
-          <span>{lead.label}</span>
-          {lead.yearLabel ? <span>{lead.yearLabel}</span> : null}
-          {period ? <span>{period.label}</span> : null}
+        <div className="hc-lead-media">
+          <EditorialImage
+            src={lead.imageUrl}
+            alt=""
+            className="hc-lead-image"
+            eager
+            width={1400}
+            sizes="(max-width: 760px) calc(100vw - 36px), (max-width: 1100px) 46vw, 42vw"
+          />
         </div>
-        <h1 id="hc-lead-title">
-          <Link href={lead.href}>{lead.title}</Link>
-        </h1>
-        {lead.summary ? <p className="hc-lead-dek">{lead.summary}</p> : null}
-        <div className="hc-lead-byline">
-          <span>Por Alejandro Gutiérrez</span>
-          <Link href={lead.href}>Leer la historia <EditorialArrow /></Link>
+
+        <div className="hc-lead-copy">
+          <div className="hc-story-meta">
+            <span>{lead.label}</span>
+            {lead.yearLabel ? <span>{lead.yearLabel}</span> : null}
+            {period ? <span>{period.label}</span> : null}
+          </div>
+          <h1 id="hc-lead-title">
+            <Link href={lead.href}>{lead.title}</Link>
+          </h1>
+          {lead.summary ? <p className="hc-lead-dek">{lead.summary}</p> : null}
+          <div className="hc-lead-byline">
+            <span>Por Alejandro Gutiérrez</span>
+            <Link href={lead.href}>Leer la historia <EditorialArrow /></Link>
+          </div>
         </div>
-        <Link href={lead.href} className="hc-lead-image-link" tabIndex={-1} aria-hidden>
-          <EditorialImage src={lead.imageUrl} alt="" className="hc-lead-image" eager width={1400} />
-        </Link>
       </article>
 
       <aside className="hc-lead-secondary" aria-label={`Más contenidos de ${editionLabel}`}>
@@ -40,9 +50,15 @@ export function HomeLead({
         {secondary.slice(0, 3).map((story, index) => (
           <article key={story.id} className="hc-secondary-story">
             {index === 0 ? (
-              <Link href={story.href} className="hc-secondary-image-link" tabIndex={-1} aria-hidden>
-                <EditorialImage src={story.imageUrl} alt="" className="hc-secondary-image" width={480} />
-              </Link>
+              <div className="hc-secondary-image-frame" aria-hidden>
+                <EditorialImage
+                  src={story.imageUrl}
+                  alt=""
+                  className="hc-secondary-image"
+                  width={640}
+                  sizes="(max-width: 760px) calc(100vw - 36px), 24vw"
+                />
+              </div>
             ) : null}
             <div className="hc-story-meta">
               <span>{story.label}</span>

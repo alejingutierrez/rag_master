@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { MapPoint } from "@/lib/public-data";
+import type { PeriodCode } from "@/lib/design-tokens";
 import type { HomeEntity } from "./types";
 import { EditorialArrow, EditorialImage, SectionMark } from "./primitives";
 import { HomePeriodMap } from "./home-period-map";
@@ -42,14 +42,14 @@ export function HomeConnected({
   people,
   places,
   ideas,
-  mapPoints,
+  selectedPeriod,
   editionLabel,
   totals,
 }: {
   people: HomeEntity[];
   places: HomeEntity[];
   ideas: HomeEntity[];
-  mapPoints: MapPoint[];
+  selectedPeriod: PeriodCode | null;
   editionLabel: string;
   totals: { people: number; places: number; ideas: number };
 }) {
@@ -70,7 +70,13 @@ export function HomeConnected({
         <div className="hc-people-grid">
           {people.slice(0, 4).map((person, index) => (
             <Link href={person.href} key={person.href} className="hc-person-card">
-              <EditorialImage src={person.imageUrl} alt={person.name} className="hc-person-image" width={320} />
+              <EditorialImage
+                src={person.imageUrl}
+                alt={person.name}
+                className="hc-person-image"
+                width={480}
+                sizes="(max-width: 760px) calc((100vw - 60px) / 2), 22vw"
+              />
               <span>{String(index + 1).padStart(2, "0")}</span>
               <h4>{person.name}</h4>
               <small>{person.count} {person.count === 1 ? "pieza relacionada" : "piezas relacionadas"}</small>
@@ -87,7 +93,11 @@ export function HomeConnected({
             <h3>El archivo sobre el territorio</h3>
             <Link href="/mapa">Mapa completo <EditorialArrow /></Link>
           </div>
-          <HomePeriodMap key={editionLabel} points={mapPoints} editionLabel={editionLabel} />
+          <HomePeriodMap
+            key={editionLabel}
+            periodCode={selectedPeriod}
+            editionLabel={editionLabel}
+          />
         </div>
         <aside className="hc-connected-indexes">
           <EntityIndex title="Lugares clave" entities={places} total={totals.places} href="/lugares" />

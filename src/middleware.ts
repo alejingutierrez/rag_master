@@ -26,6 +26,7 @@ const PUBLIC_API = new Set([
   "/api/health",
   "/api/login",
   "/api/logout",
+  "/api/public-map-points",
 ]);
 
 // Prefijos de API públicos (streaming de imágenes de piezas publicadas).
@@ -56,6 +57,15 @@ function tokenAuthorized(req: NextRequest, expected: string | undefined): boolea
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const hostname = (req.headers.get("host") ?? "").split(":")[0].toLowerCase();
+
+  if (hostname === "www.historiacolombiana.com") {
+    const canonicalUrl = req.nextUrl.clone();
+    canonicalUrl.protocol = "https:";
+    canonicalUrl.hostname = "historiacolombiana.com";
+    canonicalUrl.port = "";
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
 
   // Superficie pública de lectura → pasa sin candado.
   if (isPublicPath(pathname) || isPublicApi(pathname)) {
@@ -101,11 +111,9 @@ export async function middleware(req: NextRequest) {
 export const config = {
   // Corre en todo salvo assets estáticos y archivos con extensión (svg/png/…, robots.txt, etc.).
   //
-  // `/api/public-image` se EXCLUYE a propósito: es público (no necesita el candado)
-  // y, al pasar por el middleware, Next le añadía un `Vary: rsc, next-router-*` que
-  // impedía a CloudFront cachear las portadas — cada visita las regeneraba. Fuera
-  // del middleware, cada URL de imagen es un objeto estático que el CDN sí cachea.
+  // Las APIs públicas de imagen y mapa se EXCLUYEN a propósito: no necesitan el
+  // candado y así evitan el `Vary: rsc, next-router-*` que perjudica al CDN.
   matcher: [
-    "/((?!api/public-image|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|woff2?|json)$).*)",
+    "/((?!api/public-image|api/public-map-points|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|woff2?|json)$).*)",
   ],
 };
