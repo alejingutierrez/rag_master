@@ -1312,9 +1312,9 @@
   .hc-dateline span:last-child { display: none; }
   .hc-masthead {
     padding: 14px 0 12px;
-    font-size: clamp(47px, 14vw, 72px);
+    font-size: clamp(31px, 10vw, 56px);
     line-height: var(--leading-brand);
-    white-space: normal;
+    white-space: nowrap;
   }
   .hc-section-menu {
     width: 100%;
@@ -1610,7 +1610,6 @@
 }
 
 @media (max-width: 410px) {
-  .hc-masthead { font-size: 51px; }
   .hc-lead-main h1 { font-size: 51px; }
   .hc-map-card { grid-template-columns: 1fr; }
   .hc-map-card > img { display: none; }
