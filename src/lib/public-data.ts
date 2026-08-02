@@ -8,7 +8,11 @@
  */
 import { prisma } from "@/lib/prisma";
 import { getAtelierFormat, fichaKindForFormat, type AtelierFormatId } from "@/lib/atelier-formats";
-import { PERIODS } from "@/lib/design-tokens";
+import {
+  HISTORICAL_PERIODS,
+  PERIODS,
+  type PeriodCode,
+} from "@/lib/design-tokens";
 import {
   normalizeStructured,
   typologyPath,
@@ -894,6 +898,15 @@ export interface AnchoredPiece {
   /** Ítem del archivo del que se produjo la pieza ({ kind, key }). Marca a una
    *  pieza como DEDICADA a una entidad cuando kind==="entidad" (ver dedicatedSlugs). */
   sourceRef: { kind: string; key: string } | null;
+  /** Campos editoriales propios de una época. Se conservan en la proyección
+   *  cacheada para construir su explorador sin volver a consultar la pieza. */
+  epochData: {
+    panorama: string;
+    hitos: { year: number | null; titulo: string; detalle?: string }[];
+    actores: string[];
+    transformaciones: string[];
+    legado: string;
+  } | null;
 }
 
 /** Fila cruda de `loadAnchoredPieces`: solo los trozos de JSON que se usan. */
@@ -1034,6 +1047,16 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       fragmentCount: Number(r.fragmentCount ?? 0),
       sourceDocumentIds: (r.sourceDocumentIds ?? []).filter((id) => !!id),
       sourceRef,
+      epochData:
+        s?.typology === "epoca"
+          ? {
+              panorama: s.panorama,
+              hitos: s.hitos,
+              actores: s.actores,
+              transformaciones: s.transformaciones,
+              legado: s.legado,
+            }
+          : null,
     });
   }
   return out;
@@ -1406,6 +1429,136 @@ export async function getPeriodHub(periodCode: string): Promise<PeriodHub> {
     console.error(`[public-data] getPeriodHub(${periodCode}) falló:`, err);
     return empty;
   }
+}
+
+// ── Explorador editorial de épocas ─────────────────────────────────────────
+
+export interface EpochExplorerSummary {
+  code: PeriodCode;
+  index: number;
+  href: string;
+  title: string;
+  articleTitle: string;
+  range: string;
+  summary: string;
+  imageUrl: string | null;
+  articlePublished: boolean;
+}
+
+export interface EpochExplorerMoment {
+  year: number | null;
+  title: string;
+  detail: string;
+}
+
+export interface EpochExplorerPageData {
+  periods: EpochExplorerSummary[];
+  selected: EpochExplorerSummary;
+  panorama: string;
+  legacy: string;
+  transformations: string[];
+  actors: string[];
+  moments: EpochExplorerMoment[];
+  facts: HubPiece[];
+  readings: HubPiece[];
+  people: EntityChip[];
+  places: EntityChip[];
+  ideas: EntityChip[];
+  counts: {
+    pieces: number;
+    facts: number;
+    readings: number;
+    people: number;
+    places: number;
+    ideas: number;
+  };
+  evidence: {
+    documents: number;
+    fragments: number;
+    words: number;
+    readingMinutes: number;
+  };
+}
+
+/**
+ * Proyección compacta para `/epocas`: una sola época completa y las portadas
+ * mínimas de sus vecinas. La navegación cambia el query param y vuelve a
+ * resolver aquí, evitando enviar las quince ediciones completas al cliente.
+ */
+export async function getEpochExplorerPage(
+  requestedPeriod: PeriodCode,
+): Promise<EpochExplorerPageData> {
+  const periodCode = HISTORICAL_PERIODS.includes(requestedPeriod) ? requestedPeriod : "IND";
+  const pieces = await getAnchoredPieces();
+  const epochPieces = pieces.filter((piece) => piece.kind === "epoca");
+  const epochByCode = new Map(
+    epochPieces
+      .filter((piece): piece is AnchoredPiece & { periodCode: string } => !!piece.periodCode)
+      .map((piece) => [piece.periodCode, piece]),
+  );
+
+  const periods: EpochExplorerSummary[] = HISTORICAL_PERIODS.map((code, index) => {
+    const period = PERIODS[code];
+    const piece = epochByCode.get(code);
+    return {
+      code,
+      index: index + 1,
+      href: piece?.href ?? `/linea-de-tiempo?p=${code}`,
+      title: period.label,
+      articleTitle: piece?.titulo ?? `${period.label} (${period.yearRange})`,
+      range: piece?.cardMeta ?? period.yearRange,
+      summary: piece?.resumen ?? "Esta época todavía no tiene una síntesis publicada.",
+      imageUrl: piece?.imageUrl ?? null,
+      articlePublished: Boolean(piece),
+    };
+  });
+
+  const selected = periods.find((period) => period.code === periodCode) ?? periods[4];
+  const selectedPiece = epochByCode.get(periodCode);
+  const hub = await getPeriodHub(periodCode);
+  const epoch = selectedPiece?.epochData;
+  const fallbackMoments: EpochExplorerMoment[] = hub.hechos.slice(0, 8).map((fact) => ({
+    year: fact.anio,
+    title: fact.titulo,
+    detail: fact.resumen,
+  }));
+  const moments = epoch?.hitos.length
+    ? epoch.hitos.map((hito) => ({
+        year: hito.year,
+        title: hito.titulo,
+        detail: hito.detalle ?? "",
+      }))
+    : fallbackMoments;
+  const words = selectedPiece?.wordCount ?? 0;
+
+  return {
+    periods,
+    selected,
+    panorama: epoch?.panorama || selected.summary,
+    legacy: epoch?.legado || selectedPiece?.porQueImporta || selected.summary,
+    transformations: epoch?.transformaciones ?? [],
+    actors: epoch?.actores ?? [],
+    moments,
+    facts: hub.hechos,
+    readings: hub.ensayos,
+    people: hub.personas,
+    places: hub.lugares,
+    ideas: hub.ideas,
+    counts: {
+      pieces: hub.pieceCount,
+      facts: hub.counts.hechos,
+      readings: hub.counts.ensayos,
+      people: hub.counts.personas,
+      places: hub.counts.lugares,
+      ideas: hub.counts.ideas,
+    },
+    evidence: {
+      documents: selectedPiece?.sourceDocumentIds.length ?? 0,
+      fragments: selectedPiece?.fragmentCount ?? 0,
+      words,
+      readingMinutes: words > 0 ? Math.max(1, Math.ceil(words / 220)) : 0,
+    },
+  };
 }
 
 // ── Entidades: índice + nodo wiki con co-ocurrencia ──────────────────────────
