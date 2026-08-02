@@ -1,4 +1,4 @@
-import { TypologyIndex } from "@/components/public/typology-index";
+import { HechosIndex } from "@/components/public/hechos/hechos-index";
 import { getTypologyList } from "@/lib/public-data";
 import { buildMetadata } from "@/lib/seo";
 
@@ -15,14 +15,9 @@ export const metadata = buildMetadata({
 });
 
 export default async function HechosPage() {
-  const cards = await getTypologyList("hecho");
-  return (
-    <TypologyIndex
-      kicker="Acontecimientos"
-      title="Hechos"
-      intro="Los acontecimientos que marcaron a Colombia: qué pasó, cuándo, por qué importa y con las fuentes a la vista."
-      cards={cards}
-      emptyNote="Aún no hay hechos publicados. Aparecerán aquí a medida que se publiquen desde el taller."
-    />
-  );
+  const [facts, periods] = await Promise.all([
+    getTypologyList("hecho", 1000),
+    getTypologyList("epoca", 100),
+  ]);
+  return <HechosIndex facts={facts} periods={periods} />;
 }

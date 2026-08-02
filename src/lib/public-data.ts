@@ -62,6 +62,11 @@ export interface EssaySource {
   page: number | null;
   /** Fragmento exacto que respalda la fuente (ya guardado en chunksUsed). */
   snippet: string | null;
+  /** Identidad documental estable para agrupar muchas citas del mismo PDF. */
+  documentId: string | null;
+  documentTitle: string;
+  author: string | null;
+  publicationYear: number | null;
 }
 
 export interface PublicEssayDetail {
@@ -141,12 +146,23 @@ async function resolveSources(chunks: ChunkUsage[]): Promise<EssaySource[]> {
       console.error("[public-data] resolveSources (join a Document) falló:", err);
     }
   }
-  return chunks.map((c, i) => ({
-    n: i + 1,
-    label: sourceLabel(c, c.documentId ? docMap.get(c.documentId) : undefined),
-    page: typeof c.pageNumber === "number" ? c.pageNumber : null,
-    snippet: cleanSnippet(c.content),
-  }));
+  return chunks.map((c, i) => {
+    const doc = c.documentId ? docMap.get(c.documentId) : undefined;
+    const meta = (doc?.metadata ?? null) as EnrichmentMetadata | null;
+    return {
+      n: i + 1,
+      label: sourceLabel(c, doc),
+      page: typeof c.pageNumber === "number" ? c.pageNumber : null,
+      snippet: cleanSnippet(c.content),
+      documentId: c.documentId ?? null,
+      documentTitle: doc
+        ? getDocumentDisplayName({ filename: doc.filename, metadata: meta })
+        : docLabel(c),
+      author: meta?.author?.trim() || null,
+      publicationYear:
+        typeof meta?.publicationYear === "number" ? meta.publicationYear : null,
+    };
+  });
 }
 
 /** Fragmento legible del chunk: colapsa espacios, recorta en borde de palabra. */
@@ -308,6 +324,17 @@ export interface TypologyCard {
   /** Etiqueta secundaria: fecha (hecho), tipo (entidad), rango (época), año. */
   meta: string | null;
   imageUrl: string | null;
+  /** Contexto editorial ya calculado en la carga pública cacheada. */
+  porQueImporta: string;
+  categoriaCode: string | null;
+  categoriaNombre: string | null;
+  clusterTematico: string | null;
+  docCount: number | null;
+  wordCount: number | null;
+  fragmentCount: number;
+  lugarPrincipal: string | null;
+  lat: number | null;
+  lng: number | null;
 }
 
 function cardMeta(s: StructuredData, anchor: ContentAnchor): string | null {
@@ -354,6 +381,16 @@ export async function getTypologyList(
         entidades: { personas: p.personas, lugares: p.lugares, ideas: p.ideas },
         meta: p.cardMeta,
         imageUrl: p.imageUrl,
+        porQueImporta: p.porQueImporta,
+        categoriaCode: p.categoriaCode,
+        categoriaNombre: p.categoriaNombre,
+        clusterTematico: p.clusterTematico,
+        docCount: p.docCount,
+        wordCount: p.wordCount,
+        fragmentCount: p.fragmentCount,
+        lugarPrincipal: p.lugarPrincipal,
+        lat: p.lat,
+        lng: p.lng,
       });
     }
     cards.sort(
@@ -846,6 +883,9 @@ export interface AnchoredPiece {
   /** "Por qué importa" (hecho) / "legado" (época) / "semblanza" (entidad): el
    *  párrafo corto que sirve de avance sin cargar la prosa completa. */
   porQueImporta: string;
+  categoriaCode: string | null;
+  categoriaNombre: string | null;
+  clusterTematico: string | null;
   publishedAt: Date | null;
   docCount: number | null;
   wordCount: number | null;
@@ -985,6 +1025,9 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
               : s?.typology === "pregunta"
                 ? s.tesis
                 : "",
+      categoriaCode: r.taxonomy?.categoriaCode ?? null,
+      categoriaNombre: r.taxonomy?.categoriaNombre ?? null,
+      clusterTematico: r.taxonomy?.clusterTematico ?? null,
       publishedAt: r.publishedAt,
       docCount: r.docCount,
       wordCount: r.wordCount,
@@ -2096,6 +2139,16 @@ export async function getEssaysIndex(): Promise<TypologyCard[]> {
         entidades: { personas: p.personas, lugares: p.lugares, ideas: p.ideas },
         meta: p.anio != null ? (p.anio < 0 ? `${-p.anio} a.C.` : String(p.anio)) : null,
         imageUrl: p.imageUrl,
+        porQueImporta: p.porQueImporta,
+        categoriaCode: p.categoriaCode,
+        categoriaNombre: p.categoriaNombre,
+        clusterTematico: p.clusterTematico,
+        docCount: p.docCount,
+        wordCount: p.wordCount,
+        fragmentCount: p.fragmentCount,
+        lugarPrincipal: p.lugarPrincipal,
+        lat: p.lat,
+        lng: p.lng,
       });
     }
     cards.sort(

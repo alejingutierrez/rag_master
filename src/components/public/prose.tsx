@@ -14,10 +14,57 @@ export interface ProseOptions {
   linker?: EntityLinker | null;
   /** `${type}:${slug}` de la entidad de esta página — no auto-enlazar a sí misma. */
   selfKey?: string;
+  /** Prefijo opcional para evitar colisiones con secciones estructuradas. */
+  headingPrefix?: string;
+}
+
+export interface ProseHeading {
+  id: string;
+  level: 2 | 3;
+  text: string;
 }
 
 /** Máximo de auto-enlaces por pieza (evita saturar una prosa larga). */
 const LINK_CAP = 60;
+
+function plainInline(text: string): string {
+  return text
+    .replace(/\[#?\d+\]/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .trim();
+}
+
+function headingSlug(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 72) || "seccion";
+}
+
+/** Índice estable de la prosa; comparte exactamente los ids del render. */
+export function extractProseHeadings(markdown: string, prefix = ""): ProseHeading[] {
+  const seen = new Map<string, number>();
+  const headings: ProseHeading[] = [];
+  for (const line of markdown.split("\n")) {
+    const match = line.match(/^(#{1,3})\s+(.+)$/);
+    if (!match) continue;
+    const text = plainInline(match[2]);
+    if (!text) continue;
+    const base = headingSlug(text);
+    const occurrence = seen.get(base) ?? 0;
+    seen.set(base, occurrence + 1);
+    headings.push({
+      id: `${prefix}${occurrence === 0 ? base : `${base}-${occurrence + 1}`}`,
+      level: match[1].length >= 3 ? 3 : 2,
+      text,
+    });
+  }
+  return headings;
+}
 
 interface InlineCtx extends LinkCtx {
   linker: EntityLinker;
@@ -72,6 +119,8 @@ export function renderProse(markdown: string, opts: ProseOptions = {}) {
     : null;
 
   const lines = markdown.split("\n");
+  const headings = extractProseHeadings(markdown, opts.headingPrefix);
+  let headingIndex = 0;
   const blocks: React.ReactNode[] = [];
   let bq: string[] = [];
   const flush = (i: number) => {
@@ -95,9 +144,18 @@ export function renderProse(markdown: string, opts: ProseOptions = {}) {
     }
     flush(i);
     // Encabezados sin auto-enlace (ctx omitido).
-    if (line.startsWith("### ")) blocks.push(<h3 key={i}>{renderInline(line.slice(4))}</h3>);
-    else if (line.startsWith("## ")) blocks.push(<h2 key={i}>{renderInline(line.slice(3))}</h2>);
-    else if (line.startsWith("# ")) blocks.push(<h2 key={i}>{renderInline(line.slice(2))}</h2>);
+    if (line.startsWith("### ")) {
+      const heading = headings[headingIndex++];
+      blocks.push(<h3 key={i} id={heading?.id}>{renderInline(line.slice(4))}</h3>);
+    }
+    else if (line.startsWith("## ")) {
+      const heading = headings[headingIndex++];
+      blocks.push(<h2 key={i} id={heading?.id}>{renderInline(line.slice(3))}</h2>);
+    }
+    else if (line.startsWith("# ")) {
+      const heading = headings[headingIndex++];
+      blocks.push(<h2 key={i} id={heading?.id}>{renderInline(line.slice(2))}</h2>);
+    }
     else if (line.startsWith("- ") || line.startsWith("* "))
       blocks.push(
         <li key={i} style={{ marginLeft: 20 }}>
