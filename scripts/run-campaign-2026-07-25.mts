@@ -5,9 +5,14 @@
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --plan
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --campaign=2026-07-28 --plan
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --produce
+ *   node --import tsx scripts/run-campaign-2026-07-25.mts --produce --resume
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --qa
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --covers
+ *   node --import tsx scripts/run-campaign-2026-07-25.mts --openai-covers
+ *   node --import tsx scripts/run-campaign-2026-07-25.mts --replace-rejected
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --publish
+ *   node --import tsx scripts/run-campaign-2026-07-25.mts --publish-ready
+ *   node --import tsx scripts/run-campaign-2026-07-25.mts --verify-ready
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --verify
  */
 import { config as dotenv } from "dotenv";
@@ -63,9 +68,10 @@ const BASE = process.env.SITE_URL || "https://historiacolombiana.com";
 const CONC = Math.max(1, Number(process.env.CONC ?? "3"));
 const IMAGE_CONC = Math.max(1, Number(process.env.IMAGE_CONC ?? "2"));
 const POLL_MS = Number(process.env.POLL_MS ?? "8000");
-// El endpoint del Taller dispone de hasta 60 minutos. Dejamos cinco minutos
-// de margen para que la edición/portada terminen sin declarar fallas prematuras.
-const MAX_ITEM_MS = Number(process.env.MAX_ITEM_MS ?? String(55 * 60 * 1000));
+// El endpoint del Taller puede seguir progresando aunque un tramo de red/RDS
+// impida observarlo durante varios minutos. El margen amplio evita declarar un
+// falso timeout local y abrir trabajo nuevo mientras el after() remoto continúa.
+const MAX_ITEM_MS = Number(process.env.MAX_ITEM_MS ?? String(120 * 60 * 1000));
 const DB_RETRY_ATTEMPTS = Math.max(
   1,
   Number(process.env.DB_RETRY_ATTEMPTS ?? "80"),
@@ -74,6 +80,16 @@ const DB_RETRY_MAX_MS = Number(process.env.DB_RETRY_MAX_MS ?? "30000");
 const STATE_FILE =
   process.env.STATE_FILE || join(tmpdir(), `rag-master-campaign-${CAMPAIGN_ID}.json`);
 const argv = new Set(process.argv.slice(2));
+const onlyDeliverableId = process.argv
+  .find((value) => value.startsWith("--only="))
+  ?.slice("--only=".length);
+const requestedLimit = Math.max(
+  0,
+  Number(
+    process.argv.find((value) => value.startsWith("--limit="))?.slice("--limit=".length) ??
+      "0",
+  ),
+);
 
 type Bucket = CampaignEntity["type"] | "master";
 type SourceKind = "entidad" | "pregunta-madre";
@@ -531,6 +547,17 @@ function qaRow(job: Job, row: DeliverableRow | null): QaResult {
   if (typeof image.status === "string" && image.status !== "ok") {
     errors.push(`imagen ${image.status}`);
   }
+  if (
+    CAMPAIGN_ID === "2026-07-28" &&
+    (row.imageKey || row.imageUrl) &&
+    !hasFullOpenAIImageMethodology(row.metadata)
+  ) {
+    errors.push(
+      `portada sin metodología OpenAI completa (${
+        typeof image.modelo === "string" ? image.modelo : "modelo ausente"
+      })`,
+    );
+  }
   if (!seo.metaTitle || !seo.metaDescription) {
     errors.push("SEO incompleto");
   }
@@ -743,12 +770,227 @@ async function generateMissingCovers(results: QaResult[]) {
   }
 }
 
-async function publish(results: QaResult[]) {
+function imageModel(metadata: unknown): string | null {
+  const image = asObject(asObject(metadata).image);
+  return typeof image.modelo === "string" ? image.modelo : null;
+}
+
+function isOpenAIImageModel(model: string | null): boolean {
+  return Boolean(model && /^gpt-image-/i.test(model));
+}
+
+function hasFullOpenAIImageMethodology(metadata: unknown): boolean {
+  const image = asObject(asObject(metadata).image);
+  const reason = typeof asObject(image.acento).razon === "string"
+    ? String(asObject(image.acento).razon)
+    : "";
+  return (
+    image.status === "ok" &&
+    isOpenAIImageModel(typeof image.modelo === "string" ? image.modelo : null) &&
+    Array.isArray(image.queries) &&
+    !/dirección de respaldo/i.test(reason)
+  );
+}
+
+/**
+ * Rehace portadas faltantes o producidas por otro proveedor usando el pipeline
+ * completo (búsqueda de referencias, dirección de arte y GPT Image), sin
+ * respaldo alternativo. En error preserva la portada previa para que una
+ * prueba de billing/moderación no deje la ficha en peor estado.
+ */
+async function generateOpenAICovers(results: QaResult[]) {
+  const candidateIds = results
+    .map((result) => result.deliverableId)
+    .filter((id): id is string => Boolean(id));
+  const rows = await withDbRetry("openai-cover-audit", () =>
+    prisma.deliverable.findMany({
+      where: { id: { in: candidateIds } },
+      select: {
+        id: true,
+        metadata: true,
+        imageKey: true,
+        imageUrl: true,
+      },
+    }),
+  );
+  const byId = new Map(rows.map((row) => [row.id, row]));
+  let targets = results.filter((result) => {
+    if (!result.deliverableId) return false;
+    const row = byId.get(result.deliverableId);
+    return (
+      !row?.imageKey ||
+      !row?.imageUrl ||
+      !hasFullOpenAIImageMethodology(row.metadata)
+    );
+  });
+  if (onlyDeliverableId) {
+    targets = targets.filter(
+      (result) => result.deliverableId === onlyDeliverableId,
+    );
+  }
+  if (requestedLimit > 0) targets = targets.slice(0, requestedLimit);
+
+  const counts = targets.reduce<Record<string, number>>((out, result) => {
+    out[result.job.bucket] = (out[result.job.bucket] ?? 0) + 1;
+    return out;
+  }, {});
+  console.log(
+    `\nPORTADAS OPENAI-ONLY: ${targets.length} · concurrencia ${IMAGE_CONC} · ${JSON.stringify(
+      counts,
+    )}`,
+  );
+  let index = 0;
+  let failures = 0;
+  const worker = async () => {
+    while (index < targets.length) {
+      const result = targets[index++];
+      const id = result.deliverableId!;
+      const startedAt = Date.now();
+      try {
+        await generateAndStoreImage(id, {
+          allowBedrockFallback: false,
+          preserveExistingOnError: true,
+          requireArtDirection: true,
+        });
+        const verified = await withDbRetry(`verify-openai-cover:${id}`, () =>
+          prisma.deliverable.findUnique({
+            where: { id },
+            select: { metadata: true, imageKey: true, imageUrl: true },
+          }),
+        );
+        const model = imageModel(verified?.metadata);
+        if (
+          !verified?.imageKey ||
+          !verified.imageUrl ||
+          !hasFullOpenAIImageMethodology(verified.metadata)
+        ) {
+          throw new Error(
+            `la portada persistida no acredita OpenAI (${model ?? "sin modelo"})`,
+          );
+        }
+        console.log(
+          `  ✓ ${result.job.bucket} · ${result.job.label.slice(0, 64)} · ${model} · ${Math.round(
+            (Date.now() - startedAt) / 1000,
+          )}s`,
+        );
+      } catch (error) {
+        failures++;
+        console.log(
+          `  ✗ ${result.job.bucket} · ${result.job.label.slice(0, 64)} · ${
+            (error as Error).message
+          }`,
+        );
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(IMAGE_CONC, targets.length) }, () => worker()),
+  );
+  if (failures) {
+    throw new Error(
+      `Fallaron ${failures}/${targets.length} portadas OpenAI-only; las portadas previas se conservaron.`,
+    );
+  }
+}
+
+function isImageQaError(error: string): boolean {
+  return (
+    error === "sin portada persistida" ||
+    error.startsWith("imagen ") ||
+    error.startsWith("portada sin metodología OpenAI completa")
+  );
+}
+
+/**
+ * Sustituye fichas no publicadas que fallan el gate editorial por una nueva
+ * producción canónica. Las versiones rechazadas se conservan como ERROR para
+ * auditoría; nunca se toca una ficha ya publicada.
+ */
+async function replaceRejected(results: QaResult[]) {
+  let targets = results.filter(
+    (result) =>
+      result.deliverableId &&
+      !result.ok &&
+      result.errors.some((error) => !isImageQaError(error)),
+  );
+  if (onlyDeliverableId) {
+    targets = targets.filter(
+      (result) => result.deliverableId === onlyDeliverableId,
+    );
+  }
+  if (requestedLimit > 0) targets = targets.slice(0, requestedLimit);
+
+  console.log(
+    `\nREEMPLAZOS EDITORIALES: ${targets.length} · concurrencia ${CONC}`,
+  );
+  let index = 0;
+  let failures = 0;
+  const worker = async () => {
+    while (index < targets.length) {
+      const result = targets[index++];
+      const rows = await latestRows(result.job);
+      const published = rows.filter(
+        (row) => row.status === "COMPLETE" && row.publishedAt,
+      );
+      if (published.length) {
+        failures++;
+        console.log(
+          `  ✗ ${result.job.bucket} · ${result.job.label.slice(0, 64)} · ya publicada; requiere revisión manual`,
+        );
+        continue;
+      }
+      const rejectedIds = rows
+        .filter((row) => row.status === "COMPLETE" && !row.publishedAt)
+        .map((row) => row.id);
+      if (!rejectedIds.length) continue;
+
+      await withDbRetry(
+        `retire-rejected:${result.job.bucket}:${result.job.key}`,
+        () =>
+          prisma.deliverable.updateMany({
+            where: { id: { in: rejectedIds } },
+            data: { status: "ERROR" },
+          }),
+      );
+      const startedAt = Date.now();
+      try {
+        const replacement = await produceOne(result.job);
+        console.log(
+          `  ✓ ${result.job.bucket} · ${result.job.label.slice(0, 64)} · ${replacement.id} · ${Math.round(
+            (Date.now() - startedAt) / 1000,
+          )}s`,
+        );
+      } catch (error) {
+        failures++;
+        console.log(
+          `  ✗ ${result.job.bucket} · ${result.job.label.slice(0, 64)} · ${
+            (error as Error).message
+          }`,
+        );
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(CONC, targets.length) }, () => worker()),
+  );
+  if (failures) {
+    throw new Error(`Fallaron ${failures}/${targets.length} reemplazos editoriales.`);
+  }
+}
+
+async function publish(results: QaResult[], readyOnly = false) {
   const rejected = results.filter((result) => !result.ok);
-  if (rejected.length) {
+  if (!readyOnly && rejected.length) {
     throw new Error(`Publicación bloqueada por ${rejected.length} piezas rechazadas en QA.`);
   }
-  const unpublished = results.filter((result) => result.deliverableId);
+  const unpublished = results.filter(
+    (result) => result.deliverableId && (!readyOnly || result.ok),
+  );
+  if (readyOnly) {
+    console.log(
+      `\nPUBLICACIÓN PARCIAL: ${unpublished.length} aprobadas · ${rejected.length} rechazadas excluidas`,
+    );
+  }
   let index = 0;
   let failures = 0;
   const worker = async () => {
@@ -775,12 +1017,33 @@ async function publish(results: QaResult[]) {
   if (failures) throw new Error(`Fallaron ${failures} publicaciones.`);
 }
 
-async function verify(results: QaResult[]) {
+async function verify(results: QaResult[], readyOnly = false) {
+  let targets = readyOnly ? results.filter((result) => result.ok) : results;
+  if (readyOnly) {
+    const candidateIds = targets
+      .map((result) => result.deliverableId)
+      .filter((id): id is string => Boolean(id));
+    const published = await withDbRetry("verify-ready-published", () =>
+      prisma.deliverable.findMany({
+        where: {
+          id: { in: candidateIds },
+          publishedAt: { not: null },
+        },
+        select: { id: true },
+      }),
+    );
+    const publishedIds = new Set(published.map((row) => row.id));
+    targets = targets.filter(
+      (result) =>
+        Boolean(result.deliverableId) &&
+        publishedIds.has(result.deliverableId as string),
+    );
+  }
   const failures: string[] = [];
   let index = 0;
   const worker = async () => {
-    while (index < results.length) {
-      const result = results[index++];
+    while (index < targets.length) {
+      const result = targets[index++];
       if (!result.deliverableId || !result.path) {
         failures.push(`${result.job.bucket}:${result.job.key}:sin ruta/id`);
         continue;
@@ -815,9 +1078,9 @@ async function verify(results: QaResult[]) {
     throw new Error(`Verificación pública falló en ${failures.length} comprobaciones.`);
   }
   console.log(
-    `\nVERIFICACIÓN PÚBLICA: ${results.length}/${
-      results.length
-    } páginas 200 + ${results.length}/${results.length} portadas image/*`,
+    `\nVERIFICACIÓN PÚBLICA: ${targets.length}/${
+      targets.length
+    } páginas 200 + ${targets.length}/${targets.length} portadas image/*`,
   );
 }
 
@@ -849,7 +1112,9 @@ async function main() {
 
   await initAuth();
   if (argv.has("--produce")) {
-    await assertNewPublicKeys(all);
+    if (!argv.has("--resume")) {
+      await assertNewPublicKeys(all);
+    }
     await runProduction(all);
     return;
   }
@@ -860,15 +1125,33 @@ async function main() {
     await generateMissingCovers(qa);
     return;
   }
+  if (argv.has("--openai-covers")) {
+    await generateOpenAICovers(qa);
+    return;
+  }
+  if (argv.has("--replace-rejected")) {
+    await replaceRejected(qa);
+    return;
+  }
   if (argv.has("--publish")) {
     await publish(qa);
+    return;
+  }
+  if (argv.has("--publish-ready")) {
+    await publish(qa, true);
     return;
   }
   if (argv.has("--verify")) {
     await verify(qa);
     return;
   }
-  throw new Error("Usa --plan, --produce, --qa, --covers, --publish o --verify.");
+  if (argv.has("--verify-ready")) {
+    await verify(qa, true);
+    return;
+  }
+  throw new Error(
+    "Usa --plan, --produce [--resume], --qa, --covers, --openai-covers, --replace-rejected, --publish, --publish-ready, --verify o --verify-ready.",
+  );
 }
 
 main()

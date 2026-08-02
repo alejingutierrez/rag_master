@@ -69,6 +69,23 @@ export interface ImageResult {
   imageKey: string;
 }
 
+export interface GenerateImageOptions {
+  /**
+   * Permite el respaldo de Bedrock cuando OpenAI no puede generar. El flujo
+   * editorial ordinario conserva su configuración por env; las campañas que
+   * exigen procedencia OpenAI pueden desactivarlo de forma explícita.
+   */
+  allowBedrockFallback?: boolean;
+  /**
+   * En una regeneración, conserva metadata.image y la portada vigente si
+   * OpenAI falla. El error sigue llegando al caller para su bitácora, pero una
+   * prueba de facturación o moderación no degrada un activo ya persistido.
+   */
+  preserveExistingOnError?: boolean;
+  /** Exige una decisión válida del director de arte; no admite dirección neutra. */
+  requireArtDirection?: boolean;
+}
+
 /** Referencia registrada en metadata.image (auditable desde Producciones). */
 export interface ImageMetaReference {
   titulo: string;
@@ -221,8 +238,13 @@ async function siblingAccentTargets(deliverableId: string, structured: ReturnTyp
 }
 
 /** Genera + sube + persiste la imagen. Lanza en error (el caller decide). */
-export async function generateAndStoreImage(deliverableId: string): Promise<ImageResult> {
+export async function generateAndStoreImage(
+  deliverableId: string,
+  options: GenerateImageOptions = {},
+): Promise<ImageResult> {
   if (!isOpenAIConfigured()) throw new Error("OPENAI_API_KEY no configurado");
+  const allowBedrockFallback =
+    options.allowBedrockFallback ?? isBedrockImageFallbackEnabled();
 
   const d = await prisma.deliverable.findUnique({
     where: { id: deliverableId },
@@ -325,6 +347,11 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
         });
   } catch (e) {
     console.warn(`[imagen ${deliverableId}] director de arte falló: ${(e as Error).message}`);
+    if (options.requireArtDirection) {
+      throw new Error(
+        `Dirección de arte obligatoria falló: ${(e as Error).message}`,
+      );
+    }
     direction = fallbackDirection({ esPersona });
   }
   direction = applyDocumentaryScenePlan(direction, scenePlan, structured?.typology) as ArtDirection;
@@ -361,6 +388,11 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     direction.primaryReferenceIndex ?? scenePlan?.primaryReferenceIndex ?? 1;
   const primaryReference =
     search.refs[primaryIndex - 1]?.buffer ?? search.refs[0]?.buffer;
+  const configuredTimeout = Number(process.env.OPENAI_IMAGE_TIMEOUT_MS ?? "");
+  const openAIImageTimeoutMs =
+    Number.isFinite(configuredTimeout) && configuredTimeout > 0
+      ? configuredTimeout
+      : undefined;
   const safeModerationPrompt =
     "Documentary editorial still life in a quiet late-twentieth-century " +
     "Colombian historical archive: an analog radio, sealed evidence boxes, " +
@@ -404,7 +436,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
   if (
     previousImage?.error &&
     /moderation_blocked|safety system/i.test(previousImage.error) &&
-    isBedrockImageFallbackEnabled()
+    allowBedrockFallback
   ) {
     console.warn(
       `[imagen ${deliverableId}] moderación previa agotada; usando respaldo Bedrock ${bedrockImageModel()}`,
@@ -427,32 +459,36 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
         ? await editImagePng({
             prompt,
             size,
-            quality: esPersona ? "high" : undefined,
-            refs: search.refs.map((r) => ({ buffer: r.buffer, name: r.name })),
-          })
+          quality: esPersona ? "high" : undefined,
+          timeoutMs: openAIImageTimeoutMs,
+          refs: search.refs.map((r) => ({ buffer: r.buffer, name: r.name })),
+        })
         : await generateImagePng({
             prompt,
             size,
             quality: esPersona ? "high" : undefined,
+            timeoutMs: openAIImageTimeoutMs,
           });
       break;
     } catch (e) {
       lastErr = e as Error;
-      if (isBillingHardLimit(e) && isBedrockImageFallbackEnabled()) {
-        console.warn(
-          `[imagen ${deliverableId}] límite de OpenAI; usando respaldo Bedrock ${bedrockImageModel()}`,
-        );
-        try {
-          png = await generateWithBedrock();
-          model = bedrockImageModel();
-          break;
-        } catch (fallbackError) {
-          lastErr = fallbackError as Error;
+      if (isBillingHardLimit(e)) {
+        if (allowBedrockFallback) {
           console.warn(
-            `[imagen ${deliverableId}] respaldo Bedrock falló: ${lastErr.message.slice(0, 200)}`,
+            `[imagen ${deliverableId}] límite de OpenAI; usando respaldo Bedrock ${bedrockImageModel()}`,
           );
-          break;
+          try {
+            png = await generateWithBedrock();
+            model = bedrockImageModel();
+          } catch (fallbackError) {
+            lastErr = fallbackError as Error;
+            console.warn(
+              `[imagen ${deliverableId}] respaldo Bedrock falló: ${lastErr.message.slice(0, 200)}`,
+            );
+          }
         }
+        // Un límite de facturación no cambia entre reintentos inmediatos.
+        break;
       }
       const moderated = isModerationBlocked(e);
       console.warn(
@@ -464,7 +500,7 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
     !png &&
     lastErr &&
     isModerationBlocked(lastErr) &&
-    isBedrockImageFallbackEnabled()
+    allowBedrockFallback
   ) {
     console.warn(
       `[imagen ${deliverableId}] moderación agotada; usando respaldo Bedrock ${bedrockImageModel()}`,
@@ -493,7 +529,9 @@ export async function generateAndStoreImage(deliverableId: string): Promise<Imag
       intentos: attempts,
       error: lastErr?.message.slice(0, 300),
     };
-    await persistImageMeta(deliverableId, meta).catch(() => {});
+    if (!options.preserveExistingOnError || previousImage?.status !== "ok") {
+      await persistImageMeta(deliverableId, meta).catch(() => {});
+    }
     throw lastErr ?? new Error("Generación de imagen falló");
   }
 
