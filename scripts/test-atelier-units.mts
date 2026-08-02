@@ -24,6 +24,10 @@ import {
   CAMPAIGN_ENTITIES as CAMPAIGN_2026_07_28_ENTITIES,
   CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_07_28_MASTER_IDS,
 } from "./campaign-2026-07-28-manifest";
+import {
+  CAMPAIGN_ENTITIES as CAMPAIGN_2026_08_02_ENTITIES,
+  CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_08_02_MASTER_IDS,
+} from "./campaign-2026-08-02-manifest";
 import { ATELIER_FORMAT_LIST, isValidFormatId, targetWords } from "../src/lib/atelier-formats";
 import { getFormatConfig } from "../src/lib/atelier/format-config";
 import { getFormatPrompt } from "../src/lib/atelier/formats";
@@ -142,6 +146,23 @@ test("la campaña 2026-07-28 declara 30 piezas inéditas por categoría", () => 
     ...CAMPAIGN_2026_07_28_MASTER_IDS,
   ]);
   assert.equal(keys.size, 120);
+});
+
+test("la campaña 2026-08-02 declara 40 personas, 40 ideas y 50 preguntas madre", () => {
+  const counts = CAMPAIGN_2026_08_02_ENTITIES.reduce<Record<string, number>>(
+    (out, entity) => {
+      out[entity.type] = (out[entity.type] ?? 0) + 1;
+      return out;
+    },
+    {},
+  );
+  assert.deepEqual(counts, { person: 40, concept: 40 });
+  assert.equal(CAMPAIGN_2026_08_02_MASTER_IDS.length, 50);
+  const keys = new Set([
+    ...CAMPAIGN_2026_08_02_ENTITIES.map((entity) => entity.key),
+    ...CAMPAIGN_2026_08_02_MASTER_IDS,
+  ]);
+  assert.equal(keys.size, 130);
 });
 
 // ── Fixtures ─────────────────────────────────────────────────────────

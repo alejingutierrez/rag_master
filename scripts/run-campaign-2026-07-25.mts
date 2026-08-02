@@ -41,6 +41,10 @@ import {
   CAMPAIGN_ENTITIES as CAMPAIGN_2026_07_28_ENTITIES,
   CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_07_28_MASTER_IDS,
 } from "./campaign-2026-07-28-manifest";
+import {
+  CAMPAIGN_ENTITIES as CAMPAIGN_2026_08_02_ENTITIES,
+  CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_08_02_MASTER_IDS,
+} from "./campaign-2026-08-02-manifest";
 
 const CAMPAIGN_ID =
   process.env.CAMPAIGN_ID ||
@@ -50,10 +54,20 @@ const CAMPAIGNS = {
   "2026-07-25": {
     entities: CAMPAIGN_2026_07_25_ENTITIES,
     masterIds: CAMPAIGN_2026_07_25_MASTER_IDS,
+    expectedCounts: { person: 30, place: 30, concept: 30, master: 30 },
+    requireOpenAIImages: false,
   },
   "2026-07-28": {
     entities: CAMPAIGN_2026_07_28_ENTITIES,
     masterIds: CAMPAIGN_2026_07_28_MASTER_IDS,
+    expectedCounts: { person: 30, place: 30, concept: 30, master: 30 },
+    requireOpenAIImages: true,
+  },
+  "2026-08-02": {
+    entities: CAMPAIGN_2026_08_02_ENTITIES,
+    masterIds: CAMPAIGN_2026_08_02_MASTER_IDS,
+    expectedCounts: { person: 40, place: 0, concept: 40, master: 50 },
+    requireOpenAIImages: true,
   },
 } as const;
 const selectedCampaign = CAMPAIGNS[CAMPAIGN_ID as keyof typeof CAMPAIGNS];
@@ -64,6 +78,7 @@ if (!selectedCampaign) {
 }
 const CAMPAIGN_ENTITIES: readonly CampaignEntity[] = selectedCampaign.entities;
 const CAMPAIGN_MASTER_IDS: readonly string[] = selectedCampaign.masterIds;
+const EXPECTED_COUNTS = selectedCampaign.expectedCounts;
 const BASE = process.env.SITE_URL || "https://historiacolombiana.com";
 const CONC = Math.max(1, Number(process.env.CONC ?? "3"));
 const IMAGE_CONC = Math.max(1, Number(process.env.IMAGE_CONC ?? "2"));
@@ -174,8 +189,11 @@ function assertManifest(all: Job[]) {
     return out;
   }, {});
   for (const bucket of ["person", "place", "concept", "master"]) {
-    if (counts[bucket] !== 30) {
-      throw new Error(`Manifest inválido: ${bucket}=${counts[bucket] ?? 0}, se esperaban 30.`);
+    const expected = EXPECTED_COUNTS[bucket as keyof typeof EXPECTED_COUNTS];
+    if ((counts[bucket] ?? 0) !== expected) {
+      throw new Error(
+        `Manifest inválido: ${bucket}=${counts[bucket] ?? 0}, se esperaban ${expected}.`,
+      );
     }
   }
   const keys = new Set(all.map((job) => `${job.sourceKind}:${job.key}`));
@@ -432,7 +450,7 @@ async function assertNewPublicKeys(all: Job[]) {
   }
   if (problems.length) {
     throw new Error(
-      `El manifest no representa 120 páginas nuevas; ya publicadas: ${problems.join(", ")}`,
+      `El manifest no representa ${all.length} páginas nuevas; ya publicadas: ${problems.join(", ")}`,
     );
   }
 }
@@ -548,7 +566,7 @@ function qaRow(job: Job, row: DeliverableRow | null): QaResult {
     errors.push(`imagen ${image.status}`);
   }
   if (
-    CAMPAIGN_ID === "2026-07-28" &&
+    selectedCampaign.requireOpenAIImages &&
     (row.imageKey || row.imageUrl) &&
     !hasFullOpenAIImageMethodology(row.metadata)
   ) {
@@ -1106,7 +1124,7 @@ async function main() {
   if (argv.has("--plan")) {
     await printPlan(all);
     await assertNewPublicKeys(all);
-    console.log("\nPLAN VÁLIDO: 120 llaves inéditas.");
+    console.log(`\nPLAN VÁLIDO: ${all.length} llaves inéditas.`);
     return;
   }
 
