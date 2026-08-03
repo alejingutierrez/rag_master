@@ -4,7 +4,12 @@ import { metadata as loginMetadata } from "../src/app/login/layout";
 import { robots } from "../src/app/robots";
 import { trackEvent } from "../src/lib/analytics";
 import { isAdminPath, isPublicPath } from "../src/lib/public-routes";
-import { contextualSeoTitle, entityNodeJsonLd, typologyJsonLd } from "../src/lib/seo";
+import {
+  contextualSeoTitle,
+  entityNodeJsonLd,
+  entityNodeSeo,
+  typologyJsonLd,
+} from "../src/lib/seo";
 import type { StructuredData } from "../src/lib/typology-schemas";
 
 const ctx = {
@@ -79,6 +84,13 @@ assert.deepEqual(
   (entityNode["@graph"] as Array<Record<string, unknown>>).map((node) => node["@type"]),
   ["Person", "BreadcrumbList"],
 );
+const aggregateSeo = entityNodeSeo({
+  name: "Lugar de prueba",
+  description: "Descripción extensa ".repeat(30),
+  typeLabel: "Lugar",
+});
+assert.ok(aggregateSeo.metaDescription.length <= 155);
+assert.deepEqual(aggregateSeo.keywords, ["Lugar de prueba", "Lugar", "historia de Colombia"]);
 
 const entityOverrides = JSON.parse(
   readFileSync(new URL("../src/data/entity-overrides.json", import.meta.url), "utf8"),
@@ -111,4 +123,4 @@ assert.deepEqual(
   [],
 );
 
-console.log("SEO tests: 21 passed");
+console.log("SEO tests: 23 passed");

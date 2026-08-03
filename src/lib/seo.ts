@@ -124,6 +124,19 @@ export function deriveSeo(p: {
   return { metaTitle, metaDescription, keywords };
 }
 
+/** SEO normalizado para nodos de entidad que aún no tienen ficha editorial. */
+export function entityNodeSeo(a: {
+  name: string;
+  description: string;
+  typeLabel: string;
+}): DeliverableSeo {
+  const seo = deriveSeo({ titulo: a.name, resumen: a.description });
+  return {
+    ...seo,
+    keywords: dedupeKeywords([a.name, a.typeLabel, "historia de Colombia"]),
+  };
+}
+
 /**
  * Valida/recorta un SEO crudo (de `metadata.seo`, del compositor IA o del editor
  * de Producciones). Devuelve null si no hay al menos título + descripción usables.
