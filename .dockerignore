@@ -9,3 +9,5 @@ node_modules
 scripts/
 !scripts/apply-migrations.js
 !scripts/start.sh
+!scripts/test-seo.mts
+!scripts/audit-seo-indexability.mts
