@@ -19,7 +19,7 @@ import {
   type EntityType,
 } from "@/lib/public-data";
 import { entityKey } from "@/lib/entities-registry";
-import { buildMetadata, detailJsonLd, entityNodeJsonLd } from "@/lib/seo";
+import { buildMetadata, detailJsonLd, entityNodeJsonLd, entityNodeSeo } from "@/lib/seo";
 import { TrackView } from "@/components/analytics/track-view";
 
 export async function entityDetailMetadata(slug: string, type: EntityType) {
@@ -45,14 +45,11 @@ export async function entityDetailMetadata(slug: string, type: EntityType) {
     }
   }
 
+  const description =
+    node.resumen ??
+    `${node.name}: ${meta.singular.toLowerCase()} en la historia de Colombia. Dónde aparece y con qué otras figuras se relaciona.`;
   return buildMetadata({
-    seo: {
-      metaTitle: node.name,
-      metaDescription:
-        node.resumen ??
-        `${node.name}: ${meta.singular.toLowerCase()} en la historia de Colombia. Dónde aparece y con qué otras figuras se relaciona.`,
-      keywords: [node.name, meta.singular, "historia de Colombia"],
-    },
+    seo: entityNodeSeo({ name: node.name, description, typeLabel: meta.singular }),
     path: entityPath(type, node.slug),
     type: "article",
   });
