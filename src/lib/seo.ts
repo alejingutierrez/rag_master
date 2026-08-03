@@ -267,16 +267,24 @@ export function typologyJsonLd(s: StructuredData, ctx: DetailCtx): JsonLdNode {
 
   switch (s.typology) {
     case "hecho": {
-      // Event exige startDate; sin año de inicio cae a Article (evita Event inválido).
-      if (s.anioInicio == null) {
-        return { "@type": "Article", headline: s.titulo, ...common, ...authoredBits(ctx) };
-      }
+      // Un hecho histórico es contenido editorial, no un evento futuro al que
+      // el usuario pueda asistir. `Event` activaba el rich result comercial de
+      // Google y producía errores de fecha/ofertas/organizador en Search Console.
+      const temporalCoverage =
+        s.anioInicio == null
+          ? undefined
+          : s.anioFin != null && s.anioFin !== s.anioInicio
+            ? `${s.anioInicio}/${s.anioFin}`
+            : String(s.anioInicio);
       return {
-        "@type": "Event",
+        "@type": "Article",
+        headline: s.titulo,
         ...common,
-        startDate: String(s.anioInicio),
-        ...(s.anioFin != null ? { endDate: String(s.anioFin) } : {}),
-        ...(s.lugares[0] ? { location: { "@type": "Place", name: s.lugares[0] } } : {}),
+        ...authoredBits(ctx),
+        ...(temporalCoverage ? { temporalCoverage } : {}),
+        ...(s.lugares[0]
+          ? { contentLocation: { "@type": "Place", name: s.lugares[0] } }
+          : {}),
         ...(s.protagonistas.length
           ? { about: s.protagonistas.map((name) => ({ "@type": "Person", name })) }
           : {}),
@@ -306,14 +314,18 @@ export function typologyJsonLd(s: StructuredData, ctx: DetailCtx): JsonLdNode {
       };
     }
     case "pregunta":
+      // Estas páginas son mini-ensayos editoriales con una pregunta rectora,
+      // no foros con respuestas de usuarios. QAPage era semánticamente falso y
+      // generaba rich results inválidos (`answerCount`, votos, autores, etc.).
       return {
-        "@type": "QAPage",
+        "@type": "Article",
+        headline: s.titulo,
         ...common,
-        mainEntity: {
+        ...authoredBits(ctx),
+        about: {
           "@type": "Question",
           name: s.pregunta || s.titulo,
           text: s.pregunta || s.titulo,
-          acceptedAnswer: { "@type": "Answer", text: s.tesis || ctx.description || s.resumen },
         },
       };
   }

@@ -82,6 +82,7 @@ export async function PublicShell({
             <div className="ps-foot-title">Proyecto</div>
             <Link href="/acerca">Acerca</Link>
             <Link href="/autor">El autor</Link>
+            <Link href="/privacidad">Privacidad</Link>
             <Link href="/ensayos">Lecturas</Link>
           </div>
         </div>

@@ -1,9 +1,4 @@
-/**
- * Google Analytics 4 — helpers de cliente. El tag (gtag.js) lo inyecta el
- * componente <GoogleAnalytics/> SOLO en el sitio público (no en /admin ni /login),
- * así la analítica no se contamina con el uso del panel.
- */
-export const GA_MEASUREMENT_ID = "G-ESBTWH8XFB";
+/** Google Tag Manager — eventos editoriales publicados en `dataLayer`. */
 
 declare global {
   interface Window {
@@ -13,10 +8,16 @@ declare global {
 }
 
 /**
- * Envía un evento personalizado a GA4. No-op si gtag aún no cargó (el layout lo
- * inicializa antes de que monten las páginas de detalle) o en rutas privadas.
+ * Publica un evento para GTM. La cola se crea incluso antes de que descargue el
+ * contenedor, así ninguna vista editorial se pierde por una carrera de carga.
  */
 export function trackEvent(name: string, params?: Record<string, unknown>): void {
-  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
-  window.gtag("event", name, params ?? {});
+  if (typeof window === "undefined") return;
+  try {
+    if (window.localStorage.getItem("hc_analytics_consent_v1") !== "granted") return;
+  } catch {
+    return;
+  }
+  window.dataLayer = window.dataLayer ?? [];
+  window.dataLayer.push({ ...(params ?? {}), event: name });
 }

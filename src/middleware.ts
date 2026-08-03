@@ -67,6 +67,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(canonicalUrl, 308);
   }
 
+  // El login es accesible sin sesión, pero nunca debe entrar al índice. Se
+  // protege también por header para que el gate no dependa solo del HTML.
+  if (pathname === "/login") {
+    const res = NextResponse.next();
+    res.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+    return res;
+  }
+
   // Superficie pública de lectura → pasa sin candado.
   if (isPublicPath(pathname) || isPublicApi(pathname)) {
     return NextResponse.next();
@@ -90,7 +98,7 @@ export async function middleware(req: NextRequest) {
 
   if (authed) {
     const res = NextResponse.next();
-    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    res.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
     return res;
   }
 
@@ -104,7 +112,7 @@ export async function middleware(req: NextRequest) {
   loginUrl.pathname = "/login";
   loginUrl.search = `?next=${encodeURIComponent(pathname + req.nextUrl.search)}`;
   const res = NextResponse.redirect(loginUrl);
-  res.headers.set("X-Robots-Tag", "noindex, nofollow");
+  res.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   return res;
 }
 

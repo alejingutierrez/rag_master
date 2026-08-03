@@ -64,6 +64,7 @@ export function HomeImprint({
         <span>© {new Date().getFullYear()} Historia Colombiana</span>
         <span>Bogotá · Colombia</span>
         <Link href="/acerca">Acerca del proyecto</Link>
+        <Link href="/privacidad">Privacidad</Link>
       </div>
     </footer>
   );
