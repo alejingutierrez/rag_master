@@ -6,6 +6,7 @@
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --campaign=2026-07-28 --plan
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --produce
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --produce --resume
+ *   node --import tsx scripts/run-campaign-2026-07-25.mts --produce --resume --bucket=master --offset=38
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --qa
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --covers
  *   node --import tsx scripts/run-campaign-2026-07-25.mts --openai-covers
@@ -105,6 +106,16 @@ const requestedLimit = Math.max(
       "0",
   ),
 );
+const requestedOffset = Math.max(
+  0,
+  Number(
+    process.argv.find((value) => value.startsWith("--offset="))?.slice("--offset=".length) ??
+      "0",
+  ),
+);
+const requestedBucket = process.argv
+  .find((value) => value.startsWith("--bucket="))
+  ?.slice("--bucket=".length);
 
 type Bucket = CampaignEntity["type"] | "master";
 type SourceKind = "entidad" | "pregunta-madre";
@@ -1133,7 +1144,20 @@ async function main() {
     if (!argv.has("--resume")) {
       await assertNewPublicKeys(all);
     }
-    await runProduction(all);
+    const bucketJobs = requestedBucket
+      ? all.filter((job) => job.bucket === requestedBucket)
+      : all;
+    if (requestedBucket && bucketJobs.length === 0) {
+      throw new Error(`Bucket inválido o vacío: ${requestedBucket}`);
+    }
+    const selected = bucketJobs.slice(
+      requestedOffset,
+      requestedLimit > 0 ? requestedOffset + requestedLimit : undefined,
+    );
+    if (selected.length === 0) {
+      throw new Error(`Rango de producción vacío: offset=${requestedOffset}`);
+    }
+    await runProduction(selected);
     return;
   }
 
@@ -1168,7 +1192,7 @@ async function main() {
     return;
   }
   throw new Error(
-    "Usa --plan, --produce [--resume], --qa, --covers, --openai-covers, --replace-rejected, --publish, --publish-ready, --verify o --verify-ready.",
+    "Usa --plan, --produce [--resume] [--bucket=person|place|concept|master] [--offset=N] [--limit=N], --qa, --covers, --openai-covers, --replace-rejected, --publish, --publish-ready, --verify o --verify-ready.",
   );
 }
 
