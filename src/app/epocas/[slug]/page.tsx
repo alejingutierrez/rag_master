@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
-import { TypologyArticle } from "@/components/public/typology-detail";
-import { PeriodHubSections } from "@/components/public/period-hub";
+import { EpochArticle } from "@/components/public/epocas/epoch-article";
 import { JsonLd } from "@/components/public/json-ld";
 import {
+  getEpochExplorerPage,
   getTypologyDetail,
-  getPeriodHub,
   getEntityLinker,
   resolveEntityChips,
 } from "@/lib/public-data";
+import { HISTORICAL_PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { buildMetadata, detailJsonLd } from "@/lib/seo";
 import { typologyPath } from "@/lib/typology-schemas";
 import { TrackView } from "@/components/analytics/track-view";
@@ -33,10 +33,16 @@ export default async function EpocaPage({ params }: { params: Promise<{ slug: st
   const detail = await getTypologyDetail("epoca", slug);
   if (!detail) notFound();
   const s = detail.structured;
-  const [hub, linker, actores] = await Promise.all([
-    getPeriodHub(s.periodoCode ?? ""),
+  if (s.typology !== "epoca") notFound();
+  const periodCode = s.periodoCode && HISTORICAL_PERIODS.includes(s.periodoCode as PeriodCode)
+    ? (s.periodoCode as PeriodCode)
+    : null;
+  if (!periodCode) notFound();
+
+  const [data, linker, actores] = await Promise.all([
+    getEpochExplorerPage(periodCode),
     getEntityLinker(),
-    resolveEntityChips(s.typology === "epoca" ? s.actores : [], "persona"),
+    resolveEntityChips(s.actores, "persona"),
   ]);
   return (
     <>
@@ -46,11 +52,12 @@ export default async function EpocaPage({ params }: { params: Promise<{ slug: st
         itemId={detail.structured.slug}
         itemName={detail.structured.titulo}
       />
-      <TypologyArticle
+      <EpochArticle
         detail={detail}
+        data={data}
         linker={linker}
-        chips={{ actores }}
-        extra={<PeriodHubSections hub={hub} periodCode={detail.structured.periodoCode} />}
+        actors={actores}
+        periodCode={periodCode}
       />
     </>
   );
