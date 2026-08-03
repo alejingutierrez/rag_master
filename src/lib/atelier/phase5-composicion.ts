@@ -67,7 +67,14 @@ export function packVerifiedContext(verified: VerifiedDossier, brief: AtelierBri
 
 /** Llamada de escritura en streaming. Devuelve el texto acumulado. */
 export async function askClaudeAtelier(
-  args: { system: string; user: string; maxTokens: number; model?: string },
+  args: {
+    system: string;
+    user: string;
+    maxTokens: number;
+    model?: string;
+    /** Límite total opcional, incluida la lectura completa del stream. */
+    timeoutMs?: number;
+  },
   onProgress?: (words: number) => void
 ): Promise<string> {
   const model = args.model ?? OPUS_MODEL;
@@ -84,50 +91,71 @@ export async function askClaudeAtelier(
     inferenceConfig,
   });
 
-  const response = await withBedrockSemaphore(async () => {
-    const MAX_RETRIES = 3;
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        return await client().send(command);
-      } catch (err) {
-        const e = err as Error;
-        const retryable =
-          [
-            "ThrottlingException",
-            "ModelStreamErrorException",
-            "ModelTimeoutException",
-            "ServiceUnavailableException",
-            "InternalServerException",
-            "UnrecognizedClientException",
-            "InvalidSignatureException",
-            "ExpiredTokenException",
-          ].includes(e.name) ||
-          /throttl|Too many requests|timeout|ECONNRESET|socket hang up|security token|InvalidClientTokenId|Signature expired|ExpiredToken/i.test(
-            e.message
-          );
-        if (!retryable || attempt === MAX_RETRIES) throw err;
-        const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
-        console.warn(`[atelier] writer ${e.name}, retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`);
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
-    throw new Error("Bedrock writer sin respuesta tras reintentos");
-  });
+  const abortController = args.timeoutMs ? new AbortController() : null;
+  const timeout = abortController
+    ? setTimeout(() => abortController.abort(), args.timeoutMs)
+    : null;
 
-  let text = "";
-  let lastReport = Date.now();
-  if (response.stream) {
-    for await (const event of response.stream) {
-      const delta = event.contentBlockDelta?.delta?.text;
-      if (delta) text += delta;
-      if (onProgress && Date.now() - lastReport > 30_000) {
-        onProgress(countWords(text));
-        lastReport = Date.now();
+  try {
+    const response = await withBedrockSemaphore(async () => {
+      const MAX_RETRIES = 3;
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          return await client().send(command, {
+            abortSignal: abortController?.signal,
+          });
+        } catch (err) {
+          const e = err as Error;
+          const retryable =
+            [
+              "ThrottlingException",
+              "ModelStreamErrorException",
+              "ModelTimeoutException",
+              "ServiceUnavailableException",
+              "InternalServerException",
+              "UnrecognizedClientException",
+              "InvalidSignatureException",
+              "ExpiredTokenException",
+            ].includes(e.name) ||
+            /throttl|Too many requests|timeout|ECONNRESET|socket hang up|security token|InvalidClientTokenId|Signature expired|ExpiredToken/i.test(
+              e.message
+            );
+          if (!retryable || attempt === MAX_RETRIES) throw err;
+          const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
+          console.warn(
+            `[atelier] writer ${e.name}, retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`
+          );
+          await new Promise((r) => setTimeout(r, delay));
+        }
+      }
+      throw new Error("Bedrock writer sin respuesta tras reintentos");
+    });
+
+    let text = "";
+    let lastReport = Date.now();
+    if (response.stream) {
+      for await (const event of response.stream) {
+        const delta = event.contentBlockDelta?.delta?.text;
+        if (delta) text += delta;
+        if (onProgress && Date.now() - lastReport > 30_000) {
+          onProgress(countWords(text));
+          lastReport = Date.now();
+        }
       }
     }
+    if (onProgress) onProgress(countWords(text));
+    return text;
+  } catch (error) {
+    if (abortController?.signal.aborted) {
+      throw new Error(
+        `Bedrock writer excedió ${Math.round((args.timeoutMs ?? 0) / 60_000)} min`,
+        { cause: error },
+      );
+    }
+    throw error;
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
-  if (onProgress) onProgress(countWords(text));
-  return text;
 }
 
 /** Compone la pieza a partir del brief + el material verificado. */

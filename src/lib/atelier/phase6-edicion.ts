@@ -23,6 +23,10 @@ Devuelve ÚNICAMENTE el texto final en markdown, sin comentarios ni explicacione
 const PULIDO_INSTR =
   "Pule esta pieza: afina ritmo y transiciones, recorta lo flojo, asegúrate de que la voz sea consistente y de que NO queden citas inline ni andamiaje.";
 
+const EDIT_TIMEOUT_MS = Number(
+  process.env.BEDROCK_ATELIER_EDIT_TIMEOUT_MS ?? String(12 * 60 * 1000)
+);
+
 async function editPass(
   texto: string,
   brief: AtelierBrief,
@@ -31,7 +35,12 @@ async function editPass(
 ): Promise<string> {
   const system = `${EDIT_SYSTEM_BASE}\n\nVOZ DE LA PIEZA: ${brief.ficha.voz}\nEXTENSIÓN OBJETIVO: ~${brief.ficha.extensionTarget} palabras.`;
   const user = `${instrucciones}\n\nTEXTO A EDITAR:\n\n${texto}`;
-  const out = await askClaudeAtelier({ system, user, maxTokens: format.maxTokens });
+  const out = await askClaudeAtelier({
+    system,
+    user,
+    maxTokens: format.maxTokens,
+    timeoutMs: EDIT_TIMEOUT_MS,
+  });
   return out.trim() ? out : texto;
 }
 
@@ -101,18 +110,35 @@ export async function pulirYControlar(args: {
   // revisiones dirigidas si no alcanzan el umbral (ver format-config.ts).
   const { qualityThreshold, maxRevisions } = getFormatConfig(args.format.id);
 
-  let texto = await editPass(args.texto, args.brief, args.format, PULIDO_INSTR);
+  let texto = args.texto;
+  let editAvailable = true;
+  try {
+    texto = await editPass(args.texto, args.brief, args.format, PULIDO_INSTR);
+  } catch (e) {
+    editAvailable = false;
+    console.warn(
+      `[atelier] pulido omitido; se conserva la composición: ${(e as Error).message}`
+    );
+  }
   let crit = await criticar(texto, args.format, args.brief.ficha.extensionTarget, qualityThreshold);
 
   let revisions = 0;
   while (
     crit.scoreGlobal < qualityThreshold &&
     args.allowRevision &&
+    editAvailable &&
     revisions < maxRevisions &&
     crit.problemas.length > 0
   ) {
     const fixes = `Corrige específicamente estos problemas, sin alterar el resto ni cambiar los hechos:\n- ${crit.problemas.join("\n- ")}`;
-    texto = await editPass(texto, args.brief, args.format, fixes);
+    try {
+      texto = await editPass(texto, args.brief, args.format, fixes);
+    } catch (e) {
+      console.warn(
+        `[atelier] revisión omitida; se conserva la mejor versión: ${(e as Error).message}`
+      );
+      break;
+    }
     crit = await criticar(texto, args.format, args.brief.ficha.extensionTarget, qualityThreshold);
     revisions++;
   }
