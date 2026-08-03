@@ -68,6 +68,24 @@ function canonicalHref(head: string): string {
   return tag ? xmlDecode(attr(tag, "href")) : "";
 }
 
+function expectedDetailSchema(url: string): string[] | null {
+  const parts = new URL(url).pathname.split("/").filter(Boolean);
+  if (parts.length !== 2) return null;
+  return (
+    {
+      hechos: ["Article"],
+      epocas: ["Article"],
+      preguntas: ["Article"],
+      ensayos: ["Article"],
+      personas: ["Person"],
+      lugares: ["Place"],
+      // El directorio de ideas también alberga instituciones históricas; sus
+      // fichas curadas se marcan correctamente como Organization.
+      ideas: ["DefinedTerm", "Organization"],
+    } as Record<string, string[]>
+  )[parts[0]] ?? null;
+}
+
 const sitemapResponse = await fetch(sitemapUrl, {
   signal: AbortSignal.timeout(30_000),
   // Next.js bloquea el streaming de metadata para crawlers conocidos. Usar el
@@ -89,6 +107,7 @@ if (!urls.length) throw new Error(`El sitemap no contiene URLs: ${sitemapUrl}`);
 const issues: Issue[] = [];
 const sitemapKeys = new Set<string>();
 const internalLinks = new Map<string, string>();
+const titleOwners = new Map<string, string[]>();
 for (let index = 0; index < urlBlocks.length; index += 1) {
   const url = urls[index];
   if (!url) {
@@ -163,6 +182,10 @@ async function worker(): Promise<void> {
       const lang = attr(htmlTag, "lang").toLowerCase();
 
       if (!title) issues.push({ kind: "missing_title", url });
+      else {
+        const key = title.replace(/\s+/g, " ").trim().toLocaleLowerCase("es");
+        titleOwners.set(key, [...(titleOwners.get(key) ?? []), url]);
+      }
       if (!description) issues.push({ kind: "missing_description", url });
       if (!canonical) issues.push({ kind: "missing_canonical", url });
       else if (urlKey(canonical) !== urlKey(url)) {
@@ -173,14 +196,38 @@ async function worker(): Promise<void> {
       if (!lang) issues.push({ kind: "missing_lang", url });
       else if (!lang.startsWith("es")) issues.push({ kind: "unexpected_lang", url, detail: lang });
 
+      const schemaTypes = new Set<string>();
       for (const match of html.matchAll(
         /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
       )) {
         try {
-          JSON.parse(match[1]);
+          const parsed = JSON.parse(match[1]) as Record<string, unknown>;
+          const nodes = Array.isArray(parsed["@graph"])
+            ? (parsed["@graph"] as Array<Record<string, unknown>>)
+            : [parsed];
+          for (const node of nodes) {
+            const types = Array.isArray(node["@type"]) ? node["@type"] : [node["@type"]];
+            for (const type of types) if (typeof type === "string") schemaTypes.add(type);
+          }
         } catch {
           issues.push({ kind: "invalid_json_ld", url });
         }
+      }
+
+      const expectedSchema = expectedDetailSchema(url);
+      if (expectedSchema && !expectedSchema.some((type) => schemaTypes.has(type))) {
+        issues.push({ kind: "missing_semantic_schema", url, detail: expectedSchema.join(" | ") });
+      }
+      if (expectedSchema && !schemaTypes.has("BreadcrumbList")) {
+        issues.push({ kind: "missing_breadcrumb_schema", url });
+      }
+
+      if (
+        /<script\b[^>]*\bsrc=["'][^"']*(?:googletagmanager\.com\/(?:gtm\.js|gtag\/js)|google-analytics\.com)[^"']*["']/i.test(
+          html,
+        )
+      ) {
+        issues.push({ kind: "analytics_before_consent", url });
       }
 
       for (const match of html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi)) {
@@ -208,6 +255,14 @@ async function worker(): Promise<void> {
 }
 
 await Promise.all(Array.from({ length: concurrency }, () => worker()));
+
+for (const owners of titleOwners.values()) {
+  if (owners.length > 1) {
+    for (const url of owners) {
+      issues.push({ kind: "duplicate_title", url, detail: owners.join(", ") });
+    }
+  }
+}
 
 const sitemapPaths = new Set(urls.map(pathKey));
 const extraInternalLinks = [...internalLinks.entries()].filter(
@@ -248,6 +303,30 @@ async function linkWorker(): Promise<void> {
   }
 }
 await Promise.all(Array.from({ length: concurrency }, () => linkWorker()));
+
+// Contrato de 404: una ruta pública inexistente debe ser un 404 index-safe, no
+// un redirect al login que Google interpretaría como soft-404.
+const publicOrigin = new URL(urls[0]).origin;
+const notFoundPublicUrl = new URL("/__seo_indexability_not_found_probe__", publicOrigin).toString();
+try {
+  const response = await fetch(crawlUrl(notFoundPublicUrl), {
+    redirect: "manual",
+    signal: AbortSignal.timeout(30_000),
+    headers: { "user-agent": BOT_USER_AGENT },
+  });
+  if (response.status !== 404) {
+    issues.push({ kind: "invalid_not_found_status", url: notFoundPublicUrl, detail: response.status });
+  }
+  if (!/\bnoindex\b/i.test(response.headers.get("x-robots-tag") ?? "")) {
+    issues.push({ kind: "missing_not_found_noindex", url: notFoundPublicUrl });
+  }
+} catch (error) {
+  issues.push({
+    kind: "not_found_probe_error",
+    url: notFoundPublicUrl,
+    detail: error instanceof Error ? error.message : String(error),
+  });
+}
 
 const byKind = issues.reduce<Record<string, number>>((acc, issue) => {
   acc[issue.kind] = (acc[issue.kind] ?? 0) + 1;
