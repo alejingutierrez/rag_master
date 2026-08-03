@@ -91,12 +91,11 @@ export async function askClaudeAtelier(
     inferenceConfig,
   });
 
-  const abortController = args.timeoutMs ? new AbortController() : null;
-  const timeout = abortController
-    ? setTimeout(() => abortController.abort(), args.timeoutMs)
-    : null;
+  const abortController =
+    args.timeoutMs && args.timeoutMs > 0 ? new AbortController() : null;
+  let timeout: ReturnType<typeof setTimeout> | null = null;
 
-  try {
+  const runWriter = async (): Promise<string> => {
     const response = await withBedrockSemaphore(async () => {
       const MAX_RETRIES = 3;
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -145,14 +144,23 @@ export async function askClaudeAtelier(
     }
     if (onProgress) onProgress(countWords(text));
     return text;
-  } catch (error) {
-    if (abortController?.signal.aborted) {
-      throw new Error(
-        `Bedrock writer excedió ${Math.round((args.timeoutMs ?? 0) / 60_000)} min`,
-        { cause: error },
-      );
-    }
-    throw error;
+  };
+
+  try {
+    if (!abortController || !args.timeoutMs) return await runWriter();
+    const timeoutPromise = new Promise<never>((_resolve, reject) => {
+      timeout = setTimeout(() => {
+        abortController.abort();
+        reject(
+          new Error(
+            `Bedrock writer excedió ${Math.round(args.timeoutMs! / 60_000)} min`,
+          ),
+        );
+      }, args.timeoutMs);
+    });
+    // El abortSignal corta la petición cuando el SDK coopera; la carrera
+    // garantiza además que un stream ya abierto no pueda retener la edición.
+    return await Promise.race([runWriter(), timeoutPromise]);
   } finally {
     if (timeout) clearTimeout(timeout);
   }
