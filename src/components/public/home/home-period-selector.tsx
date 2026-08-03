@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import {
   HISTORICAL_PERIODS,
@@ -12,17 +12,23 @@ import {
 export function HomePeriodSelector({
   selectedPeriod,
   destination = "home",
+  onSelect,
+  availablePeriods,
 }: {
   selectedPeriod: PeriodCode | null;
-  destination?: "home" | "epocas";
+  destination?: "home" | "epocas" | "personas";
+  onSelect?: (period: PeriodCode | null) => void;
+  availablePeriods?: readonly PeriodCode[];
 }) {
-  const activePeriodRef = useRef<HTMLAnchorElement | null>(null);
+  const activeAnchorRef = useRef<HTMLAnchorElement | null>(null);
+  const activeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [periodsOpen, setPeriodsOpen] = useState(false);
   const selected = selectedPeriod ? PERIODS[selectedPeriod] : null;
+  const isFilter = destination === "personas";
 
   useEffect(() => {
     if (!selectedPeriod) return;
-    activePeriodRef.current?.scrollIntoView({
+    (activeButtonRef.current ?? activeAnchorRef.current)?.scrollIntoView({
       behavior: "auto",
       block: "nearest",
       inline: "center",
@@ -56,18 +62,60 @@ export function HomePeriodSelector({
         aria-label={
           destination === "home"
             ? "Personalizar la portada por época"
-            : "Seleccionar una época histórica"
+            : destination === "personas"
+              ? "Filtrar personas por época"
+              : "Seleccionar una época histórica"
         }
       >
+        {isFilter && (
+          <button
+            type="button"
+            className={!selectedPeriod ? "is-active" : ""}
+            aria-pressed={!selectedPeriod}
+            ref={!selectedPeriod ? activeButtonRef : undefined}
+            onClick={() => {
+              onSelect?.(null);
+              setPeriodsOpen(false);
+            }}
+          >
+            <span>Todas</span>
+            <small>Archivo completo</small>
+          </button>
+        )}
         {HISTORICAL_PERIODS.map((code) => {
           const period = PERIODS[code];
           const active = code === selectedPeriod;
+          const available = !isFilter || !availablePeriods || availablePeriods.includes(code);
           const href =
             destination === "home"
               ? active
                 ? "/"
                 : `/?epoca=${code}`
               : `/epocas?epoca=${code}`;
+
+          if (isFilter) {
+            return (
+              <button
+                key={code}
+                type="button"
+                aria-pressed={active}
+                aria-disabled={!available}
+                disabled={!available}
+                className={active ? "is-active" : ""}
+                ref={active ? activeButtonRef : undefined}
+                style={{ "--period-color": getPeriodColor(code) } as CSSProperties}
+                onClick={() => {
+                  if (!available) return;
+                  onSelect?.(active ? null : code);
+                  setPeriodsOpen(false);
+                }}
+                title={available ? undefined : "Sin biografías publicadas en esta época"}
+              >
+                <span>{period.label}</span>
+                <small>{period.yearRange}</small>
+              </button>
+            );
+          }
 
           return (
             <Link
@@ -76,8 +124,8 @@ export function HomePeriodSelector({
               scroll={false}
               aria-current={active ? "page" : undefined}
               className={active ? "is-active" : ""}
-              ref={active ? activePeriodRef : undefined}
-              style={{ "--period-color": getPeriodColor(code) } as React.CSSProperties}
+              ref={active ? activeAnchorRef : undefined}
+              style={{ "--period-color": getPeriodColor(code) } as CSSProperties}
               onClick={() => setPeriodsOpen(false)}
             >
               <span>{period.label}</span>

@@ -1,8 +1,9 @@
 import { PublicShell } from "@/components/public/public-shell";
-import { EntityBrowser } from "@/components/public/entity-index";
-import { getConnectedEntityDirectory, getPeriodEntityUniverse, ENTITY_TYPE_META } from "@/lib/public-data";
+import { PersonasByPeriod } from "@/components/public/personas/personas-concepts";
+import { getConnectedEntityDirectory } from "@/lib/public-data";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import { buildMetadata } from "@/lib/seo";
+import "@/components/public/home/home-redesign.css";
 
 export const dynamic = "force-dynamic";
 
@@ -29,21 +30,11 @@ export default async function PersonasPage({
 }) {
   const sp = (await searchParams) ?? {};
   const periodo = validPeriod(sp.periodo);
-  const entities = periodo
-    ? await getPeriodEntityUniverse("persona", periodo)
-    : await getConnectedEntityDirectory("persona");
-  const m = ENTITY_TYPE_META.persona;
+  const entities = await getConnectedEntityDirectory("persona");
+
   return (
     <PublicShell>
-      <EntityBrowser
-        entities={entities}
-        kicker="Quién hizo la historia"
-        title="Personas"
-        intro="Las figuras que tienen su propia biografía en el archivo: cada una con su semblanza, sus fuentes y los hechos donde interviene."
-        emptyNote="Todavía no hay biografías publicadas."
-        typeLabel={m.singular}
-        color={m.color}
-      />
+      <PersonasByPeriod entities={entities} initialPeriod={periodo} />
     </PublicShell>
   );
 }

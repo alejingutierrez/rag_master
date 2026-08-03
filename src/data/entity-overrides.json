@@ -152,13 +152,13 @@
   "periodoCode": "C91",
   "anio": 1992
  },
- "persona:ingrid-betancourt": {
-  "periodoCode": "C91",
-  "anio": 2002
- },
  "persona:rafael-pardo-rueda": {
   "hide": true,
   "_motivo": "QA: duplicado de \"Rafael Pardo\""
+ },
+ "persona:ingrid-betancourt": {
+  "periodoCode": "C91",
+  "anio": 2002
  },
  "persona:ingrid-betancourt-pulecio": {
   "hide": true,

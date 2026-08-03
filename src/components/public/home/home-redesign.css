@@ -252,7 +252,7 @@
   border-left: 0;
 }
 
-.hc-period-selector a {
+.hc-period-selector :is(a, button) {
   position: relative;
   min-width: 0;
   min-height: 72px;
@@ -265,7 +265,25 @@
   transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
 }
 
-.hc-period-selector a::before {
+.hc-period-selector button {
+  appearance: none;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hc-period-selector button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.hc-period-selector button:disabled:hover { background: transparent; }
+.hc-period-selector button:disabled:hover span { color: var(--fg); }
+
+.hc-period-selector :is(a, button)::before {
   content: "";
   position: absolute;
   top: -1px;
@@ -275,23 +293,23 @@
   background: transparent;
 }
 
-.hc-period-selector a span {
+.hc-period-selector :is(a, button) span {
   font-family: var(--font-display);
   font-size: 13px;
   line-height: .98;
   hyphens: auto;
 }
 
-.hc-period-selector a small {
+.hc-period-selector :is(a, button) small {
   font-family: var(--font-mono);
   font-size: 8px;
   line-height: 1.15;
   color: var(--fg-subtle);
 }
 
-.hc-period-selector a:hover { background: var(--bg-subtle); }
-.hc-period-selector a:hover span { color: var(--period-color); }
-.hc-period-selector a.is-active {
+.hc-period-selector :is(a, button):hover { background: var(--bg-subtle); }
+.hc-period-selector :is(a, button):hover span { color: var(--period-color); }
+.hc-period-selector :is(a, button).is-active {
   z-index: 1;
   margin: -6px -1px 0;
   min-height: 78px;
@@ -300,8 +318,8 @@
   border-bottom: 0;
   background: #fff;
 }
-.hc-period-selector a.is-active::before { background: var(--accent); }
-.hc-period-selector a.is-active span { color: var(--accent); }
+.hc-period-selector :is(a, button).is-active::before { background: var(--accent); }
+.hc-period-selector :is(a, button).is-active span { color: var(--accent); }
 
 .hc-edition-status {
   min-height: 52px;
@@ -1441,14 +1459,14 @@
     scrollbar-width: none;
   }
   .hc-period-selector.is-mobile-open { display: grid; }
-  .hc-period-selector a {
+  .hc-period-selector :is(a, button) {
     min-height: 76px;
     padding: 14px 10px 9px;
     scroll-snap-align: start;
   }
-  .hc-period-selector a span { font-size: 15px; }
-  .hc-period-selector a small { font-size: 9px; }
-  .hc-period-selector a.is-active { min-height: 82px; }
+  .hc-period-selector :is(a, button) span { font-size: 15px; }
+  .hc-period-selector :is(a, button) small { font-size: 9px; }
+  .hc-period-selector :is(a, button).is-active { min-height: 82px; }
   .hc-edition-status {
     min-height: 0;
     padding: 8px 0 9px;

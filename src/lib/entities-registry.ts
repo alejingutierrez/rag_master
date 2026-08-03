@@ -51,6 +51,8 @@ export interface EntityRegistry {
   variantSlugToKey: Map<string, string>;
   /** `${type}:${slug}` canónico → slugs canónico, variantes y aliases curados. */
   slugsByKey: Map<string, Set<string>>;
+  /** Entidades excluidas por curación aunque exista una pieza publicada con ese slug. */
+  hiddenKeys: Set<string>;
   generatedAt: string | null;
 }
 
@@ -73,6 +75,7 @@ export async function loadEntityRegistry(): Promise<EntityRegistry> {
   const entities = file?.entities ?? [];
   const byKey = new Map<string, RegistryEntity>();
   const variantSlugToKey = new Map<string, string>();
+  const hiddenKeys = new Set<string>();
   for (const e of entities) {
     const k = entityKey(e.type, e.slug);
     byKey.set(k, e);
@@ -90,9 +93,13 @@ export async function loadEntityRegistry(): Promise<EntityRegistry> {
       join(process.cwd(), "src", "data", "entity-overrides.json"),
       "utf8",
     );
-    const overrides = JSON.parse(raw) as Record<string, { _motivo?: unknown }>;
+    const overrides = JSON.parse(raw) as Record<
+      string,
+      { hide?: unknown; _motivo?: unknown }
+    >;
     for (const [aliasKey, override] of Object.entries(overrides)) {
       if (aliasKey.startsWith("_")) continue;
+      if (override?.hide === true) hiddenKeys.add(aliasKey);
       const reason = typeof override?._motivo === "string" ? override._motivo : "";
       const targetName = reason.match(/^QA:\s*duplicado de\s+"([^"]+)"$/i)?.[1];
       if (!targetName) continue;
@@ -121,6 +128,7 @@ export async function loadEntityRegistry(): Promise<EntityRegistry> {
     byKey,
     variantSlugToKey,
     slugsByKey,
+    hiddenKeys,
     generatedAt: file?.generatedAt ?? null,
   };
   return cache;

@@ -22,7 +22,12 @@ import {
 } from "@/lib/typology-schemas";
 import { normalizeSeo, deriveSeo, type DeliverableSeo } from "@/lib/seo";
 import type { DeliverableTaxonomy } from "@/lib/taxonomy";
-import { resolveAnchor, periodStartYear, type ContentAnchor } from "@/lib/content-anchor";
+import {
+  resolveAnchor,
+  periodRank,
+  periodStartYear,
+  type ContentAnchor,
+} from "@/lib/content-anchor";
 import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
 import {
   loadEntityRegistry,
@@ -1202,6 +1207,15 @@ export async function getPublicArchiveStats(): Promise<PublicArchiveStats> {
   };
 }
 
+interface DedicatedEntityInfo {
+  imageUrl: string | null;
+  href: string;
+  resumen: string;
+  periodCode: string | null;
+  anio: number | null;
+  isFicha: boolean;
+}
+
 interface PublishedEntityData {
   index: EntityIndex;
   /** slugs con ≥1 pieza DEDICADA publicada (su ficha, o una pieza producida desde
@@ -1210,7 +1224,7 @@ interface PublishedEntityData {
   /** `${type}:${slug}` → portada/ruta de la pieza dedicada. Alimenta la imagen de
    *  la entidad en los índices, incluso cuando la pieza llegó por `sourceRef` y no
    *  es una ficha de entidad (y por tanto no está en el acc del índice). */
-  dedicatedInfo: Map<string, { imageUrl: string | null; href: string; resumen: string }>;
+  dedicatedInfo: Map<string, DedicatedEntityInfo>;
 }
 let pubEntityCache: { data: PublishedEntityData; at: number } | null = null;
 let pubEntityLoad: Promise<PublishedEntityData> | null = null;
@@ -1234,10 +1248,7 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
         lugar: new Set(),
         idea: new Set(),
       };
-      const dedicatedInfo = new Map<
-        string,
-        { imageUrl: string | null; href: string; resumen: string }
-      >();
+      const dedicatedInfo = new Map<string, DedicatedEntityInfo>();
       const markDedicated = (t: EntityType, slug: string, p: AnchoredPiece) => {
         if (!slug) return;
         const registryKey = registry.variantSlugToKey.get(slug);
@@ -1246,14 +1257,23 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
           registryEntity && registryEntity.type === t ? registryEntity.slug : slug;
         dedicatedSlugs[t].add(canonicalSlug);
         const key = entityKey(t, canonicalSlug);
-        // Una ficha de entidad manda sobre una pieza producida desde ella: es el
-        // retrato canónico. Por eso solo se rellena si aún no hay imagen.
         const prev = dedicatedInfo.get(key);
-        if (!prev || (!prev.imageUrl && p.imageUrl)) {
+        const isFicha = p.kind === "entidad";
+        // La ficha de entidad manda sobre una pieza derivada: además del retrato,
+        // aporta el ancla histórica propia de la biografía. Entre piezas del mismo
+        // rango solo se reemplaza para completar una imagen ausente.
+        if (
+          !prev ||
+          (isFicha && !prev.isFicha) ||
+          (isFicha === prev.isFicha && !prev.imageUrl && !!p.imageUrl)
+        ) {
           dedicatedInfo.set(key, {
             imageUrl: p.imageUrl ?? prev?.imageUrl ?? null,
             href: prev?.href ?? p.href,
             resumen: prev?.resumen || p.resumen,
+            periodCode: p.periodCode ?? prev?.periodCode ?? null,
+            anio: p.anio ?? prev?.anio ?? null,
+            isFicha,
           });
         }
       };
@@ -1748,7 +1768,7 @@ function findDedicatedInfo(
   e: RegistryEntity,
   info: PublishedEntityData["dedicatedInfo"],
   reg: EntityRegistry,
-): { imageUrl: string | null; href: string; resumen: string } | null {
+): DedicatedEntityInfo | null {
   for (const slug of entitySurfaceSlugs(e, reg)) {
     const hit = info.get(entityKey(e.type, slug));
     if (hit) return hit;
@@ -1865,6 +1885,11 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
     // entra como nodo dedicado aun cuando no haya variante canónica todavía.
     for (const acc of index.byKey.values()) {
       if (acc.type !== type || !acc.hasFicha || representedAccs.has(acc.key)) continue;
+      const dedicated = dedicatedInfo.get(acc.key);
+      const unclassifiedPersona = type === "persona" && reg.hiddenKeys.has(acc.key);
+      const homePeriod = unclassifiedPersona
+        ? null
+        : dedicated?.periodCode ?? [...acc.periods][0] ?? null;
       list.push({
         name: canonicalName(acc),
         slug: acc.slug,
@@ -1872,12 +1897,15 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
         href: entityPath(acc.type, acc.slug),
         mentions: acc.pieceIds.size,
         corpusMentions: 0,
-        periods: [...acc.periods],
-        periodoOrden: acc.periodoOrden,
-        anio: acc.anio,
+        // Una ficha publicada que el registro curado excluyó sigue siendo legible
+        // y permanece en el directorio completo, pero no hereda épocas ruidosas de
+        // las piezas donde se la menciona: queda transversal hasta nueva curación.
+        periods: type === "persona" ? (homePeriod ? [homePeriod] : []) : [...acc.periods],
+        periodoOrden: type === "persona" ? periodRank(homePeriod) : acc.periodoOrden,
+        anio: dedicated?.anio ?? acc.anio,
         hasFicha: true,
         resumen: acc.resumen,
-        imageUrl: acc.imageUrl ?? dedicatedInfo.get(acc.key)?.imageUrl ?? null,
+        imageUrl: acc.imageUrl ?? dedicated?.imageUrl ?? null,
       });
     }
     list.sort(
@@ -1927,7 +1955,8 @@ export async function getPeriodEntityUniverse(type: EntityType, periodCode: stri
         acc.type !== type ||
         !acc.hasFicha ||
         !ded.has(acc.slug) ||
-        representedAccs.has(acc.key)
+        representedAccs.has(acc.key) ||
+        (type === "persona" && reg.hiddenKeys.has(acc.key))
       ) {
         continue;
       }
