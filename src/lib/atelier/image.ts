@@ -428,6 +428,7 @@ export async function generateAndStoreImage(
   let png: Buffer | null = null;
   let attempts = 0;
   let lastErr: Error | null = null;
+  let useSafeOpenAIPrompt = false;
   const previousImage = (
     d.metadata && typeof d.metadata === "object"
       ? (d.metadata as { image?: ImageMeta }).image
@@ -455,7 +456,17 @@ export async function generateAndStoreImage(
   for (let i = 1; i <= GENERATION_ATTEMPTS && !png; i++) {
     attempts = i;
     try {
-      png = hasRefs
+      // Si una composición sensible fue bloqueada, el siguiente intento se
+      // mantiene en OpenAI pero pasa a una naturaleza muerta documental sin
+      // personas ni referencias visuales potencialmente problemáticas. Para
+      // retratos no se aplica: la identidad verificada sigue siendo obligatoria.
+      png = useSafeOpenAIPrompt && !esPersona
+        ? await generateImagePng({
+            prompt: safeModerationPrompt,
+            size,
+            timeoutMs: openAIImageTimeoutMs,
+          })
+        : hasRefs
         ? await editImagePng({
             prompt,
             size,
@@ -491,6 +502,7 @@ export async function generateAndStoreImage(
         break;
       }
       const moderated = isModerationBlocked(e);
+      if (moderated && !esPersona) useSafeOpenAIPrompt = true;
       console.warn(
         `[imagen ${deliverableId}] intento ${i}/${GENERATION_ATTEMPTS} falló${moderated ? " (moderación)" : ""}: ${lastErr.message.slice(0, 200)}`,
       );
