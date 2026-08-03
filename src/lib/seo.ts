@@ -44,6 +44,19 @@ function clampText(text: string, max: number): string {
   return base.replace(/[\s.,;:–—-]+$/u, "").trim();
 }
 
+/**
+ * Añade contexto editorial sin permitir que el título base expulse el sufijo.
+ * Útil cuando dos tipologías tratan el mismo tema con intenciones distintas.
+ */
+export function contextualSeoTitle(title: string, context: string, max = 60): string {
+  const suffix = ` · ${context.trim()}`;
+  const base = clampText(title, Math.max(20, max - suffix.length)).replace(
+    /\s+(?:y|e|o|u|de|del|la|el|los|las|en|para|por)$/iu,
+    "",
+  );
+  return `${base}${suffix}`;
+}
+
 /** Primera frase legible de un markdown (para meta description de ensayos). */
 function firstSentence(md: string): string {
   const plain = (md || "")
@@ -353,6 +366,35 @@ export function articleJsonLd(a: {
     ...authoredBits(a),
     ...(a.wordCount ? { wordCount: a.wordCount } : {}),
   };
+}
+
+/** Schema mínimo y migas para nodos de entidad sin una ficha editorial propia. */
+export function entityNodeJsonLd(a: {
+  type: "persona" | "lugar" | "idea";
+  path: string;
+  name: string;
+  description: string;
+  imageUrl?: string | null;
+  indexPath: string;
+  indexLabel: string;
+}): JsonLdNode {
+  const schemaType =
+    a.type === "persona" ? "Person" : a.type === "lugar" ? "Place" : "DefinedTerm";
+  return jsonLdGraph(
+    {
+      "@type": schemaType,
+      name: a.name,
+      description: a.description,
+      url: absUrl(a.path),
+      inLanguage: "es",
+      ...(a.imageUrl ? { image: [absUrl(a.imageUrl)] } : {}),
+    },
+    breadcrumbJsonLd([
+      { name: "Inicio", path: "/" },
+      { name: a.indexLabel, path: a.indexPath },
+      { name: a.name, path: a.path },
+    ]),
+  );
 }
 
 const INDEX_LABEL: Record<TypologyKind, string> = {

@@ -33,3 +33,8 @@ export function isPublicPath(pathname: string): boolean {
   if (pathname === "/" || pathname === "/login") return true;
   return PUBLIC_PAGE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
+
+/** Solo el namespace real del backoffice debe activar el candado HTML. */
+export function isAdminPath(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}

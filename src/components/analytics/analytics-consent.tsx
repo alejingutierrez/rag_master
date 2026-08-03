@@ -67,7 +67,7 @@ export function AnalyticsConsent({ containerId }: { containerId?: string }) {
             <p>
               Usamos Google Analytics para conocer, de forma agregada, qué páginas se leen y
               mejorar la navegación. Google Tag Manager no se carga hasta que usted lo acepte.
-              Puede rechazarlo o cambiar su decisión después. <Link href="/privacidad">Más información</Link>.
+              Puede rechazarlo o cambiar su decisión después. <Link href="/privacidad">Más información sobre privacidad y analítica</Link>.
             </p>
             {storageError ? (
               <p role="alert">El navegador bloqueó el almacenamiento local; la analítica seguirá desactivada.</p>

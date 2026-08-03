@@ -156,6 +156,14 @@
   "periodoCode": "C91",
   "anio": 2002
  },
+ "persona:rafael-pardo-rueda": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Rafael Pardo\""
+ },
+ "persona:ingrid-betancourt-pulecio": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Ingrid Betancourt\""
+ },
  "persona:nina-s-de-friedemann": {
   "hide": true,
   "_motivo": "academico"

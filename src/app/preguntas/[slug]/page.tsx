@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { TypologyArticle } from "@/components/public/typology-detail";
 import { JsonLd } from "@/components/public/json-ld";
 import { getTypologyDetail, getEntityLinker } from "@/lib/public-data";
-import { buildMetadata, detailJsonLd } from "@/lib/seo";
+import { buildMetadata, contextualSeoTitle, detailJsonLd } from "@/lib/seo";
 import { typologyPath } from "@/lib/typology-schemas";
 import { TrackView } from "@/components/analytics/track-view";
 
@@ -13,7 +13,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const d = await getTypologyDetail("pregunta", slug);
   if (!d) return { title: "Pregunta" };
   return buildMetadata({
-    seo: d.seo,
+    seo: {
+      ...d.seo,
+      metaTitle: contextualSeoTitle(d.seo.metaTitle, "análisis"),
+    },
     path: typologyPath(d.structured),
     imageUrl: d.imageUrl,
     publishedTime: d.publishedAt,

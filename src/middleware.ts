@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/auth-edge";
-import { isPublicPath } from "@/lib/public-routes";
+import { isAdminPath, isPublicPath } from "@/lib/public-routes";
 
 /**
  * Candado de producción — SEPARA público de admin.
@@ -78,6 +78,16 @@ export async function middleware(req: NextRequest) {
   // Superficie pública de lectura → pasa sin candado.
   if (isPublicPath(pathname) || isPublicApi(pathname)) {
     return NextResponse.next();
+  }
+
+  // Una URL HTML desconocida debe llegar al router de Next y producir un 404
+  // real. Antes TODO path no listado se trataba como admin y redirigía a
+  // `/login`, lo que convertía enlaces públicos obsoletos en soft-404 para
+  // buscadores. Se añade noindex como segunda barrera mientras Next resuelve.
+  if (!isAdminPath(pathname) && !pathname.startsWith("/api/")) {
+    const res = NextResponse.next();
+    res.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+    return res;
   }
 
   const token = process.env.ADMIN_ACCESS_TOKEN;

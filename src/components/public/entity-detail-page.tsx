@@ -19,7 +19,7 @@ import {
   type EntityType,
 } from "@/lib/public-data";
 import { entityKey } from "@/lib/entities-registry";
-import { buildMetadata, detailJsonLd } from "@/lib/seo";
+import { buildMetadata, detailJsonLd, entityNodeJsonLd } from "@/lib/seo";
 import { TrackView } from "@/components/analytics/track-view";
 
 export async function entityDetailMetadata(slug: string, type: EntityType) {
@@ -93,6 +93,19 @@ export async function EntityDetailPage({ slug, type }: { slug: string; type: Ent
   // Sin ficha: nodo wiki ligero (cabecera + conexiones).
   return (
     <>
+      <JsonLd
+        data={entityNodeJsonLd({
+          type,
+          path: node.href,
+          name: node.name,
+          description:
+            node.resumen ??
+            `${node.name}: ${meta.singular.toLowerCase()} en la historia de Colombia.`,
+          imageUrl: node.imageUrl,
+          indexPath: crumb.href,
+          indexLabel: crumb.label,
+        })}
+      />
       <TrackView contentType="entidad" itemId={slug} itemName={node.name} />
       <EntityNodeArticle node={node} crumb={crumb} />
     </>

@@ -260,7 +260,12 @@ export function TypologyArticle({
             {head}
             <figure className="art-figure portrait art-figure-side">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imageAt(detail.imageUrl, 640)!} alt={s.titulo} loading="lazy" />
+              <img
+                src={imageAt(detail.imageUrl, 640)!}
+                alt={s.titulo}
+                loading="eager"
+                fetchPriority="high"
+              />
             </figure>
           </div>
         ) : (
@@ -269,7 +274,12 @@ export function TypologyArticle({
             {detail.imageUrl && (
               <figure className="art-figure landscape">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageAt(detail.imageUrl, 1400)!} alt={s.titulo} loading="lazy" />
+                <img
+                  src={imageAt(detail.imageUrl, 1400)!}
+                  alt={s.titulo}
+                  loading="eager"
+                  fetchPriority="high"
+                />
               </figure>
             )}
           </>

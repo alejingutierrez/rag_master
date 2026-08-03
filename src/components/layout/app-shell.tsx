@@ -6,7 +6,7 @@ import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { CommandPalette } from "./command-palette";
 import { KeyboardHelp } from "./keyboard-help";
-import { isPublicPath } from "@/lib/public-routes";
+import { isAdminPath, isPublicPath } from "@/lib/public-routes";
 
 const SIDEBAR_WIDTH = 220;
 
@@ -21,7 +21,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // El sitio público tiene su propio chrome (PublicShell), no el del admin.
   // `/login` también va sin chrome del admin (pantalla propia).
-  const publicPath = isPublicPath(pathname);
+  // Las rutas desconocidas también deben usar un shell neutro/público: el
+  // backoffice existe exclusivamente bajo `/admin`.
+  const publicPath = isPublicPath(pathname) || !isAdminPath(pathname);
 
   useEffect(() => {
     const check = () => setMobile(window.innerWidth < 768);

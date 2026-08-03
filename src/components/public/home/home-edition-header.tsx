@@ -41,7 +41,7 @@ export function HomeEditionHeader({
         <span>Archivo abierto y citable</span>
       </div>
 
-      <Link href="/" className="hc-masthead" aria-label="Historia Colombiana, portada">
+      <Link href="/" className="hc-masthead" title="Ir a la portada">
         Historia Colombiana
       </Link>
 
@@ -59,7 +59,7 @@ export function HomeEditionHeader({
         </nav>
         <div className="hc-menu-tools">
           <Link href="/buscar">Buscar</Link>
-          <Link href="/acerca" className="hc-menu-more-desktop">Más</Link>
+          <Link href="/acerca" className="hc-menu-more-desktop">Acerca del proyecto</Link>
           <button
             type="button"
             className="hc-mobile-menu-trigger"

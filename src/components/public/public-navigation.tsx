@@ -34,27 +34,24 @@ function Arrow() {
 
 export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [exploreOpen, setExploreOpen] = useState(false);
-
-  useEffect(() => {
-    setMobileOpen(false);
-    setExploreOpen(false);
-  }, [pathname]);
+  const [mobileState, setMobileState] = useState({ pathname, open: false });
+  const [exploreState, setExploreState] = useState({ pathname, open: false });
+  const mobileOpen = mobileState.pathname === pathname && mobileState.open;
+  const exploreOpen = exploreState.pathname === pathname && exploreState.open;
 
   useEffect(() => {
     if (!mobileOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileOpen(false);
+      if (event.key === "Escape") setMobileState({ pathname, open: false });
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKey);
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, pathname]);
 
   const active = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -77,7 +74,7 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
   return (
     <>
       <div className="ps-nav-shell">
-        <Link href="/" className="ps-wordmark" aria-label="Historia Colombiana, portada">
+        <Link href="/" className="ps-wordmark" title="Ir a la portada">
           <span>Historia</span>
           <span>Colombiana</span>
         </Link>
@@ -104,7 +101,7 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
             className="ps-utility-button"
             aria-expanded={exploreOpen}
             aria-controls="public-explore-panel"
-            onClick={() => setExploreOpen((value) => !value)}
+            onClick={() => setExploreState({ pathname, open: !exploreOpen })}
           >
             Explorar
           </button>
@@ -118,7 +115,7 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
           className="ps-mobile-trigger"
           aria-expanded={mobileOpen}
           aria-controls="public-mobile-menu"
-          onClick={() => setMobileOpen(true)}
+          onClick={() => setMobileState({ pathname, open: true })}
         >
           Menú
         </button>
@@ -148,7 +145,11 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
       <div id="public-mobile-menu" className={`ps-mobile-menu ${mobileOpen ? "is-open" : ""}`} aria-hidden={!mobileOpen}>
         <div className="ps-mobile-head">
           <Link href="/" className="ps-mobile-brand">Historia Colombiana</Link>
-          <button type="button" className="ps-mobile-close" onClick={() => setMobileOpen(false)}>
+          <button
+            type="button"
+            className="ps-mobile-close"
+            onClick={() => setMobileState({ pathname, open: false })}
+          >
             Cerrar
           </button>
         </div>

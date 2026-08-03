@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { metadata as loginMetadata } from "../src/app/login/layout";
 import { robots } from "../src/app/robots";
 import { trackEvent } from "../src/lib/analytics";
-import { isPublicPath } from "../src/lib/public-routes";
-import { typologyJsonLd } from "../src/lib/seo";
+import { isAdminPath, isPublicPath } from "../src/lib/public-routes";
+import { contextualSeoTitle, entityNodeJsonLd, typologyJsonLd } from "../src/lib/seo";
 import type { StructuredData } from "../src/lib/typology-schemas";
 
 const ctx = {
@@ -57,6 +58,39 @@ const loginMetadataText = JSON.stringify(loginMetadata);
 assert.match(loginMetadataText, /\/login/);
 assert.match(loginMetadataText, /"index":false/);
 assert.equal(isPublicPath("/privacidad"), true);
+assert.equal(isAdminPath("/admin"), true);
+assert.equal(isAdminPath("/admin/home"), true);
+assert.equal(isAdminPath("/admin-falso"), false);
+assert.equal(isAdminPath("/ruta-publica-inexistente"), false);
+assert.equal(
+  contextualSeoTitle("Camilo Torres Restrepo: sacerdote, sociólogo y guerrillero", "análisis"),
+  "Camilo Torres Restrepo: sacerdote, sociólogo · análisis",
+);
+
+const entityNode = entityNodeJsonLd({
+  type: "persona",
+  path: "/personas/persona-prueba",
+  name: "Persona de prueba",
+  description: "Descripción",
+  indexPath: "/personas",
+  indexLabel: "Personas",
+});
+assert.deepEqual(
+  (entityNode["@graph"] as Array<Record<string, unknown>>).map((node) => node["@type"]),
+  ["Person", "BreadcrumbList"],
+);
+
+const entityOverrides = JSON.parse(
+  readFileSync(new URL("../src/data/entity-overrides.json", import.meta.url), "utf8"),
+) as Record<string, { _motivo?: string }>;
+assert.equal(
+  entityOverrides["persona:ingrid-betancourt-pulecio"]?._motivo,
+  'QA: duplicado de "Ingrid Betancourt"',
+);
+assert.equal(
+  entityOverrides["persona:rafael-pardo-rueda"]?._motivo,
+  'QA: duplicado de "Rafael Pardo"',
+);
 
 (globalThis as unknown as { window: unknown }).window = {
   dataLayer: [],
@@ -77,4 +111,4 @@ assert.deepEqual(
   [],
 );
 
-console.log("SEO tests: 13 passed");
+console.log("SEO tests: 21 passed");
