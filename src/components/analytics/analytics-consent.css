@@ -1,0 +1,85 @@
+.ac-banner {
+  position: fixed;
+  z-index: 200;
+  right: 20px;
+  bottom: 20px;
+  width: min(620px, calc(100vw - 40px));
+  padding: 22px;
+  border: 1px solid var(--fg);
+  background: var(--bg);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, .16);
+  color: var(--fg);
+}
+
+.ac-kicker {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.ac-banner h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 4vw, 31px);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -.02em;
+}
+
+.ac-banner p {
+  max-width: 64ch;
+  margin: 12px 0 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fg-muted);
+}
+
+.ac-banner a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.ac-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 18px; }
+
+.ac-button,
+.ac-close,
+.ac-manage {
+  appearance: none;
+  border: 1px solid var(--fg);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ac-button { min-height: 40px; padding: 0 14px; }
+.ac-button:hover { border-color: var(--accent); color: var(--accent); }
+.ac-button-primary { border-color: var(--accent); background: var(--accent); color: var(--accent-fg); }
+.ac-button-primary:hover { background: var(--accent-hover); color: var(--accent-fg); }
+.ac-close { border: 0; padding: 8px 4px; color: var(--fg-muted); }
+
+.ac-manage {
+  position: fixed;
+  z-index: 90;
+  right: 12px;
+  bottom: 12px;
+  padding: 8px 10px;
+  border-color: var(--line-strong);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+}
+.ac-manage:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 640px) {
+  .ac-banner { right: 0; bottom: 0; width: 100%; padding: 19px 18px 20px; border-width: 1px 0 0; }
+  .ac-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .ac-close { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ac-button,
+  .ac-manage { transition: none; }
+}

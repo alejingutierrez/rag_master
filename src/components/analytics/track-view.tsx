@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 
 /**
- * Evento GA4 `view_content` al abrir una pieza publicada (hecho/época/entidad/
- * pregunta/ensayo). Permite ver en GA qué se lee y de qué tipología.
+ * Evento GTM `view_content` al abrir una pieza publicada (hecho/época/entidad/
+ * pregunta/ensayo). GTM lo remite a GA4 con sus parámetros editoriales.
  */
 export function TrackView({
   contentType,

@@ -106,6 +106,8 @@ jobs:
                     \"BEDROCK_SEMAPHORE_LIMIT\": \"3\",
                     \"PGVECTOR_EF_SEARCH\": \"200\",
                     \"ENABLE_CITATION_VALIDATION\": \"false\",
+                    \"GTM_ID\": \"GTM-5WGHJVB2\",
+                    \"PRIVACY_CONTACT_EMAIL\": \"malgutierrezar@gmail.com\",
                     \"NODE_ENV\": \"production\",
                     \"HOSTNAME\": \"0.0.0.0\",
                     \"PORT\": \"3000\"
@@ -142,7 +144,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Smoke test — real /api/chat request
+      - name: Smoke tests — chat and SEO indexability
         env:
           ADMIN_ACCESS_TOKEN: ${{ secrets.ADMIN_ACCESS_TOKEN }}
         run: |
@@ -163,3 +165,7 @@ jobs:
           done
 
           npx --yes tsx scripts/smoke-test.mts --target="https://$SERVICE_URL" --timeout=120
+          npx --yes tsx scripts/audit-seo-indexability.mts \
+            --sitemap="https://$SERVICE_URL/sitemap.xml" \
+            --base-url="https://$SERVICE_URL" \
+            --concurrency=12

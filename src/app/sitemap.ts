@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { absUrl } from "@/lib/site";
+import { SITE_URL, absUrl } from "@/lib/site";
 import { getSitemapEntries } from "@/lib/public-data";
 
 // Dinámico: lee las piezas publicadas en vivo, así publicar aparece de inmediato.
@@ -26,13 +26,14 @@ const STATIC_ROUTES: { path: string; changeFrequency: ChangeFreq; priority: numb
   { path: "/como-trabajamos", changeFrequency: "yearly", priority: 0.3 },
   { path: "/fuentes", changeFrequency: "yearly", priority: 0.3 },
   { path: "/criterios-editoriales", changeFrequency: "yearly", priority: 0.3 },
+  { path: "/privacidad", changeFrequency: "yearly", priority: 0.3 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
-    url: absUrl(r.path),
-    lastModified: now,
+    // Las páginas estáticas no tienen una fecha editorial fiable. Omitir
+    // `lastmod` es más correcto que fingir que cambian en cada request.
+    url: r.path === "/" ? SITE_URL : absUrl(r.path),
     changeFrequency: r.changeFrequency,
     priority: r.priority,
   }));

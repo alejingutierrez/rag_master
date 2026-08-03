@@ -24,6 +24,7 @@ export const PUBLIC_PAGE_PREFIXES = [
   "/como-trabajamos",
   "/fuentes",
   "/criterios-editoriales",
+  "/privacidad",
   "/colecciones",
 ];
 

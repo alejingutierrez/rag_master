@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
-import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { AnalyticsConsent } from "@/components/analytics/analytics-consent";
 import { SITE_URL, SITE_NAME, AUTHOR, DEFAULT_OG_IMAGE } from "@/lib/site";
 import "@/lib/dayjs-config";
 import "./globals.css";
@@ -68,10 +68,10 @@ export default function RootLayout({
         <link rel="stylesheet" href="https://use.typekit.net/eug6imx.css" />
       </head>
       <body className={mono.variable}>
+        <AnalyticsConsent containerId={process.env.GTM_ID} />
         <ThemeProvider>
           <AppShell>{children}</AppShell>
         </ThemeProvider>
-        <GoogleAnalytics />
       </body>
     </html>
   );

@@ -1,16 +1,19 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL, absUrl } from "@/lib/site";
+import { absUrl } from "@/lib/site";
 
-export default function robots(): MetadataRoute.Robots {
+export function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
-        disallow: ["/admin", "/api"],
+        // Las portadas públicas se sirven desde este endpoint; bloquear todo
+        // `/api` impedía a Google Images rastrearlas.
+        allow: ["/", "/api/public-image/"],
+        disallow: ["/api/"],
       },
     ],
     sitemap: absUrl("/sitemap.xml"),
-    host: SITE_URL,
   };
 }
+
+export default robots;

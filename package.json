@@ -8,8 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "smoke": "tsx scripts/smoke-test.mts",
+    "seo:audit:indexability": "tsx scripts/audit-seo-indexability.mts",
     "test": "tsx scripts/test-atelier-units.mts",
     "test:atelier": "tsx scripts/test-atelier-units.mts",
+    "test:seo": "tsx scripts/test-seo.mts",
     "test:prod-atelier": "tsx scripts/test-prod-atelier.mts"
   },
   "dependencies": {

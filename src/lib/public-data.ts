@@ -1798,6 +1798,14 @@ function relatedFromAcc(
       const registryKey = reg?.variantSlugToKey.get(o.slug);
       const registryEntity = registryKey ? reg?.byKey.get(registryKey) : undefined;
       const entity = registryEntity?.type === o.type ? registryEntity : undefined;
+      // El mismo nombre puede haberse extraído con un tipo equivocado (ANUC como
+      // persona cuando su entidad canónica es una idea), o pertenecer a una
+      // entidad descartada del registro (Alfredo Molano). Un `sourceRef` puede
+      // marcar el slug como dedicado aunque no exista una ficha navegable. Solo
+      // las entidades canónicas del mismo tipo o las fichas reales sin registrar
+      // pueden convertirse en enlace.
+      if (reg && registryEntity && registryEntity.type !== o.type) continue;
+      if (reg && !registryEntity && !o.hasFicha) continue;
       const slug = entity?.slug ?? o.slug;
       // Pasa el gate como todo lo demás: la co-ocurrencia detecta a cualquier
       // entidad nombrada, pero solo se enlaza la que tiene artículo propio. Sin
@@ -2088,7 +2096,7 @@ export async function resolveEntityChips(
 ): Promise<ResolvedEntityChip[]> {
   if (!names.length) return [];
   try {
-    const [reg, { dedicatedSlugs, dedicatedInfo }] = await Promise.all([
+    const [reg, { index, dedicatedSlugs, dedicatedInfo }] = await Promise.all([
       loadEntityRegistry(),
       getPublishedEntityData(),
     ]);
@@ -2108,7 +2116,14 @@ export async function resolveEntityChips(
       const canonicalKey = entityKey(type, canonicalSlug);
       if (seen.has(canonicalKey)) continue;
       seen.add(canonicalKey);
-      const published = dedicatedSlugs[type].has(canonicalSlug) || dedicatedSlugs[type].has(slug);
+      const typeMismatch = !!ent && ent.type !== type;
+      const acc =
+        index.byKey.get(entityKey(type, canonicalSlug)) ?? index.byKey.get(entityKey(type, slug));
+      const published =
+        !typeMismatch &&
+        (ent
+          ? isDedicatedEntity(ent, dedicatedSlugs[type], reg)
+          : !!acc?.hasFicha && dedicatedSlugs[type].has(slug));
       const info =
         dedicatedInfo.get(entityKey(type, canonicalSlug)) ?? dedicatedInfo.get(entityKey(type, slug));
 
@@ -2166,6 +2181,7 @@ export async function getEntityNode(slug: string, type?: EntityType): Promise<En
         publishedData.index,
         publishedData.dedicatedSlugs,
         type,
+        reg,
       );
     }
 
@@ -2230,6 +2246,7 @@ function pieceEntityNode(
   index: EntityIndex,
   dedicatedSlugs: Record<EntityType, Set<string>>,
   type?: EntityType,
+  reg?: EntityRegistry,
 ): EntityNode | null {
   const { byKey, piecesById } = index;
   let acc: EntityAccum | null = null;
@@ -2257,7 +2274,7 @@ function pieceEntityNode(
     resumen: acc.resumen,
     imageUrl: acc.imageUrl,
     pieces: pieceRefs,
-    related: relatedFromAcc(acc, index, dedicatedSlugs),
+    related: relatedFromAcc(acc, index, dedicatedSlugs, reg),
   };
 }
 
@@ -2392,21 +2409,22 @@ export interface SitemapEntry {
 }
 
 /**
- * Paths + lastModified de todo lo indexable: las piezas publicadas (fichas y
- * ensayos) MÁS las páginas de entidad que superan el gate estricto.
+ * Paths + lastModified de todo lo indexable. Las fichas de entidad pasan por el
+ * registro canónico para que ningún alias que redirige termine en el sitemap.
  *
- * Las entidades entran aquí porque tienen su propia URL y su propio contenido;
- * quedaban fuera del sitemap y por tanto invisibles para los buscadores. Y solo
- * entran las que pasan el gate: si la ruta daría 404, no se publica en el mapa
- * del sitio. Al leerse en vivo, publicar o despublicar se refleja de inmediato.
+ * Al leerse en vivo, publicar o despublicar se refleja de inmediato y `lastmod`
+ * conserva el `updatedAt` real de la pieza, nunca la hora de la petición.
  */
 export async function getSitemapEntries(): Promise<SitemapEntry[]> {
   try {
-    const rows = await prisma.deliverable.findMany({
-      where: PUBLISHED_WHERE,
-      orderBy: { publishedAt: "desc" },
-      select: { id: true, structuredData: true, updatedAt: true, publishedAt: true },
-    });
+    const [rows, registry] = await Promise.all([
+      prisma.deliverable.findMany({
+        where: PUBLISHED_WHERE,
+        orderBy: { publishedAt: "desc" },
+        select: { id: true, structuredData: true, updatedAt: true },
+      }),
+      loadEntityRegistry(),
+    ]);
     const seen = new Set<string>();
     const entries: SitemapEntry[] = [];
     const push = (path: string, lastModified: Date) => {
@@ -2417,13 +2435,34 @@ export async function getSitemapEntries(): Promise<SitemapEntry[]> {
 
     for (const r of rows) {
       const s = normalizeStructured(r.structuredData);
-      push(s ? typologyPath(s) : `/ensayos/${r.id}`, r.updatedAt ?? r.publishedAt ?? r.updatedAt);
+      if (!s) {
+        push(`/ensayos/${r.id}`, r.updatedAt);
+        continue;
+      }
+      if (s.typology === "entidad") {
+        const type = entityTypeFromTipo(s.tipo);
+        const key = registry.variantSlugToKey.get(s.slug) ?? entityKey(type, s.slug);
+        const entity = registry.byKey.get(key);
+        const canonicalSlug = entity?.type === type ? entity.slug : s.slug;
+        push(entityPath(type, canonicalSlug), r.updatedAt);
+        continue;
+      }
+      push(typologyPath(s), r.updatedAt);
     }
 
-    // Páginas de entidad que superan el gate estricto (las mismas que se listan).
-    const now = new Date();
+    // Las páginas-nodo de entidad agregan las piezas publicadas relacionadas y
+    // no siempre tienen una ficha con su mismo slug (p. ej. `/lugares/cartagena`).
+    // Se conservan si pasan el gate público, usando una fecha estable que solo
+    // cambia cuando cambia el corpus publicado. Así no reaparecen aliases que
+    // redirigen ni se finge una modificación nueva en cada petición.
+    const corpusLastModified = rows.reduce(
+      (latest, row) => (row.updatedAt > latest ? row.updatedAt : latest),
+      new Date(0),
+    );
     for (const type of ["persona", "lugar", "idea"] as const) {
-      for (const e of await getEntityUniverse(type)) push(e.href, now);
+      for (const entity of await getEntityUniverse(type)) {
+        push(entity.href, corpusLastModified);
+      }
     }
 
     return entries;
