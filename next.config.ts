@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // El sitio público prioriza un <head> completo y determinista. Algunos
+  // auditores usan un UA móvil genérico (sin `Chrome-Lighthouse`) y pueden
+  // capturar la página antes de que Next inserte la metadata transmitida.
+  // Bloquear el streaming evita falsos faltantes de title/description/canonical
+  // y da el mismo contrato inicial a buscadores, previews y navegadores.
+  htmlLimitedBots: /.*/,
   // Bundling: pdf-parse (Node) + pdfkit (Node con fonts/binarios) deben ir externos
   serverExternalPackages: ["pdf-parse", "pdfkit"],
   outputFileTracingIncludes: {
