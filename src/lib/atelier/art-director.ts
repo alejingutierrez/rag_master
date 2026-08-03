@@ -231,7 +231,9 @@ export async function directArt(args: ArtDirectorArgs): Promise<ArtDirection> {
     model: SONNET_MODEL,
     system: SYSTEM,
     user,
-    maxTokens: 800,
+    // El contrato incluye escena, restricciones y acento. Con 800 tokens,
+    // respuestas válidas podían quedar truncadas antes de cerrar el JSON.
+    maxTokens: 1400,
   });
 
   const color = normalizeAccentColor(raw.accentColor);
