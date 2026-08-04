@@ -46,6 +46,11 @@ import {
   CAMPAIGN_ENTITIES as CAMPAIGN_2026_08_02_ENTITIES,
   CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_08_02_MASTER_IDS,
 } from "./campaign-2026-08-02-manifest";
+import {
+  CAMPAIGN_ENTITIES as CAMPAIGN_2026_08_04_ENTITIES,
+  CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_08_04_MASTER_IDS,
+  EXPECTED_PERIOD_COUNTS as CAMPAIGN_2026_08_04_PERIOD_COUNTS,
+} from "./campaign-2026-08-04-manifest";
 
 const CAMPAIGN_ID =
   process.env.CAMPAIGN_ID ||
@@ -57,18 +62,28 @@ const CAMPAIGNS = {
     masterIds: CAMPAIGN_2026_07_25_MASTER_IDS,
     expectedCounts: { person: 30, place: 30, concept: 30, master: 30 },
     requireOpenAIImages: false,
+    expectedPeriodCounts: null,
   },
   "2026-07-28": {
     entities: CAMPAIGN_2026_07_28_ENTITIES,
     masterIds: CAMPAIGN_2026_07_28_MASTER_IDS,
     expectedCounts: { person: 30, place: 30, concept: 30, master: 30 },
     requireOpenAIImages: true,
+    expectedPeriodCounts: null,
   },
   "2026-08-02": {
     entities: CAMPAIGN_2026_08_02_ENTITIES,
     masterIds: CAMPAIGN_2026_08_02_MASTER_IDS,
     expectedCounts: { person: 40, place: 0, concept: 40, master: 50 },
     requireOpenAIImages: true,
+    expectedPeriodCounts: null,
+  },
+  "2026-08-04": {
+    entities: CAMPAIGN_2026_08_04_ENTITIES,
+    masterIds: CAMPAIGN_2026_08_04_MASTER_IDS,
+    expectedCounts: { person: 37, place: 0, concept: 0, master: 0 },
+    requireOpenAIImages: true,
+    expectedPeriodCounts: CAMPAIGN_2026_08_04_PERIOD_COUNTS,
   },
 } as const;
 const selectedCampaign = CAMPAIGNS[CAMPAIGN_ID as keyof typeof CAMPAIGNS];
@@ -125,6 +140,7 @@ interface Job {
   key: string;
   label: string;
   intent?: string;
+  expectedPeriodCode?: string;
   masterId?: string;
   sourceKind: SourceKind;
 }
@@ -182,6 +198,7 @@ function jobs(): Job[] {
       key: e.key,
       label: e.label,
       intent: e.intent,
+      expectedPeriodCode: e.periodCode,
       sourceKind: "entidad" as const,
     })),
     ...CAMPAIGN_MASTER_IDS.map((id) => ({
@@ -210,6 +227,23 @@ function assertManifest(all: Job[]) {
   const keys = new Set(all.map((job) => `${job.sourceKind}:${job.key}`));
   if (keys.size !== all.length) {
     throw new Error(`Manifest inválido: ${all.length - keys.size} llaves duplicadas.`);
+  }
+  if (selectedCampaign.expectedPeriodCounts) {
+    const actual = all.reduce<Record<string, number>>((out, job) => {
+      if (job.expectedPeriodCode) {
+        out[job.expectedPeriodCode] = (out[job.expectedPeriodCode] ?? 0) + 1;
+      }
+      return out;
+    }, {});
+    for (const [periodCode, expected] of Object.entries(
+      selectedCampaign.expectedPeriodCounts,
+    )) {
+      if ((actual[periodCode] ?? 0) !== expected) {
+        throw new Error(
+          `Manifest inválido: ${periodCode}=${actual[periodCode] ?? 0}, se esperaban ${expected}.`,
+        );
+      }
+    }
   }
 }
 
@@ -343,6 +377,112 @@ async function pollUntilReady(
   }
 }
 
+async function enforceExpectedPeriod(
+  deliverableId: string,
+  job: Job,
+): Promise<boolean> {
+  if (!job.expectedPeriodCode) return false;
+  const row = await withDbRetry(`period:${job.key}`, () =>
+    prisma.deliverable.findUnique({
+      where: { id: deliverableId },
+      select: { structuredData: true },
+    }),
+  );
+  const structured = row?.structuredData as StructuredData | null;
+  if (!structured || structured.periodoCode === job.expectedPeriodCode) return false;
+  await withDbRetry(`period-fix:${job.key}`, () =>
+    prisma.deliverable.update({
+      where: { id: deliverableId },
+      data: {
+        structuredData: {
+          ...structured,
+          periodoCode: job.expectedPeriodCode,
+        } as unknown as object,
+      },
+    }),
+  );
+  console.log(
+    `[PERÍODO] ${job.label} · ${structured.periodoCode ?? "ausente"} → ${job.expectedPeriodCode}`,
+  );
+  return true;
+}
+
+async function regenerateCampaignImageRemote(
+  deliverableId: string,
+  job: Job,
+): Promise<void> {
+  const response = await apiWrite(
+    `/api/deliverables/${deliverableId}/generate-image`,
+    "POST",
+    {
+      openAIOnly: true,
+      requireArtDirection: true,
+      allowHistoricalNonLikeness: job.expectedPeriodCode === "PRE",
+    },
+  );
+  const accepted =
+    (response.status >= 200 && response.status < 300) || response.status === 409;
+  if (!accepted) {
+    throw new Error(apiError(response.json, `generate-image ${response.status}`));
+  }
+
+  const deadlineAt = Date.now() + MAX_ITEM_MS;
+  for (;;) {
+    if (Date.now() > deadlineAt) {
+      throw new Error(`timeout de portada tras ${Math.round(MAX_ITEM_MS / 60000)} min`);
+    }
+    await sleep(POLL_MS);
+    let row: JsonObject;
+    try {
+      row = await apiGet(`/api/deliverables/${deliverableId}`);
+    } catch {
+      continue;
+    }
+    const image = asObject(asObject(row.metadata).image);
+    const status = typeof image.status === "string" ? image.status : "";
+    if (status === "generando" || !status) continue;
+    if (status === "ok") {
+      const model = typeof image.modelo === "string" ? image.modelo : "";
+      if (!isOpenAIImageModel(model)) {
+        throw new Error(`la portada remota no acredita OpenAI (${model || "sin modelo"})`);
+      }
+      if (
+        job.expectedPeriodCode === "PRE" &&
+        image.personaModo !== "escena-documental-sin-semejanza"
+      ) {
+        throw new Error("la portada remota no acredita no-semejanza histórica");
+      }
+      return;
+    }
+    const detail = typeof image.error === "string" ? `: ${image.error}` : "";
+    throw new Error(`portada remota ${status}${detail}`);
+  }
+}
+
+async function finishCampaignItem(
+  deliverableId: string,
+  job: Job,
+  deadlineAt?: number,
+): Promise<void> {
+  try {
+    await pollUntilReady(deliverableId, deadlineAt);
+  } catch (error) {
+    if (
+      job.expectedPeriodCode === "PRE" &&
+      (error as Error).message === "image-without-identity-reference"
+    ) {
+      await enforceExpectedPeriod(deliverableId, job);
+      await regenerateCampaignImageRemote(deliverableId, job);
+      return;
+    }
+    throw error;
+  }
+  const periodChanged = await enforceExpectedPeriod(deliverableId, job);
+  if (periodChanged) {
+    await regenerateCampaignImageRemote(deliverableId, job);
+  }
+}
+
 async function produceOne(job: Job): Promise<{ id: string; reused: boolean }> {
   const existing = await latestRows(job);
   const startedAt = (row: DeliverableRow): number => {
@@ -392,7 +532,7 @@ async function produceOne(job: Job): Promise<{ id: string; reused: boolean }> {
       usable.status === "GENERATING"
         ? startedAt(usable) + MAX_ITEM_MS
         : Date.now() + MAX_ITEM_MS;
-    await pollUntilReady(usable.id, deadlineAt);
+    await finishCampaignItem(usable.id, job, deadlineAt);
     return { id: usable.id, reused: true };
   }
 
@@ -421,7 +561,7 @@ async function produceOne(job: Job): Promise<{ id: string; reused: boolean }> {
       ? response.json.deliverableId
       : undefined;
   if (!id) throw new Error("La producción no devolvió deliverableId.");
-  await pollUntilReady(id);
+  await finishCampaignItem(id, job);
   return { id, reused: false };
 }
 
@@ -587,6 +727,12 @@ function qaRow(job: Job, row: DeliverableRow | null): QaResult {
       })`,
     );
   }
+  if (
+    job.expectedPeriodCode === "PRE" &&
+    image.personaModo !== "escena-documental-sin-semejanza"
+  ) {
+    errors.push("portada prehispánica sin declaración de no-semejanza");
+  }
   if (!seo.metaTitle || !seo.metaDescription) {
     errors.push("SEO incompleto");
   }
@@ -608,6 +754,14 @@ function qaRow(job: Job, row: DeliverableRow | null): QaResult {
         structured,
       );
       if (!sourceCheck.ok) errors.push(sourceCheck.error ?? "identidad incompatible");
+      if (
+        job.expectedPeriodCode &&
+        structured.periodoCode !== job.expectedPeriodCode
+      ) {
+        errors.push(
+          `período ${structured.periodoCode ?? "ausente"}, se esperaba ${job.expectedPeriodCode}`,
+        );
+      }
     }
   }
   if (words < 2300) errors.push(`solo ${words} palabras`);
@@ -876,11 +1030,18 @@ async function generateOpenAICovers(results: QaResult[]) {
       const id = result.deliverableId!;
       const startedAt = Date.now();
       try {
-        await generateAndStoreImage(id, {
-          allowBedrockFallback: false,
-          preserveExistingOnError: true,
-          requireArtDirection: true,
-        });
+        await enforceExpectedPeriod(id, result.job);
+        if (CAMPAIGN_ID === "2026-08-04") {
+          await regenerateCampaignImageRemote(id, result.job);
+        } else {
+          await generateAndStoreImage(id, {
+            allowBedrockFallback: false,
+            preserveExistingOnError: true,
+            requireArtDirection: true,
+            allowHistoricalNonLikeness:
+              result.job.expectedPeriodCode === "PRE",
+          });
+        }
         const verified = await withDbRetry(`verify-openai-cover:${id}`, () =>
           prisma.deliverable.findUnique({
             where: { id },
@@ -1123,7 +1284,11 @@ async function printPlan(all: Job[]) {
   for (const bucket of ["person", "place", "concept", "master"]) {
     console.log(`\n${bucket.toUpperCase()}`);
     for (const job of all.filter((value) => value.bucket === bucket)) {
-      console.log(`  - ${job.key} · ${job.label}`);
+      console.log(
+        `  - ${job.key} · ${job.label}${
+          job.expectedPeriodCode ? ` · ${job.expectedPeriodCode}` : ""
+        }`,
+      );
     }
   }
 }

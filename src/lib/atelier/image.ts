@@ -36,6 +36,7 @@ import {
   aspectForStructured,
   buildStyledPrompt,
   essaySubject,
+  historicalNonLikenessSubject,
   pieceContextExcerpt,
   subjectFor,
 } from "./image-prompt";
@@ -84,6 +85,12 @@ export interface GenerateImageOptions {
   preserveExistingOnError?: boolean;
   /** Exige una decisión válida del director de arte; no admite dirección neutra. */
   requireArtDirection?: boolean;
+  /**
+   * Permite una escena histórica explícitamente SIN semejanza facial cuando no
+   * sobrevive un retrato verificable. Solo se activa de forma curada para
+   * figuras pre-fotográficas; el gate de retratos ordinarios permanece intacto.
+   */
+  allowHistoricalNonLikeness?: boolean;
 }
 
 /** Referencia registrada en metadata.image (auditable desde Producciones). */
@@ -135,6 +142,8 @@ export interface ImageMeta {
   usables?: number;
   identidadVerificada?: number;
   identidadRequerida?: number;
+  /** Tratamiento honesto de la identidad de una persona en la portada. */
+  personaModo?: "retrato-identitario" | "escena-documental-sin-semejanza";
   intentos?: number;
   error?: string;
 }
@@ -301,8 +310,19 @@ export async function generateAndStoreImage(
   const avoidAccentTargets = await siblingAccentTargets(deliverableId, structured);
 
   // Una referencia contextual no prueba un rostro. Para personas reales se
-  // detiene la generación antes de inventar un parecido aproximado.
-  if (esPersona && search.identityVerified < search.identityRequired) {
+  // detiene la generación antes de inventar un parecido aproximado. La única
+  // excepción es la escena histórica de no-semejanza, curada explícitamente:
+  // representa el papel y el contexto sin afirmar que el rostro sea auténtico.
+  const historicalNonLikeness = Boolean(
+    esPersona &&
+      options.allowHistoricalNonLikeness &&
+      search.identityVerified < search.identityRequired,
+  );
+  if (
+    esPersona &&
+    !historicalNonLikeness &&
+    search.identityVerified < search.identityRequired
+  ) {
     const message = `No se encontró una referencia facial verificable de ${refCtx.titulo}; el retrato no se generó.`;
     await persistImageMeta(deliverableId, {
       status: "sin_referencias",
@@ -319,6 +339,9 @@ export async function generateAndStoreImage(
       error: message,
     }).catch(() => {});
     throw new Error(message);
+  }
+  if (historicalNonLikeness && structured) {
+    subject = historicalNonLikenessSubject(structured);
   }
 
   // 2. Director de arte (con respaldo neutro si el LLM falla). Corre DESPUÉS
@@ -355,6 +378,29 @@ export async function generateAndStoreImage(
     direction = fallbackDirection({ esPersona });
   }
   direction = applyDocumentaryScenePlan(direction, scenePlan, structured?.typology) as ArtDirection;
+  if (historicalNonLikeness) {
+    const nonLikenessConstraint =
+      "Do not claim or invent a facial likeness: keep the principal figure from behind, in obscured profile, or at medium distance without identifiable facial features.";
+    direction = {
+      ...direction,
+      encuadre: "plano-medio",
+      sceneMode: "public-scene",
+      primaryReferenceIndex: undefined,
+      sceneAnchor: `An evidence-led public scene about ${refCtx.titulo}, centered on documented role, territory and material culture rather than an invented face.`,
+      sceneAnchorEs: `Escena pública documentada sobre ${refCtx.titulo}, centrada en su papel, territorio y cultura material, sin inventar un rostro.`,
+      creativeMove:
+        "A vertical medium-distance composition with the principal figure turned away or facially obscured, surrounded by historically grounded action and setting.",
+      historicalConstraints: [
+        ...(direction.historicalConstraints ?? []),
+        nonLikenessConstraint,
+        "No modern objects, fantasy regalia, generic pan-Indigenous costume or invented heraldry.",
+      ],
+      warnings: [
+        ...(direction.warnings ?? []),
+        "Sin retrato verificable: se usa escena documental de no-semejanza.",
+      ],
+    };
+  }
 
   // Diagnóstico común del buscador para persistir en cualquier salida.
   const searchDiag = {
@@ -363,7 +409,12 @@ export async function generateAndStoreImage(
     relevantes: search.relevant,
     usables: search.usable,
     identidadVerificada: search.identityVerified,
-    identidadRequerida: search.identityRequired,
+    identidadRequerida: historicalNonLikeness ? 0 : search.identityRequired,
+    personaModo: historicalNonLikeness
+      ? "escena-documental-sin-semejanza" as const
+      : esPersona
+        ? "retrato-identitario" as const
+        : undefined,
   };
   const acentoMeta = {
     color: direction.accentColor,
@@ -382,7 +433,7 @@ export async function generateAndStoreImage(
     withReferences: hasRefs,
     contextText,
     referenceNotes: referenceHints,
-    identityName: esPersona ? refCtx.titulo : undefined,
+    identityName: esPersona && !historicalNonLikeness ? refCtx.titulo : undefined,
   });
   const primaryIndex =
     direction.primaryReferenceIndex ?? scenePlan?.primaryReferenceIndex ?? 1;

@@ -14,6 +14,8 @@ export interface CampaignEntity {
   key: string;
   label: string;
   intent: string;
+  /** Período canónico exigido por campañas con una cuota histórica explícita. */
+  periodCode?: string;
 }
 
 const person = (label: string, key: string): CampaignEntity => ({
