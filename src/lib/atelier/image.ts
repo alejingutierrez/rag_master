@@ -428,16 +428,16 @@ export async function generateAndStoreImage(
   direction = applyDocumentaryScenePlan(direction, scenePlan, structured?.typology) as ArtDirection;
   if (historicalNonLikeness) {
     const nonLikenessConstraint =
-      "Do not claim or invent a facial likeness: keep the principal figure from behind, in obscured profile, or at medium distance without identifiable facial features.";
+      "STRICT FACE-EXCLUSION GATE: show the principal figure only from directly behind, or keep the head fully outside the frame. No eye, nose, mouth, cheek, facial profile or identifiable facial feature may be visible; any visible face invalidates the image.";
     direction = {
       ...direction,
       encuadre: "plano-medio",
       sceneMode: "public-scene",
       primaryReferenceIndex: undefined,
-      sceneAnchor: `An evidence-led public scene about ${refCtx.titulo}, centered on documented role, territory and material culture rather than an invented face.`,
-      sceneAnchorEs: `Escena pública documentada sobre ${refCtx.titulo}, centrada en su papel, territorio y cultura material, sin inventar un rostro.`,
+      sceneAnchor: `An evidence-led rear-view public scene about ${refCtx.titulo}, centered on documented role, territory and material culture; the principal figure's face is completely invisible.`,
+      sceneAnchorEs: `Escena pública documentada de espaldas sobre ${refCtx.titulo}, centrada en su papel, territorio y cultura material; el rostro de la figura principal no aparece.`,
       creativeMove:
-        "A vertical medium-distance composition with the principal figure turned away or facially obscured, surrounded by historically grounded action and setting.",
+        "A vertical documentary composition with the principal figure seen directly from behind or with the head outside the frame, surrounded by historically grounded action and setting; never a portrait or profile.",
       historicalConstraints: [
         ...(direction.historicalConstraints ?? []),
         nonLikenessConstraint,
@@ -482,6 +482,7 @@ export async function generateAndStoreImage(
     contextText,
     referenceNotes: referenceHints,
     identityName: esPersona && !historicalNonLikeness ? refCtx.titulo : undefined,
+    historicalNonLikeness,
   });
   const primaryIndex =
     direction.primaryReferenceIndex ?? scenePlan?.primaryReferenceIndex ?? 1;
