@@ -147,7 +147,7 @@ export function historicalNonLikenessSubject(s: StructuredData): string {
     roles ? ` in the documented role of ${roles}` : ""
   }. ${s.resumen} ${milestone ? `Documented milestone: ${milestone}.` : ""} ${
     per ? `Set in ${per} in Colombian history.` : ""
-  } This is NOT a verified portrait and must not claim a facial likeness: show the principal human figure from behind, in obscured profile, or at medium distance, with no invented identifiable facial features. Ground clothing, objects, architecture, landscape and public action in the historical evidence. For Muisca subjects, follow Museo del Oro material culture: woven cotton mantas, woven caps or restrained diadems, and precise gold nose, ear or chest ornaments only when supported; absolutely no Plains-style warbonnets, giant feather crowns, stereotyped pan-Indigenous regalia or invented heraldry. A single vertical documentary scene, no montage.`;
+  } This is NOT a verified portrait and must not claim a facial likeness. STRICT COMPOSITION GATE: show the principal human figure only from directly behind, with the back of the head toward the camera, or keep the head completely outside the frame. No part of the principal figure's face may be visible: no eyes, nose, mouth, cheek, facial profile or identifiable facial features. A visible face makes the image invalid. Do not create a solo portrait or a three-quarter portrait. Ground clothing, objects, architecture, landscape and public action in the historical evidence. For Muisca subjects, follow Museo del Oro material culture: woven cotton mantas, woven caps or restrained diadems, and precise gold nose, ear or chest ornaments only when supported; absolutely no Plains-style warbonnets, giant feather crowns, stereotyped pan-Indigenous regalia or invented heraldry. A single vertical documentary scene, no montage.`;
 }
 
 /** Sujeto de respaldo para una pieza sin ficha (ensayo). */
@@ -191,6 +191,8 @@ export interface StyledPromptArgs {
   contextText?: string;
   /** Activa el contrato reforzado de semejanza para una persona real. */
   identityName?: string;
+  /** Evita que el encuadre genérico vuelva a pedir rostros visibles. */
+  historicalNonLikeness?: boolean;
 }
 
 /** Compone el prompt completo: sujeto + contexto + encuadre + referencias + estilo. */
@@ -215,7 +217,11 @@ export function buildStyledPrompt(args: StyledPromptArgs): string {
             .join("\n")}`,
         ]
       : []),
-    `COMPOSITION: ${ENCUADRE_EN[d.encuadre]}`,
+    `COMPOSITION: ${
+      args.historicalNonLikeness
+        ? "STRICT REAR-VIEW DOCUMENTARY SCENE: the principal historical figure is seen only from directly behind, with the face fully invisible, or the head is completely outside the frame. Show the documented public action, setting, hands, clothing and material culture. No portrait pose, no three-quarter view, no profile, no facial features. Any visible eye, nose, mouth, cheek or facial profile on the principal figure invalidates the image."
+        : ENCUADRE_EN[d.encuadre]
+    }`,
     ...(args.withReferences
       ? [
           args.identityName

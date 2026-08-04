@@ -882,10 +882,32 @@ test("una figura prehispánica sin retrato usa escena documental sin inventar ro
   });
   assert.match(subject, /NOT a verified portrait/i);
   assert.match(subject, /must not claim a facial likeness/i);
-  assert.match(subject, /from behind, in obscured profile, or at medium distance/i);
+  assert.match(subject, /only from directly behind/i);
+  assert.match(subject, /no eyes, nose, mouth, cheek, facial profile/i);
+  assert.match(subject, /visible face makes the image invalid/i);
   assert.match(subject, /zipa de Bacatá/i);
   assert.match(subject, /woven cotton mantas/i);
   assert.match(subject, /no Plains-style warbonnets, giant feather crowns/i);
+});
+
+test("el encuadre de no-semejanza excluye cualquier instrucción de retrato o perfil", () => {
+  const prompt = buildStyledPrompt({
+    subject: "An evidence-led historical scene about Nicolás de Federmán.",
+    direction: {
+      accentColor: "amarillo",
+      accentTarget: "one map marker",
+      accentTargetEs: "un marcador del mapa",
+      encuadre: "plano-medio",
+      razon: "Contexto documental.",
+    },
+    withReferences: true,
+    referenceNotes: ["Mapa histórico de la expedición — archivo, score 8"],
+    historicalNonLikeness: true,
+  });
+  assert.match(prompt, /STRICT REAR-VIEW DOCUMENTARY SCENE/i);
+  assert.match(prompt, /No portrait pose, no three-quarter view, no profile/i);
+  assert.match(prompt, /Any visible eye, nose, mouth, cheek or facial profile/i);
+  assert.doesNotMatch(prompt, /faces lit by period light/i);
 });
 
 test("el contrato de origen impide producir una persona desde un lugar", () => {
