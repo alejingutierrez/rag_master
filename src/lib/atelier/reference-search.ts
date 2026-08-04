@@ -333,13 +333,23 @@ const CURATED_PERSON_REFERENCES: Record<
 > = {
   "carlos v": {
     provider: "curated:wikimedia-artwork",
-    title: "Carlos V, emperador del Sacro Imperio (Carlos I de España) — retrato de 1548",
-    url: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Charles%20V,%20Holy%20Roman%20Emperor%20-%20Titian.jpg?width=1200",
-    page: "https://commons.wikimedia.org/wiki/File:Charles_V,_Holy_Roman_Emperor_-_Titian.jpg",
+    title: "Carlos V, emperador del Sacro Imperio (Carlos I de España) — retrato de Tiziano",
+    url: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Portrait%20of%20Charles%20V,%20Holy%20Roman%20Emperor%20(1500%E2%80%931558),%20by%20Titian%20(National%20Museum%20of%20Capodimonte,%20Naples).jpg?width=1200",
+    page: "https://commons.wikimedia.org/wiki/File:Portrait_of_Charles_V,_Holy_Roman_Emperor_(1500%E2%80%931558),_by_Titian_(National_Museum_of_Capodimonte,_Naples).jpg",
     width: 1280,
-    height: 1968,
+    height: 1816,
     identityVerified: true,
     identityReason: "retrato identificado como Carlos V, emperador del Sacro Imperio, fechado en 1548",
+  },
+  "candelario obeso": {
+    provider: "curated:banrepcultural-wikimedia",
+    title: "Candelario Obeso — dibujo de Alberto Urdaneta, grabado por Rodríguez (1884)",
+    url: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Candelario%20Obeso.jpg",
+    page: "https://commons.wikimedia.org/wiki/File:Candelario_Obeso.jpg",
+    width: 125,
+    height: 161,
+    identityVerified: true,
+    identityReason: "retrato de 1884 procedente de la Biblioteca Luis Ángel Arango",
   },
   "ofelia uribe de acosta": {
     provider: "curated:cedinci",
@@ -402,6 +412,12 @@ export function scorePersonIdentityCandidate(
   candidate: ReferenceCandidate,
   personName: string,
 ): ScoredReference | null {
+  // Flickr aporta escenas y lugares valiosos, pero un título nominal no prueba
+  // por sí solo que la foto muestre el rostro histórico. Dos falsos positivos
+  // reales fueron un evento de la Fundación Candelario Obeso y un edificio del
+  // barrio Nicolás de Federmán. La identidad facial exige biografía, Commons o
+  // una referencia curada con procedencia explícita.
+  if (candidate.provider === "flickr") return null;
   if (isKnownIdentityFalseFriend(candidate, personName)) return null;
   if (!matchesPersonIdentity(candidate.title, personName)) return null;
   if (NON_PORTRAIT_PERSON_RE.test(candidate.title)) return null;

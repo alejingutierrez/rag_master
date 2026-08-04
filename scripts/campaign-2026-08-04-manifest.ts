@@ -54,7 +54,7 @@ export const CAMPAIGN_ENTITIES: CampaignEntity[] = [
   person("Felipe II", "felipe-ii", "CON"),
   person("Jorge Robledo", "jorge-robledo", "CON"),
   person("Hernán Pérez de Quesada", "hernan-perez-de-quesada", "CON"),
-  person("Nicolás de Federmán", "nicolas-de-federman", "CON"),
+  person("Nicolás de Federmán", "nicolas-de-federman", "CON", true),
   person("Rodrigo de Bastidas", "rodrigo-de-bastidas", "CON"),
 
   // Colonia Madura.
