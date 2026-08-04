@@ -192,7 +192,7 @@ test("la campaña 2026-08-04 declara 37 personas con las cuotas históricas pedi
     CAMPAIGN_2026_08_04_ENTITIES
       .filter((entity) => entity.forceHistoricalNonLikeness)
       .map((entity) => entity.label),
-    ["Juan Tama", "Ambrosio Pisco", "Pedro Romero"],
+    ["Nicolás de Federmán", "Juan Tama", "Ambrosio Pisco", "Pedro Romero"],
   );
   assert.equal(
     new Set(CAMPAIGN_2026_08_04_ENTITIES.map((entity) => entity.key)).size,
@@ -780,6 +780,7 @@ test("el gate de identidad acepta el nombre completo y rechaza otra figura públ
 test("las referencias faciales curadas conservan identidad y procedencia", () => {
   for (const name of [
     "Carlos V",
+    "Candelario Obeso",
     "Ofelia Uribe de Acosta",
     "Juan Roa Sierra",
     "Patricia Tobón Yagarí",
@@ -790,6 +791,20 @@ test("las referencias faciales curadas conservan identidad y procedencia", () =>
     assert.ok(candidate?.url.startsWith("https://"));
     assert.ok(scorePersonIdentityCandidate(candidate!, name));
   }
+});
+
+test("Flickr no acredita identidad facial solo con un título nominal", () => {
+  const building: ReferenceCandidate = {
+    provider: "flickr",
+    title: "Ed. EVA Nicolás de Federmán",
+    url: "https://example.test/edificio.jpg",
+    page: "https://www.flickr.com/photos/example/building",
+    query: "Nicolás de Federmán",
+    width: 1024,
+    height: 911,
+    identityVerified: true,
+  };
+  assert.equal(scorePersonIdentityCandidate(building, "Nicolás de Federmán"), null);
 });
 
 test("Carlos V de Francia no puede suplir al emperador de la Conquista", () => {
