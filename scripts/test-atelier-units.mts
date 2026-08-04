@@ -779,6 +779,7 @@ test("el gate de identidad acepta el nombre completo y rechaza otra figura públ
 
 test("las referencias faciales curadas conservan identidad y procedencia", () => {
   for (const name of [
+    "Carlos V",
     "Ofelia Uribe de Acosta",
     "Juan Roa Sierra",
     "Patricia Tobón Yagarí",
@@ -789,6 +790,26 @@ test("las referencias faciales curadas conservan identidad y procedencia", () =>
     assert.ok(candidate?.url.startsWith("https://"));
     assert.ok(scorePersonIdentityCandidate(candidate!, name));
   }
+});
+
+test("Carlos V de Francia no puede suplir al emperador de la Conquista", () => {
+  const wrongCarlos: ReferenceCandidate = {
+    provider: "wikipedia-biografia",
+    title: "Carlos V de Francia",
+    url: "https://example.test/Carlos_V_de_Francia.jpg",
+    page: "https://es.wikipedia.org/wiki/Carlos_V_de_Francia",
+    query: "Carlos V",
+    width: 500,
+    height: 700,
+    identityVerified: true,
+  };
+  assert.equal(scorePersonIdentityCandidate(wrongCarlos, "Carlos V"), null);
+  assert.ok(
+    scorePersonIdentityCandidate(
+      curatedPersonReferenceCandidate("Carlos V")!,
+      "Carlos V",
+    ),
+  );
 });
 
 test("una referencia grupal exacta queda por debajo de la biografía", () => {

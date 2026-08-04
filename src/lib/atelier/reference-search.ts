@@ -331,6 +331,16 @@ const CURATED_PERSON_REFERENCES: Record<
   string,
   Omit<ReferenceCandidate, "query">
 > = {
+  "carlos v": {
+    provider: "curated:wikimedia-artwork",
+    title: "Carlos V, emperador del Sacro Imperio (Carlos I de España) — retrato de 1548",
+    url: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Charles%20V,%20Holy%20Roman%20Emperor%20-%20Titian.jpg?width=1200",
+    page: "https://commons.wikimedia.org/wiki/File:Charles_V,_Holy_Roman_Emperor_-_Titian.jpg",
+    width: 1280,
+    height: 1968,
+    identityVerified: true,
+    identityReason: "retrato identificado como Carlos V, emperador del Sacro Imperio, fechado en 1548",
+  },
   "ofelia uribe de acosta": {
     provider: "curated:cedinci",
     title: "Ofelia Uribe de Acosta",
@@ -370,10 +380,29 @@ export function curatedPersonReferenceCandidate(
   return found ? { ...found, query: personName } : null;
 }
 
+const PERSON_IDENTITY_FALSE_FRIENDS: Record<string, RegExp> = {
+  // La campaña de Conquista se refiere al emperador Carlos V/Carlos I de
+  // España. El homónimo rey de Francia comparte exactamente los tokens del
+  // nombre corto y por eso requiere una exclusión semántica explícita.
+  "carlos v": /carlos[ _-]*v[ _-]*(?:de[ _-]*)?francia/,
+};
+
+function isKnownIdentityFalseFriend(
+  candidate: ReferenceCandidate,
+  personName: string,
+): boolean {
+  const rejection = PERSON_IDENTITY_FALSE_FRIENDS[foldAccents(personName).trim()];
+  if (!rejection) return false;
+  return rejection.test(
+    foldAccents(`${candidate.title} ${candidate.page ?? ""} ${candidate.url}`),
+  );
+}
+
 export function scorePersonIdentityCandidate(
   candidate: ReferenceCandidate,
   personName: string,
 ): ScoredReference | null {
+  if (isKnownIdentityFalseFriend(candidate, personName)) return null;
   if (!matchesPersonIdentity(candidate.title, personName)) return null;
   if (NON_PORTRAIT_PERSON_RE.test(candidate.title)) return null;
   const dedicatedBiography =
