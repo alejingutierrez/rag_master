@@ -468,7 +468,6 @@ async function finishCampaignItem(
     await pollUntilReady(deliverableId, deadlineAt);
   } catch (error) {
     if (
-      job.expectedPeriodCode === "PRE" &&
       (error as Error).message === "image-without-identity-reference"
     ) {
       await enforceExpectedPeriod(deliverableId, job);
@@ -999,6 +998,7 @@ async function generateOpenAICovers(results: QaResult[]) {
   const byId = new Map(rows.map((row) => [row.id, row]));
   let targets = results.filter((result) => {
     if (!result.deliverableId) return false;
+    if (onlyDeliverableId === result.deliverableId) return true;
     const row = byId.get(result.deliverableId);
     return (
       !row?.imageKey ||

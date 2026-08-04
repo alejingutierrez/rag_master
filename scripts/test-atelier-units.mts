@@ -764,6 +764,8 @@ test("una figura prehispánica sin retrato usa escena documental sin inventar ro
   assert.match(subject, /must not claim a facial likeness/i);
   assert.match(subject, /from behind, in obscured profile, or at medium distance/i);
   assert.match(subject, /zipa de Bacatá/i);
+  assert.match(subject, /woven cotton mantas/i);
+  assert.match(subject, /no Plains-style warbonnets, giant feather crowns/i);
 });
 
 test("el contrato de origen impide producir una persona desde un lugar", () => {
