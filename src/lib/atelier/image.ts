@@ -30,7 +30,7 @@ import {
   generateBedrockImagePng,
   isBedrockImageFallbackEnabled,
 } from "../bedrock-image";
-import { normalizeStructured } from "../typology-schemas";
+import { normalizeStructured, type StructuredData } from "../typology-schemas";
 import { periodInfo } from "../design-tokens";
 import {
   aspectForStructured,
@@ -173,6 +173,32 @@ function refsToMeta(search: ReferenceSearchResult): ImageMetaReference[] {
   }));
 }
 
+function historicalNonLikenessReferenceContext(
+  structured: StructuredData,
+  base: ReferenceContext,
+): ReferenceContext {
+  if (structured.typology !== "entidad" || structured.tipo !== "Persona") {
+    return base;
+  }
+  const anchors = [
+    ...structured.roles,
+    ...structured.relaciones,
+    ...structured.hitos.map((hito) => hito.titulo),
+    structured.lugarPrincipal ?? "",
+    base.periodoLabel ?? "",
+  ].filter(Boolean);
+  return {
+    titulo: `${structured.titulo}: contexto y cultura material`,
+    resumen: `${structured.resumen} Busca cultura material, textiles, adornos, arquitectura, paisaje y escenas públicas verificables del pueblo, territorio y período; no un retrato de la persona.`,
+    typology: "contexto histórico de persona sin retrato",
+    periodoLabel: base.periodoLabel,
+    entidades: [...structured.roles, ...structured.relaciones],
+    lugares: structured.lugarPrincipal ? [structured.lugarPrincipal] : [],
+    visualIntent: "hecho-documental",
+    visualAnchors: anchors.slice(0, 14),
+  };
+}
+
 function sceneToMeta(
   direction: ArtDirection,
   search: ReferenceSearchResult,
@@ -292,8 +318,28 @@ export async function generateAndStoreImage(
   //    Piso editorial en 3 niveles, no todo-o-nada: si no se junta el ideal de
   //    ≥5 relevantes, NO se abandona la imagen — se degrada con transparencia y
   //    se apoya en el texto de la pieza dentro del prompt (proyecto, 2026-07).
-  const search = await searchReferences(refCtx);
+  let search = await searchReferences(refCtx);
+  const identitySearch = search;
   const esPersona = structured?.typology === "entidad" && structured.tipo === "Persona";
+  const historicalNonLikeness = Boolean(
+    esPersona &&
+      options.allowHistoricalNonLikeness &&
+      identitySearch.identityVerified < identitySearch.identityRequired,
+  );
+  let sceneRefCtx = refCtx;
+  if (historicalNonLikeness && structured) {
+    sceneRefCtx = historicalNonLikenessReferenceContext(structured, refCtx);
+    const contextual = await searchReferences(sceneRefCtx);
+    search = {
+      ...contextual,
+      considered: identitySearch.considered + contextual.considered,
+      relevant: contextual.relevant,
+      usable: contextual.usable,
+      queries: [...new Set([...identitySearch.queries, ...contextual.queries])],
+      identityVerified: identitySearch.identityVerified,
+      identityRequired: 0,
+    };
+  }
   const hasRefs = search.refs.length > 0;
   const ancla: ImageAncla = search.ok ? "documental" : hasRefs ? "parcial" : "solo-texto";
   const degraded = ancla !== "documental";
@@ -305,23 +351,20 @@ export async function generateAndStoreImage(
   const referenceHints = search.refs.map(
     (r) => `${r.meta.title || "referencia visual"} — ${r.meta.provider}, score ${r.meta.score}`
   );
-  const referenceBriefs = buildReferenceBriefs(search.refs, refCtx);
-  const scenePlan = structured ? inferDocumentaryScenePlan(structured, refCtx, referenceBriefs) : null;
+  const referenceBriefs = buildReferenceBriefs(search.refs, sceneRefCtx);
+  const scenePlan = structured
+    ? inferDocumentaryScenePlan(structured, sceneRefCtx, referenceBriefs)
+    : null;
   const avoidAccentTargets = await siblingAccentTargets(deliverableId, structured);
 
   // Una referencia contextual no prueba un rostro. Para personas reales se
   // detiene la generación antes de inventar un parecido aproximado. La única
   // excepción es la escena histórica de no-semejanza, curada explícitamente:
   // representa el papel y el contexto sin afirmar que el rostro sea auténtico.
-  const historicalNonLikeness = Boolean(
-    esPersona &&
-      options.allowHistoricalNonLikeness &&
-      search.identityVerified < search.identityRequired,
-  );
   if (
     esPersona &&
     !historicalNonLikeness &&
-    search.identityVerified < search.identityRequired
+    identitySearch.identityVerified < identitySearch.identityRequired
   ) {
     const message = `No se encontró una referencia facial verificable de ${refCtx.titulo}; el retrato no se generó.`;
     await persistImageMeta(deliverableId, {
@@ -329,13 +372,13 @@ export async function generateAndStoreImage(
       at: new Date().toISOString(),
       modelo: process.env.OPENAI_IMAGE_MODEL || "gpt-image-2",
       ancla: "solo-texto",
-      referencias: refsToMeta(search),
-      queries: search.queries,
-      candidatos: search.considered,
-      relevantes: search.relevant,
-      usables: search.usable,
-      identidadVerificada: search.identityVerified,
-      identidadRequerida: search.identityRequired,
+      referencias: refsToMeta(identitySearch),
+      queries: identitySearch.queries,
+      candidatos: identitySearch.considered,
+      relevantes: identitySearch.relevant,
+      usables: identitySearch.usable,
+      identidadVerificada: identitySearch.identityVerified,
+      identidadRequerida: identitySearch.identityRequired,
       error: message,
     }).catch(() => {});
     throw new Error(message);
@@ -393,7 +436,7 @@ export async function generateAndStoreImage(
       historicalConstraints: [
         ...(direction.historicalConstraints ?? []),
         nonLikenessConstraint,
-        "No modern objects, fantasy regalia, generic pan-Indigenous costume or invented heraldry.",
+        "For Muisca subjects, use woven cotton mantas, woven caps or restrained diadems and evidence-based gold ornaments; absolutely no Plains-style warbonnets, giant feather crowns, stereotyped pan-Indigenous costume or invented heraldry.",
       ],
       warnings: [
         ...(direction.warnings ?? []),

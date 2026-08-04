@@ -147,7 +147,7 @@ export function historicalNonLikenessSubject(s: StructuredData): string {
     roles ? ` in the documented role of ${roles}` : ""
   }. ${s.resumen} ${milestone ? `Documented milestone: ${milestone}.` : ""} ${
     per ? `Set in ${per} in Colombian history.` : ""
-  } This is NOT a verified portrait and must not claim a facial likeness: show the principal human figure from behind, in obscured profile, or at medium distance, with no invented identifiable facial features. Ground clothing, objects, architecture, landscape and public action in the historical evidence. A single vertical documentary scene, no montage.`;
+  } This is NOT a verified portrait and must not claim a facial likeness: show the principal human figure from behind, in obscured profile, or at medium distance, with no invented identifiable facial features. Ground clothing, objects, architecture, landscape and public action in the historical evidence. For Muisca subjects, follow Museo del Oro material culture: woven cotton mantas, woven caps or restrained diadems, and precise gold nose, ear or chest ornaments only when supported; absolutely no Plains-style warbonnets, giant feather crowns, stereotyped pan-Indigenous regalia or invented heraldry. A single vertical documentary scene, no montage.`;
 }
 
 /** Sujeto de respaldo para una pieza sin ficha (ensayo). */
