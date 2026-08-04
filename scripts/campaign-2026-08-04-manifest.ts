@@ -26,11 +26,17 @@ const PERIOD_LABELS: Record<string, string> = {
   POS: "Posconflicto y Colombia Contemporánea",
 };
 
-const person = (label: string, key: string, periodCode: string): CampaignEntity => ({
+const person = (
+  label: string,
+  key: string,
+  periodCode: string,
+  allowHistoricalNonLikeness = false,
+): CampaignEntity => ({
   type: "person",
   key: `person:${key}`,
   label,
   periodCode,
+  allowHistoricalNonLikeness,
   intent: `${label}, trayectoria y papel en la historia de Colombia, con foco editorial en ${PERIOD_LABELS[periodCode]} (${periodCode})`,
 });
 
@@ -57,16 +63,16 @@ export const CAMPAIGN_ENTITIES: CampaignEntity[] = [
   person("Francisco Antonio Moreno y Escandón", "francisco-antonio-moreno-y-escandon", "COL"),
   person("Alonso de Sandoval", "alonso-de-sandoval", "COL"),
   person("Francisca Josefa de Castillo", "francisca-josefa-de-castillo", "COL"),
-  person("Juan Tama", "juan-tama", "COL"),
+  person("Juan Tama", "juan-tama", "COL", true),
 
   // Crisis Colonial y Pre-Independencia.
   person("Pedro Fermín de Vargas", "pedro-fermin-de-vargas", "PRE_IND"),
   person("Manuel del Socorro Rodríguez", "manuel-del-socorro-rodriguez", "PRE_IND"),
-  person("Ambrosio Pisco", "ambrosio-pisco", "PRE_IND"),
+  person("Ambrosio Pisco", "ambrosio-pisco", "PRE_IND", true),
 
   // Independencia y Gran Colombia.
   person("Rafael Urdaneta", "rafael-urdaneta", "IND"),
-  person("Pedro Romero", "pedro-romero", "IND"),
+  person("Pedro Romero", "pedro-romero", "IND", true),
 
   // Estados Unidos de Colombia y Radicalismo.
   person("Miguel Samper", "miguel-samper", "EUC"),

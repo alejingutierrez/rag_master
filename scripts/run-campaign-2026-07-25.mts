@@ -141,6 +141,7 @@ interface Job {
   label: string;
   intent?: string;
   expectedPeriodCode?: string;
+  allowHistoricalNonLikeness?: boolean;
   masterId?: string;
   sourceKind: SourceKind;
 }
@@ -199,6 +200,7 @@ function jobs(): Job[] {
       label: e.label,
       intent: e.intent,
       expectedPeriodCode: e.periodCode,
+      allowHistoricalNonLikeness: e.allowHistoricalNonLikeness,
       sourceKind: "entidad" as const,
     })),
     ...CAMPAIGN_MASTER_IDS.map((id) => ({
@@ -417,7 +419,8 @@ async function regenerateCampaignImageRemote(
     {
       openAIOnly: true,
       requireArtDirection: true,
-      allowHistoricalNonLikeness: job.expectedPeriodCode === "PRE",
+      allowHistoricalNonLikeness:
+        job.expectedPeriodCode === "PRE" || job.allowHistoricalNonLikeness,
     },
   );
   const accepted =
@@ -447,7 +450,7 @@ async function regenerateCampaignImageRemote(
         throw new Error(`la portada remota no acredita OpenAI (${model || "sin modelo"})`);
       }
       if (
-        job.expectedPeriodCode === "PRE" &&
+        (job.expectedPeriodCode === "PRE" || job.allowHistoricalNonLikeness) &&
         image.personaModo !== "escena-documental-sin-semejanza"
       ) {
         throw new Error("la portada remota no acredita no-semejanza histórica");
@@ -727,10 +730,10 @@ function qaRow(job: Job, row: DeliverableRow | null): QaResult {
     );
   }
   if (
-    job.expectedPeriodCode === "PRE" &&
+    (job.expectedPeriodCode === "PRE" || job.allowHistoricalNonLikeness) &&
     image.personaModo !== "escena-documental-sin-semejanza"
   ) {
-    errors.push("portada prehispánica sin declaración de no-semejanza");
+    errors.push("portada histórica sin declaración de no-semejanza");
   }
   if (!seo.metaTitle || !seo.metaDescription) {
     errors.push("SEO incompleto");
@@ -1039,7 +1042,8 @@ async function generateOpenAICovers(results: QaResult[]) {
             preserveExistingOnError: true,
             requireArtDirection: true,
             allowHistoricalNonLikeness:
-              result.job.expectedPeriodCode === "PRE",
+              result.job.expectedPeriodCode === "PRE" ||
+              result.job.allowHistoricalNonLikeness,
           });
         }
         const verified = await withDbRetry(`verify-openai-cover:${id}`, () =>
