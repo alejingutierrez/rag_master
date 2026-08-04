@@ -36,6 +36,8 @@ export async function POST(
     requireArtDirection: body.requireArtDirection === true,
     allowHistoricalNonLikeness:
       body.allowHistoricalNonLikeness === true,
+    forceHistoricalNonLikeness:
+      body.forceHistoricalNonLikeness === true,
   };
   if (!isOpenAIConfigured()) {
     return NextResponse.json({ error: "OPENAI_API_KEY no configurado" }, { status: 503 });

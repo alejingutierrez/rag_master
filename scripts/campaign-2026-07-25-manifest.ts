@@ -16,8 +16,8 @@ export interface CampaignEntity {
   intent: string;
   /** Período canónico exigido por campañas con una cuota histórica explícita. */
   periodCode?: string;
-  /** Autoriza una escena documental honesta cuando no existe retrato verificable. */
-  allowHistoricalNonLikeness?: boolean;
+  /** Exige una escena documental honesta sin afirmar una semejanza facial. */
+  forceHistoricalNonLikeness?: boolean;
 }
 
 const person = (label: string, key: string): CampaignEntity => ({

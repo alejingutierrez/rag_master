@@ -30,13 +30,13 @@ const person = (
   label: string,
   key: string,
   periodCode: string,
-  allowHistoricalNonLikeness = false,
+  forceHistoricalNonLikeness = false,
 ): CampaignEntity => ({
   type: "person",
   key: `person:${key}`,
   label,
   periodCode,
-  allowHistoricalNonLikeness,
+  forceHistoricalNonLikeness,
   intent: `${label}, trayectoria y papel en la historia de Colombia, con foco editorial en ${PERIOD_LABELS[periodCode]} (${periodCode})`,
 });
 

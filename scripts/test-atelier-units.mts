@@ -77,6 +77,7 @@ import { validateEntitySourceContract } from "../src/lib/entity-source-contract"
 import type { StructuredData } from "../src/lib/typology-schemas";
 import type { SearchResult } from "../src/lib/vector-search";
 import type { VerifiedClaim, AtelierBrief } from "../src/lib/atelier/types";
+import { shouldUseHistoricalNonLikeness } from "../src/lib/atelier/person-image-policy";
 
 let pass = 0;
 let fail = 0;
@@ -189,7 +190,7 @@ test("la campaña 2026-08-04 declara 37 personas con las cuotas históricas pedi
   assert.deepEqual(periods, CAMPAIGN_2026_08_04_PERIOD_COUNTS);
   assert.deepEqual(
     CAMPAIGN_2026_08_04_ENTITIES
-      .filter((entity) => entity.allowHistoricalNonLikeness)
+      .filter((entity) => entity.forceHistoricalNonLikeness)
       .map((entity) => entity.label),
     ["Juan Tama", "Ambrosio Pisco", "Pedro Romero"],
   );
@@ -716,6 +717,28 @@ test("la búsqueda facial usa el nombre canónico del encargo", () => {
   });
   assert.equal(ctx.titulo, "Miguel Samper");
   assert.ok(ctx.visualAnchors?.includes("Miguel Samper retrato"));
+});
+
+test("la no-semejanza forzada prevalece aunque aparezca una imagen nominal", () => {
+  assert.equal(
+    shouldUseHistoricalNonLikeness({
+      isPerson: true,
+      allow: true,
+      force: true,
+      identityVerified: 1,
+      identityRequired: 1,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldUseHistoricalNonLikeness({
+      isPerson: true,
+      allow: true,
+      identityVerified: 1,
+      identityRequired: 1,
+    }),
+    false,
+  );
 });
 
 test("el gate de identidad acepta el nombre completo y rechaza otra figura pública", () => {
