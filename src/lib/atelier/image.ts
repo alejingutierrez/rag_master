@@ -60,6 +60,7 @@ import {
   inferDocumentaryScenePlan,
   type DocumentaryScenePlan,
 } from "./scene-plan";
+import { shouldUseHistoricalNonLikeness } from "./person-image-policy";
 
 export { isOpenAIConfigured };
 
@@ -91,6 +92,8 @@ export interface GenerateImageOptions {
    * figuras pre-fotográficas; el gate de retratos ordinarios permanece intacto.
    */
   allowHistoricalNonLikeness?: boolean;
+  /** Fuerza la no-semejanza aunque una búsqueda nominal encuentre una imagen. */
+  forceHistoricalNonLikeness?: boolean;
 }
 
 /** Referencia registrada en metadata.image (auditable desde Producciones). */
@@ -321,11 +324,13 @@ export async function generateAndStoreImage(
   let search = await searchReferences(refCtx);
   const identitySearch = search;
   const esPersona = structured?.typology === "entidad" && structured.tipo === "Persona";
-  const historicalNonLikeness = Boolean(
-    esPersona &&
-      options.allowHistoricalNonLikeness &&
-      identitySearch.identityVerified < identitySearch.identityRequired,
-  );
+  const historicalNonLikeness = shouldUseHistoricalNonLikeness({
+    isPerson: esPersona,
+    allow: options.allowHistoricalNonLikeness,
+    force: options.forceHistoricalNonLikeness,
+    identityVerified: identitySearch.identityVerified,
+    identityRequired: identitySearch.identityRequired,
+  });
   let sceneRefCtx = refCtx;
   if (historicalNonLikeness && structured) {
     sceneRefCtx = historicalNonLikenessReferenceContext(structured, refCtx);

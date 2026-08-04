@@ -141,7 +141,7 @@ interface Job {
   label: string;
   intent?: string;
   expectedPeriodCode?: string;
-  allowHistoricalNonLikeness?: boolean;
+  forceHistoricalNonLikeness?: boolean;
   masterId?: string;
   sourceKind: SourceKind;
 }
@@ -200,7 +200,7 @@ function jobs(): Job[] {
       label: e.label,
       intent: e.intent,
       expectedPeriodCode: e.periodCode,
-      allowHistoricalNonLikeness: e.allowHistoricalNonLikeness,
+      forceHistoricalNonLikeness: e.forceHistoricalNonLikeness,
       sourceKind: "entidad" as const,
     })),
     ...CAMPAIGN_MASTER_IDS.map((id) => ({
@@ -420,7 +420,9 @@ async function regenerateCampaignImageRemote(
       openAIOnly: true,
       requireArtDirection: true,
       allowHistoricalNonLikeness:
-        job.expectedPeriodCode === "PRE" || job.allowHistoricalNonLikeness,
+        job.expectedPeriodCode === "PRE" || job.forceHistoricalNonLikeness,
+      forceHistoricalNonLikeness:
+        job.expectedPeriodCode === "PRE" || job.forceHistoricalNonLikeness,
     },
   );
   const accepted =
@@ -450,7 +452,7 @@ async function regenerateCampaignImageRemote(
         throw new Error(`la portada remota no acredita OpenAI (${model || "sin modelo"})`);
       }
       if (
-        (job.expectedPeriodCode === "PRE" || job.allowHistoricalNonLikeness) &&
+        (job.expectedPeriodCode === "PRE" || job.forceHistoricalNonLikeness) &&
         image.personaModo !== "escena-documental-sin-semejanza"
       ) {
         throw new Error("la portada remota no acredita no-semejanza histórica");
@@ -730,7 +732,7 @@ function qaRow(job: Job, row: DeliverableRow | null): QaResult {
     );
   }
   if (
-    (job.expectedPeriodCode === "PRE" || job.allowHistoricalNonLikeness) &&
+    (job.expectedPeriodCode === "PRE" || job.forceHistoricalNonLikeness) &&
     image.personaModo !== "escena-documental-sin-semejanza"
   ) {
     errors.push("portada histórica sin declaración de no-semejanza");
@@ -1043,7 +1045,10 @@ async function generateOpenAICovers(results: QaResult[]) {
             requireArtDirection: true,
             allowHistoricalNonLikeness:
               result.job.expectedPeriodCode === "PRE" ||
-              result.job.allowHistoricalNonLikeness,
+              result.job.forceHistoricalNonLikeness,
+            forceHistoricalNonLikeness:
+              result.job.expectedPeriodCode === "PRE" ||
+              result.job.forceHistoricalNonLikeness,
           });
         }
         const verified = await withDbRetry(`verify-openai-cover:${id}`, () =>
@@ -1090,6 +1095,7 @@ async function generateOpenAICovers(results: QaResult[]) {
 function isImageQaError(error: string): boolean {
   return (
     error === "sin portada persistida" ||
+    error === "portada histórica sin declaración de no-semejanza" ||
     error.startsWith("imagen ") ||
     error.startsWith("portada sin metodología OpenAI completa")
   );
