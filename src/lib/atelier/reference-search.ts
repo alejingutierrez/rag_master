@@ -43,7 +43,7 @@ const MIN_WIDTH = 600;
 /** Los archivos históricos de personas suelen conservar una foto pequeña pero
  * identificable. Para identidad importa más que sea la persona correcta que
  * descartar el único retrato por no llegar a 600 px. */
-const MIN_PERSON_WIDTH = 160;
+const MIN_PERSON_WIDTH = 100;
 const PROVIDER_TIMEOUT_MS = 15_000;
 const DOWNLOAD_TIMEOUT_MS = 25_000;
 const UA = "HistoriaColombiana/1.0 (buscador de referencias editoriales)";
@@ -162,6 +162,13 @@ function visualHintsFromMetadata(metadata: unknown): {
   };
 }
 
+function canonicalSourceLabel(metadata: unknown): string | undefined {
+  const sourceRef = plainRecord(plainRecord(metadata).sourceRef);
+  return sourceRef.kind === "entidad" && typeof sourceRef.label === "string"
+    ? sourceRef.label.trim() || undefined
+    : undefined;
+}
+
 export function referenceContextFromStructured(
   s: StructuredData,
   opts: { metadata?: unknown } = {}
@@ -208,8 +215,12 @@ export function referenceContextFromStructured(
     }
     case "entidad":
       if (s.tipo === "Persona") {
+        // El título estructurado puede expandir el nombre (p. ej. añadir un
+        // segundo apellido). Para buscar identidad usamos primero el nombre
+        // canónico del encargo, ya validado por el contrato de sourceRef.
+        const identityTitle = canonicalSourceLabel(opts.metadata) ?? s.titulo;
         return {
-          titulo: s.titulo,
+          titulo: identityTitle,
           resumen: s.semblanza || s.resumen,
           typology: `entidad (${s.tipo})`,
           periodoLabel,
@@ -217,10 +228,10 @@ export function referenceContextFromStructured(
           entityType: s.tipo,
           visualIntent: "retrato-publico",
           visualAnchors: uniqueStrings([
-            `${s.titulo} portrait`,
-            `${s.titulo} fotografía`,
-            `${s.titulo} retrato`,
-            s.titulo,
+            `${identityTitle} portrait`,
+            `${identityTitle} fotografía`,
+            `${identityTitle} retrato`,
+            identityTitle,
             ...s.roles,
             ...s.relaciones,
             ...s.hitos.map((h) => h.titulo),
@@ -294,7 +305,11 @@ function personTokens(value: string): string[] {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .split(/\s+/)
-    .filter((token) => token.length > 1 && !PERSON_NAME_STOPWORDS.has(token));
+    .filter(
+      (token) =>
+        (token.length > 1 || /^[ivxlcdm]$/.test(token)) &&
+        !PERSON_NAME_STOPWORDS.has(token),
+    );
 }
 
 /** Match estricto de identidad por nombre: nunca usa la query que trajo el
@@ -303,7 +318,56 @@ export function matchesPersonIdentity(candidateTitle: string, personName: string
   const expected = personTokens(personName);
   const actual = new Set(personTokens(candidateTitle));
   if (expected.length < 2 || actual.size < 2) return false;
-  return expected.every((token) => actual.has(token));
+  if (expected.every((token) => actual.has(token))) return true;
+  // Los archivos a veces publican el nombre unido en el nombre del fichero
+  // (GuadalupeSalcedo.jpg). Sigue siendo una coincidencia determinista del
+  // nombre completo, no una inferencia desde la query.
+  const compactExpected = expected.join("");
+  const compactActual = foldAccents(candidateTitle).replace(/[^a-z0-9]+/g, "");
+  return compactExpected.length >= 6 && compactActual.includes(compactExpected);
+}
+
+const CURATED_PERSON_REFERENCES: Record<
+  string,
+  Omit<ReferenceCandidate, "query">
+> = {
+  "ofelia uribe de acosta": {
+    provider: "curated:cedinci",
+    title: "Ofelia Uribe de Acosta",
+    url: "https://diccionario.cedinci.org/wp-content/uploads/2021/07/URIBE-Ofelia-1.jpg",
+    page: "https://diccionario.cedinci.org/uribe-de-acosta-ofelia/",
+    width: 221,
+    height: 300,
+    identityVerified: true,
+    identityReason: "retrato identificado y documentado por el diccionario biográfico CeDInCI",
+  },
+  "juan roa sierra": {
+    provider: "curated:el-universal",
+    title: "Juan Roa Sierra — Foto Ortiz Pereira",
+    url: "https://cloudfront-us-east-1.images.arcpublishing.com/vanguardiaeluniversal/I25SRXLL6ZFZ5KRTFTD2XXD7OQ.jpg",
+    page: "https://www.eluniversal.com.co/suplementos/dominical/2013/04/14/el-asesino-de-gaitan/",
+    width: 700,
+    height: 1199,
+    identityVerified: true,
+    identityReason: "retrato nominal publicado con crédito fotográfico Ortiz Pereira",
+  },
+  "patricia tobon yagari": {
+    provider: "curated:comision-verdad",
+    title: "Patricia Tobón Yagarí — Comisión de la Verdad",
+    url: "https://www.elespectador.com/resizer/v2/NZLSL2M7WVD73KT5RPBFKRAGOY.jpg?auth=55f70bc273c42d17aeaaf7b76b84d4d17fc22b8ff4457b514524a32c00dc586b&height=613&quality=60&smart=true&width=920",
+    page: "https://www.elespectador.com/colombia-20/informe-final-comision-de-la-verdad/patricia-tobon-yagari-comisionada-de-la-comision-de-la-verdad-que-lucha-contra-los-prejuicios-y-el-racismo/",
+    width: 920,
+    height: 613,
+    identityVerified: true,
+    identityReason: "retrato nominal acreditado a la Comisión de la Verdad",
+  },
+};
+
+export function curatedPersonReferenceCandidate(
+  personName: string,
+): ReferenceCandidate | null {
+  const found = CURATED_PERSON_REFERENCES[foldAccents(personName).trim()];
+  return found ? { ...found, query: personName } : null;
 }
 
 export function scorePersonIdentityCandidate(
@@ -312,7 +376,9 @@ export function scorePersonIdentityCandidate(
 ): ScoredReference | null {
   if (!matchesPersonIdentity(candidate.title, personName)) return null;
   if (NON_PORTRAIT_PERSON_RE.test(candidate.title)) return null;
-  const dedicatedBiography = candidate.provider === "wikipedia-biografia";
+  const dedicatedBiography =
+    candidate.provider === "wikipedia-biografia" ||
+    candidate.provider.startsWith("curated:");
   // Internet Archive, Gallica y bibliotecas devuelven sobre todo cubiertas de
   // libros/documentos. Solo entran si el título declara una imagen de la
   // persona; el nombre del autor en una portada no demuestra un rostro.
@@ -1248,6 +1314,11 @@ export async function searchReferences(ctx: ReferenceContext): Promise<Reference
         return [];
       })
     : [];
+  const curated = isPerson
+    ? [curatedPersonReferenceCandidate(ctx.titulo)].filter(
+        (candidate): candidate is ReferenceCandidate => Boolean(candidate),
+      )
+    : [];
   // Si ya existe la imagen biográfica exacta, una sola pasada por el nombre
   // canónico basta para buscar un segundo ángulo; no lanzamos 4× todos los
   // archivos. Si no existe, sí agotamos las cuatro variantes exactas.
@@ -1256,7 +1327,10 @@ export async function searchReferences(ctx: ReferenceContext): Promise<Reference
     minWidth: isPerson ? MIN_PERSON_WIDTH : MIN_WIDTH,
   });
   if (isPerson) {
-    candidates = dedupeCandidates([...biography, ...candidates], MIN_PERSON_WIDTH);
+    candidates = dedupeCandidates(
+      [...curated, ...biography, ...candidates],
+      MIN_PERSON_WIDTH,
+    );
   }
   let scored = isPerson
     ? candidates

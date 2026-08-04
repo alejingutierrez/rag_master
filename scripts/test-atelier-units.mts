@@ -68,6 +68,7 @@ import {
   buildReferenceQuerySeeds,
   capForArchives,
   matchesPersonIdentity,
+  curatedPersonReferenceCandidate,
   referenceContextFromStructured,
   scorePersonIdentityCandidate,
   type ReferenceCandidate,
@@ -186,6 +187,12 @@ test("la campaña 2026-08-04 declara 37 personas con las cuotas históricas pedi
     {},
   );
   assert.deepEqual(periods, CAMPAIGN_2026_08_04_PERIOD_COUNTS);
+  assert.deepEqual(
+    CAMPAIGN_2026_08_04_ENTITIES
+      .filter((entity) => entity.allowHistoricalNonLikeness)
+      .map((entity) => entity.label),
+    ["Juan Tama", "Ambrosio Pisco", "Pedro Romero"],
+  );
   assert.equal(
     new Set(CAMPAIGN_2026_08_04_ENTITIES.map((entity) => entity.key)).size,
     37,
@@ -683,6 +690,34 @@ test("el contexto de una persona marca búsqueda de retrato público", () => {
   assert.ok(ctx.visualAnchors?.includes("María Cano portrait"));
 });
 
+test("la búsqueda facial usa el nombre canónico del encargo", () => {
+  const structured: StructuredData = {
+    typology: "entidad",
+    titulo: "Miguel Samper Agudelo",
+    slug: "miguel-samper",
+    resumen: "Político y economista colombiano.",
+    tipo: "Persona",
+    periodoCode: "EUC",
+    nacimiento: "1825",
+    muerte: "1899",
+    roles: ["político"],
+    hitos: [],
+    relaciones: [],
+    semblanza: "Figura del liberalismo colombiano.",
+  };
+  const ctx = referenceContextFromStructured(structured, {
+    metadata: {
+      sourceRef: {
+        kind: "entidad",
+        key: "person:miguel-samper",
+        label: "Miguel Samper",
+      },
+    },
+  });
+  assert.equal(ctx.titulo, "Miguel Samper");
+  assert.ok(ctx.visualAnchors?.includes("Miguel Samper retrato"));
+});
+
 test("el gate de identidad acepta el nombre completo y rechaza otra figura pública", () => {
   assert.equal(
     matchesPersonIdentity("Carlos Pizarro Leongómez, 1989", "Carlos Pizarro Leongómez"),
@@ -691,6 +726,18 @@ test("el gate de identidad acepta el nombre completo y rechaza otra figura públ
   assert.equal(
     matchesPersonIdentity("Jaime Pardo Leal en Bogotá", "Carlos Pizarro Leongómez"),
     false,
+  );
+  assert.equal(
+    matchesPersonIdentity("Retrato de Carlos V por Tiziano", "Carlos V"),
+    true,
+  );
+  assert.equal(
+    matchesPersonIdentity("Retrato de Carlos IV", "Carlos V"),
+    false,
+  );
+  assert.equal(
+    matchesPersonIdentity("File:GuadalupeSalcedo.jpg", "Guadalupe Salcedo"),
+    true,
   );
   const verified = scorePersonIdentityCandidate(
     {
@@ -705,6 +752,20 @@ test("el gate de identidad acepta el nombre completo y rechaza otra figura públ
   );
   assert.equal(verified?.identityVerified, true);
   assert.equal(verified?.score, 10);
+});
+
+test("las referencias faciales curadas conservan identidad y procedencia", () => {
+  for (const name of [
+    "Ofelia Uribe de Acosta",
+    "Juan Roa Sierra",
+    "Patricia Tobón Yagarí",
+  ]) {
+    const candidate = curatedPersonReferenceCandidate(name);
+    assert.equal(candidate?.identityVerified, true);
+    assert.ok(candidate?.page?.startsWith("https://"));
+    assert.ok(candidate?.url.startsWith("https://"));
+    assert.ok(scorePersonIdentityCandidate(candidate!, name));
+  }
 });
 
 test("una referencia grupal exacta queda por debajo de la biografía", () => {
