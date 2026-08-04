@@ -28,6 +28,11 @@ import {
   CAMPAIGN_ENTITIES as CAMPAIGN_2026_08_02_ENTITIES,
   CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_08_02_MASTER_IDS,
 } from "./campaign-2026-08-02-manifest";
+import {
+  CAMPAIGN_ENTITIES as CAMPAIGN_2026_08_04_ENTITIES,
+  CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_08_04_MASTER_IDS,
+  EXPECTED_PERIOD_COUNTS as CAMPAIGN_2026_08_04_PERIOD_COUNTS,
+} from "./campaign-2026-08-04-manifest";
 import { ATELIER_FORMAT_LIST, isValidFormatId, targetWords } from "../src/lib/atelier-formats";
 import { getFormatConfig } from "../src/lib/atelier/format-config";
 import { getFormatPrompt } from "../src/lib/atelier/formats";
@@ -47,7 +52,10 @@ import {
   buildArtDirectorUserPrompt,
   type ArtDirection,
 } from "../src/lib/atelier/art-director";
-import { buildStyledPrompt } from "../src/lib/atelier/image-prompt";
+import {
+  buildStyledPrompt,
+  historicalNonLikenessSubject,
+} from "../src/lib/atelier/image-prompt";
 import {
   applyDocumentaryScenePlan,
   buildReferenceBriefs,
@@ -163,6 +171,25 @@ test("la campaña 2026-08-02 declara 40 personas, 40 ideas y 50 preguntas madre"
     ...CAMPAIGN_2026_08_02_MASTER_IDS,
   ]);
   assert.equal(keys.size, 130);
+});
+
+test("la campaña 2026-08-04 declara 37 personas con las cuotas históricas pedidas", () => {
+  assert.equal(CAMPAIGN_2026_08_04_ENTITIES.length, 37);
+  assert.equal(CAMPAIGN_2026_08_04_MASTER_IDS.length, 0);
+  assert.ok(CAMPAIGN_2026_08_04_ENTITIES.every((entity) => entity.type === "person"));
+  const periods = CAMPAIGN_2026_08_04_ENTITIES.reduce<Record<string, number>>(
+    (out, entity) => {
+      assert.ok(entity.periodCode);
+      out[entity.periodCode!] = (out[entity.periodCode!] ?? 0) + 1;
+      return out;
+    },
+    {},
+  );
+  assert.deepEqual(periods, CAMPAIGN_2026_08_04_PERIOD_COUNTS);
+  assert.equal(
+    new Set(CAMPAIGN_2026_08_04_ENTITIES.map((entity) => entity.key)).size,
+    37,
+  );
 });
 
 // ── Fixtures ─────────────────────────────────────────────────────────
@@ -713,6 +740,30 @@ test("el prompt de retrato bloquea la identidad y prohíbe mezclar rostros", () 
   assert.match(prompt, /IDENTITY LOCK — Álvaro Gómez Hurtado/i);
   assert.match(prompt, /Do not .*blend the face/i);
   assert.match(prompt, /Image #1 is the primary facial identity reference/i);
+});
+
+test("una figura prehispánica sin retrato usa escena documental sin inventar rostro", () => {
+  const subject = historicalNonLikenessSubject({
+    typology: "entidad",
+    slug: "tisquesusa",
+    titulo: "Tisquesusa",
+    resumen: "Zipa de Bacatá en la víspera de la invasión española.",
+    periodoCode: "PRE",
+    lugarPrincipal: "Bacatá",
+    lat: null,
+    lng: null,
+    tipo: "Persona",
+    nacimiento: null,
+    muerte: "1537",
+    roles: ["zipa de Bacatá"],
+    hitos: [{ year: 1537, titulo: "Resistencia ante la expedición de Quesada" }],
+    relaciones: ["Bacatá", "muiscas"],
+    semblanza: "Autoridad política muisca.",
+  });
+  assert.match(subject, /NOT a verified portrait/i);
+  assert.match(subject, /must not claim a facial likeness/i);
+  assert.match(subject, /from behind, in obscured profile, or at medium distance/i);
+  assert.match(subject, /zipa de Bacatá/i);
 });
 
 test("el contrato de origen impide producir una persona desde un lugar", () => {

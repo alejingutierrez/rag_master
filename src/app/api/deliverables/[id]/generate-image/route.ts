@@ -5,6 +5,7 @@ import {
   generateAndStoreImage,
   isOpenAIConfigured,
   persistImageMeta,
+  type GenerateImageOptions,
   type ImageMeta,
 } from "@/lib/atelier/image";
 
@@ -25,10 +26,17 @@ const STALE_MS = 12 * 60 * 1000;
  * Gateado por el middleware (solo admin: consume créditos de OpenAI/Bedrock).
  */
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const generationOptions: GenerateImageOptions = {
+    allowBedrockFallback: body.openAIOnly === true ? false : undefined,
+    requireArtDirection: body.requireArtDirection === true,
+    allowHistoricalNonLikeness:
+      body.allowHistoricalNonLikeness === true,
+  };
   if (!isOpenAIConfigured()) {
     return NextResponse.json({ error: "OPENAI_API_KEY no configurado" }, { status: 503 });
   }
@@ -57,7 +65,7 @@ export async function POST(
 
   after(async () => {
     try {
-      const { imageUrl } = await generateAndStoreImage(id);
+      const { imageUrl } = await generateAndStoreImage(id, generationOptions);
       console.log(`[imagen ${id}] lista · ${imageUrl}`);
     } catch (e) {
       // generateAndStoreImage ya persiste el "error" en sus rutas conocidas;

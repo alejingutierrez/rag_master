@@ -133,6 +133,23 @@ export function subjectFor(s: StructuredData): string {
   }
 }
 
+/**
+ * Escena honesta para personas anteriores a la fotografía sin retrato fiable.
+ * No reconstruye rasgos faciales: representa el papel público y el mundo
+ * material documentado de la figura, a distancia y sin semejanza facial.
+ */
+export function historicalNonLikenessSubject(s: StructuredData): string {
+  if (s.typology !== "entidad" || s.tipo !== "Persona") return subjectFor(s);
+  const per = periodLabel(s.periodoCode);
+  const roles = s.roles.slice(0, 3).join(", ");
+  const milestone = s.hitos[0]?.titulo;
+  return `An evidence-led historical scene about ${s.titulo}${
+    roles ? ` in the documented role of ${roles}` : ""
+  }. ${s.resumen} ${milestone ? `Documented milestone: ${milestone}.` : ""} ${
+    per ? `Set in ${per} in Colombian history.` : ""
+  } This is NOT a verified portrait and must not claim a facial likeness: show the principal human figure from behind, in obscured profile, or at medium distance, with no invented identifiable facial features. Ground clothing, objects, architecture, landscape and public action in the historical evidence. A single vertical documentary scene, no montage.`;
+}
+
 /** Sujeto de respaldo para una pieza sin ficha (ensayo). */
 export function essaySubject(title: string, excerpt: string): string {
   return `An evocative documentary composition inspired by a historical essay titled "${title}". ${excerpt.slice(0, 400)} A single atmospheric scene about Colombian / Latin American history, no montage.`;
