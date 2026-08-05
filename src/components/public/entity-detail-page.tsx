@@ -8,6 +8,7 @@
  */
 import { notFound, redirect } from "next/navigation";
 import { TypologyArticle } from "@/components/public/typology-detail";
+import { PersonaDetailArticle } from "@/components/public/personas/persona-detail";
 import { EntityConnections, EntityNodeArticle } from "@/components/public/entity-node";
 import { JsonLd } from "@/components/public/json-ld";
 import {
@@ -69,19 +70,29 @@ export async function EntityDetailPage({ slug, type }: { slug: string; type: Ent
   if (node.hasFicha) {
     const detail = await getTypologyDetail("entidad", node.slug, type);
     if (detail) {
+      const article = type === "persona" ? (
+        <PersonaDetailArticle
+          detail={detail}
+          node={node}
+          linker={linker}
+          selfKey={selfKey}
+        />
+      ) : (
+        <TypologyArticle
+          detail={detail}
+          crumb={crumb}
+          linker={linker}
+          selfKey={selfKey}
+          extra={
+            <EntityConnections pieces={node.pieces} related={node.related} selfHref={node.href} />
+          }
+        />
+      );
       return (
         <>
           <JsonLd data={detailJsonLd(detail)} />
           <TrackView contentType="entidad" itemId={slug} itemName={node.name} />
-          <TypologyArticle
-            detail={detail}
-            crumb={crumb}
-            linker={linker}
-            selfKey={selfKey}
-            extra={
-              <EntityConnections pieces={node.pieces} related={node.related} selfHref={node.href} />
-            }
-          />
+          {article}
         </>
       );
     }
