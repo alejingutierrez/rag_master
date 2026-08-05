@@ -29,11 +29,7 @@ import {
   type PublicEntity,
 } from "@/lib/public-data";
 import { PERIOD_ORDER, periodInfo } from "@/lib/design-tokens";
-import {
-  searchPublishedArticleRanks,
-  searchSourceFragments,
-  type SourceFragmentHit,
-} from "@/lib/public-search";
+import { searchPublishedArticleRanks } from "@/lib/public-search";
 import { buildMetadata } from "@/lib/seo";
 import "./buscar.css";
 
@@ -44,7 +40,7 @@ export const metadata: Metadata = {
     seo: {
       metaTitle: "Buscar",
       metaDescription:
-        "Busca en los artículos completos publicados y revisa después los fragmentos exactos de los libros del archivo.",
+        "Busca y recorre los artículos completos publicados sobre la historia de Colombia.",
       keywords: ["buscar", "historia de Colombia", "archivo histórico", "fuentes"],
     },
     path: "/buscar",
@@ -144,7 +140,6 @@ function EvidenceLine({ hit }: { hit: SearchHit }) {
     <div className="sr-evidence-line">
       <span>{describeMatch(hit)}</span>
       {hit.documentCount ? <span>{formatNumber(hit.documentCount)} fuentes</span> : null}
-      {hit.fragmentCount ? <span>{formatNumber(hit.fragmentCount)} fragmentos citados</span> : null}
     </div>
   );
 }
@@ -218,39 +213,6 @@ function ArticleRow({ hit, query, index }: { hit: SearchHit; query: string; inde
   );
 }
 
-function FragmentCard({
-  fragment,
-  query,
-  citedBy,
-}: {
-  fragment: SourceFragmentHit;
-  query: string;
-  citedBy?: SearchHit;
-}) {
-  const byline = [fragment.author, fragment.publicationYear].filter(Boolean).join(" · ");
-  return (
-    <li className="sr-fragment">
-      <div className="sr-fragment-head">
-        <span>Fragmento de fuente</span>
-        <span>P. {fragment.pageNumber}</span>
-      </div>
-      <h3>{fragment.sourceTitle}</h3>
-      {byline ? <div className="sr-fragment-byline">{byline}</div> : null}
-      {fragment.chapterTitle ? <div className="sr-fragment-chapter">{fragment.chapterTitle}</div> : null}
-      <blockquote>“{highlight(fragment.excerpt, query)}”</blockquote>
-      {citedBy ? (
-        <Link href={citedBy.href} className="sr-fragment-link">
-          Ver una pieza que cita esta obra <EditorialArrow />
-        </Link>
-      ) : (
-        <Link href="/fuentes" className="sr-fragment-link">
-          Cómo se usa el corpus <EditorialArrow />
-        </Link>
-      )}
-    </li>
-  );
-}
-
 function EmptyEntry({ total }: { total: number }) {
   return (
     <section className="sr-entry" aria-labelledby="sr-entry-title">
@@ -284,14 +246,13 @@ export default async function BuscarPage({
   const type = typeBySlug(sp.tipo);
   const period = validPeriod(sp.periodo);
 
-  const [pieces, personas, lugares, ideas, stats, articleRanks, fragments] = await Promise.all([
+  const [pieces, personas, lugares, ideas, stats, articleRanks] = await Promise.all([
     getRecentPublicPieces(5000),
     getConnectedEntityDirectory("persona"),
     getConnectedEntityDirectory("lugar"),
     getConnectedEntityDirectory("idea"),
     getPublicArchiveStats(),
     query ? searchPublishedArticleRanks(query) : Promise.resolve(new Map<string, number>()),
-    query ? searchSourceFragments(query, 10) : Promise.resolve([]),
   ]);
 
   const corpus = buildSearchCorpus(pieces, [...personas, ...lugares, ...ideas]);
@@ -324,13 +285,6 @@ export default async function BuscarPage({
     periodo: period,
     pagina: pageNumber > 1 ? pageNumber : null,
   });
-  const citedByDocument = new Map<string, SearchHit>();
-  for (const hit of allHits) {
-    for (const documentId of hit.sourceDocumentIds) {
-      if (!citedByDocument.has(documentId)) citedByDocument.set(documentId, hit);
-    }
-  }
-
   return (
     <PublicShell>
       <div className="sr-page">
@@ -342,7 +296,7 @@ export default async function BuscarPage({
               defaultValue={query}
               label="Buscar en todo lo publicado"
               placeholder="Una persona, un lugar, un año, una pregunta…"
-              hint="Primero verás piezas completas; después, los fragmentos exactos de los libros y documentos."
+              hint="Explora únicamente las piezas completas que ya publicamos en el archivo."
               variant="workbench"
             />
           </div>
@@ -414,7 +368,6 @@ export default async function BuscarPage({
                 {page.length === 0 ? (
                   <div className="sr-empty">
                     <h2>No encontramos una pieza completa con esos filtros.</h2>
-                    <p>Los fragmentos de libros, si existen, siguen disponibles más abajo.</p>
                   </div>
                 ) : (
                   <>
@@ -439,28 +392,6 @@ export default async function BuscarPage({
                     ) : null}
                   </>
                 )}
-
-                {current === 1 && fragments.length ? (
-                  <section className="sr-source-results" aria-labelledby="sr-source-title">
-                    <div className="sr-section-head sr-source-head">
-                      <div>
-                        <span>Segunda capa de la búsqueda</span>
-                        <h2 id="sr-source-title">Fragmentos del archivo</h2>
-                      </div>
-                      <p>Recortes textuales del corpus, identificados por obra y página.</p>
-                    </div>
-                    <ol>
-                      {fragments.map((fragment) => (
-                        <FragmentCard
-                          key={`${fragment.documentId}:${fragment.pageNumber}`}
-                          fragment={fragment}
-                          query={query}
-                          citedBy={citedByDocument.get(fragment.documentId)}
-                        />
-                      ))}
-                    </ol>
-                  </section>
-                ) : null}
 
                 <ArchivePagination
                   current={current}

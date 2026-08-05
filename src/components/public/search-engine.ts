@@ -39,9 +39,7 @@ export interface SearchDoc {
   categoryName: string | null;
   theme: string | null;
   documentCount: number | null;
-  fragmentCount: number;
   wordCount: number | null;
-  sourceDocumentIds: string[];
   titleNorm: string;
   summaryNorm: string;
   contextNorm: string;
@@ -194,9 +192,7 @@ export function buildSearchCorpus(
       categoryName: piece.categoryName,
       theme: piece.theme,
       documentCount: piece.documentCount,
-      fragmentCount: piece.fragmentCount,
       wordCount: piece.wordCount,
-      sourceDocumentIds: piece.sourceDocumentIds,
     }));
   }
 
@@ -220,9 +216,7 @@ export function buildSearchCorpus(
       categoryName: null,
       theme: null,
       documentCount: null,
-      fragmentCount: 0,
       wordCount: null,
-      sourceDocumentIds: [],
     }));
   }
 

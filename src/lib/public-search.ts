@@ -1,45 +1,12 @@
-/**
- * Retrieval público en dos capas:
- * 1) piezas editoriales completas publicadas;
- * 2) fragmentos breves de libros y documentos del corpus bibliográfico.
- *
- * Los fragmentos nunca se convierten en “artículos”: conservan obra, autor y
- * página y se muestran después de las piezas producidas.
- */
+/** Ranking de texto completo para las piezas editoriales publicadas. */
 import { prisma } from "@/lib/prisma";
-import { getDocumentDisplayName, type EnrichmentMetadata } from "@/lib/enrichment-types";
 
 interface RankedArticleRow {
   id: string;
   rank: number;
 }
 
-interface RawFragmentRow {
-  id: string;
-  documentId: string;
-  content: string;
-  pageNumber: number;
-  chapterTitle: string | null;
-  filename: string;
-  documentMetadata: unknown;
-  rank: number;
-}
-
-export interface SourceFragmentHit {
-  id: string;
-  documentId: string;
-  excerpt: string;
-  pageNumber: number;
-  chapterTitle: string | null;
-  sourceTitle: string;
-  author: string | null;
-  publicationYear: number | null;
-  publisher: string | null;
-  rank: number;
-}
-
 let indexedArticleSearchColumn: Promise<boolean> | null = null;
-let hasChunksV2: Promise<boolean> | null = null;
 
 const FTS_STOPWORDS = new Set([
   "de", "del", "la", "el", "los", "las", "un", "una", "en", "y", "e", "o", "u",
@@ -103,17 +70,6 @@ async function articleIndexAvailable(): Promise<boolean> {
   return indexedArticleSearchColumn;
 }
 
-async function chunksV2Available(): Promise<boolean> {
-  if (!hasChunksV2) {
-    hasChunksV2 = prisma.$queryRaw<Array<{ exists: boolean }>>`
-      SELECT EXISTS (
-        SELECT 1 FROM chunks_v2 WHERE "isParent" = false LIMIT 1
-      ) AS exists
-    `.then((rows) => Boolean(rows[0]?.exists)).catch(() => false);
-  }
-  return hasChunksV2;
-}
-
 /** Ranking de texto completo; el mapa se fusiona con título y metadata en memoria. */
 export async function searchPublishedArticleRanks(
   query: string,
@@ -170,115 +126,4 @@ export async function searchPublishedArticleRanks(
 
 function fold(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-}
-
-function focusedExcerpt(content: string, query: string, max = 520): string {
-  const text = content.replace(/\s+/g, " ").trim();
-  if (text.length <= max) return text;
-  const terms = fold(query).split(/[^a-z0-9]+/).filter((term) => term.length > 2);
-  const normalized = fold(text);
-  const positions = terms.map((term) => normalized.indexOf(term)).filter((index) => index >= 0);
-  const hit = positions.length ? Math.min(...positions) : 0;
-  const startTarget = Math.max(0, hit - Math.floor(max * .32));
-  const startSpace = text.lastIndexOf(" ", startTarget);
-  const start = startSpace > 0 ? startSpace + 1 : 0;
-  const endTarget = Math.min(text.length, start + max);
-  const endSpace = text.lastIndexOf(" ", endTarget);
-  const end = endSpace > start + max * .65 ? endSpace : endTarget;
-  return `${start > 0 ? "…" : ""}${text.slice(start, end).trim()}${end < text.length ? "…" : ""}`;
-}
-
-async function searchFragmentTable(
-  table: "chunks" | "chunks_v2",
-  tsQuery: string,
-  limit: number,
-): Promise<RawFragmentRow[]> {
-  const v2 = table === "chunks_v2";
-  const parentClause = v2 ? `AND c."isParent" = false` : "";
-  const chapterSelect = v2 ? `c."chapterTitle"` : `NULL::text`;
-  // `ts_rank_cd + ORDER BY` sobre cada match de un término muy común puede
-  // ordenar decenas de miles de chunks. El GIN primero acota un pool amplio y
-  // solo ese pool se puntúa; 1.600 candidatos alcanzan para 10 recortes diversos.
-  const candidateLimit = Math.max(1600, limit * 60);
-  return prisma.$queryRawUnsafe<RawFragmentRow[]>(
-    `WITH q AS (SELECT to_tsquery('spanish', $1) AS query),
-          candidates AS MATERIALIZED (
-            SELECT c.id,
-                   c."documentId",
-                   c.content,
-                   c."pageNumber",
-                   ${chapterSelect} AS "chapterTitle",
-                   c.content_fts,
-                   d.filename,
-                   d.metadata AS "documentMetadata"
-            FROM ${table} c
-            JOIN documents d ON d.id = c."documentId", q
-            WHERE d.status = 'READY'
-              ${parentClause}
-              AND c.content_fts @@ q.query
-            LIMIT $3
-          )
-     SELECT candidates.id,
-            candidates."documentId",
-            candidates.content,
-            candidates."pageNumber",
-            candidates."chapterTitle",
-            candidates.filename,
-            candidates."documentMetadata",
-            ts_rank_cd(candidates.content_fts, q.query, 32)::float AS rank
-     FROM candidates, q
-     ORDER BY rank DESC
-     LIMIT $2`,
-    tsQuery,
-    limit,
-    candidateLimit,
-  );
-}
-
-/** Fragmentos del corpus, con deduplicación por obra y página para evitar solapamientos. */
-export async function searchSourceFragments(
-  query: string,
-  limit = 10,
-): Promise<SourceFragmentHit[]> {
-  const clean = query.trim().slice(0, 120);
-  if (!clean) return [];
-  const tsQuery = buildSpanishTsQuery(clean);
-  if (!tsQuery) return [];
-  try {
-    const useV2 = await chunksV2Available();
-    const [v1, v2] = await Promise.all([
-      searchFragmentTable("chunks", tsQuery, Math.max(24, limit * 3)),
-      useV2
-        ? searchFragmentTable("chunks_v2", tsQuery, Math.max(24, limit * 3))
-        : Promise.resolve([]),
-    ]);
-    const merged = [...v2, ...v1].sort((a, b) => Number(b.rank) - Number(a.rank));
-    const seenPages = new Set<string>();
-    const hits: SourceFragmentHit[] = [];
-
-    for (const row of merged) {
-      const pageKey = `${row.documentId}:${row.pageNumber}`;
-      if (seenPages.has(pageKey)) continue;
-      seenPages.add(pageKey);
-      const metadata = (row.documentMetadata ?? null) as EnrichmentMetadata | null;
-      hits.push({
-        id: row.id,
-        documentId: row.documentId,
-        excerpt: focusedExcerpt(row.content, clean),
-        pageNumber: row.pageNumber,
-        chapterTitle: row.chapterTitle,
-        sourceTitle: getDocumentDisplayName({ filename: row.filename, metadata }),
-        author: metadata?.author?.trim() || null,
-        publicationYear:
-          typeof metadata?.publicationYear === "number" ? metadata.publicationYear : null,
-        publisher: metadata?.publisher?.trim() || null,
-        rank: Number(row.rank),
-      });
-      if (hits.length === limit) break;
-    }
-    return hits;
-  } catch (error) {
-    console.error("[public-search] source fragment search failed:", error);
-    return [];
-  }
 }
