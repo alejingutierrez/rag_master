@@ -1,7 +1,7 @@
 /*
  * Super buscador público — expediente editorial.
- * Jerarquía innegociable: piezas completas primero; fragmentos bibliográficos
- * después. El rojo funciona como marca de prueba, no como decoración.
+ * El buscador se concentra únicamente en las piezas completas publicadas.
+ * El rojo funciona como marca de prueba, no como decoración.
  */
 
 .sr-page { max-width: 1480px; margin: 0 auto; padding: 0 28px 120px; }
@@ -132,9 +132,9 @@
 
 .sr-section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--fg); }
 .sr-section-head h2 { margin: 0; font-family: var(--font-display); font-size: 28px; font-style: normal; font-weight: 400; }
-.sr-section-head > span, .sr-section-head > p { margin: 0; font-family: var(--font-mono); font-size: 8.5px; line-height: 1.45; color: var(--fg-faint); letter-spacing: .06em; text-transform: uppercase; }
+.sr-section-head > span { margin: 0; font-family: var(--font-mono); font-size: 8.5px; line-height: 1.45; color: var(--fg-faint); letter-spacing: .06em; text-transform: uppercase; }
 .sr-complete-list { margin-top: 48px; }
-.sr-complete-list ol, .sr-source-results ol { list-style: none; margin: 0; padding: 0; }
+.sr-complete-list ol { list-style: none; margin: 0; padding: 0; }
 
 .sr-article {
   min-height: 170px;
@@ -161,28 +161,6 @@
 .sr-row-arrow { color: var(--fg-faint); }
 .sr-row-arrow svg { width: 18px; transition: transform .16s ease, color .16s ease; }
 .sr-row-arrow:hover svg { transform: translateX(4px); color: var(--accent); }
-
-.sr-source-results { margin-top: 74px; padding-top: 20px; border-top: 3px double var(--fg); }
-.sr-source-head { align-items: end; }
-.sr-source-head > div > span { display: block; margin-bottom: 5px; font-family: var(--font-mono); font-size: 8px; color: var(--accent); letter-spacing: .1em; text-transform: uppercase; }
-.sr-source-head > p { max-width: 32ch; text-align: right; text-transform: none; letter-spacing: .02em; }
-.sr-fragment {
-  display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
-  column-gap: 28px;
-  padding: 25px 2px 27px;
-  border-bottom: 1px solid var(--line);
-  content-visibility: auto;
-  contain-intrinsic-size: 230px;
-}
-.sr-fragment-head { grid-column: 1; display: flex; justify-content: space-between; gap: 10px; font-family: var(--font-mono); font-size: 8px; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; }
-.sr-fragment h3 { grid-column: 1; margin: 12px 0 0; font-family: var(--font-display); font-size: 22px; font-style: normal; font-weight: 400; line-height: 1.05; }
-.sr-fragment-byline, .sr-fragment-chapter { grid-column: 1; margin-top: 6px; font-family: var(--font-sans); font-size: 11.5px; color: var(--fg-muted); }
-.sr-fragment-chapter { font-style: italic; }
-.sr-fragment blockquote { grid-column: 2; grid-row: 1 / span 4; align-self: start; margin: 0; padding: 4px 0 0 22px; border-left: 2px solid var(--accent); font-family: var(--font-display); font-size: 19px; line-height: 1.42; color: var(--fg-muted); }
-.sr-fragment-link { grid-column: 2; display: inline-flex; align-items: center; gap: 8px; width: fit-content; margin: 15px 0 0 22px; color: var(--fg-muted); font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .035em; text-decoration: none; text-transform: uppercase; }
-.sr-fragment-link:hover { color: var(--accent); }
-.sr-fragment-link svg { width: 15px; }
 
 .sr-empty { padding: 70px 8px; border-top: 1px solid var(--fg); border-bottom: 1px solid var(--line); }
 .sr-empty h2 { margin: 0; max-width: 22ch; font-family: var(--font-display); font-size: 34px; font-weight: 400; line-height: 1.05; }
@@ -261,12 +239,6 @@
   .sr-article h3 { font-size: 24px; }
   .sr-article-copy > p { -webkit-line-clamp: 3; }
   .sr-evidence-line span + span::before { margin-right: 8px; }
-  .sr-source-results { margin-top: 55px; }
-  .sr-source-head > p { margin-top: 8px; max-width: none; text-align: left; }
-  .sr-fragment { display: block; padding: 22px 0 24px; }
-  .sr-fragment h3 { font-size: 24px; }
-  .sr-fragment blockquote { margin-top: 18px; padding-left: 16px; font-size: 17px; }
-  .sr-fragment-link { margin-left: 16px; }
   .sr-connections { grid-template-columns: 1fr; padding-inline: 18px; }
 }
 
