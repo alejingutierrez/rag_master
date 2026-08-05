@@ -1103,12 +1103,23 @@ export interface PublicArchivePiece {
   href: string;
   title: string;
   summary: string;
+  /** Segundo nivel editorial que ayuda a explicar y recuperar una pieza. */
+  whyItMatters: string;
   label: string;
   kind: string;
   periodCode: string | null;
   yearLabel: string | null;
   imageUrl: string | null;
   publishedAt: Date | null;
+  people: string[];
+  places: string[];
+  ideas: string[];
+  categoryName: string | null;
+  theme: string | null;
+  documentCount: number | null;
+  fragmentCount: number;
+  wordCount: number | null;
+  sourceDocumentIds: string[];
 }
 
 export interface PublicArchiveStats {
@@ -1150,12 +1161,22 @@ function archivePiece(piece: AnchoredPiece): PublicArchivePiece {
     href: piece.href,
     title: piece.titulo,
     summary: piece.resumen,
+    whyItMatters: piece.porQueImporta,
     label: pieceLabel(piece),
     kind: piece.kind,
     periodCode: piece.periodCode,
     yearLabel: pieceYearLabel(piece),
     imageUrl: piece.imageUrl,
     publishedAt: piece.publishedAt,
+    people: piece.personas,
+    places: piece.lugares,
+    ideas: piece.ideas,
+    categoryName: piece.categoriaNombre,
+    theme: piece.clusterTematico,
+    documentCount: piece.docCount,
+    fragmentCount: piece.fragmentCount,
+    wordCount: piece.wordCount,
+    sourceDocumentIds: piece.sourceDocumentIds,
   };
 }
 

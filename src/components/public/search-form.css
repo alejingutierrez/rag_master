@@ -63,3 +63,54 @@
   .sf-row { gap: 8px; }
   .sf-submit { padding: 6px 13px; letter-spacing: .06em; }
 }
+
+/* Variante de mesa de investigación: el campo es el gesto principal de /buscar. */
+.sf-workbench .sf-label { margin-bottom: 10px; color: var(--fg-muted); }
+.sf-workbench .sf-row {
+  gap: 0;
+  border: 1px solid var(--fg);
+  padding: 0;
+  background: var(--bg);
+}
+.sf-workbench .sf-icon {
+  width: 54px;
+  text-align: center;
+  color: var(--accent);
+}
+.sf-workbench .sf-input {
+  min-height: 66px;
+  padding: 14px 18px 13px 0;
+  font-family: var(--font-sans);
+  font-size: clamp(20px, 2.2vw, 29px);
+  letter-spacing: -.025em;
+}
+.sf-workbench .sf-submit {
+  align-self: stretch;
+  min-width: 136px;
+  border: 0;
+  border-left: 1px solid var(--accent);
+  border-radius: 0;
+  background: var(--accent);
+  color: white;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  text-transform: none;
+}
+.sf-workbench .sf-submit:hover { background: var(--fg); color: var(--bg); }
+.sf-workbench .sf-row:focus-within {
+  outline: 3px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  outline-offset: 3px;
+}
+.sf-workbench .sf-hint {
+  margin-top: 11px;
+  text-transform: none;
+  letter-spacing: .01em;
+}
+
+@media (max-width: 560px) {
+  .sf-workbench .sf-icon { display: none; }
+  .sf-workbench .sf-input { min-height: 58px; padding: 12px 13px; font-size: 18px; }
+  .sf-workbench .sf-submit { min-width: 94px; padding: 0 16px; font-size: 13px; }
+}

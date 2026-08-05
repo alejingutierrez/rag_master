@@ -242,6 +242,20 @@ const MIGRATIONS = [
   `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "imageKey" TEXT`,
   `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS "imageGeneratedAt" TIMESTAMP(3)`,
   `CREATE INDEX IF NOT EXISTS "deliverables_publishedAt_idx" ON deliverables ("publishedAt")`,
+  // 2026-08-04: búsqueda pública rápida dentro del texto COMPLETO de cada pieza.
+  // Los chunks bibliográficos conservan su índice independiente y siempre se
+  // presentan en un segundo carril de evidencia.
+  `ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS public_search_fts tsvector
+   GENERATED ALWAYS AS (
+     to_tsvector('spanish',
+       coalesce(answer, '') || ' ' ||
+       coalesce("structuredData"->>'titulo', '') || ' ' ||
+       coalesce("structuredData"->>'resumen', '')
+     )
+   ) STORED`,
+  `CREATE INDEX IF NOT EXISTS deliverables_public_search_fts_idx
+   ON deliverables USING gin(public_search_fts)
+   WHERE "publishedAt" IS NOT NULL`,
 
   // 2026-07-02: configuración editable del home (singleton, id='default')
   `CREATE TABLE IF NOT EXISTS home_config (
