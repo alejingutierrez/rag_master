@@ -11,11 +11,11 @@ import { PublicShell } from "@/components/public/public-shell";
 import { EntityConnections } from "@/components/public/entity-node";
 import { groupEssaySources } from "@/components/public/hechos/source-bibliography";
 import { renderProse } from "@/components/public/prose";
-import { imageAt } from "@/lib/image-url";
 import { periodInfo } from "@/lib/design-tokens";
 import type { EntityLinker } from "@/lib/entity-linker";
 import type { EntityNode, TypologyDetail } from "@/lib/public-data";
 import type { EntidadStructured } from "@/lib/typology-schemas";
+import { PersonaFloatingPortrait } from "./persona-floating-portrait";
 import { PersonaReadingRail, type PersonaRailItem } from "./persona-reading-rail";
 import "@/components/public/article.css";
 import "@/components/public/wiki.css";
@@ -83,47 +83,6 @@ function Fact({
         {secondary ? <small>{secondary}</small> : null}
       </div>
     </div>
-  );
-}
-
-function EvidenceRail({ detail }: { detail: TypologyDetail }) {
-  const documents = groupEssaySources(detail.sources);
-  const featured = documents.find((document) => document.sources.some((source) => source.snippet)) ?? documents[0];
-  if (!featured) {
-    return (
-      <aside className="pd-evidence">
-        <span className="pd-evidence-label">Evidencia de esta biografía</span>
-        <p className="pd-evidence-empty">La síntesis conserva sus fuentes en el corpus editorial.</p>
-      </aside>
-    );
-  }
-  const excerpt = featured.sources.find((source) => source.snippet)?.snippet;
-  return (
-    <aside className="pd-evidence">
-      <span className="pd-evidence-label">Evidencia de esta biografía</span>
-      <strong className="pd-evidence-title">{featured.title}</strong>
-      <p className="pd-evidence-meta">
-        {[featured.author, featured.publicationYear, pagesLabel(featured.pages)]
-          .filter(Boolean)
-          .join(" · ") || "Documento del corpus"}
-      </p>
-      {excerpt ? (
-        <blockquote className="pd-document-preview">
-          <span>Fragmento citado</span>
-          <p>{excerpt}</p>
-        </blockquote>
-      ) : null}
-      <dl className="pd-evidence-catalog">
-        <div><dt>Documento</dt><dd>{featured.title}</dd></div>
-        {featured.author ? <div><dt>Autor</dt><dd>{featured.author}</dd></div> : null}
-        {featured.publicationYear ? <div><dt>Año</dt><dd>{featured.publicationYear}</dd></div> : null}
-        {featured.pages.length ? <div><dt>Páginas</dt><dd>{featured.pages.join(", ")}</dd></div> : null}
-      </dl>
-      <a href="#pd-documentos" className="pd-evidence-link">
-        Ver {documents.length} {documents.length === 1 ? "documento" : "documentos"} relacionados
-        <span aria-hidden>→</span>
-      </a>
-    </aside>
   );
 }
 
@@ -212,71 +171,66 @@ export function PersonaDetailArticle({
     <PublicShell>
       <article className="pd-page" data-persona-article>
         <div className="pd-shell">
-          <section className="pd-hero" aria-labelledby="pd-title">
-            <header className="pd-hero-copy">
-              <Link href="/personas" className="pd-kicker">Biografía</Link>
-              <h1 id="pd-title">{person.titulo}</h1>
-              <span className="pd-title-rule" aria-hidden />
-              {period ? <p className="pd-period">{period.label}</p> : null}
-              {range ? <p className="pd-life-range">{range}</p> : null}
-              <div className="pd-hero-meta">
-                <span><BookOpenText aria-hidden />{readingMinutes} min de lectura</span>
-                <span><FileText aria-hidden />{documents.length} {documents.length === 1 ? "documento" : "documentos"}</span>
-              </div>
-            </header>
-            {detail.imageUrl ? (
-              <figure className="pd-portrait">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageAt(detail.imageUrl, 1400)!} alt={`Retrato de ${person.titulo}`} fetchPriority="high" />
-              </figure>
-            ) : (
-              <div className="pd-portrait-fallback" aria-hidden><span>{person.titulo.charAt(0)}</span></div>
-            )}
-          </section>
-
-          <section className="pd-facts" id="pd-en-breve" aria-label="Datos biográficos principales">
-            <Fact icon={<CalendarDays />} label="Nacimiento" primary={person.nacimiento ?? "Sin fecha registrada"} />
-            <Fact icon={<Landmark />} label="Fallecimiento" primary={person.muerte ?? "Sin fecha registrada"} />
-            <Fact icon={<BriefcaseBusiness />} label="Roles" primary={compactRole(person.roles)} />
-            <Fact icon={<MapPin />} label="Lugar principal" primary={person.lugarPrincipal ?? "Colombia"} />
-            <Fact icon={<BookOpenText />} label="Período histórico" primary={period?.label ?? "Transversal"} secondary={period?.yearRange} />
-          </section>
-
-          <div className="pd-reading-grid">
-            <PersonaReadingRail items={RAIL_ITEMS} readingMinutes={readingMinutes} />
-            <main className="pd-article-column">
-              <section className="pd-biography-lead" id="pd-biografia" aria-labelledby="pd-biography-title">
-                <header className="pd-section-heading">
-                  <span>03</span>
-                  <h2 id="pd-biography-title">La biografía</h2>
-                </header>
-                <div className="pd-prose pd-prose-lead">
-                  {renderProse(biography.lead || person.resumen, { linker, selfKey, headingPrefix: "pd-lead-" })}
+          <div className="pd-persona-layout">
+            <section className="pd-hero" aria-labelledby="pd-title">
+              <header className="pd-hero-copy">
+                <Link href="/personas" className="pd-kicker">Biografía</Link>
+                <h1 id="pd-title">{person.titulo}</h1>
+                <span className="pd-title-rule" aria-hidden />
+                {period ? <p className="pd-period">{period.label}</p> : null}
+                {range ? <p className="pd-life-range">{range}</p> : null}
+                <div className="pd-hero-meta">
+                  <span><BookOpenText aria-hidden />{readingMinutes} min de lectura</span>
+                  <span><FileText aria-hidden />{documents.length} {documents.length === 1 ? "documento" : "documentos"}</span>
                 </div>
-              </section>
+              </header>
+            </section>
 
-              <Timeline person={person} />
+            <PersonaFloatingPortrait imageUrl={detail.imageUrl} title={person.titulo} />
 
-              {biography.body ? (
-                <div className="pd-prose pd-prose-body">
-                  {renderProse(biography.body, { linker, selfKey, headingPrefix: "pd-bio-" })}
-                </div>
-              ) : null}
+            <section className="pd-facts" id="pd-en-breve" aria-label="Datos biográficos principales">
+              <Fact icon={<CalendarDays />} label="Nacimiento" primary={person.nacimiento ?? "Sin fecha registrada"} />
+              <Fact icon={<Landmark />} label="Fallecimiento" primary={person.muerte ?? "Sin fecha registrada"} />
+              <Fact icon={<BriefcaseBusiness />} label="Roles" primary={compactRole(person.roles)} />
+              <Fact icon={<MapPin />} label="Lugar principal" primary={person.lugarPrincipal ?? "Colombia"} />
+              <Fact icon={<BookOpenText />} label="Período histórico" primary={period?.label ?? "Transversal"} secondary={period?.yearRange} />
+            </section>
 
-              <section className="pd-network" id="pd-red-historica" aria-labelledby="pd-network-title">
-                <header className="pd-section-heading">
-                  <span>04</span>
-                  <div>
-                    <p>Conexiones del archivo</p>
-                    <h2 id="pd-network-title">Red histórica</h2>
+            <div className="pd-reading-grid">
+              <PersonaReadingRail items={RAIL_ITEMS} readingMinutes={readingMinutes} />
+              <main className="pd-article-column">
+                <section className="pd-biography-lead" id="pd-biografia" aria-labelledby="pd-biography-title">
+                  <header className="pd-section-heading">
+                    <span>03</span>
+                    <h2 id="pd-biography-title">La biografía</h2>
+                  </header>
+                  <div className="pd-prose pd-prose-lead">
+                    {renderProse(biography.lead || person.resumen, { linker, selfKey, headingPrefix: "pd-lead-" })}
                   </div>
-                </header>
-                <EntityConnections pieces={node.pieces} related={node.related} selfHref={node.href} />
-              </section>
+                </section>
 
-              <DocumentArchive detail={detail} />
-            </main>
-            <EvidenceRail detail={detail} />
+                <Timeline person={person} />
+
+                {biography.body ? (
+                  <div className="pd-prose pd-prose-body">
+                    {renderProse(biography.body, { linker, selfKey, headingPrefix: "pd-bio-" })}
+                  </div>
+                ) : null}
+
+                <section className="pd-network" id="pd-red-historica" aria-labelledby="pd-network-title">
+                  <header className="pd-section-heading">
+                    <span>04</span>
+                    <div>
+                      <p>Conexiones del archivo</p>
+                      <h2 id="pd-network-title">Red histórica</h2>
+                    </div>
+                  </header>
+                  <EntityConnections pieces={node.pieces} related={node.related} selfHref={node.href} />
+                </section>
+
+                <DocumentArchive detail={detail} />
+              </main>
+            </div>
           </div>
         </div>
       </article>
