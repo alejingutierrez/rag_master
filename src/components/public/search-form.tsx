@@ -13,6 +13,7 @@ export function SearchForm({
   id = "buscador",
   label = "Buscar en el archivo",
   hint,
+  variant = "default",
 }: {
   defaultValue?: string;
   placeholder?: string;
@@ -21,9 +22,10 @@ export function SearchForm({
   label?: string;
   /** Nota breve bajo el campo (qué se busca). */
   hint?: string;
+  variant?: "default" | "workbench";
 }) {
   return (
-    <form className="sf" action="/buscar" method="get" role="search">
+    <form className={`sf sf-${variant}`} action="/buscar" method="get" role="search">
       <label className="sf-label" htmlFor={id}>
         {label}
       </label>
@@ -40,6 +42,7 @@ export function SearchForm({
           placeholder={placeholder}
           autoComplete="off"
           maxLength={120}
+          enterKeyHint="search"
         />
         <button type="submit" className="sf-submit">
           {submitLabel}
