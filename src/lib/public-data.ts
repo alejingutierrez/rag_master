@@ -885,6 +885,10 @@ export interface AnchoredPiece {
   cardMeta: string | null;
   entidadTipo: string | null; // Persona|Lugar|Concepto|Institución (solo fichas de entidad)
   entidadSlug: string | null; // slug de la ficha de entidad, si aplica
+  /** Roles editoriales de una ficha de entidad. Se conservan para derivar
+   *  facetas públicas (por ejemplo ciudad/región/río) sin reenviar el JSON
+   *  estructurado completo al cliente. */
+  entityRoles: string[];
   /** Anclaje geográfico de la pieza (ver typology-schemas). Alimenta el mapa. */
   lugarPrincipal: string | null;
   lat: number | null;
@@ -1030,6 +1034,7 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       cardMeta: s ? cardMeta(s, anchor) : null,
       entidadTipo: s?.typology === "entidad" ? s.tipo : null,
       entidadSlug: canonicalEntitySlug,
+      entityRoles: s?.typology === "entidad" ? s.roles : [],
       lugarPrincipal: s?.lugarPrincipal ?? null,
       lat: s?.lat ?? null,
       lng: s?.lng ?? null,
@@ -1235,6 +1240,9 @@ interface DedicatedEntityInfo {
   periodCode: string | null;
   anio: number | null;
   isFicha: boolean;
+  lat: number | null;
+  lng: number | null;
+  roles: string[];
 }
 
 interface PublishedEntityData {
@@ -1270,7 +1278,12 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
         idea: new Set(),
       };
       const dedicatedInfo = new Map<string, DedicatedEntityInfo>();
-      const markDedicated = (t: EntityType, slug: string, p: AnchoredPiece) => {
+      const markDedicated = (
+        t: EntityType,
+        slug: string,
+        p: AnchoredPiece,
+        carryPlaceData = false,
+      ) => {
         if (!slug) return;
         const registryKey = registry.variantSlugToKey.get(slug);
         const registryEntity = registryKey ? registry.byKey.get(registryKey) : undefined;
@@ -1280,6 +1293,8 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
         const key = entityKey(t, canonicalSlug);
         const prev = dedicatedInfo.get(key);
         const isFicha = p.kind === "entidad";
+        const isPlaceFicha =
+          carryPlaceData && isFicha && t === "lugar" && p.entidadTipo === "Lugar";
         // La ficha de entidad manda sobre una pieza derivada: además del retrato,
         // aporta el ancla histórica propia de la biografía. Entre piezas del mismo
         // rango solo se reemplaza para completar una imagen ausente.
@@ -1295,13 +1310,23 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
             periodCode: p.periodCode ?? prev?.periodCode ?? null,
             anio: p.anio ?? prev?.anio ?? null,
             isFicha,
+            // Solo una ficha de Lugar puede georreferenciar el lugar. Una
+            // crónica dedicada puede tener coordenadas de su escena, que no son
+            // necesariamente las de la entidad y por eso no se reutilizan aquí.
+            lat: isPlaceFicha ? (p.lat ?? prev?.lat ?? null) : (prev?.lat ?? null),
+            lng: isPlaceFicha ? (p.lng ?? prev?.lng ?? null) : (prev?.lng ?? null),
+            roles:
+              isPlaceFicha && p.entityRoles.length ? p.entityRoles : (prev?.roles ?? []),
           });
         }
       };
       for (const p of pieces) {
         if (p.kind === "entidad" && p.entidadTipo) {
           const t = entityTypeFromTipo(p.entidadTipo);
-          if (p.entidadSlug) markDedicated(t, p.entidadSlug, p);
+          // La identidad estructurada es la única que hereda coordenadas/roles.
+          // El título también se marca como alias dedicado, pero no duplica el
+          // mismo punto en dos entradas del directorio (Cali/Santiago de Cali).
+          if (p.entidadSlug) markDedicated(t, p.entidadSlug, p, true);
           markDedicated(t, slugify(p.titulo), p);
         }
         if (p.sourceRef?.kind === "entidad") {
@@ -1732,6 +1757,69 @@ export interface PublicEntity {
   imageUrl: string | null;
 }
 
+export type PlaceKind = "ciudad" | "region" | "rio-paisaje" | "frontera";
+
+export const PLACE_KIND_LABELS: Record<PlaceKind, string> = {
+  ciudad: "Ciudad",
+  region: "Región",
+  "rio-paisaje": "Río y paisaje",
+  frontera: "Frontera",
+};
+
+export interface PublicPlace extends PublicEntity {
+  kind: PlaceKind;
+  kindLabel: string;
+  /** Solo existen cuando la ficha publicada trae coordenadas editoriales. */
+  lat: number | null;
+  lng: number | null;
+}
+
+function foldForPlaceClassification(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+/**
+ * Faceta geográfica derivada de la ficha real. Es deliberadamente conservadora:
+ * primero respeta roles editoriales explícitos y luego usa el título/resumen como
+ * respaldo. No inventa una taxonomía persistida ni altera la identidad canónica.
+ */
+export function classifyPlaceKind(input: {
+  name: string;
+  resumen?: string | null;
+  roles?: string[];
+}): PlaceKind {
+  const roles = input.roles ?? [];
+  const name = foldForPlaceClassification(input.name);
+  const primary = foldForPlaceClassification([input.name, roles[0] ?? ""].join(" "));
+  const full = foldForPlaceClassification([input.name, ...roles].join(" "));
+  const summary = foldForPlaceClassification(input.resumen ?? "");
+  const isCity = (text: string) =>
+    /\b(ciudad|capital|municipio|villa|corregimiento|puerto|plaza|palacio|centro urbano)\b/.test(text);
+  const isLandscape = (text: string) =>
+    /\b(rio|fluvial|cuenca|sierra|sabana|paramo|macizo|valle|selva|cordillera|llanos|altiplano|litoral|costa|atrato|pacifico|caribe)\b/.test(text);
+  const isFrontier = (text: string) =>
+    /\b(frontera|fronterizo|fronteriza|limite|corredor|zona de distension|enclave)\b/.test(text) ||
+    /\b(darien|catatumbo|uraba)\b/.test(text);
+  const isRegion = (text: string) =>
+    /\b(region|subregion|departamento|provincia|estado soberano|gobernacion)\b/.test(text);
+
+  // El primer rol es la definición editorial principal y prevalece sobre
+  // menciones incidentales (Bogotá está en un altiplano; no por eso es paisaje).
+  if (isLandscape(name)) return "rio-paisaje";
+  if (isFrontier(name)) return "frontera";
+  if (isRegion(primary)) return "region";
+  if (isRegion(summary)) return "region";
+  if (isCity(primary)) return "ciudad";
+  if (isCity(summary)) return "ciudad";
+  if (isCity(full)) return "ciudad";
+  if (isRegion(full)) return "region";
+  if (isLandscape(full)) return "rio-paisaje";
+  if (isFrontier(full)) return "frontera";
+  if (isLandscape(summary)) return "rio-paisaje";
+  if (isFrontier(summary)) return "frontera";
+  return "region";
+}
+
 // ── Entidades públicas: REGISTRO (época/nombre) ∩ PUBLICADO (visibilidad) ─────
 // El registro canónico (src/data/entities.json) aporta identidad y ÉPOCA de cada
 // entidad. El gate es UNO solo y es ESTRICTO (dedicatedSlugs): la entidad tiene
@@ -2034,6 +2122,42 @@ export async function getConnectedEntityDirectory(
 ): Promise<PublicEntity[]> {
   const list = await getEntityUniverse(type);
   return list.slice(0, limit);
+}
+
+/**
+ * Directorio especializado de `/lugares`: conserva el universo público canónico
+ * y lo enriquece con coordenadas y una faceta visual derivadas de su pieza
+ * dedicada. El cliente recibe una proyección pequeña, no el JSON histórico.
+ */
+export async function getPlacesDirectory(): Promise<PublicPlace[]> {
+  try {
+    const [places, published, registry] = await Promise.all([
+      getEntityUniverse("lugar"),
+      getPublishedEntityData(),
+      loadEntityRegistry(),
+    ]);
+    return places.map((place) => {
+      const registered = registry.byKey.get(entityKey("lugar", place.slug));
+      const dedicated = registered
+        ? findDedicatedInfo(registered, published.dedicatedInfo, registry)
+        : published.dedicatedInfo.get(entityKey("lugar", place.slug)) ?? null;
+      const kind = classifyPlaceKind({
+        name: place.name,
+        resumen: place.resumen,
+        roles: dedicated?.roles,
+      });
+      return {
+        ...place,
+        kind,
+        kindLabel: PLACE_KIND_LABELS[kind],
+        lat: dedicated?.lat ?? null,
+        lng: dedicated?.lng ?? null,
+      };
+    });
+  } catch (err) {
+    console.error("[public-data] getPlacesDirectory falló:", err);
+    return [];
+  }
 }
 
 export async function getConnectedEntityCounts(): Promise<Record<EntityType, number>> {
