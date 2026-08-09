@@ -9,6 +9,7 @@
 import { notFound, redirect } from "next/navigation";
 import { TypologyArticle } from "@/components/public/typology-detail";
 import { PersonaDetailArticle } from "@/components/public/personas/persona-detail";
+import { PlaceDetailArticle, PlaceNodeArticle } from "@/components/public/places/place-detail";
 import { EntityConnections, EntityNodeArticle } from "@/components/public/entity-node";
 import { JsonLd } from "@/components/public/json-ld";
 import {
@@ -77,6 +78,13 @@ export async function EntityDetailPage({ slug, type }: { slug: string; type: Ent
           linker={linker}
           selfKey={selfKey}
         />
+      ) : type === "lugar" ? (
+        <PlaceDetailArticle
+          detail={detail}
+          node={node}
+          linker={linker}
+          selfKey={selfKey}
+        />
       ) : (
         <TypologyArticle
           detail={detail}
@@ -115,7 +123,11 @@ export async function EntityDetailPage({ slug, type }: { slug: string; type: Ent
         })}
       />
       <TrackView contentType="entidad" itemId={slug} itemName={node.name} />
-      <EntityNodeArticle node={node} crumb={crumb} />
+      {type === "lugar" ? (
+        <PlaceNodeArticle node={node} />
+      ) : (
+        <EntityNodeArticle node={node} crumb={crumb} />
+      )}
     </>
   );
 }
