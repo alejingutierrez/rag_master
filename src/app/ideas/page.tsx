@@ -1,7 +1,6 @@
 import { PublicShell } from "@/components/public/public-shell";
-import { EntityBrowser } from "@/components/public/entity-index";
-import { getConnectedEntityDirectory, getPeriodEntityUniverse, ENTITY_TYPE_META } from "@/lib/public-data";
-import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
+import { IdeasExplorer } from "@/components/public/ideas/ideas-explorer";
+import { getConnectedEntityDirectory } from "@/lib/public-data";
 import { buildMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -17,33 +16,11 @@ export const metadata = buildMetadata({
   type: "website",
 });
 
-function validPeriod(raw: string | string[] | undefined): PeriodCode | null {
-  const value = Array.isArray(raw) ? raw[0] : raw;
-  return value && value in PERIODS ? (value as PeriodCode) : null;
-}
-
-export default async function IdeasPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ periodo?: string | string[] }>;
-}) {
-  const sp = (await searchParams) ?? {};
-  const periodo = validPeriod(sp.periodo);
-  const entities = periodo
-    ? await getPeriodEntityUniverse("idea", periodo)
-    : await getConnectedEntityDirectory("idea");
-  const m = ENTITY_TYPE_META.idea;
+export default async function IdeasPage() {
+  const ideas = await getConnectedEntityDirectory("idea");
   return (
     <PublicShell>
-      <EntityBrowser
-        entities={entities}
-        kicker="Qué estaba en juego"
-        title="Ideas"
-        intro="Procesos, ideologías e instituciones con pieza propia en el archivo — y las historias que permiten pensarlas."
-        emptyNote="Todavía no hay ideas con pieza propia publicada."
-        typeLabel={m.singular}
-        color={m.color}
-      />
+      <IdeasExplorer ideas={ideas} />
     </PublicShell>
   );
 }
