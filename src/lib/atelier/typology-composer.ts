@@ -31,7 +31,7 @@ const SCHEMA_LINES: Record<TypologyKind, string> = {
   epoca:
     '{"typology":"epoca","titulo","resumen","rango","panorama","hitos":[{"year","titulo","detalle"}],"actores":[],"transformaciones":[],"legado"}',
   entidad:
-    '{"typology":"entidad","titulo","tipo":"Persona|Lugar|Concepto|Institución","resumen","nacimiento","muerte","roles":[],"hitos":[{"year","titulo","detalle"}],"relaciones":[],"semblanza"}',
+    '{"typology":"entidad","titulo","tipo":"Persona|Lugar|Concepto|Institución","resumen","nacimiento","muerte","roles":[],"hitos":[{"year","titulo","detalle"}],"relaciones":[],"semblanza","lugarPrincipal","lat","lng"}',
   pregunta:
     '{"typology":"pregunta","titulo","resumen","pregunta","tesis","debate","temasRelacionados":[]}',
 };
@@ -50,6 +50,7 @@ const EXIGENCIAS: Record<TypologyKind, string> = {
 - "legado": 1–3 frases.`,
   entidad: `- "tipo" correcto (Persona/Lugar/Concepto/Institución).
 - Si es Persona: "nacimiento" y "muerte" si el material los da; "roles" con sus cargos u oficios (mínimo 1).
+- Si es Lugar: "lugarPrincipal" y un par "lat"/"lng" WGS84 válido son obligatorios. Para ciudades usa la localidad; para departamentos o regiones usa su centro geográfico; para territorios históricos o paisajes sin centro único usa un punto representativo y defendible.
 - "hitos": mínimo 3, fechados, cubriendo la trayectoria completa.
 - "relaciones": mínimo 2 (personas, lugares o conceptos entretejidos).
 - "semblanza": 3–5 frases con sustancia, DISTINTA del resumen.`,
@@ -104,6 +105,10 @@ export function missingFields(s: StructuredData): string[] {
       if (s.hitos.length < 3) missing.push("hitos (≥3)");
       if (s.relaciones.length < 2) missing.push("relaciones (≥2)");
       if (!s.semblanza) missing.push("semblanza");
+      if (s.tipo === "Lugar") {
+        if (!s.lugarPrincipal) missing.push("lugarPrincipal");
+        if (s.lat == null || s.lng == null) missing.push("lat/lng");
+      }
       break;
     case "pregunta":
       if (!s.pregunta) missing.push("pregunta");
