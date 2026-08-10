@@ -74,6 +74,7 @@ import {
   type ReferenceCandidate,
 } from "../src/lib/atelier/reference-search";
 import { validateEntitySourceContract } from "../src/lib/entity-source-contract";
+import { missingFields } from "../src/lib/atelier/typology-composer";
 import {
   applyPrimaryPeriodOverride,
   entityPeriodEvidence,
@@ -722,6 +723,35 @@ test("la búsqueda facial usa el nombre canónico del encargo", () => {
   });
   assert.equal(ctx.titulo, "Miguel Samper");
   assert.ok(ctx.visualAnchors?.includes("Miguel Samper retrato"));
+});
+
+test("una ficha de Lugar no puede pasar QA sin anclaje y par WGS84", () => {
+  const place: StructuredData = {
+    typology: "entidad",
+    slug: "bojaya",
+    titulo: "Bojayá",
+    resumen: "Municipio del Chocó atravesado por el río Atrato.",
+    periodoCode: "C91",
+    lugarPrincipal: null,
+    lat: null,
+    lng: null,
+    tipo: "Lugar",
+    nacimiento: null,
+    muerte: null,
+    roles: ["Municipio del departamento del Chocó"],
+    hitos: [
+      { year: 1960, titulo: "Consolidación municipal" },
+      { year: 2002, titulo: "Masacre de Bojayá" },
+      { year: 2019, titulo: "Retorno de comunidades" },
+    ],
+    relaciones: ["Río Atrato", "Chocó"],
+    semblanza: "Territorio afrocolombiano del Medio Atrato.",
+  };
+  assert.deepEqual(missingFields(place), ["lugarPrincipal", "lat/lng"]);
+  assert.deepEqual(
+    missingFields({ ...place, lugarPrincipal: "Bojayá, Chocó", lat: 6.5236, lng: -76.9744 }),
+    [],
+  );
 });
 
 test("la no-semejanza forzada prevalece aunque aparezca una imagen nominal", () => {
