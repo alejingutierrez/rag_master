@@ -145,7 +145,7 @@
 .id-cover { grid-area: cover; margin: 0; overflow: hidden; border-bottom: 1px solid #d4d4d4; }
 .id-cover img {
   width: 100%;
-  aspect-ratio: 4 / 1;
+  aspect-ratio: 16 / 9;
   display: block;
   object-fit: cover;
   object-position: center;
@@ -383,7 +383,6 @@
   .id-summary { max-width: 30ch; font-size: clamp(22px, 5.3vw, 29px); line-height: 1.3; }
   .id-metrics { margin-top: 27px; font-size: 9px; line-height: 1.7; }
   .id-cover { margin: 0; }
-  .id-cover img { aspect-ratio: 3.7 / 1; }
   .id-reading-rail-mobile {
     grid-area: mobile-rail;
     position: sticky;
@@ -457,7 +456,6 @@
   .id-metrics { display: block; }
   .id-metrics span { display: inline; }
   .id-metrics span + span::before { margin: 0 8px; }
-  .id-cover img { aspect-ratio: 3.85 / 1; }
   .id-reading-rail-mobile > button { padding-right: 15px; padding-left: 14px; }
   .id-reading-rail-mobile button > strong { font-size: 18px; }
   .id-natures section { min-height: 146px; padding-right: 17px; }
