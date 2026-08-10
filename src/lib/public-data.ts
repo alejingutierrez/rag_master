@@ -2451,6 +2451,7 @@ export interface EntityPieceRef {
   titulo: string;
   kind: string;
   anio: number | null;
+  periodCode: string | null;
 }
 export interface EntityRelation {
   name: string;
@@ -2536,7 +2537,13 @@ export async function getEntityNode(slug: string, type?: EntityType): Promise<En
 
     const pieceRefs: EntityPieceRef[] = [...index.piecesById.values()]
       .filter((p) => namesOf(p).some((n) => varSlugs.has(slugify(n))))
-      .map((p) => ({ href: p.href, titulo: p.titulo, kind: p.kind, anio: p.anio }))
+      .map((p) => ({
+        href: p.href,
+        titulo: p.titulo,
+        kind: p.kind,
+        anio: p.anio,
+        periodCode: p.periodCode,
+      }))
       .sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es"));
 
     const acc = findPublishedAcc(e, index, reg);
@@ -2573,7 +2580,13 @@ function pieceEntityNode(
   const pieceRefs: EntityPieceRef[] = [...acc.pieceIds]
     .map((id) => piecesById.get(id))
     .filter((p): p is AnchoredPiece => !!p)
-    .map((p) => ({ href: p.href, titulo: p.titulo, kind: p.kind, anio: p.anio }))
+    .map((p) => ({
+      href: p.href,
+      titulo: p.titulo,
+      kind: p.kind,
+      anio: p.anio,
+      periodCode: p.periodCode,
+    }))
     .sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es"));
   return {
     name: canonicalName(acc),

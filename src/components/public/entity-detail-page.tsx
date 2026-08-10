@@ -10,6 +10,7 @@ import { notFound, redirect } from "next/navigation";
 import { TypologyArticle } from "@/components/public/typology-detail";
 import { PersonaDetailArticle } from "@/components/public/personas/persona-detail";
 import { PlaceDetailArticle, PlaceNodeArticle } from "@/components/public/places/place-detail";
+import { IdeaDetailArticle } from "@/components/public/ideas/idea-detail";
 import { EntityConnections, EntityNodeArticle } from "@/components/public/entity-node";
 import { JsonLd } from "@/components/public/json-ld";
 import {
@@ -80,6 +81,13 @@ export async function EntityDetailPage({ slug, type }: { slug: string; type: Ent
         />
       ) : type === "lugar" ? (
         <PlaceDetailArticle
+          detail={detail}
+          node={node}
+          linker={linker}
+          selfKey={selfKey}
+        />
+      ) : type === "idea" ? (
+        <IdeaDetailArticle
           detail={detail}
           node={node}
           linker={linker}
