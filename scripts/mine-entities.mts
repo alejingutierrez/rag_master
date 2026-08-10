@@ -35,6 +35,11 @@ import { dirname, join } from "node:path";
 import { prisma } from "../src/lib/prisma";
 import { slugify } from "../src/lib/typology-schemas";
 import { PERIOD_YEAR_BOUNDS, periodOrderOf } from "../src/lib/taxonomy";
+import {
+  applyPrimaryPeriodOverride,
+  entityPeriodEvidence,
+  selectDenoisedEntityPeriods,
+} from "../src/lib/entity-periods";
 
 type EntityType = "persona" | "lugar" | "idea";
 
@@ -53,6 +58,10 @@ interface Accum {
   variants: Map<string, number>;
   questionIds: Set<string>;
   periodCounts: Map<string, number>;
+  /** Evidencia temporal completa por pregunta. Para ideas incluye el período
+   * principal y `periodosRelacionados`; para personas/lugares conserva solo el
+   * principal para no volver ruidosos sus filtros. */
+  periodEvidenceCounts: Map<string, number>;
   years: number[]; // yearPrincipal de las preguntas donde aparece
   yearsByPeriod: Map<string, number[]>;
 }
@@ -117,6 +126,7 @@ async function main() {
       entidadesLugares: true,
       entidadesConceptos: true,
       periodoCode: true,
+      periodosRelacionados: true,
       yearPrincipal: true,
     },
   });
@@ -136,6 +146,7 @@ async function main() {
         variants: new Map(),
         questionIds: new Set(),
         periodCounts: new Map(),
+        periodEvidenceCounts: new Map(),
         years: [],
         yearsByPeriod: new Map(),
       };
@@ -165,6 +176,17 @@ async function main() {
             arr.push(q.yearPrincipal);
             a.yearsByPeriod.set(q.periodoCode, arr);
           }
+        }
+        for (const code of entityPeriodEvidence(
+          a.type,
+          q.periodoCode,
+          q.periodosRelacionados,
+        )) {
+          if (!code) continue;
+          a.periodEvidenceCounts.set(
+            code,
+            (a.periodEvidenceCounts.get(code) ?? 0) + 1,
+          );
         }
         if (q.yearPrincipal != null) a.years.push(q.yearPrincipal);
       }
@@ -198,13 +220,27 @@ async function main() {
     // uno — en vez de colapsar a la época más frecuente del corpus. Excluye TRANS
     // (no es un período cronológico ni chip del filtro). Top 6 por frecuencia.
     const modeCount = primary && primary !== "TRANS" ? (a.periodCounts.get(primary) ?? 0) : 0;
-    const thresh = Math.max(2, Math.ceil(0.25 * modeCount));
-    const periods = [...a.periodCounts.entries()]
-      .filter(([code, n]) => code !== "TRANS" && (code === primary || n >= thresh))
-      .sort((x, y) => y[1] - x[1])
-      .slice(0, 6)
-      .map(([code]) => code)
-      .sort((x, y) => periodOrderOf(x) - periodOrderOf(y));
+    // Para las ideas, una pregunta puede anclarlas a una época principal y
+    // declarar otras épocas relacionadas. Esa segunda señal antes se perdía por
+    // completo. La incorporamos con el MISMO gate conservador (>=2 preguntas y
+    // >=25% de la moda), sin cambiar cómo se elige la época principal.
+    const periods =
+      a.type === "idea"
+        ? selectDenoisedEntityPeriods({
+            primaryPeriod: primary,
+            primaryCount: modeCount,
+            evidenceCounts: a.periodEvidenceCounts,
+          })
+        : [...a.periodCounts.entries()]
+            .filter(
+              ([code, count]) =>
+                code !== "TRANS" &&
+                (code === primary || count >= Math.max(2, Math.ceil(0.25 * modeCount))),
+            )
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([code]) => code)
+            .sort((a, b) => periodOrderOf(a) - periodOrderOf(b));
 
     // Año representativo: mediana de los años DENTRO de la época primaria (para
     // que año y época sean coherentes); si no hay, inicio del período.
@@ -228,7 +264,7 @@ async function main() {
       variants,
       mentions,
       periodoCode: periodoCode ?? null,
-      periods: periodoCode && !periods.includes(periodoCode) ? [periodoCode, ...periods] : periods,
+      periods: applyPrimaryPeriodOverride(periods, periodoCode),
       periodoOrden: periodoCode ? periodOrderOf(periodoCode) : 99,
       anio: anio ?? null,
     });
