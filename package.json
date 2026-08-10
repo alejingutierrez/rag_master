@@ -9,6 +9,7 @@
     "lint": "eslint",
     "smoke": "tsx scripts/smoke-test.mts",
     "seo:audit:indexability": "tsx scripts/audit-seo-indexability.mts",
+    "audit:idea-periods": "tsx scripts/audit-idea-periods.mts",
     "test": "tsx scripts/test-atelier-units.mts",
     "test:atelier": "tsx scripts/test-atelier-units.mts",
     "test:seo": "tsx scripts/test-seo.mts",

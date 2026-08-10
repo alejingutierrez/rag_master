@@ -885,6 +885,9 @@ export interface AnchoredPiece {
   cardMeta: string | null;
   entidadTipo: string | null; // Persona|Lugar|Concepto|Institución (solo fichas de entidad)
   entidadSlug: string | null; // slug de la ficha de entidad, si aplica
+  /** Nombre canónico resuelto por `sourceRef`; evita que el título editorial de
+   * una ficha cree una segunda entidad pública. */
+  entidadNombre: string | null;
   /** Roles editoriales de una ficha de entidad. Se conservan para derivar
    *  facetas públicas (por ejemplo ciudad/región/río) sin reenviar el JSON
    *  estructurado completo al cliente. */
@@ -995,26 +998,48 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
         : null;
     const structuredEntityType =
       s?.typology === "entidad" ? entityTypeFromTipo(s.tipo) : null;
+    const sourceRefEntityParts =
+      sourceRef?.kind === "entidad" && sourceRef.key.includes(":")
+        ? {
+            type: sourceEntityType(sourceRef.key.slice(0, sourceRef.key.indexOf(":"))),
+            slug: sourceRef.key.slice(sourceRef.key.indexOf(":") + 1),
+          }
+        : null;
+    // `sourceRef` identifica el registro desde el que se produjo la pieza. Se
+    // intenta primero su tipo declarado y luego el alias canónico: las fichas
+    // antiguas incluyen casos como `person:anuc`, hoy curado como institución.
+    const sourceRefDirectKey =
+      sourceRefEntityParts?.type && sourceRefEntityParts.slug
+        ? entityKey(sourceRefEntityParts.type, sourceRefEntityParts.slug)
+        : null;
+    const sourceRefAliasKey = sourceRefEntityParts?.slug
+      ? registry.variantSlugToKey.get(sourceRefEntityParts.slug) ?? null
+      : null;
     const structuredEntityKey =
       s?.typology === "entidad"
         ? registry.variantSlugToKey.get(s.slug) ??
           entityKey(structuredEntityType!, s.slug)
         : null;
-    const canonicalStructuredEntity = structuredEntityKey
-      ? registry.byKey.get(structuredEntityKey)
-      : undefined;
+    const canonicalStructuredEntity =
+      (sourceRefDirectKey ? registry.byKey.get(sourceRefDirectKey) : undefined) ??
+      (sourceRefAliasKey ? registry.byKey.get(sourceRefAliasKey) : undefined) ??
+      (structuredEntityKey ? registry.byKey.get(structuredEntityKey) : undefined);
+    const resolvedEntityType =
+      canonicalStructuredEntity?.type ?? sourceRefEntityParts?.type ?? structuredEntityType;
     const canonicalEntitySlug =
       canonicalStructuredEntity &&
-      (!structuredEntityType || canonicalStructuredEntity.type === structuredEntityType)
+      (!resolvedEntityType || canonicalStructuredEntity.type === resolvedEntityType)
         ? canonicalStructuredEntity.slug
+        : sourceRefEntityParts?.type === resolvedEntityType && sourceRefEntityParts.slug
+          ? sourceRefEntityParts.slug
         : s?.typology === "entidad"
           ? s.slug
           : null;
     out.push({
       id: r.id,
       href:
-        s?.typology === "entidad" && canonicalEntitySlug
-          ? entityPath(entityTypeFromTipo(s.tipo), canonicalEntitySlug)
+        s?.typology === "entidad" && canonicalEntitySlug && resolvedEntityType
+          ? entityPath(resolvedEntityType, canonicalEntitySlug)
           : s
             ? typologyPath(s)
             : `/ensayos/${r.id}`,
@@ -1032,8 +1057,21 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       ideas: anchor.ideas,
       slug: s?.slug ?? "",
       cardMeta: s ? cardMeta(s, anchor) : null,
-      entidadTipo: s?.typology === "entidad" ? s.tipo : null,
+      entidadTipo:
+        s?.typology !== "entidad" || !resolvedEntityType
+          ? null
+          : resolvedEntityType === "persona"
+            ? "Persona"
+            : resolvedEntityType === "lugar"
+              ? "Lugar"
+              : s.tipo === "Institución"
+                ? "Institución"
+                : "Concepto",
       entidadSlug: canonicalEntitySlug,
+      entidadNombre:
+        s?.typology === "entidad"
+          ? canonicalStructuredEntity?.name ?? s.titulo
+          : null,
       entityRoles: s?.typology === "entidad" ? s.roles : [],
       lugarPrincipal: s?.lugarPrincipal ?? null,
       lat: s?.lat ?? null,
@@ -1323,11 +1361,9 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
       for (const p of pieces) {
         if (p.kind === "entidad" && p.entidadTipo) {
           const t = entityTypeFromTipo(p.entidadTipo);
-          // La identidad estructurada es la única que hereda coordenadas/roles.
-          // El título también se marca como alias dedicado, pero no duplica el
-          // mismo punto en dos entradas del directorio (Cali/Santiago de Cali).
-          if (p.entidadSlug) markDedicated(t, p.entidadSlug, p, true);
-          markDedicated(t, slugify(p.titulo), p);
+          // La identidad reconciliada es la única que hereda coordenadas/roles.
+          // El título editorial puede ser más largo y no crea otro nodo.
+          markDedicated(t, p.entidadSlug ?? slugify(p.titulo), p, true);
         }
         if (p.sourceRef?.kind === "entidad") {
           const i = p.sourceRef.key.indexOf(":");
@@ -1725,7 +1761,7 @@ export function buildEntityIndex(pieces: AnchoredPiece[]): EntityIndex {
     }
     // La ficha de entidad enriquece su propio nodo.
     if (p.kind === "entidad" && p.entidadTipo) {
-      const acc = upsert(entityTypeFromTipo(p.entidadTipo), p.titulo);
+      const acc = upsert(entityTypeFromTipo(p.entidadTipo), p.entidadNombre ?? p.titulo);
       if (acc) {
         acc.hasFicha = true;
         acc.resumen = p.resumen || acc.resumen;
@@ -1748,6 +1784,10 @@ export interface PublicEntity {
   mentions: number;
   /** Prominencia histórica dentro del corpus completo de preguntas. */
   corpusMentions: number;
+  /** Época hogar/canónica. No se infiere en el cliente. */
+  primaryPeriod: string | null;
+  /** Épocas relacionadas depuradas, sin repetir la principal. */
+  secondaryPeriods: string[];
   periods: string[];
   periodoOrden: number;
   anio: number | null;
@@ -1893,6 +1933,7 @@ function registryToPublic(
 ): PublicEntity {
   const acc = findPublishedAcc(e, index, reg);
   const ded = dedicatedInfo ? findDedicatedInfo(e, dedicatedInfo, reg) : null;
+  const periods = e.type === "persona" ? (e.periodoCode ? [e.periodoCode] : []) : e.periods;
   return {
     name: e.name,
     slug: e.slug,
@@ -1904,7 +1945,9 @@ function registryToPublic(
     // curada por overrides/clasificador) — y no debe filtrarse en varias. Los
     // lugares/ideas transversales (Bogotá, el liberalismo) sí conservan sus
     // períodos y siguen filtrando en cada uno donde son relevantes.
-    periods: e.type === "persona" ? (e.periodoCode ? [e.periodoCode] : []) : e.periods,
+    primaryPeriod: e.periodoCode,
+    secondaryPeriods: periods.filter((period) => period !== e.periodoCode),
+    periods,
     periodoOrden: e.periodoOrden,
     anio: e.anio,
     hasFicha: acc?.hasFicha ?? false,
@@ -1999,6 +2042,8 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
       const homePeriod = unclassifiedPersona
         ? null
         : dedicated?.periodCode ?? [...acc.periods][0] ?? null;
+      const fallbackPeriods =
+        type === "persona" ? (homePeriod ? [homePeriod] : []) : [...acc.periods];
       list.push({
         name: canonicalName(acc),
         slug: acc.slug,
@@ -2009,7 +2054,9 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
         // Una ficha publicada que el registro curado excluyó sigue siendo legible
         // y permanece en el directorio completo, pero no hereda épocas ruidosas de
         // las piezas donde se la menciona: queda transversal hasta nueva curación.
-        periods: type === "persona" ? (homePeriod ? [homePeriod] : []) : [...acc.periods],
+        primaryPeriod: homePeriod,
+        secondaryPeriods: fallbackPeriods.filter((period) => period !== homePeriod),
+        periods: fallbackPeriods,
         periodoOrden: type === "persona" ? periodRank(homePeriod) : acc.periodoOrden,
         anio: dedicated?.anio ?? acc.anio,
         hasFicha: true,
@@ -2076,6 +2123,10 @@ export async function getPeriodEntityUniverse(type: EntityType, periodCode: stri
         href: entityPath(acc.type, acc.slug),
         mentions: acc.pieceIds.size,
         corpusMentions: 0,
+        primaryPeriod: dedicatedInfo.get(acc.key)?.periodCode ?? [...acc.periods][0] ?? null,
+        secondaryPeriods: [...acc.periods].filter(
+          (period) => period !== (dedicatedInfo.get(acc.key)?.periodCode ?? [...acc.periods][0] ?? null),
+        ),
         periods: [...acc.periods],
         periodoOrden: acc.periodoOrden,
         anio: acc.anio,
@@ -2441,6 +2492,8 @@ function pieceEntityNode(
     href: entityPath(acc.type, acc.slug),
     mentions: acc.pieceIds.size,
     corpusMentions: 0,
+    primaryPeriod: [...acc.periods][0] ?? null,
+    secondaryPeriods: [...acc.periods].slice(1),
     periods: [...acc.periods],
     periodoOrden: acc.periodoOrden,
     anio: acc.anio,

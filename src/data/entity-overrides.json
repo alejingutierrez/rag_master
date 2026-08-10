@@ -22286,5 +22286,53 @@
  },
  "idea:calendario-muisca": {
   "periodoCode": "PRE"
+ },
+ "idea:el-bogotazo": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Bogotazo\""
+ },
+ "idea:desamortizacion-de-bienes-de-manos-muertas": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Desamortización\""
+ },
+ "idea:centro-nacional-de-memoria-historica-cnmh": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Memoria histórica\""
+ },
+ "idea:reforma-agraria-en-colombia": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Reforma agraria\""
+ },
+ "idea:resguardo-indigena-en-colombia": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Resguardo\""
+ },
+ "idea:paramilitarismo-en-colombia": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Paramilitarismo\""
+ },
+ "idea:extradicion-en-colombia": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Extradición\""
+ },
+ "idea:la-regeneracion": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Regeneración\""
+ },
+ "idea:anuc-asociacion-nacional-de-usuarios-campesinos": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"ANUC\""
+ },
+ "idea:bandas-criminales-bacrim": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Bandas criminales\""
+ },
+ "lugar:roma-en-la-historia-de-colombia": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Roma\""
+ },
+ "lugar:argentina-en-la-historia-de-colombia": {
+  "hide": true,
+  "_motivo": "QA: duplicado de \"Argentina\""
  }
 }

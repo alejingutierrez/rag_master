@@ -74,6 +74,11 @@ import {
   type ReferenceCandidate,
 } from "../src/lib/atelier/reference-search";
 import { validateEntitySourceContract } from "../src/lib/entity-source-contract";
+import {
+  applyPrimaryPeriodOverride,
+  entityPeriodEvidence,
+  selectDenoisedEntityPeriods,
+} from "../src/lib/entity-periods";
 import type { StructuredData } from "../src/lib/typology-schemas";
 import type { SearchResult } from "../src/lib/vector-search";
 import type { VerifiedClaim, AtelierBrief } from "../src/lib/atelier/types";
@@ -951,6 +956,38 @@ test("el contrato permite completar el nombre formal de la misma persona", () =>
     },
   );
   assert.equal(result.ok, true);
+});
+
+group("Épocas principales y secundarias de ideas");
+
+test("una idea incorpora los períodos relacionados de la pregunta sin duplicarlos", () => {
+  assert.deepEqual(
+    entityPeriodEvidence("idea", "FN", ["CNA", "FN", "C91"]),
+    ["FN", "CNA", "C91"],
+  );
+  assert.deepEqual(entityPeriodEvidence("persona", "FN", ["CNA", "C91"]), ["FN"]);
+});
+
+test("las épocas secundarias requieren evidencia repetida y proporcional", () => {
+  const periods = selectDenoisedEntityPeriods({
+    primaryPeriod: "FN",
+    primaryCount: 20,
+    evidenceCounts: new Map([
+      ["FN", 20],
+      ["VIO", 8],
+      ["CNA", 5],
+      ["C91", 4],
+      ["TRANS", 100],
+    ]),
+  });
+  assert.deepEqual(periods, ["VIO", "FN", "CNA"]);
+});
+
+test("un override conserva la principal y limita el conjunto a seis épocas", () => {
+  assert.deepEqual(
+    applyPrimaryPeriodOverride(["PRE", "CON", "COL", "IND", "NGR", "EUC"], "FN"),
+    ["PRE", "CON", "COL", "IND", "NGR", "FN"],
+  );
 });
 
 test("el director de arte recibe acentos recientes para no repetir la serie", () => {
