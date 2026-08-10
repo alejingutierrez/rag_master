@@ -964,6 +964,79 @@ interface AnchoredRow {
   pregunta: string | null;
 }
 
+type PublishedSourceRef = { kind: string; key: string } | null;
+
+function publishedSourceRef(value: { kind?: unknown; key?: unknown } | null): PublishedSourceRef {
+  return value && typeof value.kind === "string" && typeof value.key === "string"
+    ? { kind: value.kind, key: value.key }
+    : null;
+}
+
+/**
+ * Identidad canónica de una ficha publicada. `sourceRef` es el contrato de la
+ * producción y prevalece sobre el slug histórico guardado en structuredData.
+ * Así directorios, detalles y sitemap resuelven exactamente la misma ruta.
+ */
+function resolvePublishedEntityIdentity(
+  structured: StructuredData,
+  sourceRef: PublishedSourceRef,
+  registry: EntityRegistry,
+): { type: EntityType; slug: string; name: string } | null {
+  if (structured.typology !== "entidad") return null;
+  const structuredType = entityTypeFromTipo(structured.tipo);
+  const sourceRefParts =
+    sourceRef?.kind === "entidad" && sourceRef.key.includes(":")
+      ? {
+          type: sourceEntityType(sourceRef.key.slice(0, sourceRef.key.indexOf(":"))),
+          slug: sourceRef.key.slice(sourceRef.key.indexOf(":") + 1),
+        }
+      : null;
+  const sourceRefDirectKey =
+    sourceRefParts?.type && sourceRefParts.slug
+      ? entityKey(sourceRefParts.type, sourceRefParts.slug)
+      : null;
+  const sourceRefAliasKey = sourceRefParts?.slug
+    ? registry.variantSlugToKey.get(sourceRefParts.slug) ?? null
+    : null;
+  const structuredKey =
+    registry.variantSlugToKey.get(structured.slug) ??
+    entityKey(structuredType, structured.slug);
+  const canonicalEntity =
+    (sourceRefDirectKey ? registry.byKey.get(sourceRefDirectKey) : undefined) ??
+    (sourceRefAliasKey ? registry.byKey.get(sourceRefAliasKey) : undefined) ??
+    registry.byKey.get(structuredKey);
+  const type = canonicalEntity?.type ?? sourceRefParts?.type ?? structuredType;
+  const slug =
+    canonicalEntity && canonicalEntity.type === type
+      ? canonicalEntity.slug
+      : sourceRefParts?.type === type && sourceRefParts.slug
+        ? sourceRefParts.slug
+        : structured.slug;
+  return { type, slug, name: canonicalEntity?.name ?? structured.titulo };
+}
+
+function isHiddenEntityIdentity(
+  type: EntityType,
+  slug: string,
+  registry: EntityRegistry,
+): boolean {
+  const directKey = entityKey(type, slug);
+  const canonicalKey = registry.variantSlugToKey.get(slug);
+  return (
+    registry.hiddenKeys.has(directKey) ||
+    (!!canonicalKey && registry.hiddenKeys.has(canonicalKey))
+  );
+}
+
+function isHiddenEntityPiece(piece: AnchoredPiece, registry: EntityRegistry): boolean {
+  if (piece.kind !== "entidad" || !piece.entidadTipo || !piece.entidadSlug) return false;
+  return isHiddenEntityIdentity(
+    entityTypeFromTipo(piece.entidadTipo),
+    piece.entidadSlug,
+    registry,
+  );
+}
+
 /**
  * Carga todas las piezas publicadas con su ancla resuelta. Base de la wikización.
  *
@@ -1015,55 +1088,13 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       fallbackPeriodo: r.periodoCode ?? undefined,
       fallbackYear: r.yearPrincipal ?? undefined,
     });
-    const rawRef = r.sourceRef ?? undefined;
-    const sourceRef =
-      rawRef && typeof rawRef.kind === "string" && typeof rawRef.key === "string"
-        ? { kind: rawRef.kind, key: rawRef.key }
-        : null;
-    const structuredEntityType =
-      s?.typology === "entidad" ? entityTypeFromTipo(s.tipo) : null;
-    const sourceRefEntityParts =
-      sourceRef?.kind === "entidad" && sourceRef.key.includes(":")
-        ? {
-            type: sourceEntityType(sourceRef.key.slice(0, sourceRef.key.indexOf(":"))),
-            slug: sourceRef.key.slice(sourceRef.key.indexOf(":") + 1),
-          }
-        : null;
-    // `sourceRef` identifica el registro desde el que se produjo la pieza. Se
-    // intenta primero su tipo declarado y luego el alias canónico: las fichas
-    // antiguas incluyen casos como `person:anuc`, hoy curado como institución.
-    const sourceRefDirectKey =
-      sourceRefEntityParts?.type && sourceRefEntityParts.slug
-        ? entityKey(sourceRefEntityParts.type, sourceRefEntityParts.slug)
-        : null;
-    const sourceRefAliasKey = sourceRefEntityParts?.slug
-      ? registry.variantSlugToKey.get(sourceRefEntityParts.slug) ?? null
-      : null;
-    const structuredEntityKey =
-      s?.typology === "entidad"
-        ? registry.variantSlugToKey.get(s.slug) ??
-          entityKey(structuredEntityType!, s.slug)
-        : null;
-    const canonicalStructuredEntity =
-      (sourceRefDirectKey ? registry.byKey.get(sourceRefDirectKey) : undefined) ??
-      (sourceRefAliasKey ? registry.byKey.get(sourceRefAliasKey) : undefined) ??
-      (structuredEntityKey ? registry.byKey.get(structuredEntityKey) : undefined);
-    const resolvedEntityType =
-      canonicalStructuredEntity?.type ?? sourceRefEntityParts?.type ?? structuredEntityType;
-    const canonicalEntitySlug =
-      canonicalStructuredEntity &&
-      (!resolvedEntityType || canonicalStructuredEntity.type === resolvedEntityType)
-        ? canonicalStructuredEntity.slug
-        : sourceRefEntityParts?.type === resolvedEntityType && sourceRefEntityParts.slug
-          ? sourceRefEntityParts.slug
-        : s?.typology === "entidad"
-          ? s.slug
-          : null;
+    const sourceRef = publishedSourceRef(r.sourceRef);
+    const entityIdentity = s ? resolvePublishedEntityIdentity(s, sourceRef, registry) : null;
     out.push({
       id: r.id,
       href:
-        s?.typology === "entidad" && canonicalEntitySlug && resolvedEntityType
-          ? entityPath(resolvedEntityType, canonicalEntitySlug)
+        entityIdentity
+          ? entityPath(entityIdentity.type, entityIdentity.slug)
           : s
             ? typologyPath(s)
             : `/ensayos/${r.id}`,
@@ -1082,20 +1113,17 @@ async function loadAnchoredPieces(): Promise<AnchoredPiece[]> {
       slug: s?.slug ?? "",
       cardMeta: s ? cardMeta(s, anchor) : null,
       entidadTipo:
-        s?.typology !== "entidad" || !resolvedEntityType
+        !entityIdentity
           ? null
-          : resolvedEntityType === "persona"
+          : entityIdentity.type === "persona"
             ? "Persona"
-            : resolvedEntityType === "lugar"
+            : entityIdentity.type === "lugar"
               ? "Lugar"
-              : s.tipo === "Institución"
+              : s?.typology === "entidad" && s.tipo === "Institución"
                 ? "Institución"
                 : "Concepto",
-      entidadSlug: canonicalEntitySlug,
-      entidadNombre:
-        s?.typology === "entidad"
-          ? canonicalStructuredEntity?.name ?? s.titulo
-          : null,
+      entidadSlug: entityIdentity?.slug ?? null,
+      entidadNombre: entityIdentity?.name ?? null,
       entityRoles: s?.typology === "entidad" ? s.roles : [],
       lugarPrincipal: s?.lugarPrincipal ?? null,
       lat: s?.lat ?? null,
@@ -2057,6 +2085,7 @@ function relatedFromAcc(
       // pueden convertirse en enlace.
       if (reg && registryEntity && registryEntity.type !== o.type) continue;
       if (reg && !registryEntity && !o.hasFicha) continue;
+      if (reg && isHiddenEntityIdentity(o.type, o.slug, reg)) continue;
       const slug = entity?.slug ?? o.slug;
       // Pasa el gate como todo lo demás: la co-ocurrencia detecta a cualquier
       // entidad nombrada, pero solo se enlaza la que tiene artículo propio. Sin
@@ -2104,7 +2133,13 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
     const list: PublicEntity[] = [];
     const representedAccs = new Set<string>();
     for (const e of reg.entities) {
-      if (e.type !== type || !isDedicatedEntity(e, ded, reg)) continue;
+      if (
+        e.type !== type ||
+        isHiddenEntityIdentity(e.type, e.slug, reg) ||
+        !isDedicatedEntity(e, ded, reg)
+      ) {
+        continue;
+      }
       list.push(registryToPublic(e, index, reg, dedicatedInfo));
       for (const slug of entitySurfaceSlugs(e, reg)) {
         const acc = index.byKey.get(entityKey(e.type, slug));
@@ -2115,12 +2150,16 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
     // histórico (p. ej. José Prudencio Padilla vs. José Padilla). No se pierde:
     // entra como nodo dedicado aun cuando no haya variante canónica todavía.
     for (const acc of index.byKey.values()) {
-      if (acc.type !== type || !acc.hasFicha || representedAccs.has(acc.key)) continue;
+      if (
+        acc.type !== type ||
+        !acc.hasFicha ||
+        representedAccs.has(acc.key) ||
+        isHiddenEntityIdentity(acc.type, acc.slug, reg)
+      ) {
+        continue;
+      }
       const dedicated = dedicatedInfo.get(acc.key);
-      const unclassifiedPersona = type === "persona" && reg.hiddenKeys.has(acc.key);
-      const homePeriod = unclassifiedPersona
-        ? null
-        : dedicated?.periodCode ?? [...acc.periods][0] ?? null;
+      const homePeriod = dedicated?.periodCode ?? [...acc.periods][0] ?? null;
       const fallbackPeriods =
         type === "persona" ? (homePeriod ? [homePeriod] : []) : [...acc.periods];
       list.push({
@@ -2130,9 +2169,6 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
         href: entityPath(acc.type, acc.slug),
         mentions: acc.pieceIds.size,
         corpusMentions: 0,
-        // Una ficha publicada que el registro curado excluyó sigue siendo legible
-        // y permanece en el directorio completo, pero no hereda épocas ruidosas de
-        // las piezas donde se la menciona: queda transversal hasta nueva curación.
         primaryPeriod: homePeriod,
         secondaryPeriods: fallbackPeriods.filter((period) => period !== homePeriod),
         periods: fallbackPeriods,
@@ -2499,6 +2535,7 @@ export async function getEntityNode(slug: string, type?: EntityType): Promise<En
         reg,
       );
     }
+    if (isHiddenEntityIdentity(e.type, e.slug, reg)) return null;
 
     // La RUTA existe solo si la entidad tiene su propia pieza publicada. Antes
     // bastaba una mención, lo que abría miles de páginas casi vacías que además
@@ -2536,6 +2573,7 @@ export async function getEntityNode(slug: string, type?: EntityType): Promise<En
 
     const pieceRefs: EntityPieceRef[] = [...index.piecesById.values()]
       .filter((p) => namesOf(p).some((n) => varSlugs.has(slugify(n))))
+      .filter((p) => !isHiddenEntityPiece(p, reg))
       .map((p) => ({ href: p.href, titulo: p.titulo, kind: p.kind, anio: p.anio }))
       .sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es"));
 
@@ -2573,6 +2611,7 @@ function pieceEntityNode(
   const pieceRefs: EntityPieceRef[] = [...acc.pieceIds]
     .map((id) => piecesById.get(id))
     .filter((p): p is AnchoredPiece => !!p)
+    .filter((p) => !reg || !isHiddenEntityPiece(p, reg))
     .map((p) => ({ href: p.href, titulo: p.titulo, kind: p.kind, anio: p.anio }))
     .sort((a, b) => (a.anio ?? 9999) - (b.anio ?? 9999) || a.titulo.localeCompare(b.titulo, "es"));
   return {
@@ -2725,6 +2764,13 @@ export interface SitemapEntry {
   lastModified: Date;
 }
 
+interface SitemapRow {
+  id: string;
+  structuredData: unknown;
+  updatedAt: Date;
+  sourceRef: { kind?: unknown; key?: unknown } | null;
+}
+
 /**
  * Paths + lastModified de todo lo indexable. Las fichas de entidad pasan por el
  * registro canónico para que ningún alias que redirige termine en el sitemap.
@@ -2734,14 +2780,20 @@ export interface SitemapEntry {
  */
 export async function getSitemapEntries(): Promise<SitemapEntry[]> {
   try {
-    const [rows, registry, published] = await Promise.all([
-      prisma.deliverable.findMany({
-        where: PUBLISHED_WHERE,
-        orderBy: { publishedAt: "desc" },
-        select: { id: true, structuredData: true, updatedAt: true },
-      }),
+    const [rows, registry] = await Promise.all([
+      prisma.$queryRaw<SitemapRow[]>`
+        SELECT
+          d.id,
+          d."structuredData",
+          d."updatedAt",
+          d.metadata -> 'sourceRef' AS "sourceRef"
+        FROM deliverables d
+        WHERE d.status = 'COMPLETE'
+          AND d.source IN ('atelier', 'master')
+          AND d."publishedAt" IS NOT NULL
+        ORDER BY d."publishedAt" DESC
+      `,
       loadEntityRegistry(),
-      getPublishedEntityData(),
     ]);
     const seen = new Set<string>();
     const entries: SitemapEntry[] = [];
@@ -2758,14 +2810,14 @@ export async function getSitemapEntries(): Promise<SitemapEntry[]> {
         continue;
       }
       if (s.typology === "entidad") {
-        const type = entityTypeFromTipo(s.tipo);
-        const publishedCanonical = published.aliasToCanonical.get(entityKey(type, s.slug));
-        const resolvedSlug = publishedCanonical ?? s.slug;
-        const key =
-          registry.variantSlugToKey.get(resolvedSlug) ?? entityKey(type, resolvedSlug);
-        const entity = registry.byKey.get(key);
-        const canonicalSlug = entity?.type === type ? entity.slug : resolvedSlug;
-        push(entityPath(type, canonicalSlug), r.updatedAt);
+        const identity = resolvePublishedEntityIdentity(
+          s,
+          publishedSourceRef(r.sourceRef),
+          registry,
+        );
+        if (identity && !isHiddenEntityIdentity(identity.type, identity.slug, registry)) {
+          push(entityPath(identity.type, identity.slug), r.updatedAt);
+        }
         continue;
       }
       push(typologyPath(s), r.updatedAt);

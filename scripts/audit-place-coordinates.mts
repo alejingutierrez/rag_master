@@ -109,11 +109,26 @@ async function main(): Promise<void> {
   }
 
   if (BASE_URL) {
-    const response = await fetch(`${BASE_URL}/lugares`);
+    const [response, sitemapResponse] = await Promise.all([
+      fetch(`${BASE_URL}/lugares`),
+      fetch(`${BASE_URL}/sitemap.xml`),
+    ]);
     const html = await response.text();
+    const sitemap = await sitemapResponse.text();
     const publicSlugs = [
       ...new Set([...html.matchAll(/href="\/lugares\/([^"?#]+)"/g)].map((match) => match[1])),
     ].sort();
+    const sitemapSlugs = [
+      ...new Set(
+        [...sitemap.matchAll(/<loc>[^<]*\/lugares\/([^<]+)<\/loc>/g)].map((match) =>
+          decodeURIComponent(match[1]),
+        ),
+      ),
+    ].sort();
+    const publicSlugSet = new Set(publicSlugs);
+    const sitemapSlugSet = new Set(sitemapSlugs);
+    const extraSitemapSlugs = sitemapSlugs.filter((slug) => !publicSlugSet.has(slug));
+    const missingSitemapSlugs = publicSlugs.filter((slug) => !sitemapSlugSet.has(slug));
     const withCoordinates = Number(
       html.match(/([0-9]+)<!-- --> con coordenadas/)?.[1] ?? Number.NaN,
     );
@@ -125,14 +140,25 @@ async function main(): Promise<void> {
       publicRoutes: publicSlugs.length,
       directoryWithCoordinates: withCoordinates,
       directoryWithoutCoordinates: withoutCoordinates,
+      sitemapStatus: sitemapResponse.status,
+      sitemapPlaceRoutes: sitemapSlugs.length,
+      extraSitemapSlugs,
+      missingSitemapSlugs,
     });
     if (!response.ok) failures.push(`/lugares respondió ${response.status}`);
+    if (!sitemapResponse.ok) failures.push(`/sitemap.xml respondió ${sitemapResponse.status}`);
     if (withoutCoordinates !== 0) failures.push(`El directorio declara ${withoutCoordinates} sin coordenadas`);
     if (withCoordinates !== publicSlugs.length) {
       failures.push(`El directorio declara ${withCoordinates}/${publicSlugs.length} con coordenadas`);
     }
     if (publicSlugs.length !== canonicalSlugs.size) {
       failures.push(`Rutas públicas ${publicSlugs.length} != slugs canónicos ${canonicalSlugs.size}`);
+    }
+    if (extraSitemapSlugs.length) {
+      failures.push(`Aliases obsoletos en sitemap: ${extraSitemapSlugs.join(", ")}`);
+    }
+    if (missingSitemapSlugs.length) {
+      failures.push(`Rutas canónicas ausentes del sitemap: ${missingSitemapSlugs.join(", ")}`);
     }
     if (CHECK_ROUTES) {
       const statuses = await mapLimit(publicSlugs, 10, async (slug) => {
