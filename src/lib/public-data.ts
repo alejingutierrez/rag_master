@@ -443,18 +443,42 @@ export async function getTypologyDetail(
     let canonicalSlug = slug;
     let candidateSlugs = [slug];
     if (typology === "entidad") {
-      const reg = await loadEntityRegistry();
-      const direct = entityType ? reg.byKey.get(entityKey(entityType, slug)) : undefined;
-      const viaAliasKey = reg.variantSlugToKey.get(slug);
+      const [reg, published] = await Promise.all([
+        loadEntityRegistry(),
+        getPublishedEntityData(),
+      ]);
+      const publishedCanonical = entityType
+        ? published.aliasToCanonical.get(entityKey(entityType, slug))
+        : undefined;
+      const resolvedSlug = publishedCanonical ?? slug;
+      const direct = entityType
+        ? reg.byKey.get(entityKey(entityType, resolvedSlug))
+        : undefined;
+      const viaAliasKey = reg.variantSlugToKey.get(resolvedSlug);
       const viaAlias = viaAliasKey ? reg.byKey.get(viaAliasKey) : undefined;
       const entity =
         direct ??
         (viaAlias && (!entityType || viaAlias.type === entityType) ? viaAlias : undefined);
+      const candidates = new Set([slug, resolvedSlug]);
       if (entity) {
         const key = entityKey(entity.type, entity.slug);
         canonicalSlug = entity.slug;
-        candidateSlugs = [...(reg.slugsByKey.get(key) ?? new Set([entity.slug]))];
+        for (const candidate of reg.slugsByKey.get(key) ?? [entity.slug]) {
+          candidates.add(candidate);
+        }
+        for (const candidate of published.sourceSlugsByCanonical.get(key) ?? []) {
+          candidates.add(candidate);
+        }
+      } else {
+        canonicalSlug = resolvedSlug;
+        if (entityType) {
+          const key = entityKey(entityType, canonicalSlug);
+          for (const candidate of published.sourceSlugsByCanonical.get(key) ?? []) {
+            candidates.add(candidate);
+          }
+        }
       }
+      candidateSlugs = [...candidates];
     }
     const d = await prisma.deliverable.findFirst({
       where: {
@@ -1292,6 +1316,12 @@ interface PublishedEntityData {
    *  la entidad en los índices, incluso cuando la pieza llegó por `sourceRef` y no
    *  es una ficha de entidad (y por tanto no está en el acc del índice). */
   dedicatedInfo: Map<string, DedicatedEntityInfo>;
+  /** Slug editorial o de título → slug estable declarado por `sourceRef`.
+   *  Mantiene resolubles las URLs antiguas sin volver a crear nodos duplicados. */
+  aliasToCanonical: Map<string, string>;
+  /** `${type}:${slug canónico}` → slugs físicos de sus fichas publicadas. Permite
+   *  recuperar el detalle aunque el JSON estructurado conserve un slug antiguo. */
+  sourceSlugsByCanonical: Map<string, Set<string>>;
 }
 let pubEntityCache: { data: PublishedEntityData; at: number } | null = null;
 let pubEntityLoad: Promise<PublishedEntityData> | null = null;
@@ -1316,6 +1346,25 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
         idea: new Set(),
       };
       const dedicatedInfo = new Map<string, DedicatedEntityInfo>();
+      const aliasToCanonical = new Map<string, string>();
+      const sourceSlugsByCanonical = new Map<string, Set<string>>();
+      const registerPublishedAlias = (
+        type: EntityType,
+        canonicalSlug: string,
+        sourceSlugs: Iterable<string>,
+      ) => {
+        if (!canonicalSlug) return;
+        const canonicalKey = entityKey(type, canonicalSlug);
+        const slugs = sourceSlugsByCanonical.get(canonicalKey) ?? new Set<string>();
+        slugs.add(canonicalSlug);
+        aliasToCanonical.set(canonicalKey, canonicalSlug);
+        for (const sourceSlug of sourceSlugs) {
+          if (!sourceSlug) continue;
+          slugs.add(sourceSlug);
+          aliasToCanonical.set(entityKey(type, sourceSlug), canonicalSlug);
+        }
+        sourceSlugsByCanonical.set(canonicalKey, slugs);
+      };
       const markDedicated = (
         t: EntityType,
         slug: string,
@@ -1363,7 +1412,13 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
           const t = entityTypeFromTipo(p.entidadTipo);
           // La identidad reconciliada es la única que hereda coordenadas/roles.
           // El título editorial puede ser más largo y no crea otro nodo.
-          markDedicated(t, p.entidadSlug ?? slugify(p.titulo), p, true);
+          const canonicalSlug = p.entidadSlug ?? slugify(p.entidadNombre ?? p.titulo);
+          markDedicated(t, canonicalSlug, p, true);
+          registerPublishedAlias(t, canonicalSlug, [
+            p.slug,
+            slugify(p.titulo),
+            slugify(p.entidadNombre ?? ""),
+          ]);
         }
         if (p.sourceRef?.kind === "entidad") {
           const i = p.sourceRef.key.indexOf(":");
@@ -1378,6 +1433,8 @@ async function getPublishedEntityData(): Promise<PublishedEntityData> {
         index,
         dedicatedSlugs,
         dedicatedInfo,
+        aliasToCanonical,
+        sourceSlugsByCanonical,
       };
       pubEntityCache = { data, at: Date.now() };
       return data;
@@ -1703,10 +1760,14 @@ export function buildEntityIndex(pieces: AnchoredPiece[]): EntityIndex {
   const byKey = new Map<string, EntityAccum>();
   const piecesById = new Map<string, AnchoredPiece>();
 
-  const upsert = (type: EntityType, rawName: string): EntityAccum | null => {
+  const upsert = (
+    type: EntityType,
+    rawName: string,
+    forcedSlug?: string | null,
+  ): EntityAccum | null => {
     const name = rawName.trim();
     if (!name) return null;
-    const slug = slugify(name);
+    const slug = forcedSlug || slugify(name);
     if (!slug) return null;
     const key = `${type}:${slug}`;
     let acc = byKey.get(key);
@@ -1752,22 +1813,40 @@ export function buildEntityIndex(pieces: AnchoredPiece[]): EntityIndex {
         ents.push(acc);
       }
     }
-    // Co-ocurrencia: todo par de entidades de la misma pieza se relaciona.
-    for (const a of ents) {
-      for (const b of ents) {
-        if (a.key === b.key) continue;
-        a.related.set(b.key, (a.related.get(b.key) ?? 0) + 1);
-      }
-    }
     // La ficha de entidad enriquece su propio nodo.
     if (p.kind === "entidad" && p.entidadTipo) {
-      const acc = upsert(entityTypeFromTipo(p.entidadTipo), p.entidadNombre ?? p.titulo);
+      const type = entityTypeFromTipo(p.entidadTipo);
+      const name = p.entidadNombre ?? p.titulo;
+      const canonicalSlug = p.entidadSlug ?? slugify(name);
+      const acc = upsert(type, name, canonicalSlug);
       if (acc) {
+        // La ficha debe vivir bajo el slug estable de `sourceRef`, incluso si el
+        // título editorial añadió apellidos, fechas o aclaraciones. Se sustituye
+        // su representación nominal dentro de esta pieza para no relacionar la
+        // entidad consigo misma como si fueran dos nodos distintos.
+        const selfSlugs = new Set([slugify(p.titulo), slugify(name)]);
+        const others = ents.filter(
+          (entity) => entity.key === acc.key || entity.type !== type || !selfSlugs.has(entity.slug),
+        );
+        ents.length = 0;
+        ents.push(...others);
+        if (!ents.some((entity) => entity.key === acc.key)) ents.push(acc);
+        acc.pieceIds.add(p.id);
+        if (p.periodCode) acc.periods.add(p.periodCode);
+        if (p.periodoOrden < acc.periodoOrden) acc.periodoOrden = p.periodoOrden;
+        if (p.anio != null && (acc.anio == null || p.anio < acc.anio)) acc.anio = p.anio;
         acc.hasFicha = true;
         acc.resumen = p.resumen || acc.resumen;
         // La portada de la ficha es el retrato/vista de la entidad: la usan los
         // índices (/personas · /lugares · /ideas) y su propia página.
         acc.imageUrl = p.imageUrl ?? acc.imageUrl;
+      }
+    }
+    // Co-ocurrencia: todo par de entidades de la misma pieza se relaciona.
+    for (const a of ents) {
+      for (const b of ents) {
+        if (a.key === b.key) continue;
+        a.related.set(b.key, (a.related.get(b.key) ?? 0) + 1);
       }
     }
   }
@@ -2394,18 +2473,29 @@ export interface EntityNode extends PublicEntity {
  */
 export async function getEntityNode(slug: string, type?: EntityType): Promise<EntityNode | null> {
   try {
-    const [e, reg, initialData] = await Promise.all([
-      findRegistryEntity(slug, type),
+    const [reg, initialData] = await Promise.all([
       loadEntityRegistry(),
       getPublishedEntityData(),
     ]);
+    let resolvedSlug = slug;
+    let resolvedType = type;
+    for (const candidateType of type
+      ? [type]
+      : (["persona", "lugar", "idea"] as EntityType[])) {
+      const canonical = initialData.aliasToCanonical.get(entityKey(candidateType, slug));
+      if (!canonical) continue;
+      resolvedSlug = canonical;
+      resolvedType = candidateType;
+      break;
+    }
+    const e = await findRegistryEntity(resolvedSlug, resolvedType);
     let publishedData = initialData;
     if (!e) {
       return pieceEntityNode(
-        slug,
+        resolvedSlug,
         publishedData.index,
         publishedData.dedicatedSlugs,
-        type,
+        resolvedType,
         reg,
       );
     }
@@ -2644,13 +2734,14 @@ export interface SitemapEntry {
  */
 export async function getSitemapEntries(): Promise<SitemapEntry[]> {
   try {
-    const [rows, registry] = await Promise.all([
+    const [rows, registry, published] = await Promise.all([
       prisma.deliverable.findMany({
         where: PUBLISHED_WHERE,
         orderBy: { publishedAt: "desc" },
         select: { id: true, structuredData: true, updatedAt: true },
       }),
       loadEntityRegistry(),
+      getPublishedEntityData(),
     ]);
     const seen = new Set<string>();
     const entries: SitemapEntry[] = [];
@@ -2668,9 +2759,12 @@ export async function getSitemapEntries(): Promise<SitemapEntry[]> {
       }
       if (s.typology === "entidad") {
         const type = entityTypeFromTipo(s.tipo);
-        const key = registry.variantSlugToKey.get(s.slug) ?? entityKey(type, s.slug);
+        const publishedCanonical = published.aliasToCanonical.get(entityKey(type, s.slug));
+        const resolvedSlug = publishedCanonical ?? s.slug;
+        const key =
+          registry.variantSlugToKey.get(resolvedSlug) ?? entityKey(type, resolvedSlug);
         const entity = registry.byKey.get(key);
-        const canonicalSlug = entity?.type === type ? entity.slug : s.slug;
+        const canonicalSlug = entity?.type === type ? entity.slug : resolvedSlug;
         push(entityPath(type, canonicalSlug), r.updatedAt);
         continue;
       }
