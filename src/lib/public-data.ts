@@ -2079,13 +2079,11 @@ function relatedFromAcc(
     .slice(0, 16);
 }
 
-/** El registro tiene miles de entidades; el índice muestra las más referenciadas. */
-export const ENTITY_DISPLAY_CAP = 300;
-
 /**
  * Índice público de entidades de un tipo: las del REGISTRO que además aparecen en
- * piezas PUBLICADAS (gate). Ordenadas por prominencia (menciones del corpus),
- * capadas a `ENTITY_DISPLAY_CAP`. El filtro de época navega dentro de ellas.
+ * piezas PUBLICADAS (gate). Ordenadas por prominencia (menciones del corpus).
+ * El gate de publicación ya acota el universo: el índice debe conservarlas todas
+ * para que ninguna ficha publicada desaparezca por un límite de presentación.
  */
 // El universo por tipo se pide muchas veces por request (el pie del sitio, el
 // home, los índices y el sitemap lo consultan) y recorrerlo implica escanear el
@@ -2149,7 +2147,7 @@ export async function getEntityUniverse(type: EntityType): Promise<PublicEntity[
         b.corpusMentions - a.corpusMentions ||
         a.name.localeCompare(b.name, "es"),
     );
-    const out = list.slice(0, ENTITY_DISPLAY_CAP);
+    const out = list;
     universeCache.set(type, { list: out, at: Date.now() });
     return out;
   } catch (err) {
@@ -2215,7 +2213,7 @@ export async function getPeriodEntityUniverse(type: EntityType, periodCode: stri
       });
     }
     list.sort((a, b) => b.mentions - a.mentions || a.name.localeCompare(b.name, "es"));
-    return list.slice(0, ENTITY_DISPLAY_CAP);
+    return list;
   } catch (err) {
     console.error(`[public-data] getPeriodEntityUniverse(${type}, ${periodCode}) falló:`, err);
     return [];
@@ -2248,10 +2246,10 @@ export async function getEntityCounts(): Promise<Record<EntityType, number>> {
  */
 export async function getConnectedEntityDirectory(
   type: EntityType,
-  limit = ENTITY_DISPLAY_CAP,
+  limit?: number,
 ): Promise<PublicEntity[]> {
   const list = await getEntityUniverse(type);
-  return list.slice(0, limit);
+  return typeof limit === "number" ? list.slice(0, Math.max(0, limit)) : list;
 }
 
 /**
