@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { TypologyArticle } from "@/components/public/typology-detail";
+import { QuestionDetailArticle } from "@/components/public/questions/question-detail";
 import { JsonLd } from "@/components/public/json-ld";
 import { getTypologyDetail, getEntityLinker } from "@/lib/public-data";
 import { buildMetadata, contextualSeoTitle, detailJsonLd } from "@/lib/seo";
@@ -38,7 +38,7 @@ export default async function PreguntaPage({ params }: { params: Promise<{ slug:
         itemId={detail.structured.slug}
         itemName={detail.structured.titulo}
       />
-      <TypologyArticle detail={detail} linker={linker} />
+      <QuestionDetailArticle detail={detail} linker={linker} />
     </>
   );
 }
