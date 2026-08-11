@@ -1,4 +1,5 @@
-import { TypologyIndex } from "@/components/public/typology-index";
+import { EssaysExplorer } from "@/components/public/essays/essays-explorer";
+import { PublicShell } from "@/components/public/public-shell";
 import { getEssaysIndex } from "@/lib/public-data";
 import { buildMetadata } from "@/lib/seo";
 
@@ -17,13 +18,10 @@ export const metadata = buildMetadata({
 
 export default async function EnsayosPage() {
   const cards = await getEssaysIndex();
+
   return (
-    <TypologyIndex
-      kicker="Lecturas"
-      title="Lecturas"
-      intro="Preguntas con respuesta razonada — ordenadas por época y con las fuentes siempre a la vista."
-      cards={cards}
-      emptyNote="Aún no hay lecturas publicadas. Aparecerán aquí a medida que se publiquen desde el taller."
-    />
+    <PublicShell>
+      <EssaysExplorer cards={cards} />
+    </PublicShell>
   );
 }
