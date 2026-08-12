@@ -27,7 +27,7 @@ export function HomePeriodSelector({
   const isFilter = destination === "personas";
 
   useEffect(() => {
-    if (!selectedPeriod) return;
+    if (!selectedPeriod || !periodsOpen) return;
     (activeButtonRef.current ?? activeAnchorRef.current)?.scrollIntoView({
       behavior: "auto",
       block: "nearest",
@@ -67,21 +67,6 @@ export function HomePeriodSelector({
               : "Seleccionar una época histórica"
         }
       >
-        {isFilter && (
-          <button
-            type="button"
-            className={!selectedPeriod ? "is-active" : ""}
-            aria-pressed={!selectedPeriod}
-            ref={!selectedPeriod ? activeButtonRef : undefined}
-            onClick={() => {
-              onSelect?.(null);
-              setPeriodsOpen(false);
-            }}
-          >
-            <span>Todas</span>
-            <small>Archivo completo</small>
-          </button>
-        )}
         {HISTORICAL_PERIODS.map((code) => {
           const period = PERIODS[code];
           const active = code === selectedPeriod;

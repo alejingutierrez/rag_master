@@ -200,9 +200,9 @@
 
 .qd-reading-rail {
   position: sticky;
-  top: 74px;
+  top: var(--ps-header-height, 74px);
   align-self: start;
-  max-height: calc(100vh - 96px);
+  max-height: calc(100vh - var(--ps-header-height, 74px) - 22px);
   overflow: auto;
   scrollbar-width: thin;
 }

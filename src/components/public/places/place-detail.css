@@ -88,7 +88,7 @@
 
 .ld-chapters {
   position: sticky;
-  top: 74px;
+  top: var(--ps-header-height, 74px);
   z-index: 20;
   background: color-mix(in srgb, var(--bg) 97%, transparent);
   border-bottom: 1px solid var(--line-strong);
@@ -446,7 +446,7 @@
   .ld-hero-copy { width: 100%; padding: 62px 24px 34px; }
   .ld-hero h1 { font-size: clamp(76px, 18vw, 112px); }
   .ld-hero-copy > p { max-width: 35ch; }
-  .ld-chapters { top: 58px; }
+  .ld-chapters { top: var(--ps-header-height, 58px); }
   .ld-chapters > div { width: 100%; padding: 0 18px; }
   .ld-chapters a { padding-right: 18px; padding-left: 18px; }
   .ld-chapters a:first-child { padding-left: 0; }

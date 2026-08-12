@@ -4,7 +4,7 @@
   color: #0a0a0a;
 }
 
-.id-page :where(section, header, figure) { scroll-margin-top: 104px; }
+.id-page :where(section, header, figure) { scroll-margin-top: calc(var(--ps-header-height, 74px) + 30px); }
 
 .id-layout {
   width: min(100% - 64px, 1410px);
@@ -386,7 +386,7 @@
   .id-reading-rail-mobile {
     grid-area: mobile-rail;
     position: sticky;
-    top: 58px;
+    top: var(--ps-header-height, 58px);
     z-index: 20;
     display: block;
     margin-top: 27px;

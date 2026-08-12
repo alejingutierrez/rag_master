@@ -15,7 +15,7 @@
 
 .pc-labbar {
   position: sticky;
-  top: 74px;
+  top: var(--ps-header-height, 74px);
   z-index: 40;
   min-height: 92px;
   padding: 12px max(var(--pc-gutter), calc((100vw - 1360px) / 2));
@@ -44,22 +44,6 @@
 .pc-filterbar { display: grid; grid-template-columns: minmax(220px, 300px) 1fr auto; align-items: end; gap: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .pc-filterbar.is-home-selector { grid-template-columns: minmax(220px, 340px) 1fr auto; align-items: end; }
 .pc-home-period-selector { grid-column: 1 / -1; min-width: 0; }
-.pc-home-period-selector .hc-period-selector {
-  grid-template-columns: none;
-  grid-auto-columns: 10%;
-  grid-auto-flow: column;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-width: thin;
-  scroll-snap-type: x proximity;
-}
-.pc-home-period-selector .hc-period-selector :is(a, button) { scroll-snap-align: start; }
-.pc-home-period-selector .hc-period-selector :is(a, button) span {
-  hyphens: none;
-  overflow-wrap: normal;
-  word-break: normal;
-  text-wrap: balance;
-}
 .pc-search { display: grid; gap: 5px; }
 .pc-search span, .pc-result-count { font: 9.5px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-faint); }
 .pc-search input { width: 100%; padding: 8px 0; border: 0; border-bottom: 1px solid var(--fg-muted); outline: none; background: transparent; color: var(--fg); font: 14px/1.2 var(--font-sans); }
@@ -265,16 +249,10 @@ a:hover > .pc-photo img { transform: scale(1.018); filter: saturate(1) contrast(
 .pc-empty { max-width: 1360px; margin: 0 auto; padding: 80px var(--pc-gutter) 140px; font: italic 24px/1.4 var(--font-display); color: var(--fg-muted); }
 
 @media (max-width: 1080px) {
-  .pc-labbar { top: 58px; grid-template-columns: 1fr; gap: 10px; }
+  .pc-labbar { top: var(--ps-header-height, 58px); grid-template-columns: 1fr; gap: 10px; }
   .pc-lab-intro { display: none; }
   .pc-filterbar { grid-template-columns: 240px 1fr; }
   .pc-filterbar.is-home-selector { grid-template-columns: 240px 1fr; }
-  .pc-home-period-selector .hc-period-selector {
-    grid-template-columns: none;
-    grid-auto-columns: 106px;
-    grid-auto-flow: column;
-    overflow-x: auto;
-  }
   .pc-result-count { display: none; }
   .pc-gallery-lead { min-height: 520px; }
   .pc-gallery-caption p { display: none; }
