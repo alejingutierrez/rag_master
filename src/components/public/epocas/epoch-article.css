@@ -279,7 +279,7 @@
 }
 
 .ea-prose-section { padding: clamp(44px, 5vw, 74px) 0 100px; }
-.ea-reader-anchor { display: block; scroll-margin-top: 120px; }
+.ea-reader-anchor { display: block; scroll-margin-top: calc(var(--ps-header-height, 74px) + 46px); }
 .ea-prose-section .prose {
   width: min(100%, 690px);
   max-width: none;
@@ -289,7 +289,7 @@
 }
 .ea-prose-section .prose > h2:first-child { margin-top: 0; }
 .ea-prose-section .prose h2,
-.ea-prose-section .prose h3 { scroll-margin-top: 120px; }
+.ea-prose-section .prose h3 { scroll-margin-top: calc(var(--ps-header-height, 74px) + 46px); }
 .ea-prose-section .prose h2 {
   margin-top: 2.15em;
   font-size: clamp(39px, 4vw, 56px);

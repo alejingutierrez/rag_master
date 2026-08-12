@@ -71,7 +71,7 @@
 @media (max-width: 560px) { .edp-def { grid-template-columns: minmax(0, 1fr); } .edp-def-k { padding: 0 0 7px; } }
 
 /* ── Raíl: el conjunto de páginas del proyecto ─────────────────────────── */
-.edp-rail { align-self: start; position: sticky; top: 94px; }
+.edp-rail { align-self: start; position: sticky; top: calc(var(--ps-header-height, 74px) + 20px); }
 @media (max-width: 940px) { .edp-rail { position: static; margin-top: 56px; padding-top: 26px; border-top: 1px solid var(--line); } }
 .edp-rail-t { display: block; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--fg-subtle); margin-bottom: 12px; }
 .edp-rail-l { display: block; padding: 10px 0; border-top: 1px solid var(--line); font-family: var(--font-sans); font-size: 13px; line-height: 1.35; color: var(--fg-muted); text-decoration: none; }

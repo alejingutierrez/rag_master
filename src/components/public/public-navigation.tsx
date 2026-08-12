@@ -19,10 +19,13 @@ export interface PublicNavigationStats {
 const PRIMARY = [
   { href: "/hechos", label: "Hechos" },
   { href: "/epocas", label: "Épocas" },
+  { href: "/ensayos", label: "Ensayos" },
   { href: "/personas", label: "Personas" },
-  { href: "/linea-de-tiempo", label: "Línea de tiempo" },
+  { href: "/lugares", label: "Lugares" },
+  { href: "/ideas", label: "Ideas" },
+  { href: "/mapa", label: "Mapa" },
   { href: "/archivo", label: "Archivo" },
-];
+] as const;
 
 function Arrow() {
   return (
@@ -35,9 +38,7 @@ function Arrow() {
 export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
   const pathname = usePathname();
   const [mobileState, setMobileState] = useState({ pathname, open: false });
-  const [exploreState, setExploreState] = useState({ pathname, open: false });
   const mobileOpen = mobileState.pathname === pathname && mobileState.open;
-  const exploreOpen = exploreState.pathname === pathname && exploreState.open;
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -59,25 +60,44 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
   const mobileLinks = [
     { href: "/hechos", label: "Hechos", meta: String(stats.hechos) },
     { href: "/epocas", label: "Épocas", meta: String(stats.epocas) },
-    { href: "/linea-de-tiempo", label: "Línea de tiempo", meta: `${stats.timelineEvents} eventos` },
-    // El mapa existía sin ninguna puerta de entrada en la navegación.
-    { href: "/mapa", label: "Mapa", meta: "El archivo sobre el territorio" },
+    { href: "/ensayos", label: "Ensayos", meta: `${stats.preguntas} ${stats.preguntas === 1 ? "pregunta" : "preguntas"}` },
     // Los directorios solo listan entidades con su propio artículo publicado: el
     // conteo del menú tiene que ser ese mismo, no el de piezas por tipología.
     { href: "/personas", label: "Personas", meta: `${stats.personas} con historia propia` },
     { href: "/lugares", label: "Lugares", meta: `${stats.lugares} con historia propia` },
     { href: "/ideas", label: "Ideas", meta: `${stats.ideas} con historia propia` },
-    { href: "/ensayos", label: "Lecturas", meta: `${stats.preguntas} ${stats.preguntas === 1 ? "pregunta" : "preguntas"}` },
+    { href: "/mapa", label: "Mapa", meta: "El archivo sobre el territorio" },
     { href: "/archivo", label: "Archivo", meta: `${stats.piezas} piezas` },
+    { href: "/linea-de-tiempo", label: "Línea de tiempo", meta: `${stats.timelineEvents} eventos` },
   ];
 
   return (
     <>
       <div className="ps-nav-shell">
-        <Link href="/" className="ps-wordmark" title="Ir a la portada">
-          <span>Historia</span>
-          <span>Colombiana</span>
-        </Link>
+        <div className="ps-brand-row">
+          <Link href="/" className="ps-wordmark" title="Ir a la portada">
+            Historia Colombiana
+          </Link>
+
+          <div className="ps-utilities">
+            <Link href="/buscar" className="ps-utility-link" aria-current={active("/buscar") ? "page" : undefined}>
+              Buscar
+            </Link>
+            <Link href="/acerca" className="ps-utility-link" aria-current={active("/acerca") ? "page" : undefined}>
+              Acerca del proyecto
+            </Link>
+          </div>
+
+          <button
+            type="button"
+            className="ps-mobile-trigger"
+            aria-expanded={mobileOpen}
+            aria-controls="public-mobile-menu"
+            onClick={() => setMobileState({ pathname, open: true })}
+          >
+            Menú
+          </button>
+        </div>
 
         <nav className="ps-primary" aria-label="Navegación principal">
           {PRIMARY.map((item) => (
@@ -91,55 +111,6 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
             </Link>
           ))}
         </nav>
-
-        <div className="ps-utilities">
-          <Link href="/buscar" className="ps-utility-link" aria-current={active("/buscar") ? "page" : undefined}>
-            Buscar
-          </Link>
-          <button
-            type="button"
-            className="ps-utility-button"
-            aria-expanded={exploreOpen}
-            aria-controls="public-explore-panel"
-            onClick={() => setExploreState({ pathname, open: !exploreOpen })}
-          >
-            Explorar
-          </button>
-          <Link href="/acerca" className="ps-utility-link" aria-current={active("/acerca") ? "page" : undefined}>
-            Acerca
-          </Link>
-        </div>
-
-        <button
-          type="button"
-          className="ps-mobile-trigger"
-          aria-expanded={mobileOpen}
-          aria-controls="public-mobile-menu"
-          onClick={() => setMobileState({ pathname, open: true })}
-        >
-          Menú
-        </button>
-      </div>
-
-      <div id="public-explore-panel" className={`ps-explore ${exploreOpen ? "is-open" : ""}`} hidden={!exploreOpen}>
-        <div className="ps-explore-inner">
-          <div className="ps-explore-lead">
-            <span className="ps-explore-index">Índice</span>
-            <p>El archivo se puede recorrer por acontecimientos, períodos y conexiones.</p>
-          </div>
-          <Link href="/lugares" className="ps-explore-link">
-            <span>Lugares</span><small>{stats.lugares} con historia propia</small><Arrow />
-          </Link>
-          <Link href="/ideas" className="ps-explore-link">
-            <span>Ideas</span><small>{stats.ideas} con historia propia</small><Arrow />
-          </Link>
-          <Link href="/ensayos" className="ps-explore-link">
-            <span>Lecturas</span><small>{stats.preguntas} {stats.preguntas === 1 ? "pregunta publicada" : "preguntas publicadas"}</small><Arrow />
-          </Link>
-          <Link href="/acerca#metodo" className="ps-explore-link">
-            <span>Método y fuentes</span><small>Cómo se construye el archivo</small><Arrow />
-          </Link>
-        </div>
       </div>
 
       <div id="public-mobile-menu" className={`ps-mobile-menu ${mobileOpen ? "is-open" : ""}`} aria-hidden={!mobileOpen}>
@@ -164,7 +135,7 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
         </nav>
         <div className="ps-mobile-foot">
           <Link href="/buscar">Buscar <Arrow /></Link>
-          <Link href="/acerca">Acerca <Arrow /></Link>
+          <Link href="/acerca">Acerca del proyecto <Arrow /></Link>
           <Link href="/acerca#metodo">Método y fuentes <Arrow /></Link>
         </div>
       </div>
