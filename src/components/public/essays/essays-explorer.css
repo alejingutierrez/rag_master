@@ -1,7 +1,7 @@
 .ex-wrap {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 42px var(--editorial-gutter) 104px;
+  padding: 0 var(--editorial-gutter) 104px;
   color: var(--fg);
 }
 
@@ -61,6 +61,8 @@
   border-bottom: 1px solid var(--line-strong);
   padding: 8px 0;
 }
+
+.section-masthead-utility .ex-search { width: 100%; }
 
 .ex-search svg {
   width: 14px;

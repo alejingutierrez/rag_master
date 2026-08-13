@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/public/public-shell";
+import { HomePeriodSelector } from "@/components/public/home/home-period-selector";
+import { SectionMasthead } from "@/components/public/section-masthead";
 import { getPublicArchiveStats, getRecentPublicPieces } from "@/lib/public-data";
-import { getPeriodColor, periodInfo } from "@/lib/design-tokens";
+import { getPeriodColor, HISTORICAL_PERIODS, periodInfo, type PeriodCode } from "@/lib/design-tokens";
 import { buildMetadata } from "@/lib/seo";
 import { SearchForm } from "@/components/public/search-form";
 import { ArchiveFilters, type ArchiveTypeFacet } from "@/components/public/archive-filters";
@@ -105,16 +107,20 @@ export default async function ArchivoPage({
   return (
     <PublicShell>
       <div className="ar-wrap">
-        <header className="ar-head">
-          <div className="ar-kicker">Archivo público · {formatNumber(stats.total)} piezas</div>
-          <div className="ar-title-row">
-            <h1>Todo el archivo</h1>
-            <p>
-              Una puerta única a las piezas publicadas. Filtra por tipo y por época, o busca
-              directamente: cada entrada conduce a la historia, la biografía o la lectura que
-              realmente existe.
-            </p>
-          </div>
+        <SectionMasthead
+          eyebrow="08 · Archivo público"
+          title="Archivo"
+          summary="Todas las piezas publicadas en una sola mesa: hechos, épocas, biografías y lecturas con sus fuentes."
+          meta={`${formatNumber(filtered.length)} de ${formatNumber(stats.total)} piezas`}
+        >
+          <HomePeriodSelector
+            selectedPeriod={periodo as PeriodCode | null}
+            destination="archivo"
+            availablePeriods={HISTORICAL_PERIODS.filter((code) => periodsPresent.includes(code))}
+          />
+        </SectionMasthead>
+
+        <section className="ar-overview" aria-label="Resumen y búsqueda del archivo">
           <dl className="ar-stats">
             <div><dt>{formatNumber(stats.hechos)}</dt><dd>hechos</dd></div>
             <div><dt>{formatNumber(stats.epocas)}</dt><dd>épocas</dd></div>
@@ -131,7 +137,7 @@ export default async function ArchivoPage({
               hint="Busca en títulos, resúmenes y entidades de todo lo publicado"
             />
           </div>
-        </header>
+        </section>
 
         <ArchiveFilters
           basePath="/archivo"
@@ -139,7 +145,6 @@ export default async function ArchivoPage({
           periodo={periodo}
           orden={orden}
           typeFacets={typeFacets}
-          periodsPresent={periodsPresent}
           total={filtered.length}
           totalAll={all.length}
         />

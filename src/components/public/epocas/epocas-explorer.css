@@ -41,7 +41,7 @@
   padding-inline: var(--editorial-gutter);
 }
 
-.ex-selector-wrap { padding-top: 18px; }
+.ex-selector-wrap { padding-top: 0; }
 
 .ex-selector-intro {
   min-height: 48px;
@@ -77,7 +77,7 @@
 .ex-hero { padding-top: 16px; }
 
 .ex-window {
-  height: clamp(470px, 43vw, 610px);
+  height: clamp(360px, 34vw, 470px);
   display: grid;
   grid-template-columns: minmax(128px, .24fr) minmax(0, 1.2fr) minmax(128px, .24fr);
   gap: 10px;
@@ -166,7 +166,7 @@
   max-width: 10ch;
   margin: 17px 0 0;
   font-family: var(--font-display);
-  font-size: clamp(58px, 6vw, 94px);
+  font-size: clamp(44px, 4.8vw, 68px);
   font-weight: 400;
   line-height: .87;
   letter-spacing: -.035em;
@@ -195,7 +195,7 @@
   max-width: 34ch;
   margin: 20px 0 0;
   font-family: var(--font-display);
-  font-size: clamp(17px, 1.45vw, 22px);
+  font-size: clamp(15px, 1.2vw, 18px);
   font-style: italic;
   line-height: 1.35;
   color: rgba(255, 255, 255, .88);

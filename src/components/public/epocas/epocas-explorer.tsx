@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { HomePeriodMap } from "@/components/public/home/home-period-map";
 import { HomePeriodSelector } from "@/components/public/home/home-period-selector";
+import { SectionMasthead } from "@/components/public/section-masthead";
 import {
   EditorialArrow,
   EditorialImage,
@@ -284,12 +285,14 @@ export function EpocasExplorer({ data }: { data: EpochExplorerPageData }) {
       style={{ "--epoch-accent": accent } as React.CSSProperties}
     >
       <div className="ex-selector-wrap">
-        <div className="ex-selector-intro">
-          <span>Las 15 épocas</span>
-          <p>Elija un período: la página completa cambia con él.</p>
-          <Link href="/linea-de-tiempo">Ver línea completa</Link>
-        </div>
-        <HomePeriodSelector selectedPeriod={data.selected.code} destination="epocas" />
+        <SectionMasthead
+          eyebrow="02 · Tiempo histórico"
+          title="Épocas"
+          summary="Quince períodos para recorrer el archivo en orden y comprender qué cambia de uno al siguiente."
+          meta={`${String(data.selected.index).padStart(2, "0")} de ${data.periods.length} · ${data.selected.title}`}
+        >
+          <HomePeriodSelector selectedPeriod={data.selected.code} destination="epocas" />
+        </SectionMasthead>
       </div>
 
       <main>

@@ -3,10 +3,13 @@
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { PERIODS, getPeriodColor, type PeriodCode } from "@/lib/design-tokens";
+import { HomePeriodSelector } from "@/components/public/home/home-period-selector";
+import { SectionMasthead } from "@/components/public/section-masthead";
+import { HISTORICAL_PERIODS, PERIODS, getPeriodColor, type PeriodCode } from "@/lib/design-tokens";
 import type { MapPoint } from "@/lib/public-data";
 import "@/components/public/map-explorer.css";
 import { imageAt } from "@/lib/image-url";
+import { useUrlState } from "@/lib/use-url-state";
 
 /**
  * El mapa se carga SOLO aquí y solo en cliente: Leaflet toca `window` al importarse
@@ -30,7 +33,12 @@ function norm(s: string): string {
 
 /** Recorrido geográfico del archivo: filtra por época, tipo y texto. */
 export function MapExplorer({ points, total }: { points: MapPoint[]; total: number }) {
-  const [periodo, setPeriodo] = useState<PeriodCode | null>(null);
+  const [periodo, setPeriodo] = useUrlState<PeriodCode | null>({
+    key: "periodo",
+    default: null,
+    parse: (raw) => raw in PERIODS ? raw as PeriodCode : null,
+    debounceMs: 0,
+  });
   const [kind, setKind] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [active, setActive] = useState<MapPoint | null>(null);
@@ -38,7 +46,7 @@ export function MapExplorer({ points, total }: { points: MapPoint[]; total: numb
   // Épocas presentes entre los puntos, en orden cronológico canónico.
   const periods = useMemo(() => {
     const present = new Set(points.map((p) => p.periodCode).filter(Boolean) as string[]);
-    return (Object.keys(PERIODS) as PeriodCode[]).filter((c) => present.has(c));
+    return HISTORICAL_PERIODS.filter((code) => present.has(code));
   }, [points]);
 
   const nq = norm(q.trim());
@@ -62,14 +70,29 @@ export function MapExplorer({ points, total }: { points: MapPoint[]; total: numb
 
   return (
     <div className="mx-wrap">
-      <header className="mx-head">
-        <div className="mx-kick">Recorrido geográfico</div>
-        <h1 className="mx-title">El archivo sobre el territorio</h1>
-        <p className="mx-intro">
-          Cada punto es una pieza publicada, anclada donde ocurre. Filtre por época o por
-          tipo y recorra Colombia a través de su historia.
-        </p>
-      </header>
+      <SectionMasthead
+        eyebrow="07 · Recorrido geográfico"
+        title="Mapa"
+        summary="Cada punto es una pieza publicada, anclada en el lugar donde ocurre y en la época a la que pertenece."
+        meta={`${filtered.length} de ${points.length} puntos`}
+        actions={
+          <input
+            type="search"
+            className="mx-search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar un lugar o una pieza…"
+            aria-label="Buscar en el mapa"
+          />
+        }
+      >
+        <HomePeriodSelector
+          selectedPeriod={periodo}
+          destination="mapa"
+          onSelect={setPeriodo}
+          availablePeriods={periods}
+        />
+      </SectionMasthead>
 
       <div className="mx-controls">
         <div className="mx-kinds">
@@ -87,30 +110,6 @@ export function MapExplorer({ points, total }: { points: MapPoint[]; total: numb
             </button>
           ))}
         </div>
-        <input
-          type="search"
-          className="mx-search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar un lugar o una pieza…"
-          aria-label="Buscar en el mapa"
-        />
-      </div>
-
-      <div className="mx-periods" role="group" aria-label="Filtrar por época">
-        {periods.map((code) => (
-          <button
-            key={code}
-            type="button"
-            aria-pressed={periodo === code}
-            className={periodo === code ? "is-on" : ""}
-            style={{ "--pc": getPeriodColor(code) } as React.CSSProperties}
-            onClick={() => setPeriodo(periodo === code ? null : code)}
-          >
-            <i />
-            {PERIODS[code].label}
-          </button>
-        ))}
       </div>
 
       <div className="mx-count">

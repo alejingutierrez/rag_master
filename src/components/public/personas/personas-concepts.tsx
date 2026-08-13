@@ -4,6 +4,7 @@ import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import type { PublicEntity } from "@/lib/public-data";
 import { HomePeriodSelector } from "@/components/public/home/home-period-selector";
+import { SectionMasthead } from "@/components/public/section-masthead";
 import {
   getPeriodColor,
   HISTORICAL_PERIODS,
@@ -298,7 +299,15 @@ function IndexConcept({ entities, allCount }: { entities: PublicEntity[]; allCou
   );
 }
 
-function TimelineConcept({ entities, allCount }: { entities: PublicEntity[]; allCount: number }) {
+function TimelineConcept({
+  entities,
+  allCount,
+  showIntro = true,
+}: {
+  entities: PublicEntity[];
+  allCount: number;
+  showIntro?: boolean;
+}) {
   const groups = HISTORICAL_PERIODS.map((code) => ({
     code,
     people: entities.filter(
@@ -310,12 +319,14 @@ function TimelineConcept({ entities, allCount }: { entities: PublicEntity[]; all
 
   return (
     <div className="pc-concept pc-timeline" data-testid="concept-3">
-      <ConceptIntro
-        eyebrow="Quiénes hicieron la historia"
-        title="Personas"
-        intro="Cada biografía ocupa su lugar dentro de la época que ayudó a transformar. Los grandes protagonistas abren el recorrido; el archivo completo permanece a la vista."
-        count={allCount}
-      />
+      {showIntro ? (
+        <ConceptIntro
+          eyebrow="Quiénes hicieron la historia"
+          title="Personas"
+          intro="Cada biografía ocupa su lugar dentro de la época que ayudó a transformar. Los grandes protagonistas abren el recorrido; el archivo completo permanece a la vista."
+          count={allCount}
+        />
+      ) : null}
       <div className="pc-timeline-key">
         <span><b>01</b>Cada persona aparece una sola vez, en su época histórica principal.</span>
         <span><b>02</b>Los retratos grandes distinguen las figuras centrales; las demás conservan una presencia visual compacta.</span>
@@ -504,6 +515,21 @@ export function PersonasByPeriod({
 
   return (
     <div className="pc-page pc-option-3 pc-production">
+      <div className="pc-section-head-shell">
+        <SectionMasthead
+          eyebrow="04 · Biografías"
+          title="Personas"
+          summary="Vidas documentadas en la época que ayudaron a transformar, con sus relaciones y fuentes a la vista."
+          meta={`${filtered.length} de ${entities.length} vidas`}
+        >
+          <HomePeriodSelector
+            selectedPeriod={period as PeriodCode | null}
+            destination="personas"
+            onSelect={choosePeriod}
+            availablePeriods={periods}
+          />
+        </SectionMasthead>
+      </div>
       <div className="pc-filter-shell">
         <FilterBar
           query={query}
@@ -512,11 +538,10 @@ export function PersonasByPeriod({
           onPeriod={choosePeriod}
           periods={periods}
           resultCount={filtered.length}
-          useHomeSelector
         />
       </div>
       {filtered.length > 0 ? (
-        <TimelineConcept entities={filtered} allCount={entities.length} />
+        <TimelineConcept entities={filtered} allCount={entities.length} showIntro={false} />
       ) : (
         <EmptyConcept />
       )}

@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useMemo, useState, type CSSProperties } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import {
-  PERIOD_ORDER,
+  HISTORICAL_PERIODS,
   PERIODS,
   getPeriodColor,
   type PeriodCode,
 } from "@/lib/design-tokens";
+import { HomePeriodSelector } from "@/components/public/home/home-period-selector";
+import { SectionMasthead } from "@/components/public/section-masthead";
 import { imageAt } from "@/lib/image-url";
 import type { TypologyCard } from "@/lib/public-data";
 import { useUrlFilters } from "@/lib/use-url-state";
@@ -121,57 +123,6 @@ function EssayMeta({ card }: { card: TypologyCard }) {
       <span>{SHORT_CATEGORY_LABELS[card.categoriaCode ?? ""] ?? card.categoriaNombre ?? "Lectura"}</span>
       {period ? <span>{period.label}</span> : null}
     </span>
-  );
-}
-
-function EpochRail({
-  present,
-  selected,
-  onSelect,
-}: {
-  present: Set<string>;
-  selected: PeriodCode | null;
-  onSelect: (period: PeriodCode | null) => void;
-}) {
-  const selectedInfo = selected ? PERIODS[selected] : null;
-  return (
-    <section className="ex-epochs" aria-labelledby="ex-epochs-title">
-      <div className="ex-section-label" id="ex-epochs-title">Explorar por época</div>
-      <div className="ex-epoch-status" aria-live="polite">
-        {selectedInfo ? `${selectedInfo.label} · ${selectedInfo.yearRange}` : "Todas las épocas"}
-      </div>
-      <div className="ex-epoch-scroll">
-        <div className="ex-epoch-rail" role="group" aria-label="Filtrar lecturas por época">
-          <button
-            type="button"
-            className={!selected ? "is-active is-all" : "is-all"}
-            onClick={() => onSelect(null)}
-            aria-pressed={!selected}
-          >
-            <span className="ex-epoch-bar" />
-            <span className="ex-epoch-short">Todas</span>
-          </button>
-          {PERIOD_ORDER.filter((code) => present.has(code)).map((code) => {
-            const period = PERIODS[code];
-            const active = code === selected;
-            return (
-              <button
-                key={code}
-                type="button"
-                className={active ? "is-active" : undefined}
-                style={{ "--epoch-color": getPeriodColor(code) } as CSSProperties}
-                onClick={() => onSelect(active ? null : code)}
-                aria-pressed={active}
-                title={`${period.label} · ${period.yearRange}`}
-              >
-                <span className="ex-epoch-bar" />
-                <span className="ex-epoch-short">{code === "TRANS" ? "Larga d." : period.short}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -322,13 +273,12 @@ export function EssaysExplorer({ cards }: { cards: TypologyCard[] }) {
 
   return (
     <div className="ex-wrap">
-      <header className="ex-intro">
-        <div className="ex-intro-copy">
-          <div className="ex-kicker">Lecturas de fondo</div>
-          <h1>Una historia para leer</h1>
-          <p>Ensayos que conectan procesos, fuentes y debates para mirar el pasado colombiano con más profundidad.</p>
-        </div>
-        <div className="ex-search-area">
+      <SectionMasthead
+        eyebrow="03 · Lecturas de fondo"
+        title="Ensayos"
+        summary="Preguntas y ensayos que conectan procesos, fuentes y debates para leer el pasado colombiano con más profundidad."
+        meta={`${cards.length} lecturas publicadas`}
+        actions={
           <label className="ex-search">
             <SearchIcon />
             <span className="sr-only">Buscar una lectura</span>
@@ -339,15 +289,15 @@ export function EssaysExplorer({ cards }: { cards: TypologyCard[] }) {
               placeholder="Buscar una lectura…"
             />
           </label>
-          <div className="ex-total"><strong>{cards.length}</strong><span>publicadas</span></div>
-        </div>
-      </header>
-
-      <EpochRail
-        present={presentPeriods}
-        selected={selectedPeriod}
-        onSelect={(periodo) => setFilters({ periodo: periodo ?? "" })}
-      />
+        }
+      >
+        <HomePeriodSelector
+          selectedPeriod={selectedPeriod}
+          destination="ensayos"
+          onSelect={(periodo) => setFilters({ periodo: periodo ?? "" })}
+          availablePeriods={HISTORICAL_PERIODS.filter((code) => presentPeriods.has(code))}
+        />
+      </SectionMasthead>
 
       {cards.length === 0 ? (
         <div className="ex-empty">Aún no hay lecturas publicadas. Aparecerán aquí a medida que se publiquen desde el taller.</div>

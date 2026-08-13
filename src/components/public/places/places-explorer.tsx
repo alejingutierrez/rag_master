@@ -3,9 +3,12 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
+import { HomePeriodSelector } from "@/components/public/home/home-period-selector";
+import { SectionMasthead } from "@/components/public/section-masthead";
 import { imageAt } from "@/lib/image-url";
 import { useUrlFilters } from "@/lib/use-url-state";
 import type { PlaceKind, PublicPlace } from "@/lib/public-data";
+import { HISTORICAL_PERIODS, type PeriodCode } from "@/lib/design-tokens";
 import type { PlacesMapPoint } from "@/components/public/places/places-map-canvas";
 import "@/components/public/places/places-explorer.css";
 
@@ -166,7 +169,7 @@ function pickFeatured(places: PublicPlace[]): PublicPlace[] {
 }
 
 export function PlacesExplorer({ places }: { places: PublicPlace[] }) {
-  const [filters, setFilters] = useUrlFilters({ q: "", tipo: "todos", vista: "mapa" }, 120);
+  const [filters, setFilters] = useUrlFilters({ q: "", tipo: "todos", vista: "mapa", periodo: "" }, 120);
   const deferredQuery = useDeferredValue(filters.q);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
@@ -175,6 +178,13 @@ export function PlacesExplorer({ places }: { places: PublicPlace[] }) {
     : "todos";
   const selectedView: PlacesView = filters.vista === "az" ? "az" : "mapa";
   const query = normalize(deferredQuery.trim());
+  const periods = useMemo(
+    () => HISTORICAL_PERIODS.filter((code) => places.some((place) => place.periods.includes(code))),
+    [places],
+  );
+  const selectedPeriod = periods.includes(filters.periodo as PeriodCode)
+    ? (filters.periodo as PeriodCode)
+    : null;
 
   const alphabetical = useMemo(
     () => [...places].sort((a, b) => a.name.localeCompare(b.name, "es")),
@@ -183,13 +193,14 @@ export function PlacesExplorer({ places }: { places: PublicPlace[] }) {
   const filtered = useMemo(
     () =>
       alphabetical.filter((place) => {
+        if (selectedPeriod && !place.periods.includes(selectedPeriod)) return false;
         if (selectedKind !== "todos" && place.kind !== selectedKind) return false;
         if (query && !normalize(`${place.name} ${place.resumen ?? ""} ${place.kindLabel}`).includes(query)) {
           return false;
         }
         return true;
       }),
-    [alphabetical, query, selectedKind],
+    [alphabetical, query, selectedKind, selectedPeriod],
   );
   const directoryPlaces = useMemo(
     () =>
@@ -223,8 +234,8 @@ export function PlacesExplorer({ places }: { places: PublicPlace[] }) {
     }
     return [...groups.entries()];
   }, [filtered]);
-  const featured = useMemo(() => pickFeatured(places), [places]);
-  const coordinateCount = places.filter((place) => place.lat != null && place.lng != null).length;
+  const featured = useMemo(() => pickFeatured(filtered), [filtered]);
+  const coordinateCount = filtered.filter((place) => place.lat != null && place.lng != null).length;
 
   const selectMarker = (slug: string) => {
     setActiveSlug(slug);
@@ -235,10 +246,19 @@ export function PlacesExplorer({ places }: { places: PublicPlace[] }) {
 
   return (
     <div className="lp-page">
-      <header className="lp-heading">
-        <h1>Lugares</h1>
-        <p><strong>{places.length}</strong> territorios<br />con historia propia</p>
-      </header>
+      <SectionMasthead
+        eyebrow="05 · Geografía histórica"
+        title="Lugares"
+        summary="Ciudades, regiones, ríos y fronteras leídos como escenarios activos de la historia colombiana."
+        meta={`${filtered.length} de ${places.length} territorios`}
+      >
+        <HomePeriodSelector
+          selectedPeriod={selectedPeriod}
+          destination="lugares"
+          onSelect={(periodo) => setFilters({ periodo: periodo ?? "" })}
+          availablePeriods={periods}
+        />
+      </SectionMasthead>
 
       {featured.length > 0 ? (
         <section className="lp-feature-grid" aria-label="Lugares destacados">
@@ -281,14 +301,14 @@ export function PlacesExplorer({ places }: { places: PublicPlace[] }) {
           </div>
           <div className="lp-coverage">
             <span>{coordinateCount} con coordenadas</span>
-            <span>{places.length - coordinateCount} sin coordenadas</span>
+            <span>{filtered.length - coordinateCount} sin coordenadas</span>
           </div>
           <button
             type="button"
             className="lp-az-link"
             onClick={() => setFilters({ vista: "az" })}
           >
-            Ver los {places.length} lugares A–Z <ArrowIcon />
+            Ver los {filtered.length} lugares A–Z <ArrowIcon />
           </button>
         </div>
 

@@ -1,0 +1,113 @@
+.section-masthead {
+  width: 100%;
+  padding: 18px 0 16px;
+  border-bottom: 1px solid var(--fg);
+}
+
+.section-masthead-row {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: minmax(170px, .48fr) minmax(320px, 1.25fr) minmax(220px, .7fr);
+  align-items: center;
+  gap: clamp(22px, 3.4vw, 52px);
+}
+
+.section-masthead-identity {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.section-masthead-identity > span,
+.section-masthead-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1.15;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.section-masthead-identity h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(34px, 3.3vw, 46px);
+  font-weight: 500;
+  font-style: normal;
+  line-height: .92;
+  letter-spacing: -.03em;
+}
+
+.section-masthead-summary {
+  max-width: 68ch;
+  margin: 0;
+  padding-left: clamp(18px, 2.1vw, 30px);
+  border-left: 1px solid var(--line-strong);
+  font-family: var(--font-display);
+  font-size: clamp(14px, 1.25vw, 17px);
+  font-style: italic;
+  line-height: 1.3;
+  color: var(--fg-muted);
+}
+
+.section-masthead-utility {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  justify-self: stretch;
+}
+
+.section-masthead-meta {
+  color: var(--fg-muted);
+  text-align: right;
+}
+
+.section-masthead-periods {
+  min-width: 0;
+  margin-top: 15px;
+}
+
+@media (max-width: 900px) {
+  .section-masthead-row {
+    grid-template-columns: minmax(150px, .55fr) minmax(0, 1.45fr);
+    gap: 20px 30px;
+  }
+  .section-masthead-utility { grid-column: 1 / -1; }
+  .section-masthead-meta { text-align: left; }
+}
+
+@media (max-width: 620px) {
+  .section-masthead { padding: 14px 0 13px; }
+  .section-masthead-row {
+    min-height: 0;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 11px 16px;
+  }
+  .section-masthead-identity { gap: 5px; }
+  .section-masthead-identity h1 { font-size: 34px; }
+  .section-masthead-summary {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: 46ch;
+    padding: 10px 0 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+    font-size: 14px;
+  }
+  .section-masthead-utility {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 14px;
+  }
+  .section-masthead-meta { position: static; max-width: 15ch; text-align: right; }
+  .section-masthead-meta:only-child {
+    grid-column: 1 / -1;
+    max-width: none;
+    justify-self: start;
+    text-align: left;
+  }
+  .section-masthead-periods { margin-top: 12px; }
+}
