@@ -2,7 +2,23 @@
   --ix-accent: var(--p-fn);
   max-width: 1378px;
   margin: 0 auto;
-  padding: 34px 32px 0;
+  padding: 0 32px;
+}
+
+.ix-viewbar {
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 316px;
+  align-items: center;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.ix-viewbar > span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
 }
 
 .ix-heading {
@@ -70,7 +86,8 @@
   height: 54px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line-strong);
+  border-right: 1px solid var(--line-strong);
 }
 
 .ix-tabs button {
@@ -549,7 +566,7 @@ a:hover > .ix-row-arrow { transform: translateX(3px); }
 }
 
 @media (max-width: 860px) {
-  .ix-page { padding: 28px 18px 0; }
+  .ix-page { padding: 0 18px; }
   .ix-heading { grid-template-columns: 1fr; gap: 25px; }
   .ix-heading-copy p { max-width: 48ch; }
   .ix-tools { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 0 24px; }
@@ -570,6 +587,8 @@ a:hover > .ix-row-arrow { transform: translateX(3px); }
 }
 
 @media (max-width: 620px) {
+  .ix-viewbar { grid-template-columns: 1fr; padding-top: 10px; }
+  .ix-viewbar > span { display: none; }
   .ix-heading-copy h1 { font-size: 56px; }
   .ix-heading-copy p { font-size: 16px; line-height: 1.28; }
   .ix-tools { display: block; }

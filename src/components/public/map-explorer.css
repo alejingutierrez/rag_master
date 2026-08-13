@@ -2,8 +2,8 @@
    Recorrido geográfico: teselas claras y desaturadas de fondo, y el color de
    época como única señal cromática. Todo el peso de Leaflet vive solo aquí. */
 
-.mx-wrap { max-width: 1320px; margin: 0 auto; padding: 56px 34px 80px; }
-@media (max-width: 700px) { .mx-wrap { padding: 34px 18px 56px; } }
+.mx-wrap { max-width: 1320px; margin: 0 auto; padding: 0 34px 80px; }
+@media (max-width: 700px) { .mx-wrap { padding: 0 18px 56px; } }
 
 .mx-head { max-width: 62ch; margin-bottom: 30px; }
 .mx-kick { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--fg-muted); margin-bottom: 14px; }
@@ -11,7 +11,7 @@
 .mx-intro { font-family: var(--font-serif); font-style: italic; font-size: 18px; line-height: 1.5; color: var(--fg-muted); margin: 16px 0 0; }
 
 /* Controles */
-.mx-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding-top: 22px; border-top: 1px solid var(--fg); }
+.mx-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 14px; padding-top: 16px; }
 .mx-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
 .mx-kinds button {
   appearance: none; background: transparent; cursor: pointer;

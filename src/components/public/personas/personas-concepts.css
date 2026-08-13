@@ -5,12 +5,18 @@
   background: var(--bg);
 }
 
+.pc-section-head-shell {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 var(--pc-gutter);
+}
+
 .pc-production .pc-filter-shell {
-  padding-top: 34px;
+  padding-top: 18px;
 }
 
 .pc-production .pc-concept {
-  padding-top: 54px;
+  padding-top: 26px;
 }
 
 .pc-labbar {

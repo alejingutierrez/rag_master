@@ -2,12 +2,37 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   HISTORICAL_PERIODS,
   PERIODS,
   getPeriodColor,
   type PeriodCode,
 } from "@/lib/design-tokens";
+import "@/components/public/home/home-redesign.css";
+
+type PeriodDestination =
+  | "home"
+  | "hechos"
+  | "epocas"
+  | "ensayos"
+  | "personas"
+  | "lugares"
+  | "ideas"
+  | "mapa"
+  | "archivo";
+
+const DESTINATION_LABELS: Record<PeriodDestination, string> = {
+  home: "la portada",
+  hechos: "hechos",
+  epocas: "épocas",
+  ensayos: "ensayos",
+  personas: "personas",
+  lugares: "lugares",
+  ideas: "ideas",
+  mapa: "el mapa",
+  archivo: "el archivo",
+};
 
 export function HomePeriodSelector({
   selectedPeriod,
@@ -16,15 +41,27 @@ export function HomePeriodSelector({
   availablePeriods,
 }: {
   selectedPeriod: PeriodCode | null;
-  destination?: "home" | "epocas" | "personas";
+  destination?: PeriodDestination;
   onSelect?: (period: PeriodCode | null) => void;
   availablePeriods?: readonly PeriodCode[];
 }) {
+  const searchParams = useSearchParams();
   const activeAnchorRef = useRef<HTMLAnchorElement | null>(null);
   const activeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [periodsOpen, setPeriodsOpen] = useState(false);
   const selected = selectedPeriod ? PERIODS[selectedPeriod] : null;
-  const isFilter = destination === "personas";
+  const isFilter = typeof onSelect === "function";
+
+  const hrefFor = (code: PeriodCode | null) => {
+    const path = destination === "home" ? "/" : `/${destination}`;
+    const key = destination === "home" || destination === "epocas" ? "epoca" : "periodo";
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("pagina");
+    if (code) params.set(key, code);
+    else params.delete(key);
+    const query = params.toString();
+    return query ? `${path}?${query}` : path;
+  };
 
   useEffect(() => {
     if (!selectedPeriod || !periodsOpen) return;
@@ -62,21 +99,14 @@ export function HomePeriodSelector({
         aria-label={
           destination === "home"
             ? "Personalizar la portada por época"
-            : destination === "personas"
-              ? "Filtrar personas por época"
-              : "Seleccionar una época histórica"
+            : `Filtrar ${DESTINATION_LABELS[destination]} por época`
         }
       >
         {HISTORICAL_PERIODS.map((code) => {
           const period = PERIODS[code];
           const active = code === selectedPeriod;
           const available = !isFilter || !availablePeriods || availablePeriods.includes(code);
-          const href =
-            destination === "home"
-              ? active
-                ? "/"
-                : `/?epoca=${code}`
-              : `/epocas?epoca=${code}`;
+          const href = hrefFor(active && destination !== "epocas" ? null : code);
 
           if (isFilter) {
             return (

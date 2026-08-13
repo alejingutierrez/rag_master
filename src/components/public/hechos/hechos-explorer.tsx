@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { EditorialArrow, EditorialImage } from "@/components/public/home/primitives";
+import { HomePeriodSelector } from "@/components/public/home/home-period-selector";
+import { SectionMasthead } from "@/components/public/section-masthead";
 import {
   getPeriodColor,
   HISTORICAL_PERIODS,
@@ -98,47 +100,6 @@ function factMatchesFacet(fact: TypologyCard, mode: ExploreMode, facet: string):
   }
   const values = mode === "lugares" ? fact.entidades.lugares : fact.entidades.personas;
   return values.some((value) => normalize(value) === key);
-}
-
-function PeriodSelector({
-  selected,
-  present,
-  onSelect,
-}: {
-  selected: string | null;
-  present: Set<string>;
-  onSelect: (period: string | null) => void;
-}) {
-  const activeRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    activeRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
-  }, [selected]);
-
-  return (
-    <nav className="hx-period-selector" aria-label="Explorar hechos por época">
-      {HISTORICAL_PERIODS.map((code) => {
-        const period = PERIODS[code];
-        const active = selected === code;
-        const available = present.has(code);
-        return (
-          <button
-            key={code}
-            type="button"
-            aria-pressed={active}
-            disabled={!available}
-            className={active ? "is-active" : ""}
-            ref={active ? activeRef : undefined}
-            onClick={() => onSelect(active ? null : code)}
-            style={{ "--period-color": getPeriodColor(code) } as React.CSSProperties}
-          >
-            <span>{period.label}</span>
-            <small>{period.yearRange}</small>
-          </button>
-        );
-      })}
-    </nav>
-  );
 }
 
 function FactImage({ fact, eager = false }: { fact: TypologyCard; eager?: boolean }) {
@@ -292,15 +253,14 @@ export function HechosExplorer({
 
   return (
     <div className="hx-wrap">
-      <header className="hx-hero">
-        <div className="hx-kicker">Archivo de acontecimientos</div>
-        <div className="hx-title-row">
-          <div>
-            <h1>Hechos</h1>
-            <p>Explore los acontecimientos que marcaron a Colombia, situados en su época, conectados con sus protagonistas y sostenidos por sus documentos.</p>
-          </div>
+      <SectionMasthead
+        eyebrow="01 · Acontecimientos"
+        title="Hechos"
+        summary="Los acontecimientos que marcaron a Colombia, situados en su época y conectados con sus protagonistas y documentos."
+        meta={`${facts.length} hechos publicados`}
+        actions={
           <label className="hx-search">
-            <span>Buscar</span>
+            <span className="sr-only">Buscar hechos</span>
             <input
               type="search"
               value={query}
@@ -311,18 +271,17 @@ export function HechosExplorer({
               placeholder="Un hecho, una persona, un lugar…"
             />
           </label>
-        </div>
-      </header>
+        }
+      >
+        <HomePeriodSelector
+          selectedPeriod={selectedPeriod as PeriodCode | null}
+          destination="hechos"
+          onSelect={selectPeriod}
+          availablePeriods={HISTORICAL_PERIODS.filter((code) => present.has(code))}
+        />
+      </SectionMasthead>
 
-      <section className="hx-periods" aria-labelledby="hx-period-title">
-        <div className="hx-period-intro">
-          <div>
-            <span id="hx-period-title">Edición histórica</span>
-            <strong>{period ? `${period.label} · ${period.yearRange}` : "Recorra quince épocas de la historia colombiana"}</strong>
-          </div>
-          {selectedPeriod ? <button type="button" onClick={() => selectPeriod(null)}>Ver todas las épocas</button> : <Link href="/linea-de-tiempo">Abrir línea completa</Link>}
-        </div>
-        <PeriodSelector selected={selectedPeriod} present={present} onSelect={selectPeriod} />
+      <section className="hx-periods" aria-label="Estado de la selección">
         <div className="hx-status" aria-live="polite">
           <strong>{period ? `Explorando ${period.label}` : "Archivo completo de hechos"}</strong>
           <dl>

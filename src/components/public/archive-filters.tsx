@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { PeriodSelector } from "@/components/public/period-selector";
 import { ArchiveChips, type ArchiveChip } from "@/components/public/archive-chips";
 import {
   ARCHIVE_ORDERS,
@@ -19,10 +17,10 @@ export interface ArchiveTypeFacet {
 }
 
 /**
- * Barra de filtros del archivo: tipo de pieza, época y orden. Cada control
+ * Barra de filtros del archivo: tipo de pieza y orden. Cada control
  * escribe en la URL (`?tipo=&periodo=&orden=`) y siempre devuelve a la página 1;
- * el listado se resuelve en el servidor. La época usa la misma cinta cronológica
- * que la línea de tiempo y los demás índices — un solo sistema visual.
+ * el listado se resuelve en el servidor. La época vive en el selector canónico
+ * compartido por todas las secciones públicas.
  */
 export function ArchiveFilters({
   basePath,
@@ -30,7 +28,6 @@ export function ArchiveFilters({
   periodo,
   orden,
   typeFacets,
-  periodsPresent,
   total,
   totalAll,
 }: {
@@ -39,11 +36,9 @@ export function ArchiveFilters({
   periodo: string | null;
   orden: string;
   typeFacets: ArchiveTypeFacet[];
-  periodsPresent: string[];
   total: number;
   totalAll: number;
 }) {
-  const router = useRouter();
   const ordenParam = orden === DEFAULT_ORDER ? null : orden;
 
   const hrefFor = (patch: { tipo?: string | null; periodo?: string | null; orden?: string | null }) =>
@@ -68,16 +63,6 @@ export function ArchiveFilters({
   return (
     <div className="af-bar">
       <ArchiveChips items={typeChips} label="Tipo" ariaLabel="Filtrar por tipo de pieza" />
-
-      {periodsPresent.length > 1 && (
-        <div className="af-ribbon">
-          <PeriodSelector
-            present={new Set(periodsPresent)}
-            selected={periodo}
-            onSelect={(code) => router.push(hrefFor({ periodo: code }), { scroll: false })}
-          />
-        </div>
-      )}
 
       <div className="af-foot">
         <div className="af-count">

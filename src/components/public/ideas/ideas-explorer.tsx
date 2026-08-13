@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useMemo, useRef } from "react";
+import { useDeferredValue, useMemo } from "react";
+import { HomePeriodSelector } from "@/components/public/home/home-period-selector";
+import { SectionMasthead } from "@/components/public/section-masthead";
 import { HISTORICAL_PERIODS, PERIODS, getPeriodColor, type PeriodCode } from "@/lib/design-tokens";
 import { imageAt } from "@/lib/image-url";
 import type { PublicEntity } from "@/lib/public-data";
@@ -178,73 +180,6 @@ function CrossPeriodRow({ idea, selected }: { idea: PublicEntity; selected: Peri
   );
 }
 
-function Timeline({
-  periods,
-  selected,
-  onSelect,
-}: {
-  periods: PeriodCode[];
-  selected: PeriodCode;
-  onSelect: (period: PeriodCode) => void;
-}) {
-  const stripRef = useRef<HTMLDivElement>(null);
-  const activeRef = useRef<HTMLButtonElement>(null);
-  const selectedIndex = periods.indexOf(selected);
-  const previous = periods[(selectedIndex - 1 + periods.length) % periods.length];
-  const next = periods[(selectedIndex + 1) % periods.length];
-
-  useEffect(() => {
-    const strip = stripRef.current;
-    const active = activeRef.current;
-    if (!strip || !active || strip.scrollWidth <= strip.clientWidth) return;
-    strip.scrollTo({
-      left: active.offsetLeft - (strip.clientWidth - active.offsetWidth) / 2,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-    });
-  }, [selected]);
-
-  return (
-    <section className="ix-timeline" aria-labelledby="ix-timeline-title">
-      <div id="ix-timeline-title" className="ix-timeline-label">Explorar por época</div>
-      <div className="ix-timeline-controls">
-        <button type="button" className="ix-timeline-arrow" onClick={() => onSelect(previous)} aria-label="Época anterior">
-          <ArrowIcon direction="left" />
-        </button>
-        <div
-          className="ix-periods"
-          role="group"
-          aria-label="Seleccionar época"
-          ref={stripRef}
-          style={{ "--period-count": periods.length } as React.CSSProperties}
-        >
-          {periods.map((code) => {
-            const period = PERIODS[code];
-            const active = code === selected;
-            return (
-              <button
-                key={code}
-                type="button"
-                ref={active ? activeRef : undefined}
-                className={active ? "is-active" : ""}
-                aria-current={active ? "true" : undefined}
-                onClick={() => onSelect(code)}
-                style={{ "--period-color": getPeriodColor(code) } as React.CSSProperties}
-              >
-                <span>{period.label}</span>
-                <small>{period.yearRange}</small>
-                {active ? <i aria-hidden /> : null}
-              </button>
-            );
-          })}
-        </div>
-        <button type="button" className="ix-timeline-arrow" onClick={() => onSelect(next)} aria-label="Época siguiente">
-          <ArrowIcon />
-        </button>
-      </div>
-    </section>
-  );
-}
-
 function EmptyResults({ onClear }: { onClear: () => void }) {
   return (
     <div className="ix-empty">
@@ -393,12 +328,12 @@ export function IdeasExplorer({ ideas }: { ideas: PublicEntity[] }) {
 
   return (
     <div className="ix-page">
-      <header className="ix-heading">
-        <div className="ix-heading-copy">
-          <h1>Ideas</h1>
-          <p>Procesos, ideologías e instituciones con pieza propia en el archivo — y las historias que permiten pensarlas.</p>
-        </div>
-        <div className="ix-tools">
+      <SectionMasthead
+        eyebrow="06 · Conceptos y procesos"
+        title="Ideas"
+        summary="Procesos, ideologías e instituciones con historia propia y las piezas que permiten pensarlos."
+        meta={`${ideas.length} ideas publicadas`}
+        actions={
           <label className="ix-search">
             <SearchIcon />
             <span className="sr-only">Buscar ideas</span>
@@ -409,18 +344,27 @@ export function IdeasExplorer({ ideas }: { ideas: PublicEntity[] }) {
               placeholder={`Buscar entre ${ideas.length} ideas`}
             />
           </label>
-          <div className="ix-tabs" role="tablist" aria-label="Organizar ideas">
-            <button type="button" role="tab" aria-selected={selectedView === "temas"} className={selectedView === "temas" ? "is-active" : ""} onClick={() => setView("temas")}>Temas</button>
-            <button type="button" role="tab" aria-selected={selectedView === "epocas"} className={selectedView === "epocas" ? "is-active" : ""} onClick={() => setView("epocas")}>Épocas</button>
-            <button type="button" role="tab" aria-selected={selectedView === "az"} className={selectedView === "az" ? "is-active" : ""} onClick={() => setView("az")}>A–Z</button>
-          </div>
-          <div className="ix-total">{ideas.length} con historia propia</div>
+        }
+      >
+        <HomePeriodSelector
+          selectedPeriod={selectedPeriod}
+          destination="ideas"
+          onSelect={(periodo) => { if (periodo) setPeriod(periodo); }}
+          availablePeriods={periods}
+        />
+      </SectionMasthead>
+
+      <div className="ix-viewbar">
+        <span>Ordenar el archivo</span>
+        <div className="ix-tabs" role="tablist" aria-label="Organizar ideas">
+          <button type="button" role="tab" aria-selected={selectedView === "temas"} className={selectedView === "temas" ? "is-active" : ""} onClick={() => setView("temas")}>Temas</button>
+          <button type="button" role="tab" aria-selected={selectedView === "epocas"} className={selectedView === "epocas" ? "is-active" : ""} onClick={() => setView("epocas")}>Épocas</button>
+          <button type="button" role="tab" aria-selected={selectedView === "az"} className={selectedView === "az" ? "is-active" : ""} onClick={() => setView("az")}>A–Z</button>
         </div>
-      </header>
+      </div>
 
       {selectedView === "epocas" ? (
         <>
-          <Timeline periods={periods} selected={selectedPeriod} onSelect={setPeriod} />
           {periodIdeas.length === 0 || !featured ? (
             <EmptyResults onClear={clearSearch} />
           ) : (
