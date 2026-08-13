@@ -162,7 +162,7 @@
   color: rgba(255, 255, 255, .84);
 }
 
-.ex-current-copy h1 {
+.ex-current-copy h2 {
   max-width: 10ch;
   margin: 17px 0 0;
   font-family: var(--font-display);
@@ -173,7 +173,7 @@
   text-wrap: balance;
 }
 
-.ex-current-copy h1 small,
+.ex-current-copy h2 small,
 .ex-next h2 small {
   display: block;
   margin-top: 10px;
@@ -789,7 +789,7 @@
   .ex-neighbor { display: none; }
   .ex-current-copy { width: 92%; padding: 34px 24px; justify-content: flex-end; }
   .ex-current-shade { background: linear-gradient(to top, rgba(0, 0, 0, .93), rgba(0, 0, 0, .56) 52%, rgba(0, 0, 0, .04)); }
-  .ex-current-copy h1 { max-width: 11ch; margin-top: 12px; font-size: clamp(47px, 14vw, 60px); }
+  .ex-current-copy h2 { max-width: 11ch; margin-top: 12px; font-size: clamp(47px, 14vw, 60px); }
   .ex-current-copy > p { margin-top: 15px; font-size: 17px; }
   .ex-current-copy > i { margin-top: 17px; }
   .ex-current-copy > a { margin-top: 17px; }
