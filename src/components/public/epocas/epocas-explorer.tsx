@@ -311,7 +311,7 @@ export function EpocasExplorer({ data }: { data: EpochExplorerPageData }) {
               <span className="ex-current-shade" aria-hidden />
               <div className="ex-current-copy">
                 <span>{String(data.selected.index).padStart(2, "0")} de {data.periods.length}</span>
-                <h1 id="ex-title">{data.selected.title}<small>{data.selected.range}</small></h1>
+                <h2 id="ex-title">{data.selected.title}<small>{data.selected.range}</small></h2>
                 <i aria-hidden />
                 <p>{data.selected.summary}</p>
                 {data.selected.articlePublished ? (
