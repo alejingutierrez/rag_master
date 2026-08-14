@@ -367,6 +367,7 @@ async function latestRows(job: Job): Promise<DeliverableRow[]> {
 
 async function pollUntilReady(
   deliverableId: string,
+  job: Job,
   deadlineAt = Date.now() + MAX_ITEM_MS,
 ): Promise<void> {
   let imageKickoffStarted = false;
@@ -393,6 +394,10 @@ async function pollUntilReady(
       action.kind === "trigger-image" &&
       (!imageKickoffStarted || action.reason === "image-error")
     ) {
+      // La dirección de arte consume el período persistido. En campañas con
+      // cuota histórica hay que fijarlo ANTES de la primera portada para no
+      // generar una imagen TRANS que luego deba descartarse y repetirse.
+      await enforceExpectedPeriod(deliverableId, job);
       const image = await apiWrite(
         `/api/deliverables/${deliverableId}/generate-image`,
         "POST",
@@ -500,7 +505,7 @@ async function finishCampaignItem(
   deadlineAt?: number,
 ): Promise<void> {
   try {
-    await pollUntilReady(deliverableId, deadlineAt);
+    await pollUntilReady(deliverableId, job, deadlineAt);
   } catch (error) {
     if (
       (error as Error).message === "image-without-identity-reference"
