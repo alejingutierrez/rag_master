@@ -470,6 +470,16 @@
   .hx-period-intro button { margin-top: 2px; text-align: right; }
   .hx-period-selector { margin: 0 calc(var(--hx-gutter) * -1); padding-left: var(--hx-gutter); border-right: 0; }
   .hx-period-selector button { min-width: 104px; }
+  .hx-status::before {
+    content: attr(data-mobile-label);
+    font-family: var(--font-mono);
+    font-size: 7px;
+    line-height: 1;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .hx-status > strong { display: none; }
   .hx-status dl { width: 100%; gap: 12px; overflow-x: auto; }
   .hx-status dl div { grid-template-columns: 1fr; gap: 0; }
   .hx-status dt { font-size: 20px; }

@@ -99,7 +99,11 @@ export function HomeEditionHeader({
 
       <HomePeriodSelector selectedPeriod={selectedPeriod} />
 
-      <div className="hc-edition-status" aria-live="polite">
+      <div
+        className="hc-edition-status"
+        aria-live="polite"
+        data-mobile-label={selected ? "Contenido de la época" : "Contenido del archivo"}
+      >
         <strong>{status}</strong>
         <dl>
           <div><dt>{formatEditorialNumber(counts.pieces)}</dt><dd>piezas</dd></div>
