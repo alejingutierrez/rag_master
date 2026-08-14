@@ -442,16 +442,17 @@ async function regenerateCampaignImageRemote(
   deliverableId: string,
   job: Job,
 ): Promise<void> {
+  const requiresHistoricalNonLikeness =
+    job.forceHistoricalNonLikeness ||
+    (job.bucket === "person" && job.expectedPeriodCode === "PRE");
   const response = await apiWrite(
     `/api/deliverables/${deliverableId}/generate-image`,
     "POST",
     {
       openAIOnly: true,
       requireArtDirection: true,
-      allowHistoricalNonLikeness:
-        job.expectedPeriodCode === "PRE" || job.forceHistoricalNonLikeness,
-      forceHistoricalNonLikeness:
-        job.expectedPeriodCode === "PRE" || job.forceHistoricalNonLikeness,
+      allowHistoricalNonLikeness: requiresHistoricalNonLikeness,
+      forceHistoricalNonLikeness: requiresHistoricalNonLikeness,
     },
   );
   const accepted =
@@ -481,7 +482,7 @@ async function regenerateCampaignImageRemote(
         throw new Error(`la portada remota no acredita OpenAI (${model || "sin modelo"})`);
       }
       if (
-        (job.expectedPeriodCode === "PRE" || job.forceHistoricalNonLikeness) &&
+        requiresHistoricalNonLikeness &&
         image.personaModo !== "escena-documental-sin-semejanza"
       ) {
         throw new Error("la portada remota no acredita no-semejanza histórica");
@@ -761,7 +762,8 @@ function qaRow(job: Job, row: DeliverableRow | null): QaResult {
     );
   }
   if (
-    (job.expectedPeriodCode === "PRE" || job.forceHistoricalNonLikeness) &&
+    (job.forceHistoricalNonLikeness ||
+      (job.bucket === "person" && job.expectedPeriodCode === "PRE")) &&
     image.personaModo !== "escena-documental-sin-semejanza"
   ) {
     errors.push("portada histórica sin declaración de no-semejanza");
@@ -1088,10 +1090,12 @@ async function generateOpenAICovers(results: QaResult[]) {
             preserveExistingOnError: true,
             requireArtDirection: true,
             allowHistoricalNonLikeness:
-              result.job.expectedPeriodCode === "PRE" ||
+              (result.job.bucket === "person" &&
+                result.job.expectedPeriodCode === "PRE") ||
               result.job.forceHistoricalNonLikeness,
             forceHistoricalNonLikeness:
-              result.job.expectedPeriodCode === "PRE" ||
+              (result.job.bucket === "person" &&
+                result.job.expectedPeriodCode === "PRE") ||
               result.job.forceHistoricalNonLikeness,
           });
         }
