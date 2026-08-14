@@ -1,14 +1,7 @@
 import Link from "next/link";
 import { PublicNavigation, type PublicNavigationStats } from "@/components/public/public-navigation";
 import { getConnectedEntityCounts, getPublicArchiveStats } from "@/lib/public-data";
-import { loadTimeline } from "@/lib/timeline-data";
 import "@/components/public/public-shell.css";
-
-function eventCount(periods: Awaited<ReturnType<typeof loadTimeline>>["periods"]): number {
-  let total = 0;
-  for (const slice of Object.values(periods)) total += slice.events.length;
-  return total;
-}
 
 /** Chrome público global: navegación de atlas, menú móvil y pie editorial. */
 export async function PublicShell({
@@ -26,18 +19,15 @@ export async function PublicShell({
     return <div className="ps-page ps-page-edition">{children}</div>;
   }
 
-  const [archive, connected, timeline] = await Promise.all([
+  const [archive, connected] = await Promise.all([
     getPublicArchiveStats(),
     getConnectedEntityCounts(),
-    loadTimeline().catch(() => null),
   ]);
   const stats: PublicNavigationStats = {
     hechos: archive.hechos,
     epocas: archive.epocas,
     biografias: archive.biografias,
-    preguntas: archive.preguntas,
     piezas: archive.total,
-    timelineEvents: timeline ? eventCount(timeline.periods) : 0,
     personas: connected.persona,
     lugares: connected.lugar,
     ideas: connected.idea,
@@ -74,7 +64,7 @@ export async function PublicShell({
           </div>
           <div className="ps-foot-col">
             <div className="ps-foot-title">Directorios</div>
-            <Link href="/personas">Personas</Link>
+            <Link href="/personas">Personajes</Link>
             <Link href="/lugares">Lugares</Link>
             <Link href="/ideas">Ideas</Link>
           </div>

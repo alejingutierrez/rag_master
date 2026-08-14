@@ -90,6 +90,8 @@ function FilterBar({
   periods,
   resultCount,
   useHomeSelector = false,
+  showPeriodControl = true,
+  showResultCount = true,
 }: {
   query: string;
   onQuery: (value: string) => void;
@@ -98,9 +100,11 @@ function FilterBar({
   periods: PeriodCode[];
   resultCount: number;
   useHomeSelector?: boolean;
+  showPeriodControl?: boolean;
+  showResultCount?: boolean;
 }) {
   return (
-    <div className={`pc-filterbar${useHomeSelector ? " is-home-selector" : ""}`}>
+    <div className={`pc-filterbar${useHomeSelector ? " is-home-selector" : ""}${showPeriodControl ? "" : " without-period-control"}${showResultCount ? "" : " is-search-only"}`}>
       <label className="pc-search">
         <span>Buscar</span>
         <input
@@ -109,7 +113,7 @@ function FilterBar({
           placeholder="Nombre, trayectoria o hecho…"
         />
       </label>
-      {useHomeSelector ? (
+      {showPeriodControl && useHomeSelector ? (
         <div className="pc-home-period-selector">
           <HomePeriodSelector
             selectedPeriod={period as PeriodCode | null}
@@ -118,7 +122,7 @@ function FilterBar({
             availablePeriods={periods}
           />
         </div>
-      ) : (
+      ) : showPeriodControl ? (
         <div className="pc-periods" role="group" aria-label="Filtrar por época">
           <button type="button" className={!period ? "is-active" : ""} onClick={() => onPeriod(null)}>
             Todas
@@ -136,8 +140,8 @@ function FilterBar({
             </button>
           ))}
         </div>
-      )}
-      <span className="pc-result-count">{resultCount} resultados</span>
+      ) : null}
+      {showResultCount ? <span className="pc-result-count">{resultCount} resultados</span> : null}
     </div>
   );
 }
@@ -322,7 +326,7 @@ function TimelineConcept({
       {showIntro ? (
         <ConceptIntro
           eyebrow="Quiénes hicieron la historia"
-          title="Personas"
+          title="Personajes"
           intro="Cada biografía ocupa su lugar dentro de la época que ayudó a transformar. Los grandes protagonistas abren el recorrido; el archivo completo permanece a la vista."
           count={allCount}
         />
@@ -518,7 +522,7 @@ export function PersonasByPeriod({
       <div className="pc-section-head-shell">
         <SectionMasthead
           eyebrow="04 · Biografías"
-          title="Personas"
+          title="Personajes"
           summary="Vidas documentadas en la época que ayudaron a transformar, con sus relaciones y fuentes a la vista."
           meta={`${filtered.length} de ${entities.length} vidas`}
         >
@@ -538,6 +542,8 @@ export function PersonasByPeriod({
           onPeriod={choosePeriod}
           periods={periods}
           resultCount={filtered.length}
+          showPeriodControl={false}
+          showResultCount={false}
         />
       </div>
       {filtered.length > 0 ? (

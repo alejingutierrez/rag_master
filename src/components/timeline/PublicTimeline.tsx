@@ -3,10 +3,11 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { PERIODS, type PeriodCode } from "@/lib/design-tokens";
-import { PeriodRibbon } from "@/components/public/period-ribbon";
+import { HomePeriodSelector } from "@/components/public/home/home-period-selector";
 import type { TimelineFile } from "@/lib/timeline-data";
 import type { TimelineLinks } from "@/lib/public-data";
 import { TimelineDensityStrip } from "./TimelineDensityStrip";
+import { TimelineArchivePulse } from "./TimelineArchivePulse";
 import { PublicTimelineEventDrawer, matchHechos } from "./PublicTimelineEventDrawer";
 import { fmtYearSpan, type TimelineEventData } from "./TimelineEventDrawer";
 import "./public-timeline.css";
@@ -52,6 +53,9 @@ export function PublicTimeline({
   const selectPeriod = (code: PeriodCode) => {
     setSelected(code);
     setSelectedEvent(null);
+    const params = new URLSearchParams(window.location.search);
+    params.set("p", code);
+    window.history.replaceState(null, "", `/linea-de-tiempo?${params.toString()}`);
   };
 
   // Un solo casamiento evento↔ficha para toda la página: la fila y el drawer
@@ -71,26 +75,39 @@ export function PublicTimeline({
           Quinientos años, <em>quince períodos.</em>
         </h1>
         <p className="ptl-hero-s">
-          Una línea de tiempo calibrada por atención: los momentos que el corpus más interroga
-          pesan más. Elija un período; cada evento abre su detalle y, cuando el hecho ya está
-          escrito, un avance de la ficha completa.
+          Una cronología que hace visible cuánto archivo existe detrás de cada época. La densidad
+          responde a hechos publicados; los eventos y las preguntas muestran cómo se conectan.
         </p>
       </header>
 
-      {/* Selector de períodos — cinta cronológica compartida (modo navegación). */}
-      <div className="ptl-wrap ptl-ribbon">
-        <PeriodRibbon
+      <div className="ptl-wrap">
+        <TimelineArchivePulse
           order={ORDER}
+          timeline={timeline}
+          links={links}
           selected={selected}
-          onSelect={(c) => c && selectPeriod(c as PeriodCode)}
-          label="Períodos canónicos · seleccione uno"
-          mode="nav"
+          onSelect={selectPeriod}
+        />
+      </div>
+
+      {/* El mismo deck de épocas que usan las demás superficies públicas. */}
+      <div className="ptl-wrap ptl-selector">
+        <div className="ptl-selector-head">
+          <span>Explorar otra época</span>
+          <small>La selección actual permanece ampliada; pase el cursor para previsualizar las demás.</small>
+        </div>
+        <HomePeriodSelector
+          selectedPeriod={selected}
+          destination="linea-de-tiempo"
+          onSelect={(code) => code && selectPeriod(code)}
+          availablePeriods={ORDER}
         />
       </div>
 
       <section className="ptl-wrap" style={pcStyle}>
-        {/* Cabecera del período: identidad, cifras y la puerta a la época. */}
-        <header className="ptl-period">
+        <div key={selected} className="ptl-period-stage">
+          {/* Cabecera del período: identidad, cifras y la puerta a la época. */}
+          <header className="ptl-period">
           <div>
             <div className="ptl-period-n">
               Período {String(ORDER.indexOf(selected) + 1).padStart(2, "0")} / {ORDER.length}
@@ -101,8 +118,9 @@ export function PublicTimeline({
 
           <div className="ptl-period-side">
             <div className="ptl-metrics">
+              <Metric label="Hechos publicados" value={periodLinks?.counts.hechos ?? 0} />
               <Metric label="Eventos" value={total} />
-              <Metric label="Piezas publicadas" value={periodLinks?.counts.total ?? 0} />
+              <Metric label="Piezas" value={periodLinks?.counts.total ?? 0} />
             </div>
             {periodLinks?.epoca && (
               <Link href={periodLinks.epoca.href} className="ptl-epoca">
@@ -111,20 +129,21 @@ export function PublicTimeline({
               </Link>
             )}
           </div>
-        </header>
+          </header>
 
-        {total > 0 ? (
+          {total > 0 ? (
           <>
             <div className="ptl-strip">
               <TimelineDensityStrip
                 histogram={slice.yearHistogram}
                 events={slice.events}
+                facts={periodLinks?.hechos ?? []}
                 periodoCode={selected}
                 selectedEventId={selectedEvent?.id ?? null}
                 onSelectEvent={setSelectedEvent}
               />
               <div className="ptl-strip-cap">
-                Barras: preguntas ancladas por año · Círculos: eventos, dimensionados por peso en el corpus
+                Barras: preguntas por año · Círculos: eventos editoriales · Rombos: hechos publicados
               </div>
             </div>
 
@@ -137,11 +156,21 @@ export function PublicTimeline({
             </div>
 
             <ol className="ptl-list">
-              {slice.events.map((e) => {
+              {slice.events.map((e, index) => {
                 const hecho = hechoPorEvento.get(e.id) ?? null;
                 const rango = e.anioFin !== e.anioInicio;
+                const eventWeight = Math.max(0.2, e.evidencia.peso / 100);
                 return (
-                  <li key={e.id} className="ptl-item">
+                  <li
+                    key={e.id}
+                    className="ptl-item"
+                    style={
+                      {
+                        "--event-delay": `${Math.min(index * 24, 240)}ms`,
+                        "--event-size": `${7 + eventWeight * 8}px`,
+                      } as CSSProperties
+                    }
+                  >
                     <button
                       type="button"
                       onClick={() => setSelectedEvent(e)}
@@ -149,11 +178,12 @@ export function PublicTimeline({
                       data-active={selectedEvent?.id === e.id ? "true" : "false"}
                       className={hecho?.imageUrl ? "ptl-btn has-media" : "ptl-btn"}
                     >
+                      <span className="ptl-event-node" aria-hidden="true"><i /></span>
                       <span className="ptl-year" data-span={rango ? "true" : "false"}>
                         {fmtYearSpan(e.anioInicio, e.anioFin)}
                       </span>
 
-                      <span>
+                      <span className="ptl-event-copy">
                         <span className="ptl-t">{e.titulo}</span>
                         <span className="ptl-s">{e.resumen}</span>
                         <span className="ptl-meta">
@@ -181,9 +211,10 @@ export function PublicTimeline({
               })}
             </ol>
           </>
-        ) : (
+          ) : (
           <p className="ptl-empty">Aún no hay eventos para este período.</p>
-        )}
+          )}
+        </div>
       </section>
 
       <PublicTimelineEventDrawer

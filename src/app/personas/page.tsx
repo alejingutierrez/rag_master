@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata = buildMetadata({
   seo: {
-    metaTitle: "Personas",
+    metaTitle: "Personajes",
     metaDescription:
       "Las figuras de la historia de Colombia con biografía propia publicada: su semblanza, sus fuentes y los hechos donde intervienen.",
     keywords: ["personajes históricos", "biografías", "historia de Colombia"],
