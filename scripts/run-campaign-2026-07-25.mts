@@ -51,6 +51,11 @@ import {
   CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_08_04_MASTER_IDS,
   EXPECTED_PERIOD_COUNTS as CAMPAIGN_2026_08_04_PERIOD_COUNTS,
 } from "./campaign-2026-08-04-manifest";
+import {
+  CAMPAIGN_ENTITIES as CAMPAIGN_2026_08_14_ENTITIES,
+  CAMPAIGN_MASTER_IDS as CAMPAIGN_2026_08_14_MASTER_IDS,
+  EXPECTED_PERIOD_COUNTS as CAMPAIGN_2026_08_14_PERIOD_COUNTS,
+} from "./campaign-2026-08-14-manifest";
 
 const CAMPAIGN_ID =
   process.env.CAMPAIGN_ID ||
@@ -84,6 +89,13 @@ const CAMPAIGNS = {
     expectedCounts: { person: 37, place: 0, concept: 0, master: 0 },
     requireOpenAIImages: true,
     expectedPeriodCounts: CAMPAIGN_2026_08_04_PERIOD_COUNTS,
+  },
+  "2026-08-14": {
+    entities: CAMPAIGN_2026_08_14_ENTITIES,
+    masterIds: CAMPAIGN_2026_08_14_MASTER_IDS,
+    expectedCounts: { person: 0, place: 60, concept: 150, master: 0 },
+    requireOpenAIImages: true,
+    expectedPeriodCounts: CAMPAIGN_2026_08_14_PERIOD_COUNTS,
   },
 } as const;
 const selectedCampaign = CAMPAIGNS[CAMPAIGN_ID as keyof typeof CAMPAIGNS];
@@ -211,6 +223,23 @@ function jobs(): Job[] {
       sourceKind: "pregunta-madre" as const,
     })),
   ];
+}
+
+function requestedJobs(all: Job[]): Job[] {
+  const bucketJobs = requestedBucket
+    ? all.filter((job) => job.bucket === requestedBucket)
+    : all;
+  if (requestedBucket && bucketJobs.length === 0) {
+    throw new Error(`Bucket inválido o vacío: ${requestedBucket}`);
+  }
+  const selected = bucketJobs.slice(
+    requestedOffset,
+    requestedLimit > 0 ? requestedOffset + requestedLimit : undefined,
+  );
+  if (selected.length === 0) {
+    throw new Error(`Rango vacío: offset=${requestedOffset}`);
+  }
+  return selected;
 }
 
 function assertManifest(all: Job[]) {
@@ -766,6 +795,21 @@ function qaRow(job: Job, row: DeliverableRow | null): QaResult {
           `período ${structured.periodoCode ?? "ausente"}, se esperaba ${job.expectedPeriodCode}`,
         );
       }
+      if (job.bucket === "place") {
+        if (!structured.lugarPrincipal) errors.push("lugar sin ancla geográfica");
+        if (structured.lat == null || structured.lng == null) {
+          errors.push("lugar sin coordenadas WGS84");
+        } else if (
+          structured.lat < -4.5 ||
+          structured.lat > 13.6 ||
+          structured.lng < -82.2 ||
+          structured.lng > -66.6
+        ) {
+          errors.push(
+            `coordenadas fuera de Colombia (${structured.lat}, ${structured.lng})`,
+          );
+        }
+      }
     }
   }
   if (words < 2300) errors.push(`solo ${words} palabras`);
@@ -1036,7 +1080,7 @@ async function generateOpenAICovers(results: QaResult[]) {
       const startedAt = Date.now();
       try {
         await enforceExpectedPeriod(id, result.job);
-        if (CAMPAIGN_ID === "2026-08-04") {
+        if (CAMPAIGN_ID === "2026-08-04" || CAMPAIGN_ID === "2026-08-14") {
           await regenerateCampaignImageRemote(id, result.job);
         } else {
           await generateAndStoreImage(id, {
@@ -1319,24 +1363,15 @@ async function main() {
     if (!argv.has("--resume")) {
       await assertNewPublicKeys(all);
     }
-    const bucketJobs = requestedBucket
-      ? all.filter((job) => job.bucket === requestedBucket)
-      : all;
-    if (requestedBucket && bucketJobs.length === 0) {
-      throw new Error(`Bucket inválido o vacío: ${requestedBucket}`);
-    }
-    const selected = bucketJobs.slice(
-      requestedOffset,
-      requestedLimit > 0 ? requestedOffset + requestedLimit : undefined,
-    );
-    if (selected.length === 0) {
-      throw new Error(`Rango de producción vacío: offset=${requestedOffset}`);
-    }
-    await runProduction(selected);
+    await runProduction(requestedJobs(all));
     return;
   }
 
-  const qa = await runQa(all);
+  const qa = await runQa(
+    requestedBucket || requestedOffset > 0 || requestedLimit > 0
+      ? requestedJobs(all)
+      : all,
+  );
   if (argv.has("--qa")) return;
   if (argv.has("--covers")) {
     await generateMissingCovers(qa);
