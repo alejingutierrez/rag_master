@@ -282,7 +282,11 @@ export function HechosExplorer({
       </SectionMasthead>
 
       <section className="hx-periods" aria-label="Estado de la selección">
-        <div className="hx-status" aria-live="polite">
+        <div
+          className="hx-status"
+          aria-live="polite"
+          data-mobile-label={period ? "Contenido de la época" : "Contenido del archivo"}
+        >
           <strong>{period ? `Explorando ${period.label}` : "Archivo completo de hechos"}</strong>
           <dl>
             <div><dt>{scopedFacts.length}</dt><dd>hechos</dd></div>
