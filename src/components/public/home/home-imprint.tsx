@@ -3,12 +3,11 @@ import type { HomeArchiveEvidence, HomeEditionCounts } from "./types";
 import { EditorialArrow, formatEditorialNumber } from "./primitives";
 
 const FOOT_LINKS = [
-  { href: "/hechos", label: "Hechos" },
   { href: "/epocas", label: "Épocas" },
-  { href: "/ensayos", label: "Ensayos" },
-  { href: "/personas", label: "Personas" },
-  { href: "/lugares", label: "Lugares" },
+  { href: "/hechos", label: "Hechos" },
+  { href: "/personas", label: "Personajes" },
   { href: "/ideas", label: "Ideas" },
+  { href: "/lugares", label: "Lugares" },
   { href: "/mapa", label: "Mapa" },
   { href: "/archivo", label: "Archivo" },
 ] as const;

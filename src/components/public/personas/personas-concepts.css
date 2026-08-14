@@ -49,6 +49,8 @@
 .pc-filter-shell { max-width: 1360px; margin: 0 auto; padding: 24px var(--pc-gutter) 0; }
 .pc-filterbar { display: grid; grid-template-columns: minmax(220px, 300px) 1fr auto; align-items: end; gap: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .pc-filterbar.is-home-selector { grid-template-columns: minmax(220px, 340px) 1fr auto; align-items: end; }
+.pc-filterbar.is-search-only { display: block; }
+.pc-filterbar.is-search-only .pc-search { max-width: 430px; }
 .pc-home-period-selector { grid-column: 1 / -1; min-width: 0; }
 .pc-search { display: grid; gap: 5px; }
 .pc-search span, .pc-result-count { font: 9.5px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-faint); }

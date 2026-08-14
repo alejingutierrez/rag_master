@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -27,7 +26,8 @@ type PeriodDestination =
   | "lugares"
   | "ideas"
   | "mapa"
-  | "archivo";
+  | "archivo"
+  | "linea-de-tiempo";
 
 const DESTINATION_LABELS: Record<PeriodDestination, string> = {
   home: "la portada",
@@ -39,6 +39,7 @@ const DESTINATION_LABELS: Record<PeriodDestination, string> = {
   ideas: "ideas",
   mapa: "el mapa",
   archivo: "el archivo",
+  "linea-de-tiempo": "la línea de tiempo",
 };
 
 const PERIOD_VISUALS: Record<
@@ -123,9 +124,16 @@ export function HomePeriodSelector({
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
   const selectedIndex = selectedPeriod ? HISTORICAL_PERIODS.indexOf(selectedPeriod) : -1;
-  const [mobileIndex, setMobileIndex] = useState(
-    selectedIndex >= 0 ? selectedIndex : DEFAULT_PREVIEW_INDEX,
-  );
+  const [mobileState, setMobileState] = useState(() => ({
+    selection: selectedIndex,
+    index: selectedIndex >= 0 ? selectedIndex : DEFAULT_PREVIEW_INDEX,
+  }));
+  const mobileIndex =
+    mobileState.selection === selectedIndex
+      ? mobileState.index
+      : selectedIndex >= 0
+        ? selectedIndex
+        : DEFAULT_PREVIEW_INDEX;
   const [mobileMotion, setMobileMotion] = useState<{
     direction: "forward" | "back";
     key: number;
@@ -173,7 +181,7 @@ export function HomePeriodSelector({
         key: (motion?.key ?? 0) + 1,
       }));
     }
-    setMobileIndex(index);
+    setMobileState({ selection: selectedIndex, index });
     if (isFilter) onSelect?.(code);
     else router.push(hrefFor(code), { scroll: false });
   };
@@ -206,10 +214,6 @@ export function HomePeriodSelector({
     const nextIndex = availableNeighbor(mobileIndex, dx < 0 ? 1 : -1);
     if (nextIndex !== null) goToMobilePeriod(nextIndex);
   };
-
-  useEffect(() => {
-    if (selectedIndex >= 0) setMobileIndex(selectedIndex);
-  }, [selectedIndex]);
 
   const previousIndex = availableNeighbor(mobileIndex, -1);
   const nextIndex = availableNeighbor(mobileIndex, 1);

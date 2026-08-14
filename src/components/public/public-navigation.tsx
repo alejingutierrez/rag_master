@@ -8,21 +8,18 @@ export interface PublicNavigationStats {
   hechos: number;
   epocas: number;
   biografias: number;
-  preguntas: number;
   piezas: number;
-  timelineEvents: number;
   personas: number;
   lugares: number;
   ideas: number;
 }
 
 const PRIMARY = [
-  { href: "/hechos", label: "Hechos" },
   { href: "/epocas", label: "Épocas" },
-  { href: "/ensayos", label: "Ensayos" },
-  { href: "/personas", label: "Personas" },
-  { href: "/lugares", label: "Lugares" },
+  { href: "/hechos", label: "Hechos" },
+  { href: "/personas", label: "Personajes" },
   { href: "/ideas", label: "Ideas" },
+  { href: "/lugares", label: "Lugares" },
   { href: "/mapa", label: "Mapa" },
   { href: "/archivo", label: "Archivo" },
 ] as const;
@@ -58,17 +55,15 @@ export function PublicNavigation({ stats }: { stats: PublicNavigationStats }) {
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 
   const mobileLinks = [
-    { href: "/hechos", label: "Hechos", meta: String(stats.hechos) },
     { href: "/epocas", label: "Épocas", meta: String(stats.epocas) },
-    { href: "/ensayos", label: "Ensayos", meta: `${stats.preguntas} ${stats.preguntas === 1 ? "pregunta" : "preguntas"}` },
+    { href: "/hechos", label: "Hechos", meta: String(stats.hechos) },
     // Los directorios solo listan entidades con su propio artículo publicado: el
     // conteo del menú tiene que ser ese mismo, no el de piezas por tipología.
-    { href: "/personas", label: "Personas", meta: `${stats.personas} con historia propia` },
-    { href: "/lugares", label: "Lugares", meta: `${stats.lugares} con historia propia` },
+    { href: "/personas", label: "Personajes", meta: `${stats.personas} con historia propia` },
     { href: "/ideas", label: "Ideas", meta: `${stats.ideas} con historia propia` },
+    { href: "/lugares", label: "Lugares", meta: `${stats.lugares} con historia propia` },
     { href: "/mapa", label: "Mapa", meta: "El archivo sobre el territorio" },
     { href: "/archivo", label: "Archivo", meta: `${stats.piezas} piezas` },
-    { href: "/linea-de-tiempo", label: "Línea de tiempo", meta: `${stats.timelineEvents} eventos` },
   ];
 
   return (

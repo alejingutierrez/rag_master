@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import type { PeriodCode } from "@/lib/design-tokens";
 import { PERIODS } from "@/lib/design-tokens";
+import type { TimelineLinkPiece } from "@/lib/public-data";
 import { fmtYearSpan, type TimelineEventData } from "./TimelineEventDrawer";
 
 /**
@@ -12,12 +13,14 @@ import { fmtYearSpan, type TimelineEventData } from "./TimelineEventDrawer";
 export function TimelineDensityStrip({
   histogram,
   events,
+  facts = [],
   periodoCode,
   selectedEventId,
   onSelectEvent,
 }: {
   histogram: Array<{ y: number; n: number; b: number }>;
   events: TimelineEventData[];
+  facts?: TimelineLinkPiece[];
   periodoCode: PeriodCode;
   selectedEventId: string | null;
   onSelectEvent: (ev: TimelineEventData) => void;
@@ -25,19 +28,31 @@ export function TimelineDensityStrip({
   const slug = PERIODS[periodoCode].slug;
 
   const layout = useMemo(() => {
-    if (histogram.length === 0) return null;
+    if (histogram.length === 0 && events.length === 0 && facts.length === 0) return null;
     const W = 800;
     const years = histogram.map((h) => h.y);
     const evYears = events.flatMap((e) => [e.anioInicio, e.anioFin]);
-    const min = Math.min(...years, ...evYears);
-    const max = Math.max(...years, ...evYears);
+    const factYears = facts.flatMap((fact) =>
+      fact.anio == null ? [] : [fact.anio, fact.anioFin ?? fact.anio],
+    );
+    const min = Math.min(...years, ...evYears, ...factYears);
+    const max = Math.max(...years, ...evYears, ...factYears);
     const span = Math.max(1, max - min);
     const pad = 14;
     const x = (y: number) => pad + ((y - min) / span) * (W - 2 * pad);
-    const maxN = Math.max(...histogram.map((h) => h.n));
+    const maxN = Math.max(1, ...histogram.map((h) => h.n));
     const barW = Math.max(1.4, Math.min(10, (W - 2 * pad) / (span + 1) - 0.6));
     return { W, min, max, x, maxN, barW };
-  }, [histogram, events]);
+  }, [histogram, events, facts]);
+
+  const factYears = useMemo(() => {
+    const grouped = new Map<number, number>();
+    for (const fact of facts) {
+      if (fact.anio == null) continue;
+      grouped.set(fact.anio, (grouped.get(fact.anio) ?? 0) + 1);
+    }
+    return [...grouped.entries()];
+  }, [facts]);
 
   if (!layout) return null;
   const { W, min, max, x, maxN, barW } = layout;
@@ -52,7 +67,7 @@ export function TimelineDensityStrip({
       viewBox={`0 0 ${W} 112`}
       style={{ width: "100%", height: "auto", display: "block" }}
       role="img"
-      aria-label="Densidad de preguntas por año, con eventos pivote"
+      aria-label="Densidad de preguntas por año, con eventos editoriales y hechos publicados"
     >
       {/* Barras de densidad */}
       {histogram.map((h) => {
@@ -74,6 +89,27 @@ export function TimelineDensityStrip({
 
       {/* Línea base */}
       <line x1={0} y1={BASE} x2={W} y2={BASE} stroke="var(--line)" strokeWidth={1} />
+
+      {/* Hechos publicados: un rombo por año, dimensionado si coinciden varios. */}
+      {factYears.map(([year, count]) => {
+        const cx = x(year);
+        const size = Math.min(7, 3.2 + Math.sqrt(count) * 1.3);
+        return (
+          <rect
+            key={`fact-${year}`}
+            x={cx - size / 2}
+            y={BASE - size / 2}
+            width={size}
+            height={size}
+            fill={`var(--p-${slug})`}
+            stroke="var(--bg)"
+            strokeWidth={1}
+            transform={`rotate(45 ${cx} ${BASE})`}
+          >
+            <title>{`${fmtY(year)} · ${count} ${count === 1 ? "hecho publicado" : "hechos publicados"}`}</title>
+          </rect>
+        );
+      })}
 
       {/* Marcadores de eventos */}
       {events.map((ev) => {

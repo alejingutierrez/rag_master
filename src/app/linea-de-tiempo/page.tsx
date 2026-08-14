@@ -12,7 +12,7 @@ export const metadata = buildMetadata({
   seo: {
     metaTitle: "Línea de tiempo",
     metaDescription:
-      "Cinco siglos de historia de Colombia en una línea de tiempo calibrada por relevancia: los momentos que el corpus más interroga pesan más.",
+      "La historia de Colombia en una línea de tiempo cuya densidad responde a hechos publicados, eventos editoriales y preguntas del corpus.",
     keywords: ["línea de tiempo", "cronología", "historia de Colombia", "períodos"],
   },
   path: "/linea-de-tiempo",
